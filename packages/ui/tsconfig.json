@@ -1,0 +1,7 @@
+{
+  "extends": "@app/typescript-config/react.json",
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "include": ["src"]
+}

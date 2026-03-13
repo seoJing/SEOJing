@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+
+# build
+dist/
+.vinext/
+.next/
+out/
+
+# turbo
+.turbo/
+
+# coverage
+coverage/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# debug
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*

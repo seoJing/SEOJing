@@ -1,0 +1,19 @@
+{
+  "name": "@app/eslint-config",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base": "./base.js",
+    "./react": "./react.js"
+  },
+  "dependencies": {
+    "@eslint/js": "^9.0.0",
+    "typescript-eslint": "^8.0.0",
+    "eslint-plugin-react": "latest",
+    "eslint-plugin-react-hooks": "latest",
+    "eslint-config-prettier": "latest"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "@app/typescript-config",
+  "private": true,
+  "exports": {
+    "./base.json": "./base.json",
+    "./react.json": "./react.json"
+  }
+}
