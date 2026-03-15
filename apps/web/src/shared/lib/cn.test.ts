@@ -13,4 +13,12 @@ describe("cn", () => {
   it("returns empty string for no args", () => {
     expect(cn()).toBe("");
   });
+
+  it("merges conflicting tailwind classes", () => {
+    expect(cn("px-4", "px-8")).toBe("px-8");
+  });
+
+  it("handles conditional classes", () => {
+    expect(cn("base", "active", false)).toBe("base active");
+  });
 });

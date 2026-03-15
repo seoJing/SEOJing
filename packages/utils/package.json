@@ -16,7 +16,13 @@
   "devDependencies": {
     "@app/eslint-config": "workspace:*",
     "@app/typescript-config": "workspace:*",
+    "@types/node": "^20.19.37",
     "eslint": "^9.0.0",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "gray-matter": "^4.0.3",
+    "tailwind-merge": "^3.5.0"
   }
 }

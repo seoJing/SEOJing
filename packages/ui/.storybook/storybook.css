@@ -1,0 +1,230 @@
+@import "tailwindcss";
+
+/* Web Fonts - A2z (본문) & Paperlogy (제목) */
+@font-face {
+  font-family: "A2z";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-1Thin.woff2") format("woff2");
+  font-weight: 100;
+  font-display: swap;
+}
+@font-face {
+  font-family: "A2z";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-2ExtraLight.woff2") format("woff2");
+  font-weight: 200;
+  font-display: swap;
+}
+@font-face {
+  font-family: "A2z";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-3Light.woff2") format("woff2");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "A2z";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-4Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "A2z";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-5Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "A2z";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-6SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "A2z";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-7Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "A2z";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-8ExtraBold.woff2") format("woff2");
+  font-weight: 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "A2z";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-9Black.woff2") format("woff2");
+  font-weight: 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Paperlogy";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-1Thin.woff2") format("woff2");
+  font-weight: 100;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Paperlogy";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-2ExtraLight.woff2") format("woff2");
+  font-weight: 200;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Paperlogy";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-3Light.woff2") format("woff2");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Paperlogy";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Paperlogy";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-5Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Paperlogy";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Paperlogy";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Paperlogy";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2") format("woff2");
+  font-weight: 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Paperlogy";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-9Black.woff2") format("woff2");
+  font-weight: 900;
+  font-display: swap;
+}
+
+@theme {
+  /* Pantone Palette */
+  --color-lemon-icing: #F6EBC8;
+  --color-nimbus-cloud: #D5D5D8;
+  --color-raindrops-on-roses: #EBD8DC;
+  --color-cloud-dancer: #F0EEE9;
+  --color-ice-melt: #D3E4F1;
+  --color-peach-dust: #F0D8CC;
+  --color-almost-aqua: #CAD3C1;
+  --color-orchid-tint: #DBD2DB;
+
+  /* Semantic Colors */
+  --color-paper-light: #F0EEE9;
+  --color-paper-dark: #1A1916;
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+
+  /* Spacing (4px base) */
+  --spacing-0: 0px;
+  --spacing-px: 1px;
+  --spacing-0_5: 2px;
+  --spacing-1: 4px;
+  --spacing-1_5: 6px;
+  --spacing-2: 8px;
+  --spacing-2_5: 10px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --spacing-20: 80px;
+  --spacing-24: 96px;
+
+  /* Typography */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: 2.25rem;
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: 2.5rem;
+
+  /* Fonts */
+  --font-sans: "A2z", Arial, Helvetica, sans-serif;
+  --font-heading: "Paperlogy", Arial, Helvetica, sans-serif;
+
+  /* Animations */
+  --animate-elliptic-in: slide-in-elliptic-top-fwd 0.7s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+  --animate-fade-in: fade-in 0.2s ease-out both;
+  --animate-fade-out: fade-out 0.2s ease-in both;
+  --animate-modal-in: modal-in 0.2s ease-out both;
+  --animate-modal-out: modal-out 0.2s ease-in both;
+}
+
+@variant dark (&:where(.dark, .dark *));
+
+@keyframes slide-in-elliptic-top-fwd {
+  0% {
+    transform: translateY(-600px) rotateX(-30deg) scale(0);
+    transform-origin: 50% 100%;
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) rotateX(0) scale(1);
+    transform-origin: 50% 1400px;
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes modal-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}

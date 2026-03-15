@@ -7,6 +7,9 @@ dist/
 .next/
 out/
 
+# generated
+**/src/generated/
+
 # turbo
 .turbo/
 
@@ -33,3 +36,10 @@ npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# claude
+.claude/
+
+# log
+logs/
+*.log
