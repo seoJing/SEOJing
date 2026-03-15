@@ -3,128 +3,146 @@
 /* Web Fonts - A2z (본문) & Paperlogy (제목) */
 @font-face {
   font-family: "A2z";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-1Thin.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-1Thin.woff2")
+    format("woff2");
   font-weight: 100;
   font-display: swap;
 }
 @font-face {
   font-family: "A2z";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-2ExtraLight.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-2ExtraLight.woff2")
+    format("woff2");
   font-weight: 200;
   font-display: swap;
 }
 @font-face {
   font-family: "A2z";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-3Light.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-3Light.woff2")
+    format("woff2");
   font-weight: 300;
   font-display: swap;
 }
 @font-face {
   font-family: "A2z";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-4Regular.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-4Regular.woff2")
+    format("woff2");
   font-weight: 400;
   font-display: swap;
 }
 @font-face {
   font-family: "A2z";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-5Medium.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-5Medium.woff2")
+    format("woff2");
   font-weight: 500;
   font-display: swap;
 }
 @font-face {
   font-family: "A2z";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-6SemiBold.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-6SemiBold.woff2")
+    format("woff2");
   font-weight: 600;
   font-display: swap;
 }
 @font-face {
   font-family: "A2z";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-7Bold.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-7Bold.woff2")
+    format("woff2");
   font-weight: 700;
   font-display: swap;
 }
 @font-face {
   font-family: "A2z";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-8ExtraBold.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-8ExtraBold.woff2")
+    format("woff2");
   font-weight: 800;
   font-display: swap;
 }
 @font-face {
   font-family: "A2z";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-9Black.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-9Black.woff2")
+    format("woff2");
   font-weight: 900;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Paperlogy";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-1Thin.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-1Thin.woff2")
+    format("woff2");
   font-weight: 100;
   font-display: swap;
 }
 @font-face {
   font-family: "Paperlogy";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-2ExtraLight.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-2ExtraLight.woff2")
+    format("woff2");
   font-weight: 200;
   font-display: swap;
 }
 @font-face {
   font-family: "Paperlogy";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-3Light.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-3Light.woff2")
+    format("woff2");
   font-weight: 300;
   font-display: swap;
 }
 @font-face {
   font-family: "Paperlogy";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2")
+    format("woff2");
   font-weight: 400;
   font-display: swap;
 }
 @font-face {
   font-family: "Paperlogy";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-5Medium.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-5Medium.woff2")
+    format("woff2");
   font-weight: 500;
   font-display: swap;
 }
 @font-face {
   font-family: "Paperlogy";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2")
+    format("woff2");
   font-weight: 600;
   font-display: swap;
 }
 @font-face {
   font-family: "Paperlogy";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2")
+    format("woff2");
   font-weight: 700;
   font-display: swap;
 }
 @font-face {
   font-family: "Paperlogy";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2")
+    format("woff2");
   font-weight: 800;
   font-display: swap;
 }
 @font-face {
   font-family: "Paperlogy";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-9Black.woff2") format("woff2");
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-9Black.woff2")
+    format("woff2");
   font-weight: 900;
   font-display: swap;
 }
 
 @theme {
   /* Pantone Palette */
-  --color-lemon-icing: #F6EBC8;
-  --color-nimbus-cloud: #D5D5D8;
-  --color-raindrops-on-roses: #EBD8DC;
-  --color-cloud-dancer: #F0EEE9;
-  --color-ice-melt: #D3E4F1;
-  --color-peach-dust: #F0D8CC;
-  --color-almost-aqua: #CAD3C1;
-  --color-orchid-tint: #DBD2DB;
+  --color-lemon-icing: #f6ebc8;
+  --color-nimbus-cloud: #d5d5d8;
+  --color-raindrops-on-roses: #ebd8dc;
+  --color-cloud-dancer: #f0eee9;
+  --color-ice-melt: #d3e4f1;
+  --color-peach-dust: #f0d8cc;
+  --color-almost-aqua: #cad3c1;
+  --color-orchid-tint: #dbd2db;
 
   /* Semantic Colors */
-  --color-paper-light: #F0EEE9;
-  --color-paper-dark: #1A1916;
+  --color-paper-light: #f0eee9;
+  --color-paper-dark: #1a1916;
   --color-background: #ffffff;
   --color-foreground: #171717;
 
@@ -170,7 +188,8 @@
   --font-heading: "Paperlogy", Arial, Helvetica, sans-serif;
 
   /* Animations */
-  --animate-elliptic-in: slide-in-elliptic-top-fwd 0.7s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+  --animate-elliptic-in: slide-in-elliptic-top-fwd 0.7s
+    cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
   --animate-fade-in: fade-in 0.2s ease-out both;
   --animate-fade-out: fade-out 0.2s ease-in both;
   --animate-modal-in: modal-in 0.2s ease-out both;
@@ -193,8 +212,12 @@
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modal-in {
@@ -209,8 +232,12 @@
 }
 
 @keyframes fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes modal-out {
