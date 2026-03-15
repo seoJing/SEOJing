@@ -192,20 +192,20 @@ export function RecentlyRead({ rootPath = "/" }: RecentlyReadProps) {
                         </p>
                       )}
                       {isFullyRead && (
-                        <div className="absolute right-10 top-27 lg:right-9 lg:top-37 z-10 -rotate-12">
+                        <div className="absolute right-5 top-28 lg:right-6 lg:top-38 z-10 -rotate-12">
                           <img
-                            src="/logo.ico"
+                            src="/redSilling.png"
                             alt="완독"
-                            className="size-10 rounded-sm border-2 border-dashed border-gray-400 opacity-70 dark:border-gray-500"
+                            className="size-10 lg:size-15"
                           />
                         </div>
                       )}
                       {hasCommented && (
-                        <div className="absolute right-1 top-25 lg:top-35 z-10 rotate-12">
+                        <div className="absolute left-17 lg:left-21 top-25 lg:top-32 z-10 rotate-12">
                           <img
-                            src="/logo.ico"
+                            src="/purpleSilling.png"
                             alt="댓글 완료"
-                            className="size-10 rounded-sm border-2 border-dashed border-gray-300 opacity-80 dark:border-gray-600"
+                            className="size-10 lg:size-15"
                           />
                         </div>
                       )}
