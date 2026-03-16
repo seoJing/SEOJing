@@ -3,6 +3,7 @@ import {
   Paragraph,
   ArticleImage,
   ArticleHeader,
+  ArticleTable,
   Anchor,
 } from "@app/ui";
 import { cn } from "@app/utils";
@@ -22,6 +23,30 @@ export const mdxComponents: Record<string, unknown> = {
   Subtitle,
   Paragraph,
   Anchor,
+  table: (props: ComponentPropsWithoutRef<"table">) => (
+    <ArticleTable {...props} />
+  ),
+  thead: ({ className, ...props }: ComponentPropsWithoutRef<"thead">) => (
+    <thead className={className} {...props} />
+  ),
+  th: ({ className, ...props }: ComponentPropsWithoutRef<"th">) => (
+    <th
+      className={cn(
+        "whitespace-nowrap border-b border-r border-gray-300 bg-white px-4 py-2.5 text-left text-sm font-semibold text-gray-900 last:border-r-0 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100",
+        className,
+      )}
+      {...props}
+    />
+  ),
+  td: ({ className, ...props }: ComponentPropsWithoutRef<"td">) => (
+    <td
+      className={cn(
+        "whitespace-nowrap border-b border-r border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 last:border-r-0 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300",
+        className,
+      )}
+      {...props}
+    />
+  ),
   h2: (props: ComponentPropsWithoutRef<"h2">) => (
     <Subtitle level={2} {...props} />
   ),

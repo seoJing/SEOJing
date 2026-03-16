@@ -75,6 +75,7 @@ export {
   Paragraph,
   CodeBlock,
   ArticleImage,
+  ArticleTable,
 } from "./article";
 export type {
   ArticleHeaderProps,
@@ -82,5 +83,6 @@ export type {
   ParagraphProps,
   CodeBlockProps,
   ArticleImageProps,
+  ArticleTableProps,
   ArticleTag,
 } from "./article";

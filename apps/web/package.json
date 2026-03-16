@@ -46,6 +46,7 @@
     "eslint": "^9",
     "jsdom": "^28.1.0",
     "rehype-prism-plus": "^2.0.2",
+    "remark-gfm": "^4.0.1",
     "tailwindcss": "^4.2.1",
     "tsx": "^4.21.0",
     "typescript": "^5",

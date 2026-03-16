@@ -1,4 +1,8 @@
-import type { HTMLAttributes, ImgHTMLAttributes } from "react";
+import type {
+  HTMLAttributes,
+  ImgHTMLAttributes,
+  TableHTMLAttributes,
+} from "react";
 
 /** 포스트 타입 (카테고리 태그) */
 export type ArticleTag = string;
@@ -33,6 +37,9 @@ export interface CodeBlockProps extends HTMLAttributes<HTMLPreElement> {
   /** 언어 표시 (우측 상단 라벨) */
   language?: string;
 }
+
+/** ArticleTable — 가로 스크롤 지원 테이블 래퍼 */
+export type ArticleTableProps = TableHTMLAttributes<HTMLTableElement>;
 
 /** ArticleImage — 이미지 + 캡션 */
 export interface ArticleImageProps extends Omit<

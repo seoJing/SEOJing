@@ -1,6 +1,7 @@
 import path from "node:path";
 import fs from "node:fs";
 import { compile } from "@mdx-js/mdx";
+import remarkGfm from "remark-gfm";
 import rehypePrismPlus from "rehype-prism-plus";
 import { scanContentDir, getContentBySlug } from "@app/utils/content";
 
@@ -67,6 +68,7 @@ async function generateContentFiles(contentDir: string, basePath: string = "") {
         outputFormat: "program",
         development: false,
         jsx: true,
+        remarkPlugins: [remarkGfm],
         rehypePlugins: [[rehypePrismPlus, { ignoreMissing: true }]],
       });
 
