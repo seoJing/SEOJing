@@ -1,14 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
-import {
-  calculateReadingTime,
-  getItemsForPath,
-  scanContentDir,
-  getContentBySlug,
-  isContentFolder,
-  type ContentTree,
-} from "./content";
+import { scanContentDir, getContentBySlug, isContentFolder } from "./content";
+import { getItemsForPath, type ContentTree } from "./content-types";
+import { calculateReadingTime } from "./reading-time";
 
 // ─── calculateReadingTime ───────────────────────────────────────────
 

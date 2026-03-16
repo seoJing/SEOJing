@@ -1,15 +1,17 @@
 import { mdxComponents } from "@/widgets/mdx-renderer/MdxRenderer";
-import { CONTENT_DIR } from "@/shared/config";
+import { loadContent } from "@/shared/config";
 import { ArticleHeader, Paper } from "@app/ui";
-import { calculateReadingTime, getContentBySlug } from "@app/utils";
-import { MDXRemote } from "next-mdx-remote/rsc";
+import { calculateReadingTime } from "@app/utils";
 import { ArticleToolbar } from "@/widgets/article-toolbar/ArticleToolbar";
-export default function Home() {
-  const content = getContentBySlug(CONTENT_DIR, ["resume"]);
+
+export default async function Home() {
+  const content = await loadContent(["resume"]);
 
   if (!content) {
     return null;
   }
+
+  const MDXContent = content.compiled.default;
 
   return (
     <>
@@ -26,7 +28,7 @@ export default function Home() {
           tags={content.frontmatter.tags}
           readingTime={calculateReadingTime(content.source)}
         />
-        <MDXRemote source={content.source} components={mdxComponents} />
+        <MDXContent components={mdxComponents} />
         <ArticleToolbar slug={"resume"} title={content.frontmatter.title} />
       </Paper>
     </>

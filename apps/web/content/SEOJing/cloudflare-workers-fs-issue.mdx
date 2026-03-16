@@ -1,0 +1,170 @@
+---
+title: Cloudflare Workers에서 fs 모듈이 안 되는 이유와 해결법
+date: "2026-03-16"
+tags: [Cloudflare Workers, vinext, RSC, 트러블슈팅, DevLog]
+description: 배포 후 블로그 포스트가 404를 반환하던 문제의 원인과, 빌드 타임 콘텐츠 프리컴파일로 해결한 과정
+---
+
+<Subtitle level={2}>문제 상황</Subtitle>
+
+<Paragraph>
+vinext + GitHub Actions 배포를 마치고 사이트에 접속했다.
+`/blog` 인덱스 페이지는 정상적으로 보였다.
+
+그런데 개별 포스트를 클릭하면 아무것도 안 뜬다.
+브라우저 Network 탭을 열어보니 `.rsc` 요청이 **404 Not Found**를 반환하고 있었다.
+</Paragraph>
+
+```
+Request URL: https://web.tjwlsrb1021.workers.dev/blog/resume.rsc
+Status Code: 404 Not Found
+```
+
+<Paragraph>
+`/blog` 인덱스는 되는데 개별 포스트만 안 되는 상황.
+뭔가 라우팅 문제인가 싶었지만, 원인은 더 근본적인 곳에 있었다.
+</Paragraph>
+
+<Subtitle level={2}>원인 분석: Cloudflare Workers에는 파일시스템이 없다</Subtitle>
+
+<Paragraph>
+블로그 포스트를 렌더링하는 `[...slug]/page.tsx`의 코드를 보자.
+</Paragraph>
+
+```tsx
+const content = getContentBySlug(CONTENT_DIR, slug);
+```
+
+<Paragraph>
+`getContentBySlug`의 내부 구현은 이렇다.
+</Paragraph>
+
+```ts
+import fs from "node:fs";
+
+export function getContentBySlug(contentDir: string, slug: string[]) {
+  const filePath = path.join(contentDir, `${slug.join("/")}.mdx`);
+  const raw = fs.readFileSync(filePath, "utf-8");  // 여기서 터짐
+  // ...
+}
+```
+
+<Paragraph>
+Node.js의 `fs.readFileSync`로 MDX 파일을 직접 읽고 있다.
+로컬 `vinext dev`에서는 Node.js 런타임이니까 당연히 동작한다.
+
+하지만 **Cloudflare Workers는 Node.js가 아니다.**
+V8 isolate 기반의 경량 런타임이라 `fs` 모듈이 존재하지 않는다.
+`nodejs_compat` 플래그를 켜면 일부 Node.js API를 폴리필해주긴 하지만,
+파일시스템 접근은 지원하지 않는다.
+
+즉, 배포 환경에서는 MDX 파일을 런타임에 읽을 방법이 없다.
+</Paragraph>
+
+<Subtitle level={3}>그러면 /blog 인덱스는 왜 동작했나?</Subtitle>
+
+<Paragraph>
+인덱스 페이지의 위젯들은 `content-tree.json`을 import해서 사용한다.
+</Paragraph>
+
+```ts
+import contentTree from "@/generated/content-tree.json";
+```
+
+<Paragraph>
+이 JSON은 빌드 시점에 생성되어 **번들에 포함**된다.
+`fs`를 쓰지 않으니 Workers에서도 문제없이 동작한다.
+
+반면 개별 포스트는 `fs.readFileSync`로 런타임에 파일을 읽으려 하니 실패한 것이다.
+같은 앱인데 한쪽은 되고 한쪽은 안 되는 이유가 여기에 있었다.
+</Paragraph>
+
+<Subtitle level={2}>해결: 빌드 타임 콘텐츠 프리컴파일</Subtitle>
+
+<Paragraph>
+해결 방향은 명확하다.
+런타임에 `fs`로 파일을 읽는 대신, **빌드 시점에 모든 MDX 콘텐츠를 JSON으로 변환**해서 번들에 포함시키면 된다.
+</Paragraph>
+
+<Subtitle level={3}>1. 빌드 스크립트에서 개별 JSON 생성</Subtitle>
+
+<Paragraph>
+기존에 `content-tree.json`(트리 구조 메타데이터)만 생성하던 빌드 스크립트를 확장했다.
+각 MDX 파일마다 frontmatter와 source를 담은 개별 JSON 파일을 생성한다.
+</Paragraph>
+
+```
+src/generated/
+├── content-tree.json          # 기존 - 트리 구조
+├── content/
+│   ├── resume.json            # 각 포스트의 { frontmatter, source }
+│   └── SEOJing/
+│       ├── reason.json
+│       └── vinext-github-actions-deploy.json
+```
+
+<Paragraph>
+포스트가 늘어나도 각각 독립된 JSON 파일이라 번들러가 필요한 것만 로드할 수 있다.
+하나의 거대한 JSON에 모든 콘텐츠를 때려넣는 것보다 확장성이 좋다.
+</Paragraph>
+
+<Subtitle level={3}>2. config에서 fs 기반 코드 제거</Subtitle>
+
+<Paragraph>
+기존의 `CONTENT_DIR` + `fs` 조합을 걷어내고, JSON import 기반의 헬퍼 함수로 교체했다.
+</Paragraph>
+
+```ts
+// Before - fs 기반 (Workers에서 동작 불가)
+import path from "node:path";
+export const CONTENT_DIR = path.resolve(import.meta.dirname ?? "", "../../../content");
+
+// After - JSON import 기반 (어디서든 동작)
+import contentTree from "@/generated/content-tree.json";
+
+export async function loadContent(slug: string[]) {
+  const mod = await import(`@/generated/content/${slug.join("/")}.json`);
+  return mod.default;
+}
+```
+
+<Paragraph>
+`loadContent`는 dynamic import를 사용한다.
+Vite가 빌드 시 이 패턴을 인식해서 각 JSON을 별도 chunk로 분리하므로,
+요청된 포스트의 JSON만 로드된다.
+</Paragraph>
+
+<Subtitle level={3}>3. 폴더 판별도 content-tree 기반으로</Subtitle>
+
+<Paragraph>
+기존에는 `fs.statSync`로 디렉토리 여부를 확인했다.
+이것도 content-tree.json을 순회하는 방식으로 바꿨다.
+</Paragraph>
+
+```ts
+export function isSlugFolder(slug: string[]): boolean {
+  let current = contentTree;
+  for (const segment of slug) {
+    const folder = current.find(n => n.type === "folder" && n.name === segment);
+    if (!folder?.children) return false;
+    current = folder.children;
+  }
+  return true;
+}
+```
+
+<Subtitle level={2}>핵심 교훈</Subtitle>
+
+<Paragraph>
+이 문제의 본질은 **개발 환경과 배포 환경의 런타임 차이**다.
+
+- 로컬 `vinext dev` → Node.js → `fs` 사용 가능
+- Cloudflare Workers → V8 isolate → `fs` 사용 불가
+
+Edge 런타임(Cloudflare Workers, Vercel Edge, Deno Deploy 등)에 배포할 때는
+Node.js 전용 API에 의존하는 코드가 없는지 반드시 확인해야 한다.
+
+특히 콘텐츠 기반 사이트에서는 **빌드 타임에 콘텐츠를 프리컴파일**하는 패턴이 사실상 필수다.
+Astro의 Content Collections, Next.js의 `generateStaticParams` 등도 같은 맥락이다.
+런타임에 파일을 읽는 대신, 빌드 시점에 미리 처리해서 번들에 포함시키는 것이다.
+</Paragraph>

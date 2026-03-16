@@ -1,26 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import matter from "gray-matter";
-
-export interface ContentFrontmatter {
-  title: string;
-  date: string;
-  tags: string[];
-  description: string;
-}
-
-export interface ContentNode {
-  name: string;
-  type: "file" | "folder";
-  // content/ 기준 상대 경로 (예: "/frontend/react-시작하기.mdx")
-  path: string;
-  extension?: string;
-  frontmatter?: ContentFrontmatter;
-  children?: ContentNode[];
-  itemCount?: number;
-}
-
-export type ContentTree = ContentNode[];
+import { parseFrontmatter } from "./frontmatter";
+import type { ContentFrontmatter, ContentTree } from "./content-types";
 
 // resolved 경로가 baseDir 내부인지 검증
 function isInsideDir(baseDir: string, targetPath: string): boolean {
@@ -77,12 +58,13 @@ export function scanContentDir(
       if (ext === "mdx" || ext === "md") {
         try {
           const raw = fs.readFileSync(fullPath, "utf-8");
-          const { data } = matter(raw);
+          const { data } = parseFrontmatter(raw);
           frontmatter = {
-            title: data.title ?? entry.name,
-            date: data.date ?? "",
+            title: typeof data.title === "string" ? data.title : entry.name,
+            date: typeof data.date === "string" ? data.date : "",
             tags: Array.isArray(data.tags) ? data.tags : [],
-            description: data.description ?? "",
+            description:
+              typeof data.description === "string" ? data.description : "",
           };
         } catch {
           frontmatter = {
@@ -141,13 +123,17 @@ export function getContentBySlug(
     try {
       if (!fs.existsSync(filePath)) continue;
       const raw = fs.readFileSync(filePath, "utf-8");
-      const { data, content } = matter(raw);
+      const { data, content } = parseFrontmatter(raw);
       return {
         frontmatter: {
-          title: data.title ?? slug[slug.length - 1]!,
-          date: data.date ?? "",
+          title:
+            typeof data.title === "string"
+              ? data.title
+              : slug[slug.length - 1]!,
+          date: typeof data.date === "string" ? data.date : "",
           tags: Array.isArray(data.tags) ? data.tags : [],
-          description: data.description ?? "",
+          description:
+            typeof data.description === "string" ? data.description : "",
         },
         source: content,
         filePath,
@@ -158,19 +144,6 @@ export function getContentBySlug(
   }
 
   return null;
-}
-
-/**
- * 텍스트의 예상 읽기 시간을 분 단위로 계산한다. (한국어 기준 500자/분)
- *
- * @example
- * ```ts
- * calculateReadingTime("안녕하세요 ..."); // 1
- * ```
- */
-export function calculateReadingTime(text: string): number {
-  const charCount = text.replace(/\s/g, "").length;
-  return Math.max(1, Math.round(charCount / 500));
 }
 
 /**
@@ -189,34 +162,4 @@ export function isContentFolder(contentDir: string, slug: string[]): boolean {
   } catch {
     return false;
   }
-}
-
-/**
- * ContentTree에서 특정 경로의 아이템 목록을 반환한다.
- *
- * @example
- * ```ts
- * getItemsForPath(tree, "/study/hooks"); // 해당 폴더의 children
- * ```
- */
-export function getItemsForPath(
-  tree: ContentTree,
-  targetPath: string,
-): ContentTree {
-  if (targetPath === "/" || targetPath === "") {
-    return tree;
-  }
-
-  const segments = targetPath.replace(/^\//, "").split("/");
-  let current = tree;
-
-  for (const segment of segments) {
-    const folder = current.find(
-      (node) => node.type === "folder" && node.name === segment,
-    );
-    if (!folder?.children) return [];
-    current = folder.children;
-  }
-
-  return current;
 }

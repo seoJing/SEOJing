@@ -1,13 +1,9 @@
 import { notFound } from "next/navigation";
-import { MDXRemote } from "next-mdx-remote/rsc";
 import { ArticleHeader, Paper } from "@app/ui";
-import {
-  getContentBySlug,
-  isContentFolder,
-  calculateReadingTime,
-} from "@app/utils";
-import { CONTENT_DIR } from "@/shared/config";
+import { calculateReadingTime } from "@app/utils";
+import { isSlugFolder, loadContent } from "@/shared/config";
 import { mdxComponents } from "@/widgets/mdx-renderer/MdxRenderer";
+import type { MDXComponents } from "mdx/types";
 import { NewPostsCarousel } from "@/widgets/new-posts-carousel/NewPostsCarousel";
 import { RecentlyRead } from "@/widgets/recently-read/RecentlyRead";
 import { PostExplorer } from "@/widgets/post-explorer/PostExplorer";
@@ -20,7 +16,7 @@ interface BlogPostPageProps {
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
 
-  if (isContentFolder(CONTENT_DIR, slug)) {
+  if (isSlugFolder(slug)) {
     const rootPath = `/${slug.join("/")}`;
     return (
       <>
@@ -31,11 +27,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     );
   }
 
-  const content = getContentBySlug(CONTENT_DIR, slug);
+  const content = await loadContent(slug);
 
   if (!content) {
     notFound();
   }
+
+  const MDXContent = content.compiled.default;
 
   return (
     <div className="relative min-h-[calc(100vh-25rem)]">
@@ -46,7 +44,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           tags={content.frontmatter.tags}
           readingTime={calculateReadingTime(content.source)}
         />
-        <MDXRemote source={content.source} components={mdxComponents} />
+        <MDXContent components={mdxComponents as MDXComponents} />
         <ArticleToolbar
           slug={slug.join("/")}
           title={content.frontmatter.title}
