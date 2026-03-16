@@ -12,7 +12,11 @@ export function Anchor({
   return (
     <a
       className={cn("transition-colors", ANCHOR_VARIANTS[variant], className)}
-      {...(external && { target: "_blank", rel: "noopener noreferrer" })}
+      {...(external && {
+        href: external,
+        target: "_blank",
+        rel: "noopener noreferrer",
+      })}
       {...props}
     >
       {children}
