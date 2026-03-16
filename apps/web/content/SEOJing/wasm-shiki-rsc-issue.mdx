@@ -1,0 +1,292 @@
+---
+title: RSC 환경에서 WebAssembly가 차단되는 이유 — Shiki에서 rehype-prism-plus로
+date: "2026-03-16"
+tags: [WebAssembly, Shiki, RSC, Cloudflare Workers, 트러블슈팅, DevLog]
+description: 코드 하이라이팅에 Shiki를 쓰면 왜 RSC에서 WebAssembly.instantiate() 에러가 터지는지, 그리고 빌드 타임 하이라이팅으로 어떻게 해결했는지 정리한다.
+---
+
+<Subtitle level={2}>WebAssembly란 무엇인가</Subtitle>
+
+<Paragraph>
+WebAssembly(Wasm)는 브라우저와 서버에서 실행할 수 있는 저수준 바이너리 포맷이다.
+C, C++, Rust 같은 언어로 작성된 코드를 컴파일해서 `.wasm` 바이너리로 만들고,
+JavaScript에서 `WebAssembly.instantiate()`로 로드해 실행한다.
+</Paragraph>
+
+<Paragraph>
+JavaScript보다 빠른 성능이 필요할 때 사용된다.
+이미지 처리, 암호화, 정규표현식 엔진 같은 CPU 집약적 작업이 대표적이다.
+</Paragraph>
+
+```js
+// WebAssembly 모듈 로드의 기본 형태
+const response = await fetch("module.wasm");
+const { instance } = await WebAssembly.instantiateStreaming(response);
+instance.exports.someFunction();
+```
+
+<Paragraph>
+문제는 **모든 런타임이 WebAssembly를 허용하지는 않는다**는 점이다.
+</Paragraph>
+
+<Subtitle level={2}>Shiki는 왜 WebAssembly를 쓰는가</Subtitle>
+
+<Paragraph>
+Shiki는 VS Code와 동일한 TextMate 문법을 사용하는 구문 강조 라이브러리다.
+TextMate 문법의 정규표현식은 JavaScript의 `RegExp`로는 처리할 수 없는
+Oniguruma 정규표현식 문법을 사용한다.
+</Paragraph>
+
+<Paragraph>
+Oniguruma는 원래 C 라이브러리다.
+이걸 브라우저와 Node.js에서 쓰려면 WebAssembly로 컴파일해야 한다.
+Shiki가 내부적으로 `onig.wasm`을 로드하는 이유가 이것이다.
+</Paragraph>
+
+```
+shiki/dist/onig.wasm  ← Oniguruma를 WebAssembly로 컴파일한 바이너리
+```
+
+<Paragraph>
+즉, `codeToHtml()`을 호출하면 내부에서 이런 일이 벌어진다.
+</Paragraph>
+
+```
+codeToHtml() 호출
+  → Oniguruma 엔진 초기화
+  → WebAssembly.instantiate(onig.wasm)  ← 여기서 터짐
+  → TextMate 문법으로 토큰화
+  → HTML 생성
+```
+
+<Subtitle level={2}>문제 상황</Subtitle>
+
+<Paragraph>
+블로그의 코드 블록 하이라이팅에 Shiki를 사용하고 있었다.
+MDX 컴포넌트 매핑에서 `pre` 태그를 가로채 Shiki로 하이라이팅하는 방식이다.
+</Paragraph>
+
+```tsx
+// MdxRenderer.tsx — 문제의 코드
+import { codeToHtml } from "shiki";
+
+pre: async ({ children, ...props }) => {
+  const highlighted = await codeToHtml(codeString, {
+    lang: language ?? "text",
+    theme: "github-dark",
+  });
+  return <CodeBlock code={highlighted} language={language} />;
+},
+```
+
+<Paragraph>
+로컬 `vinext dev`에서는 잘 동작했다.
+하지만 Cloudflare Workers 환경에서 렌더링하면 이런 에러가 터졌다.
+</Paragraph>
+
+```
+CompileError: WebAssembly.instantiate(): Wasm code generation disallowed by embedder
+```
+
+<Subtitle level={2}>왜 RSC 환경에서 WebAssembly가 차단되는가</Subtitle>
+
+<Paragraph>
+React Server Components(RSC)는 서버에서 컴포넌트를 렌더링하고,
+그 결과를 직렬화해서 클라이언트로 스트리밍하는 아키텍처다.
+</Paragraph>
+
+<Paragraph>
+이때 "서버"가 어디서 실행되느냐가 핵심이다.
+</Paragraph>
+
+<Paragraph>
+- **Node.js 서버** — WebAssembly 완전 지원. 문제없다.
+- **Cloudflare Workers** — V8 isolate 기반. WebAssembly를 제한적으로 지원한다.
+</Paragraph>
+
+<Paragraph>
+Cloudflare Workers에서 WebAssembly를 사용하려면
+모듈을 정적으로 import하는 방식만 허용된다.
+</Paragraph>
+
+```js
+// Workers에서 허용되는 방식
+import wasm from "./module.wasm";
+const instance = await WebAssembly.instantiate(wasm);
+
+// Workers에서 차단되는 방식 — Shiki가 하는 방식
+const response = await fetch("onig.wasm");
+await WebAssembly.instantiateStreaming(response);
+```
+
+<Paragraph>
+Shiki는 런타임에 동적으로 WASM 바이너리를 로드하고 인스턴스화한다.
+이 방식이 Workers의 보안 정책에 의해 차단되는 것이다.
+</Paragraph>
+
+<Paragraph>
+브라우저도 마찬가지다.
+Content-Security-Policy에 `wasm-unsafe-eval`을 추가하면 브라우저에서는 동작하지만,
+RSC 렌더링은 서버(Workers)에서 일어나므로 CSP 헤더와는 무관하다.
+</Paragraph>
+
+<Subtitle level={2}>해결: 런타임 하이라이팅에서 빌드 타임 하이라이팅으로</Subtitle>
+
+<Paragraph>
+문제의 본질을 정리하면 이렇다.
+</Paragraph>
+
+<Paragraph>
+- Shiki는 **런타임**에 WebAssembly로 구문 강조를 수행한다.
+- RSC 렌더링이 일어나는 Workers 환경에서는 이 방식의 WASM 로드가 **차단**된다.
+- 따라서 구문 강조를 **빌드 타임**으로 옮기면 런타임에서 WASM이 필요 없어진다.
+</Paragraph>
+
+<Paragraph>
+`rehype-prism-plus`를 선택했다.
+이 라이브러리는 Prism.js 기반의 rehype 플러그인으로, **순수 JavaScript**만 사용한다.
+WASM 의존성이 전혀 없다.
+그리고 rehype 플러그인이므로 MDX **컴파일 시점**에 동작한다.
+</Paragraph>
+
+<Subtitle level={3}>1. 의존성 교체</Subtitle>
+
+```bash
+pnpm remove shiki
+pnpm add -D rehype-prism-plus
+```
+
+<Subtitle level={3}>2. MDX 컴파일에 rehype 플러그인 추가</Subtitle>
+
+<Paragraph>
+빌드 스크립트의 `compile()` 호출에 rehype 플러그인을 추가한다.
+이제 MDX를 JSX로 컴파일할 때 코드 블록이 자동으로 하이라이팅된다.
+</Paragraph>
+
+```ts
+import rehypePrismPlus from "rehype-prism-plus";
+
+const compiled = await compile(result.source, {
+  outputFormat: "program",
+  development: false,
+  jsx: true,
+  rehypePlugins: [[rehypePrismPlus, { ignoreMissing: true }]],
+});
+```
+
+<Paragraph>
+컴파일 결과를 보면 코드 블록의 각 토큰이 `<span className="token keyword">` 같은
+Prism 클래스로 감싸져 있다. 빌드 시점에 이미 하이라이팅이 완료된 것이다.
+</Paragraph>
+
+<Subtitle level={3}>3. MdxRenderer에서 Shiki 제거</Subtitle>
+
+<Paragraph>
+더 이상 런타임에 하이라이팅할 필요가 없다.
+`pre` 컴포넌트에서 Shiki 호출을 제거하고, 빌드 타임에 생성된 React 요소를 그대로 렌더링한다.
+</Paragraph>
+
+```tsx
+// Before — 런타임 Shiki (WASM 필요)
+import { codeToHtml } from "shiki";
+
+pre: async ({ children }) => {
+  const highlighted = await codeToHtml(code, { lang, theme: "github-dark" });
+  return <CodeBlock code={highlighted} />;
+},
+
+// After — 빌드 타임 하이라이팅 (WASM 불필요)
+pre: ({ children }) => {
+  return (
+    <pre className="...">
+      <code className="font-mono">{codeProps.children}</code>
+    </pre>
+  );
+},
+```
+
+<Paragraph>
+주의할 점이 하나 있었다.
+MDX의 `code` 컴포넌트 매핑이 인라인 코드(`backtick`)와 코드 블록 내부의 `<code>` 태그에 모두 적용된다.
+인라인 코드용 스타일(배경색, 패딩)이 코드 블록 안에서도 적용되면 디자인이 깨진다.
+</Paragraph>
+
+```tsx
+code: ({ className, ...props }) => {
+  // 코드 블록 내부의 code인지 판별
+  const isInCodeBlock = className?.split(" ")
+    .some(c => c.startsWith("language-") || c === "code-highlight");
+
+  if (isInCodeBlock) {
+    return <code className="font-mono" {...props} />;
+  }
+  // 인라인 코드
+  return <code className="rounded bg-gray-100 px-1.5 py-0.5 ..." {...props} />;
+},
+```
+
+<Subtitle level={3}>4. Prism 토큰 CSS 추가</Subtitle>
+
+<Paragraph>
+rehype-prism-plus가 생성하는 `<span className="token keyword">` 같은 요소에 색상을 입혀야 한다.
+globals.css에 GitHub Dark 스타일의 Prism 토큰 CSS를 추가했다.
+</Paragraph>
+
+```css
+.token.keyword { color: #ff7b72; }
+.token.string  { color: #a5d6ff; }
+.token.function { color: #d2a8ff; }
+.token.comment { color: #8b949e; }
+/* ... */
+```
+
+<Subtitle level={2}>Before / After 비교</Subtitle>
+
+```
+[Before] 페이지 요청
+  → RSC 렌더링 시작
+  → pre 컴포넌트에서 codeToHtml() 호출
+  → Shiki가 onig.wasm 로드 시도
+  → WebAssembly.instantiate() 차단
+  → 에러
+
+[After] 빌드 타임
+  → MDX 컴파일 시 rehype-prism-plus가 토큰화
+  → .compiled.jsx에 하이라이팅된 span이 포함됨
+
+[After] 페이지 요청
+  → RSC 렌더링 시작
+  → pre 컴포넌트가 이미 하이라이팅된 children을 그대로 렌더링
+  → WASM 불필요 → 에러 없음
+```
+
+<Subtitle level={2}>핵심 교훈</Subtitle>
+
+<Paragraph>
+이 문제는 이전 포스트의 eval 차단 이슈와 같은 뿌리에서 나온다.
+**런타임에서 할 필요 없는 작업을 런타임에서 하고 있었다**는 것이다.
+</Paragraph>
+
+<Paragraph>
+- `gray-matter`의 `eval()` → 빌드 타임 frontmatter 파싱으로 해결
+- `next-mdx-remote`의 `new Function()` → 빌드 타임 MDX 컴파일로 해결
+- Shiki의 `WebAssembly.instantiate()` → 빌드 타임 구문 강조로 해결
+</Paragraph>
+
+<Paragraph>
+패턴이 보인다.
+Edge 런타임(Cloudflare Workers, Vercel Edge 등)에서는
+**런타임 코드 생성(`eval`, `new Function`)과 WASM 동적 로드가 차단**된다.
+이 제약을 만나면 해결책은 항상 같다 — **빌드 타임으로 옮기기**.
+</Paragraph>
+
+<Paragraph>
+그리고 WASM 의존성은 라이브러리 내부에 숨어있어서 찾기 어렵다.
+Shiki가 Oniguruma WASM을 쓴다는 건 직접 에러를 만나기 전엔 모르기 쉽다.
+Edge 환경에 배포할 때는 의존성 트리에서 `.wasm` 파일이 있는지 미리 확인해보자.
+</Paragraph>
+
+```bash
+# 의존성 중 .wasm 파일이 있는지 확인
+find node_modules -name "*.wasm" -type f
+```

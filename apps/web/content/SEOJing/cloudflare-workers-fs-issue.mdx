@@ -1,8 +1,8 @@
 ---
 title: Cloudflare Workers에서 fs 모듈이 안 되는 이유와 해결법
 date: "2026-03-16"
-tags: [Cloudflare Workers, vinext, RSC, 트러블슈팅, DevLog]
-description: 배포 후 블로그 포스트가 404를 반환하던 문제의 원인과, 빌드 타임 콘텐츠 프리컴파일로 해결한 과정
+tags: [Cloudflare Workers, vinext, MDX, 트러블슈팅, DevLog]
+description: 배포 후 블로그 포스트가 404를 반환하던 문제부터, gray-matter eval 차단, next-mdx-remote eval 차단까지 — 세 겹으로 터진 이슈를 하나씩 해결한 기록
 ---
 
 <Subtitle level={2}>문제 상황</Subtitle>
@@ -22,21 +22,14 @@ Status Code: 404 Not Found
 
 <Paragraph>
 `/blog` 인덱스는 되는데 개별 포스트만 안 되는 상황.
-뭔가 라우팅 문제인가 싶었지만, 원인은 더 근본적인 곳에 있었다.
+라우팅 문제인가 싶었지만, 원인은 더 근본적인 곳에 있었다.
+그리고 이 하나를 고치니 두 번째, 세 번째 문제가 연달아 터졌다.
 </Paragraph>
 
-<Subtitle level={2}>원인 분석: Cloudflare Workers에는 파일시스템이 없다</Subtitle>
+<Subtitle level={2}>이슈 1: Cloudflare Workers에는 파일시스템이 없다</Subtitle>
 
 <Paragraph>
-블로그 포스트를 렌더링하는 `[...slug]/page.tsx`의 코드를 보자.
-</Paragraph>
-
-```tsx
-const content = getContentBySlug(CONTENT_DIR, slug);
-```
-
-<Paragraph>
-`getContentBySlug`의 내부 구현은 이렇다.
+블로그 포스트를 렌더링하는 `[...slug]/page.tsx`는 이렇게 동작했다.
 </Paragraph>
 
 ```ts
@@ -57,14 +50,12 @@ Node.js의 `fs.readFileSync`로 MDX 파일을 직접 읽고 있다.
 V8 isolate 기반의 경량 런타임이라 `fs` 모듈이 존재하지 않는다.
 `nodejs_compat` 플래그를 켜면 일부 Node.js API를 폴리필해주긴 하지만,
 파일시스템 접근은 지원하지 않는다.
-
-즉, 배포 환경에서는 MDX 파일을 런타임에 읽을 방법이 없다.
 </Paragraph>
 
 <Subtitle level={3}>그러면 /blog 인덱스는 왜 동작했나?</Subtitle>
 
 <Paragraph>
-인덱스 페이지의 위젯들은 `content-tree.json`을 import해서 사용한다.
+인덱스 페이지의 위젯들은 빌드 시점에 생성된 `content-tree.json`을 import해서 사용한다.
 </Paragraph>
 
 ```ts
@@ -72,99 +63,266 @@ import contentTree from "@/generated/content-tree.json";
 ```
 
 <Paragraph>
-이 JSON은 빌드 시점에 생성되어 **번들에 포함**된다.
-`fs`를 쓰지 않으니 Workers에서도 문제없이 동작한다.
-
+이 JSON은 빌드 시점에 번들에 포함된다. `fs`를 쓰지 않으니 Workers에서도 문제없다.
 반면 개별 포스트는 `fs.readFileSync`로 런타임에 파일을 읽으려 하니 실패한 것이다.
-같은 앱인데 한쪽은 되고 한쪽은 안 되는 이유가 여기에 있었다.
 </Paragraph>
 
-<Subtitle level={2}>해결: 빌드 타임 콘텐츠 프리컴파일</Subtitle>
+<Subtitle level={3}>해결: 빌드 타임에 JSON 프리컴파일</Subtitle>
 
 <Paragraph>
-해결 방향은 명확하다.
-런타임에 `fs`로 파일을 읽는 대신, **빌드 시점에 모든 MDX 콘텐츠를 JSON으로 변환**해서 번들에 포함시키면 된다.
-</Paragraph>
-
-<Subtitle level={3}>1. 빌드 스크립트에서 개별 JSON 생성</Subtitle>
-
-<Paragraph>
-기존에 `content-tree.json`(트리 구조 메타데이터)만 생성하던 빌드 스크립트를 확장했다.
-각 MDX 파일마다 frontmatter와 source를 담은 개별 JSON 파일을 생성한다.
+기존에 `content-tree.json`만 생성하던 빌드 스크립트를 확장해서,
+각 MDX 파일마다 frontmatter와 source를 담은 개별 JSON 파일을 생성하도록 했다.
 </Paragraph>
 
 ```
 src/generated/
-├── content-tree.json          # 기존 - 트리 구조
+├── content-tree.json
+├── content-loader.ts          # 자동 생성된 정적 import 맵
 ├── content/
-│   ├── resume.json            # 각 포스트의 { frontmatter, source }
+│   ├── resume.json
 │   └── SEOJing/
 │       ├── reason.json
 │       └── vinext-github-actions-deploy.json
 ```
 
 <Paragraph>
-포스트가 늘어나도 각각 독립된 JSON 파일이라 번들러가 필요한 것만 로드할 수 있다.
-하나의 거대한 JSON에 모든 콘텐츠를 때려넣는 것보다 확장성이 좋다.
+그리고 `config/index.ts`에서 `fs` 기반 `CONTENT_DIR`을 걷어내고, JSON import 기반으로 교체했다.
 </Paragraph>
 
-<Subtitle level={3}>2. config에서 fs 기반 코드 제거</Subtitle>
-
 <Paragraph>
-기존의 `CONTENT_DIR` + `fs` 조합을 걷어내고, JSON import 기반의 헬퍼 함수로 교체했다.
+여기서 한 가지 함정이 있었는데, Vite는 동적 경로의 `import()`를 분석하지 못한다.
 </Paragraph>
 
 ```ts
-// Before - fs 기반 (Workers에서 동작 불가)
-import path from "node:path";
-export const CONTENT_DIR = path.resolve(import.meta.dirname ?? "", "../../../content");
+// Vite가 분석 불가 — 경고 + 런타임 실패
+const mod = await import(`@/generated/content/${slugPath}.json`);
+```
 
-// After - JSON import 기반 (어디서든 동작)
-import contentTree from "@/generated/content-tree.json";
+<Paragraph>
+그래서 빌드 스크립트에서 `content-loader.ts`를 자동 생성하는 방식으로 바꿨다.
+각 slug에 대한 import를 정적 문자열로 명시하면 Vite가 정확히 분석할 수 있다.
+</Paragraph>
 
-export async function loadContent(slug: string[]) {
-  const mod = await import(`@/generated/content/${slug.join("/")}.json`);
-  return mod.default;
+```ts
+// 빌드 시 자동 생성되는 content-loader.ts
+const contentLoaders = {
+  "SEOJing/reason": {
+    json: () => import("@/generated/content/SEOJing/reason.json"),
+    compiled: () => import("@/generated/content/SEOJing/reason.compiled.jsx"),
+  },
+  // ...
+};
+```
+
+<Subtitle level={2}>이슈 2: gray-matter의 eval이 Workers에서 차단된다</Subtitle>
+
+<Paragraph>
+JSON 프리컴파일까지 끝내고 dev 서버를 돌렸더니 새로운 에러가 떴다.
+</Paragraph>
+
+```
+EvalError: Code generation from strings disallowed for this context
+```
+
+<Paragraph>
+원인은 `gray-matter` 라이브러리였다.
+frontmatter를 파싱하는 이 라이브러리가 내부적으로 `eval()`을 사용한다.
+Cloudflare Workers의 workerd 런타임은 보안상 `eval()`을 차단하기 때문에 에러가 발생했다.
+</Paragraph>
+
+<Paragraph>
+`gray-matter`는 이제 런타임에서 사용하지 않고 빌드 스크립트에서만 쓰는데,
+문제는 `@app/utils`의 barrel export(`index.ts`)를 통해 `content.ts` 전체가 번들에 딸려오고 있었다.
+`calculateReadingTime`이나 타입만 import해도 같은 파일에 있는 `gray-matter` import가 함께 들어온 것이다.
+</Paragraph>
+
+<Subtitle level={3}>해결: 모듈 분리 + gray-matter 제거</Subtitle>
+
+<Paragraph>
+두 가지를 동시에 진행했다.
+</Paragraph>
+
+<Paragraph>
+**1. 모듈 분리** — `content.ts`(fs + gray-matter 의존)에서 순수 함수와 타입을 별도 파일로 분리했다.
+
+- `content-types.ts` — 타입(`ContentFrontmatter`, `ContentNode`, `ContentTree`)과 순수 함수(`getItemsForPath`)
+- `reading-time.ts` — `calculateReadingTime`
+- `content.ts` — fs 기반 함수만 남김 (빌드 스크립트 전용)
+</Paragraph>
+
+<Paragraph>
+`index.ts`(barrel export)에서는 `content-types.ts`와 `reading-time.ts`만 export한다.
+런타임 번들에 `content.ts`가 포함되지 않으므로 `gray-matter`도 들어오지 않는다.
+</Paragraph>
+
+<Paragraph>
+**2. gray-matter 제거** — frontmatter 파싱을 직접 구현했다.
+어차피 frontmatter는 `---`로 구분된 간단한 key-value 블록이다.
+사용하는 필드가 `title`, `date`, `tags`, `description` 네 개뿐이니
+eval 없는 자체 파서로 충분하다.
+</Paragraph>
+
+```ts
+// parseFrontmatter — eval 없는 자체 구현
+export function parseFrontmatter(raw: string) {
+  const trimmed = raw.trimStart();
+  if (!trimmed.startsWith("---")) return { data: {}, content: raw };
+
+  const endIndex = trimmed.indexOf("\n---", 3);
+  const yamlBlock = trimmed.slice(4, endIndex);
+  const content = trimmed.slice(endIndex + 4).replace(/^\r?\n/, "");
+
+  // key: value 파싱 (문자열, 배열 지원)
+  // ...
 }
 ```
 
 <Paragraph>
-`loadContent`는 dynamic import를 사용한다.
-Vite가 빌드 시 이 패턴을 인식해서 각 JSON을 별도 chunk로 분리하므로,
-요청된 포스트의 JSON만 로드된다.
+결과적으로 `gray-matter` 의존성을 완전히 제거했고,
+빌드 시 나오던 eval 경고와 `node:fs` externalization 경고도 모두 사라졌다.
 </Paragraph>
 
-<Subtitle level={3}>3. 폴더 판별도 content-tree 기반으로</Subtitle>
+<Subtitle level={2}>이슈 3: next-mdx-remote도 eval을 쓴다</Subtitle>
 
 <Paragraph>
-기존에는 `fs.statSync`로 디렉토리 여부를 확인했다.
-이것도 content-tree.json을 순회하는 방식으로 바꿨다.
+gray-matter를 제거했는데 또 같은 에러가 떴다.
+</Paragraph>
+
+```
+EvalError: Code generation from strings disallowed for this context
+    at MDXRemote [Server]
+```
+
+<Paragraph>
+이번엔 `next-mdx-remote/rsc`의 `MDXRemote` 컴포넌트가 범인이었다.
+이 라이브러리의 내부 구현을 까보면 이렇다.
+</Paragraph>
+
+```js
+// next-mdx-remote/dist/rsc.js
+const hydrateFn = Reflect.construct(
+  Function,
+  keys.concat(`${compiledSource}`)
+);
+```
+
+<Paragraph>
+MDX 소스 문자열을 받아서 `@mdx-js/mdx`로 컴파일한 뒤,
+**`new Function()`으로 런타임에 실행**한다.
+이것도 본질적으로 `eval`이니 Workers에서 차단된다.
+</Paragraph>
+
+<Paragraph>
+여기서 근본적인 질문이 생겼다.
+**MDX를 쓰면서 eval을 안 쓸 수 있는가?**
+</Paragraph>
+
+<Paragraph>
+MDX의 본질은 마크다운 안에 JSX(React 컴포넌트)를 쓰는 것이다.
+이걸 렌더링하려면 마크다운+JSX → 실행 가능한 JavaScript로 변환해야 한다.
+</Paragraph>
+
+<Paragraph>
+두 가지 시점에서 할 수 있다.
+</Paragraph>
+
+<Paragraph>
+- **런타임 변환** — MDX 소스 문자열 → `new Function()` → 실행. `next-mdx-remote`가 하는 방식. eval 필수.
+- **빌드 타임 변환** — MDX → `.jsx` 파일 → Vite가 일반 모듈로 번들. eval 불필요.
+</Paragraph>
+
+<Paragraph>
+즉, **MDX를 쓰면서 eval을 안 쓰려면 빌드 타임에 JSX로 변환하는 것이 유일한 방법**이다.
+</Paragraph>
+
+<Subtitle level={3}>해결: 빌드 타임 MDX → JSX 컴파일</Subtitle>
+
+<Paragraph>
+빌드 스크립트에서 `@mdx-js/mdx`의 `compile()`을 사용해 MDX를 ESM `.jsx` 모듈로 변환한다.
 </Paragraph>
 
 ```ts
-export function isSlugFolder(slug: string[]): boolean {
-  let current = contentTree;
-  for (const segment of slug) {
-    const folder = current.find(n => n.type === "folder" && n.name === segment);
-    if (!folder?.children) return false;
-    current = folder.children;
-  }
-  return true;
-}
+import { compile } from "@mdx-js/mdx";
+
+const compiled = await compile(result.source, {
+  outputFormat: "program",  // ESM 모듈로 출력 (eval 불필요)
+  development: false,
+  jsx: true,
+});
+
+fs.writeFileSync(`${slug}.compiled.jsx`, String(compiled));
 ```
+
+<Paragraph>
+핵심은 `outputFormat: "program"`이다.
+`"function-body"`로 하면 `new Function()`으로 실행해야 하는 문자열이 나오지만,
+`"program"`으로 하면 `export default function MDXContent` 형태의 일반 ESM 모듈이 나온다.
+Vite가 이걸 일반 모듈처럼 번들하므로 eval이 전혀 필요 없다.
+</Paragraph>
+
+<Paragraph>
+페이지 컴포넌트에서는 `MDXRemote`를 제거하고, 컴파일된 컴포넌트를 직접 렌더링한다.
+</Paragraph>
+
+```tsx
+// Before — 런타임 eval 필요
+import { MDXRemote } from "next-mdx-remote/rsc";
+<MDXRemote source={content.source} components={mdxComponents} />
+
+// After — eval 불필요
+const MDXContent = content.compiled.default;
+<MDXContent components={mdxComponents} />
+```
+
+<Subtitle level={2}>최종 아키텍처</Subtitle>
+
+<Paragraph>
+세 겹의 이슈를 모두 해결한 최종 데이터 흐름이다.
+</Paragraph>
+
+```
+[빌드 타임] content/*.mdx
+  → parseFrontmatter()로 frontmatter 추출 → .json
+  → @mdx-js/mdx compile()로 JSX 컴파일 → .compiled.jsx
+  → content-loader.ts 자동 생성 (정적 import 맵)
+
+[런타임] 페이지 요청
+  → content-loader에서 해당 slug의 .json + .compiled.jsx를 lazy import
+  → MDXContent 컴포넌트 직접 렌더링
+```
+
+<Paragraph>
+제거된 것들:
+</Paragraph>
+
+<Paragraph>
+- `gray-matter` — eval 사용, 자체 `parseFrontmatter`로 대체
+- `next-mdx-remote` — 런타임 eval 사용, 빌드 타임 컴파일로 대체
+- `node:fs` 런타임 의존 — 빌드 타임 JSON/JSX 프리컴파일로 대체
+</Paragraph>
 
 <Subtitle level={2}>핵심 교훈</Subtitle>
 
 <Paragraph>
 이 문제의 본질은 **개발 환경과 배포 환경의 런타임 차이**다.
+</Paragraph>
 
-- 로컬 `vinext dev` → Node.js → `fs` 사용 가능
-- Cloudflare Workers → V8 isolate → `fs` 사용 불가
+<Paragraph>
+- 로컬 `vinext dev` → Node.js → `fs` 사용 가능, `eval` 사용 가능
+- Cloudflare Workers → V8 isolate → `fs` 사용 불가, `eval` 사용 불가
+</Paragraph>
 
-Edge 런타임(Cloudflare Workers, Vercel Edge, Deno Deploy 등)에 배포할 때는
-Node.js 전용 API에 의존하는 코드가 없는지 반드시 확인해야 한다.
+<Paragraph>
+Edge 런타임에 배포할 때는 두 가지를 반드시 확인해야 한다.
+</Paragraph>
 
-특히 콘텐츠 기반 사이트에서는 **빌드 타임에 콘텐츠를 프리컴파일**하는 패턴이 사실상 필수다.
-Astro의 Content Collections, Next.js의 `generateStaticParams` 등도 같은 맥락이다.
-런타임에 파일을 읽는 대신, 빌드 시점에 미리 처리해서 번들에 포함시키는 것이다.
+<Paragraph>
+1. **Node.js 전용 API** (`fs`, `path`, `child_process` 등)에 의존하는 코드가 런타임 번들에 포함되는가?
+2. **런타임 코드 생성** (`eval`, `new Function`, `Reflect.construct(Function, ...)`)을 사용하는 라이브러리가 있는가?
+</Paragraph>
+
+<Paragraph>
+특히 두 번째는 라이브러리 내부에 숨어있어서 찾기 어렵다.
+`gray-matter`도 `next-mdx-remote`도 겉보기엔 평범한 라이브러리인데, 내부적으로 eval을 쓰고 있었다.
+Cloudflare Workers에서 원인 모를 `EvalError`가 나면 의존성 내부의 `eval`/`new Function`을 의심해보자.
 </Paragraph>
