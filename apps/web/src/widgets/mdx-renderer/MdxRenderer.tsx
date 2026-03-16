@@ -1,14 +1,11 @@
-import type { MDXRemoteProps } from "next-mdx-remote/rsc";
 import {
   Subtitle,
   Paragraph,
-  CodeBlock,
   ArticleImage,
   ArticleHeader,
   Anchor,
 } from "@app/ui";
 import { cn } from "@app/utils";
-import { codeToHtml } from "shiki";
 import type { ComponentPropsWithoutRef } from "react";
 
 /**
@@ -19,7 +16,7 @@ import type { ComponentPropsWithoutRef } from "react";
  * <MDXRemote source={mdxSource} components={mdxComponents} />
  * ```
  */
-export const mdxComponents: MDXRemoteProps["components"] = {
+export const mdxComponents: Record<string, unknown> = {
   ArticleHeader,
   ArticleImage,
   Subtitle,
@@ -34,27 +31,50 @@ export const mdxComponents: MDXRemoteProps["components"] = {
   img: ({ src, alt, ...props }: ComponentPropsWithoutRef<"img">) => (
     <ArticleImage src={src ?? ""} alt={alt ?? ""} {...props} />
   ),
-  pre: async ({ children, ...props }: ComponentPropsWithoutRef<"pre">) => {
+  pre: ({
+    children,
+    className: preClassName,
+    ...props
+  }: ComponentPropsWithoutRef<"pre">) => {
     if (children && typeof children === "object" && "props" in children) {
       const codeProps = children.props as {
         className?: string;
-        children?: string;
+        children?: React.ReactNode;
       };
-      const language = codeProps.className?.replace("language-", "");
-      const codeString = String(codeProps.children ?? "").trimEnd();
+      const findLang = (cls?: string) =>
+        cls
+          ?.split(" ")
+          .find((c: string) => c.startsWith("language-"))
+          ?.replace("language-", "");
+      const language =
+        findLang(codeProps.className) ?? findLang(preClassName as string);
 
-      const highlighted = await codeToHtml(codeString, {
-        lang: language ?? "text",
-        theme: "github-dark",
-      });
-      // shiki 출력에서 <code> 안의 innerHTML만 추출
-      const innerHtml = highlighted
-        .replace(/^<pre[^>]*><code[^>]*>/, "")
-        .replace(/<\/code><\/pre>$/, "");
-
-      return <CodeBlock code={innerHtml} language={language} />;
+      return (
+        <div className="my-8">
+          {language && (
+            <div className="rounded-t-lg bg-gray-800 px-4 py-2 dark:bg-gray-900">
+              <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+                {language}
+              </span>
+            </div>
+          )}
+          <pre
+            className={cn(
+              "overflow-x-auto bg-gray-900 p-4 text-sm leading-6 text-gray-100 dark:bg-gray-950",
+              language ? "rounded-b-lg" : "rounded-lg",
+            )}
+            {...props}
+          >
+            <code className="font-mono">{codeProps.children}</code>
+          </pre>
+        </div>
+      );
     }
-    return <pre {...props}>{children}</pre>;
+    return (
+      <pre className={preClassName} {...props}>
+        {children}
+      </pre>
+    );
   },
   a: ({ className, ...props }: ComponentPropsWithoutRef<"a">) => (
     <a
@@ -101,13 +121,24 @@ export const mdxComponents: MDXRemoteProps["components"] = {
       {...props}
     />
   ),
-  code: ({ className, ...props }: ComponentPropsWithoutRef<"code">) => (
-    <code
-      className={cn(
-        "rounded bg-gray-100 px-1.5 py-0.5 text-sm font-mono text-gray-800 dark:bg-gray-800 dark:text-gray-200",
-        className,
-      )}
-      {...props}
-    />
-  ),
+  code: ({ className, ...props }: ComponentPropsWithoutRef<"code">) => {
+    const isInCodeBlock =
+      className
+        ?.split(" ")
+        .some(
+          (c: string) => c.startsWith("language-") || c === "code-highlight",
+        ) ?? false;
+    if (isInCodeBlock) {
+      return <code className={cn("font-mono", className)} {...props} />;
+    }
+    return (
+      <code
+        className={cn(
+          "rounded bg-gray-100 px-1.5 py-0.5 text-sm font-mono text-gray-800 dark:bg-gray-800 dark:text-gray-200",
+          className,
+        )}
+        {...props}
+      />
+    );
+  },
 };
