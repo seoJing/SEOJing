@@ -88,13 +88,13 @@ export function RecentlyRead({ rootPath = "/" }: RecentlyReadProps) {
                       radius="sm"
                       elevation={1}
                       animated={false}
-                      className="flex h-full w-full items-center justify-center"
+                      className="flex h-full w-full items-start justify-center overflow-hidden"
                     >
-                      <p className="line-clamp-2 text-xs font-medium leading-tight text-gray-800 dark:text-gray-200">
+                      <p className="w-full min-w-0 line-clamp-2 text-xs font-medium leading-tight text-gray-800 dark:text-gray-200">
                         {post.title}
                       </p>
                       {description && (
-                        <p className="mt-1 line-clamp-1 text-[10px] text-gray-500">
+                        <p className="w-full min-w-0 mt-1 line-clamp-1 text-[10px] text-gray-500">
                           {description}
                         </p>
                       )}

@@ -6,7 +6,7 @@ import { cn } from "@app/utils";
 import type { CarouselProps } from "./carousel.types";
 
 const SIZE_CLASSES: Record<string, string> = {
-  sm: "h-40",
+  sm: "h-56",
   md: "h-56",
   lg: "h-72",
 };

@@ -34,16 +34,16 @@ export function NewPostsCarousel({ rootPath = "/" }: NewPostsCarouselProps) {
             {post.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-white/20 px-2 py-0.5 text-xs backdrop-blur-sm"
+                className="rounded-full bg-gray-100 px-2 py-0.5 text-xs backdrop-blur-sm"
               >
                 {tag}
               </span>
             ))}
           </div>
-          <h3 className="font-heading text-lg font-bold leading-tight text-gray-900 sm:text-xl dark:text-gray-100">
+          <h3 className="font-heading text-lg font-bold leading-tight text-gray-900 sm:text-xl dark:text-gray-100 line-clamp-2">
             {post.title}
           </h3>
-          <p className="mt-1 line-clamp-2 text-xs text-gray-700 sm:text-sm dark:text-gray-300">
+          <p className="mt-2 line-clamp-2 text-xs text-gray-700 sm:text-sm dark:text-gray-300">
             {post.description}
           </p>
           <time className="mt-2 text-xs">{post.date}</time>
