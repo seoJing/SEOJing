@@ -216,7 +216,7 @@ export function PostExplorer({ rootPath = "/" }: PostExplorerProps) {
   표시한다. 불필요한 빈 화면 깜빡임이 없고, cascading render 경고도 없다.
 </Paragraph>
 
-<Subtitle level={2}>주의할 점</Subtitle>
+<Subtitle level={2}>주의할 점 — getSnapshot은 반드시 캐싱해야 한다</Subtitle>
 
 <Paragraph>
   `getSnapshot` 함수는 호출될 때마다 **동일한 참조**를 반환하거나, 값이 실제로
@@ -224,11 +224,46 @@ export function PostExplorer({ rootPath = "/" }: PostExplorerProps) {
   React가 무한 리렌더링을 일으킨다.
 </Paragraph>
 
+```
+The result of getSnapshot should be cached to avoid an infinite loop
+```
+
 <Paragraph>
-  `getReadPosts()`는 `localStorage.getItem()`을 호출하고 `JSON.parse()`로 매번
-  새 배열을 생성한다. 현재 구현에서는 React가 `Object.is()`로 비교해 값이 같으면
-  리렌더링을 건너뛰므로 실질적 문제는 없지만, 성능이 중요한 경우 캐싱 전략을
-  추가할 수 있다.
+  실제로 이 에러가 터졌다. `getReadPosts()`는 `JSON.parse()`로 매번 새 배열을
+  생성하고, `getCommentedPosts()`는 매번 `new Set()`을 생성한다.
+  `useSyncExternalStore`는 `Object.is()`로 이전 스냅샷과 새 스냅샷을 비교하는데,
+  매번 새 참조이므로 항상 "변경됨"으로 판단하고 리렌더링을 트리거한다. 리렌더링
+  → `getSnapshot` 호출 → 새 참조 → 리렌더링 → 무한 루프.
+</Paragraph>
+
+<Paragraph>
+  해결법은 모듈 레벨 캐시를 두고, localStorage의 raw 문자열이 변경되었을 때만 새
+  객체를 생성하는 것이다.
+</Paragraph>
+
+```ts
+let _readPostsCache: ReadRecord[] = [];
+let _readPostsRaw: string | null = null;
+
+export function getReadPosts(): ReadRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw !== _readPostsRaw) {
+      _readPostsRaw = raw;
+      _readPostsCache = raw ? (JSON.parse(raw) as ReadRecord[]) : [];
+    }
+    return _readPostsCache;
+  } catch {
+    return [];
+  }
+}
+```
+
+<Paragraph>
+  `raw` 문자열이 이전과 같으면 `_readPostsCache`를 그대로 반환한다. 같은
+  참조이므로 `Object.is()`가 `true`를 반환하고, React는 리렌더링을 건너뛴다.
+  `getCommentedPosts()`도 동일한 패턴으로 캐싱한다.
 </Paragraph>
 
 <Paragraph>

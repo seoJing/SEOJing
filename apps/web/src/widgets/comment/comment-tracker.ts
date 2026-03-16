@@ -1,5 +1,8 @@
 const STORAGE_KEY = "seojing-commented-posts";
 
+let _commentedCache: Set<string> = new Set();
+let _commentedRaw: string | null = null;
+
 /**
  * 댓글 남긴 글 목록을 가져온다.
  *
@@ -13,7 +16,11 @@ export function getCommentedPosts(): Set<string> {
   if (typeof window === "undefined") return new Set();
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+    if (raw !== _commentedRaw) {
+      _commentedRaw = raw;
+      _commentedCache = raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+    }
+    return _commentedCache;
   } catch {
     return new Set();
   }

@@ -9,12 +9,19 @@ export interface ReadRecord {
   progress?: number;
 }
 
+let _readPostsCache: ReadRecord[] = [];
+let _readPostsRaw: string | null = null;
+
 /** localStorage에서 읽은 글 목록을 가져온다. */
 export function getReadPosts(): ReadRecord[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as ReadRecord[]) : [];
+    if (raw !== _readPostsRaw) {
+      _readPostsRaw = raw;
+      _readPostsCache = raw ? (JSON.parse(raw) as ReadRecord[]) : [];
+    }
+    return _readPostsCache;
   } catch {
     return [];
   }
