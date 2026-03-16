@@ -94,15 +94,14 @@ CompileError: WebAssembly.instantiate(): Wasm code generation disallowed by embe
   직렬화해서 클라이언트로 스트리밍하는 아키텍처다.
 </Paragraph>
 
-<Paragraph>
-이때 "서버"가 어디서 실행되느냐가 핵심이다.
+<Paragraph>이때 "서버"가 어디서 실행되느냐가 핵심이다.</Paragraph>
 
 - **Node.js 서버** — WebAssembly 완전 지원. 문제없다.
 - **Cloudflare Workers** — V8 isolate 기반. WebAssembly를 제한적으로 지원한다.
 
-Cloudflare Workers에서 WebAssembly를 사용하려면 모듈을 정적으로 import하는
-방식만 허용된다.
-
+<Paragraph>
+  Cloudflare Workers에서 WebAssembly를 사용하려면 모듈을 정적으로 import하는
+  방식만 허용된다.
 </Paragraph>
 
 ```js
@@ -130,17 +129,16 @@ await WebAssembly.instantiateStreaming(response);
   해결: 런타임 하이라이팅에서 빌드 타임 하이라이팅으로
 </Subtitle>
 
-<Paragraph>
-문제의 본질을 정리하면 이렇다.
+<Paragraph>문제의 본질을 정리하면 이렇다.</Paragraph>
 
 - Shiki는 **런타임**에 WebAssembly로 구문 강조를 수행한다.
 - RSC 렌더링이 일어나는 Workers 환경에서는 이 방식의 WASM 로드가 **차단**된다.
 - 따라서 구문 강조를 **빌드 타임**으로 옮기면 런타임에서 WASM이 필요 없어진다.
 
-`rehype-prism-plus`를 선택했다. 이 라이브러리는 Prism.js 기반의 rehype
-플러그인으로, **순수 JavaScript**만 사용한다. WASM 의존성이 전혀 없다. 그리고
-rehype 플러그인이므로 MDX **컴파일 시점**에 동작한다.
-
+<Paragraph>
+  `rehype-prism-plus`를 선택했다. 이 라이브러리는 Prism.js 기반의 rehype
+  플러그인으로, **순수 JavaScript**만 사용한다. WASM 의존성이 전혀 없다. 그리고
+  rehype 플러그인이므로 MDX **컴파일 시점**에 동작한다.
 </Paragraph>
 
 <Subtitle level={3}>1. 의존성 교체</Subtitle>

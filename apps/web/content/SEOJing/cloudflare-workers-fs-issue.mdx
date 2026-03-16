@@ -8,12 +8,13 @@ description: 배포 후 블로그 포스트가 404를 반환하던 문제부터,
 <Subtitle level={2}>문제 상황</Subtitle>
 
 <Paragraph>
-vinext + GitHub Actions 배포를 마치고 사이트에 접속했다.
-`/blog` 인덱스 페이지는 정상적으로 보였다.
+  vinext + GitHub Actions 배포를 마치고 사이트에 접속했다. `/blog` 인덱스
+  페이지는 정상적으로 보였다.
+</Paragraph>
 
-그런데 개별 포스트를 클릭하면 아무것도 안 뜬다.
-브라우저 Network 탭을 열어보니 `.rsc` 요청이 **404 Not Found**를 반환하고 있었다.
-
+<Paragraph>
+  그런데 개별 포스트를 클릭하면 아무것도 안 뜬다. 브라우저 Network 탭을 열어보니
+  `.rsc` 요청이 **404 Not Found**를 반환하고 있었다.
 </Paragraph>
 
 ```
@@ -210,9 +211,12 @@ MDX의 본질은 마크다운 안에 JSX(React 컴포넌트)를 쓰는 것이다
 
 두 가지 시점에서 할 수 있다.
 
+</Paragraph>
+
 - **런타임 변환** — MDX 소스 문자열 → `new Function()` → 실행. `next-mdx-remote`가 하는 방식. eval 필수.
 - **빌드 타임 변환** — MDX → `.jsx` 파일 → Vite가 일반 모듈로 번들. eval 불필요.
 
+<Paragraph>
 즉, **MDX를 쓰면서 eval을 안 쓰려면 빌드 타임에 JSX로 변환하는 것이 유일한
 방법**이다.
 
@@ -274,25 +278,22 @@ const MDXContent = content.compiled.default;
   → MDXContent 컴포넌트 직접 렌더링
 ```
 
-<Paragraph>
-제거된 것들:
+<Paragraph>제거된 것들:</Paragraph>
 
 - `gray-matter` — eval 사용, 자체 `parseFrontmatter`로 대체
 - `next-mdx-remote` — 런타임 eval 사용, 빌드 타임 컴파일로 대체
 - `node:fs` 런타임 의존 — 빌드 타임 JSON/JSX 프리컴파일로 대체
-  </Paragraph>
 
 <Subtitle level={2}>핵심 교훈</Subtitle>
 
 <Paragraph>
-이 문제의 본질은 **개발 환경과 배포 환경의 런타임 차이**다.
+  이 문제의 본질은 **개발 환경과 배포 환경의 런타임 차이**다.
+</Paragraph>
 
 - 로컬 `vinext dev` → Node.js → `fs` 사용 가능, `eval` 사용 가능
 - Cloudflare Workers → V8 isolate → `fs` 사용 불가, `eval` 사용 불가
 
-Edge 런타임에 배포할 때는 두 가지를 반드시 확인해야 한다.
-
-</Paragraph>
+<Paragraph>Edge 런타임에 배포할 때는 두 가지를 반드시 확인해야 한다.</Paragraph>
 
 1. **Node.js 전용 API** (`fs`, `path`, `child_process` 등)에 의존하는 코드가
    런타임 번들에 포함되는가?
