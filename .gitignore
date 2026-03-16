@@ -16,6 +16,10 @@ out/
 # coverage
 coverage/
 
+# cloudflare
+.wrangler/
+.dev.vars
+
 # env
 .env
 .env.local
