@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Paper, Subtitle } from "@app/ui";
 import { cn } from "@app/utils";
@@ -13,6 +13,14 @@ import {
   getSubTree,
   buildDescriptionMap,
 } from "./recently-read.utils";
+
+const EMPTY_POSTS: ReturnType<typeof getReadPosts> = [];
+const EMPTY_SET = new Set<string>();
+
+function subscribeStorage(cb: () => void) {
+  window.addEventListener("storage", cb);
+  return () => window.removeEventListener("storage", cb);
+}
 
 export {
   getReadPosts,
@@ -34,14 +42,16 @@ interface RecentlyReadProps {
  * ```
  */
 export function RecentlyRead({ rootPath = "/" }: RecentlyReadProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const readPosts = mounted ? getReadPosts() : [];
-  const commentedPosts = mounted ? getCommentedPosts() : new Set<string>();
+  const readPosts = useSyncExternalStore(
+    subscribeStorage,
+    getReadPosts,
+    () => EMPTY_POSTS,
+  );
+  const commentedPosts = useSyncExternalStore(
+    subscribeStorage,
+    getCommentedPosts,
+    () => EMPTY_SET,
+  );
 
   const subTree = getSubTree(contentTree as ContentNode[], rootPath);
   const validHrefs = collectHrefs(subTree);

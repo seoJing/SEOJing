@@ -1,11 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { FileExplorer, Subtitle } from "@app/ui";
 import type { ContentNode } from "@app/utils";
 import contentTree from "@/generated/content-tree.json";
 import { getReadPosts } from "@/widgets/recently-read/RecentlyRead";
 import { getItemsForPath, toExplorerItems } from "./post-explorer.utils";
+
+const EMPTY_POSTS: ReturnType<typeof getReadPosts> = [];
+
+function subscribeStorage(cb: () => void) {
+  window.addEventListener("storage", cb);
+  return () => window.removeEventListener("storage", cb);
+}
 
 interface PostExplorerProps {
   rootPath?: string;
@@ -21,15 +28,12 @@ interface PostExplorerProps {
  */
 export function PostExplorer({ rootPath = "/" }: PostExplorerProps) {
   const [currentPath, setCurrentPath] = useState(rootPath);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const visitedHref = mounted
-    ? new Set(getReadPosts().map((p) => p.href))
-    : new Set<string>();
+  const readPosts = useSyncExternalStore(
+    subscribeStorage,
+    getReadPosts,
+    () => EMPTY_POSTS,
+  );
+  const visitedHref = new Set(readPosts.map((p) => p.href));
 
   const nodes = getItemsForPath(contentTree as ContentNode[], currentPath);
   const items = toExplorerItems(nodes, visitedHref);

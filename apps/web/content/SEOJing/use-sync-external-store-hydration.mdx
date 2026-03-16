@@ -1,0 +1,278 @@
+---
+title: localStorage 읽기에서 하이드레이션 에러가 터지는 이유 — useSyncExternalStore로 해결
+date: "2026-03-16"
+tags: [React, useSyncExternalStore, Hydration, localStorage, 트러블슈팅, DevLog]
+description: localStorage를 읽는 컴포넌트에서 하이드레이션 불일치가 발생하는 원인과, useState+useEffect가 아닌 useSyncExternalStore가 정답인 이유를 정리한다.
+---
+
+<Subtitle level={2}>문제 상황</Subtitle>
+
+<Paragraph>
+블로그의 "최근 읽은 글"과 "포스트 탐색기" 컴포넌트에서 하이드레이션 에러가 터졌다.
+</Paragraph>
+
+```
+Uncaught Error: Hydration failed because the server rendered HTML
+didn't match the client.
+```
+
+<Paragraph>
+에러 메시지의 diff를 보면 원인이 명확하다.
+</Paragraph>
+
+```
+// RecentlyRead 컴포넌트
++  <div className="flex gap-2 overflow-x-auto ...">   ← 클라이언트
+-  <p className="text-sm text-gray-500 ...">            ← 서버
+
+// PostExplorer의 FileItem 컴포넌트
++  className="... text-gray-400 dark:text-gray-500"   ← 클라이언트 (방문한 글)
+-  className="... text-gray-800 dark:text-gray-200"   ← 서버 (미방문)
+```
+
+<Paragraph>
+서버에서는 "읽은 글 없음" 상태로 렌더링되고,
+클라이언트에서는 localStorage에 저장된 데이터로 렌더링된다.
+두 결과가 다르니 React가 하이드레이션 에러를 던진 것이다.
+</Paragraph>
+
+<Subtitle level={2}>왜 이런 일이 벌어지는가</Subtitle>
+
+<Paragraph>
+두 컴포넌트 모두 `getReadPosts()`를 호출해서 읽은 글 목록을 가져온다.
+이 함수의 구현을 보자.
+</Paragraph>
+
+```ts
+export function getReadPosts(): ReadRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as ReadRecord[]) : [];
+  } catch {
+    return [];
+  }
+}
+```
+
+<Paragraph>
+서버에서는 `window`가 없으므로 빈 배열을 반환한다.
+클라이언트에서는 localStorage에서 데이터를 읽어 반환한다.
+</Paragraph>
+
+<Paragraph>
+하이드레이션의 핵심 규칙은 이것이다 —
+**서버에서 렌더링한 HTML과 클라이언트의 첫 번째 렌더링 결과가 동일해야 한다.**
+</Paragraph>
+
+<Paragraph>
+서버는 빈 배열 → "열람한 페이지가 없습니다" `<p>` 태그를 렌더링하고,
+클라이언트는 localStorage 데이터 → 카드 목록 `<div>`를 렌더링한다.
+HTML 구조 자체가 달라지므로 React가 에러를 던진다.
+</Paragraph>
+
+<Subtitle level={2}>첫 번째 시도: useState + useEffect</Subtitle>
+
+<Paragraph>
+흔히 알려진 해결법은 `useState` + `useEffect` 패턴이다.
+</Paragraph>
+
+```tsx
+export function RecentlyRead({ rootPath = "/" }: RecentlyReadProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const readPosts = mounted ? getReadPosts() : [];
+  // ...
+}
+```
+
+<Paragraph>
+마운트 전까지는 빈 배열을 사용하고,
+`useEffect`로 마운트 후에 `mounted`를 `true`로 바꿔서 localStorage 데이터를 읽는다.
+서버와 클라이언트 첫 렌더링이 같아지므로 하이드레이션 에러는 사라진다.
+</Paragraph>
+
+<Paragraph>
+하지만 React 19에서 새로운 에러가 터졌다.
+</Paragraph>
+
+```
+Error: Calling setState synchronously within an effect
+can trigger cascading renders
+```
+
+<Paragraph>
+`useEffect` 안에서 `setState`를 동기적으로 호출하면
+컴포넌트가 마운트되자마자 바로 다시 렌더링을 트리거한다.
+React 19는 이를 "cascading render"로 감지하고 경고한다.
+</Paragraph>
+
+<Subtitle level={2}>useSyncExternalStore란 무엇인가</Subtitle>
+
+<Paragraph>
+`useSyncExternalStore`는 React 18에서 도입된 Hook으로,
+**React 외부의 데이터 소스**를 구독하기 위해 만들어졌다.
+</Paragraph>
+
+```ts
+const value = useSyncExternalStore(
+  subscribe,        // 외부 스토어가 변경될 때 호출될 콜백을 등록
+  getSnapshot,      // 클라이언트에서 현재 값을 가져오는 함수
+  getServerSnapshot // 서버에서 사용할 초기값을 반환하는 함수
+);
+```
+
+<Paragraph>
+세 가지 인자를 받는다.
+</Paragraph>
+
+<Paragraph>
+1. **subscribe** — 스토어가 변경될 때 React에게 알리는 구독 함수
+2. **getSnapshot** — 클라이언트에서 현재 값을 읽는 함수
+3. **getServerSnapshot** — SSR 시 사용할 값을 반환하는 함수
+</Paragraph>
+
+<Paragraph>
+핵심은 세 번째 인자다.
+서버에서는 `getServerSnapshot`이 반환하는 값으로 렌더링하고,
+클라이언트에서는 `getSnapshot`이 반환하는 값으로 렌더링한다.
+React가 이 차이를 **알고 있으므로** 하이드레이션 불일치를 허용한다.
+</Paragraph>
+
+<Paragraph>
+`useState` + `useEffect` 방식과의 차이가 여기에 있다.
+`useEffect`는 React가 "이 컴포넌트가 서버/클라이언트 데이터 차이가 있다"는 사실을 모른다.
+`useSyncExternalStore`는 이 의도를 **명시적으로 선언**한다.
+</Paragraph>
+
+<Subtitle level={2}>해결: useSyncExternalStore 적용</Subtitle>
+
+<Subtitle level={3}>subscribe 함수</Subtitle>
+
+<Paragraph>
+localStorage는 다른 탭에서 변경될 때 `storage` 이벤트를 발생시킨다.
+이걸 subscribe 함수로 사용한다.
+</Paragraph>
+
+```ts
+function subscribeStorage(cb: () => void) {
+  window.addEventListener("storage", cb);
+  return () => window.removeEventListener("storage", cb);
+}
+```
+
+<Subtitle level={3}>RecentlyRead 컴포넌트</Subtitle>
+
+```tsx
+const EMPTY_POSTS: ReadRecord[] = [];
+const EMPTY_SET = new Set<string>();
+
+export function RecentlyRead({ rootPath = "/" }: RecentlyReadProps) {
+  const readPosts = useSyncExternalStore(
+    subscribeStorage,
+    getReadPosts,          // 클라이언트: localStorage에서 읽기
+    () => EMPTY_POSTS,     // 서버: 빈 배열
+  );
+  const commentedPosts = useSyncExternalStore(
+    subscribeStorage,
+    getCommentedPosts,
+    () => EMPTY_SET,
+  );
+  // ...
+}
+```
+
+<Subtitle level={3}>PostExplorer 컴포넌트</Subtitle>
+
+```tsx
+const EMPTY_POSTS: ReadRecord[] = [];
+
+export function PostExplorer({ rootPath = "/" }: PostExplorerProps) {
+  const readPosts = useSyncExternalStore(
+    subscribeStorage,
+    getReadPosts,
+    () => EMPTY_POSTS,
+  );
+  const visitedHref = new Set(readPosts.map((p) => p.href));
+  // ...
+}
+```
+
+<Subtitle level={2}>왜 useState + useEffect가 아닌가</Subtitle>
+
+<Paragraph>
+두 방식의 차이를 정리하면 이렇다.
+</Paragraph>
+
+```
+[useState + useEffect]
+  서버 렌더링 → HTML (빈 데이터)
+  클라이언트 하이드레이션 → 첫 렌더링 (빈 데이터, 서버와 일치 ✓)
+  useEffect 실행 → setMounted(true) → 리렌더링 ← cascading render 경고!
+  두 번째 렌더링 → localStorage 데이터 표시
+
+[useSyncExternalStore]
+  서버 렌더링 → HTML (getServerSnapshot = 빈 데이터)
+  클라이언트 하이드레이션 → getSnapshot = localStorage 데이터
+  React가 차이를 인지하고 자연스럽게 전환 ← 경고 없음
+```
+
+<Paragraph>
+`useSyncExternalStore`는 추가 렌더링 사이클 없이 바로 클라이언트 데이터를 표시한다.
+불필요한 빈 화면 깜빡임이 없고, cascading render 경고도 없다.
+</Paragraph>
+
+<Subtitle level={2}>주의할 점</Subtitle>
+
+<Paragraph>
+`getSnapshot` 함수는 호출될 때마다 **동일한 참조**를 반환하거나,
+값이 실제로 변경되었을 때만 새 객체를 반환해야 한다.
+매 호출마다 새 객체를 반환하면 React가 무한 리렌더링을 일으킨다.
+</Paragraph>
+
+<Paragraph>
+`getReadPosts()`는 `localStorage.getItem()`을 호출하고 `JSON.parse()`로 매번 새 배열을 생성한다.
+현재 구현에서는 React가 `Object.is()`로 비교해 값이 같으면 리렌더링을 건너뛰므로 실질적 문제는 없지만,
+성능이 중요한 경우 캐싱 전략을 추가할 수 있다.
+</Paragraph>
+
+<Paragraph>
+서버 스냅샷으로 사용하는 빈 배열과 빈 Set은 **모듈 레벨 상수**로 선언한다.
+컴포넌트 안에서 `() => []`를 쓰면 매 렌더링마다 새 참조가 생겨 역시 문제가 된다.
+</Paragraph>
+
+```ts
+// ✓ 모듈 레벨 상수 — 참조가 안정적
+const EMPTY_POSTS: ReadRecord[] = [];
+const EMPTY_SET = new Set<string>();
+
+// ✗ 컴포넌트 안에서 인라인 — 매번 새 참조
+useSyncExternalStore(subscribe, getSnapshot, () => []);
+```
+
+<Subtitle level={2}>핵심 교훈</Subtitle>
+
+<Paragraph>
+localStorage, sessionStorage, IndexedDB 같은
+**브라우저 전용 외부 스토어**를 읽는 컴포넌트는
+`useSyncExternalStore`를 써야 한다.
+</Paragraph>
+
+<Paragraph>
+이 Hook이 해결하는 문제는 두 가지다.
+</Paragraph>
+
+<Paragraph>
+1. **하이드레이션 불일치** — `getServerSnapshot`으로 서버 렌더링 값을 명시
+2. **cascading render** — `useEffect` + `setState` 없이 외부 데이터를 동기적으로 읽기
+</Paragraph>
+
+<Paragraph>
+`typeof window !== "undefined"` 분기로 서버/클라이언트를 나누는 건 React가 의도를 모르는 상태에서 억지로 맞추는 것이고,
+`useSyncExternalStore`는 "이 데이터는 외부 스토어에서 온다"는 의도를 React에게 선언하는 것이다.
+의도를 명시하면 프레임워크가 나머지를 처리해준다.
+</Paragraph>
