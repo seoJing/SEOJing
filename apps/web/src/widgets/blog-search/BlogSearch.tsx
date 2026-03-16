@@ -5,44 +5,12 @@ import { IoClose } from "react-icons/io5";
 import { cn } from "@app/utils";
 import type { ContentNode } from "@app/utils";
 import contentTree from "@/generated/content-tree.json";
-
-interface SearchResult {
-  title: string;
-  description: string;
-  path: string;
-  tags: string[];
-}
-
-// ContentTree에서 모든 파일 노드를 평탄화
-function flattenFiles(nodes: ContentNode[]): SearchResult[] {
-  const results: SearchResult[] = [];
-
-  for (const node of nodes) {
-    if (node.type === "file" && node.frontmatter) {
-      results.push({
-        title: node.frontmatter.title,
-        description: node.frontmatter.description,
-        path: node.path,
-        tags: node.frontmatter.tags,
-      });
-    }
-    if (node.type === "folder" && node.children) {
-      results.push(...flattenFiles(node.children));
-    }
-  }
-
-  return results;
-}
+import { flattenFiles, toPostHref } from "./blog-search.utils";
 
 const allPosts = flattenFiles(contentTree as ContentNode[]);
 
 interface BlogSearchProps {
   onClose: () => void;
-}
-
-// MDX 경로를 블로그 URL로 변환
-function toPostHref(mdxPath: string) {
-  return `/blog${mdxPath.replace(/\.mdx?$/, "")}`;
 }
 
 /**
