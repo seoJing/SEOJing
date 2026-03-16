@@ -30,6 +30,7 @@
   "devDependencies": {
     "@app/eslint-config": "workspace:*",
     "@app/typescript-config": "workspace:*",
+    "@cloudflare/vite-plugin": "^1.28.0",
     "@tailwindcss/postcss": "^4.2.1",
     "@tailwindcss/vite": "^4.2.1",
     "@testing-library/jest-dom": "^6.9.1",
