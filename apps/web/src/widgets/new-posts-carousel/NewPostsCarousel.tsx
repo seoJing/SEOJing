@@ -34,7 +34,7 @@ export function NewPostsCarousel({ rootPath = "/" }: NewPostsCarouselProps) {
             {post.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-gray-100 px-2 py-0.5 text-xs backdrop-blur-sm"
+                className="rounded-full bg-gray-100 dark:bg-gray-900 px-2 py-0.5 text-xs backdrop-blur-sm"
               >
                 {tag}
               </span>

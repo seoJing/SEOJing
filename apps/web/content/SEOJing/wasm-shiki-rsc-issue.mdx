@@ -8,14 +8,13 @@ description: 코드 하이라이팅에 Shiki를 쓰면 왜 RSC에서 WebAssembly
 <Subtitle level={2}>WebAssembly란 무엇인가</Subtitle>
 
 <Paragraph>
-  WebAssembly(Wasm)는 브라우저와 서버에서 실행할 수 있는 저수준 바이너리
-  포맷이다. C, C++, Rust 같은 언어로 작성된 코드를 컴파일해서 `.wasm` 바이너리로
-  만들고, JavaScript에서 `WebAssembly.instantiate()`로 로드해 실행한다.
-</Paragraph>
+WebAssembly(Wasm)는 브라우저와 서버에서 실행할 수 있는 저수준 바이너리
+포맷이다. C, C++, Rust 같은 언어로 작성된 코드를 컴파일해서 `.wasm` 바이너리로
+만들고, JavaScript에서 `WebAssembly.instantiate()`로 로드해 실행한다.
 
-<Paragraph>
-  JavaScript보다 빠른 성능이 필요할 때 사용된다. 이미지 처리, 암호화, 정규표현식
-  엔진 같은 CPU 집약적 작업이 대표적이다.
+JavaScript보다 빠른 성능이 필요할 때 사용된다. 이미지 처리, 암호화, 정규표현식
+엔진 같은 CPU 집약적 작업이 대표적이다.
+
 </Paragraph>
 
 ```js
@@ -95,16 +94,15 @@ CompileError: WebAssembly.instantiate(): Wasm code generation disallowed by embe
   직렬화해서 클라이언트로 스트리밍하는 아키텍처다.
 </Paragraph>
 
-<Paragraph>이때 "서버"가 어디서 실행되느냐가 핵심이다.</Paragraph>
-
 <Paragraph>
-  - **Node.js 서버** — WebAssembly 완전 지원. 문제없다. - **Cloudflare Workers**
-  — V8 isolate 기반. WebAssembly를 제한적으로 지원한다.
-</Paragraph>
+이때 "서버"가 어디서 실행되느냐가 핵심이다.
 
-<Paragraph>
-  Cloudflare Workers에서 WebAssembly를 사용하려면 모듈을 정적으로 import하는
-  방식만 허용된다.
+- **Node.js 서버** — WebAssembly 완전 지원. 문제없다.
+- **Cloudflare Workers** — V8 isolate 기반. WebAssembly를 제한적으로 지원한다.
+
+Cloudflare Workers에서 WebAssembly를 사용하려면 모듈을 정적으로 import하는
+방식만 허용된다.
+
 </Paragraph>
 
 ```js
@@ -132,18 +130,17 @@ await WebAssembly.instantiateStreaming(response);
   해결: 런타임 하이라이팅에서 빌드 타임 하이라이팅으로
 </Subtitle>
 
-<Paragraph>문제의 본질을 정리하면 이렇다.</Paragraph>
-
 <Paragraph>
-  - Shiki는 **런타임**에 WebAssembly로 구문 강조를 수행한다. - RSC 렌더링이
-  일어나는 Workers 환경에서는 이 방식의 WASM 로드가 **차단**된다. - 따라서 구문
-  강조를 **빌드 타임**으로 옮기면 런타임에서 WASM이 필요 없어진다.
-</Paragraph>
+문제의 본질을 정리하면 이렇다.
 
-<Paragraph>
-  `rehype-prism-plus`를 선택했다. 이 라이브러리는 Prism.js 기반의 rehype
-  플러그인으로, **순수 JavaScript**만 사용한다. WASM 의존성이 전혀 없다. 그리고
-  rehype 플러그인이므로 MDX **컴파일 시점**에 동작한다.
+- Shiki는 **런타임**에 WebAssembly로 구문 강조를 수행한다.
+- RSC 렌더링이 일어나는 Workers 환경에서는 이 방식의 WASM 로드가 **차단**된다.
+- 따라서 구문 강조를 **빌드 타임**으로 옮기면 런타임에서 WASM이 필요 없어진다.
+
+`rehype-prism-plus`를 선택했다. 이 라이브러리는 Prism.js 기반의 rehype
+플러그인으로, **순수 JavaScript**만 사용한다. WASM 의존성이 전혀 없다. 그리고
+rehype 플러그인이므로 MDX **컴파일 시점**에 동작한다.
+
 </Paragraph>
 
 <Subtitle level={3}>1. 의존성 교체</Subtitle>
@@ -272,11 +269,9 @@ globals.css에 GitHub Dark 스타일의 Prism 토큰 CSS를 추가했다.
   필요 없는 작업을 런타임에서 하고 있었다**는 것이다.
 </Paragraph>
 
-<Paragraph>
-  - `gray-matter`의 `eval()` → 빌드 타임 frontmatter 파싱으로 해결 -
-  `next-mdx-remote`의 `new Function()` → 빌드 타임 MDX 컴파일로 해결 - Shiki의
-  `WebAssembly.instantiate()` → 빌드 타임 구문 강조로 해결
-</Paragraph>
+- `gray-matter`의 `eval()` → 빌드 타임 frontmatter 파싱으로 해결
+- `next-mdx-remote`의 `new Function()` → 빌드 타임 MDX 컴파일로 해결
+- Shiki의 `WebAssembly.instantiate()` → 빌드 타임 구문 강조로 해결
 
 <Paragraph>
   패턴이 보인다. Edge 런타임(Cloudflare Workers, Vercel Edge 등)에서는 **런타임

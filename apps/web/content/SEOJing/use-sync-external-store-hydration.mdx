@@ -55,16 +55,12 @@ export function getReadPosts(): ReadRecord[] {
 ```
 
 <Paragraph>
-  서버에서는 `window`가 없으므로 빈 배열을 반환한다. 클라이언트에서는
-  localStorage에서 데이터를 읽어 반환한다.
-</Paragraph>
+서버에서는 `window`가 없으므로 빈 배열을 반환한다. 클라이언트에서는
+localStorage에서 데이터를 읽어 반환한다.
 
-<Paragraph>
-  하이드레이션의 핵심 규칙은 이것이다 — **서버에서 렌더링한 HTML과 클라이언트의
-  첫 번째 렌더링 결과가 동일해야 한다.**
-</Paragraph>
+하이드레이션의 핵심 규칙은 이것이다 — **서버에서 렌더링한 HTML과 클라이언트의
+첫 번째 렌더링 결과가 동일해야 한다.**
 
-<Paragraph>
 서버는 빈 배열 → "열람한 페이지가 없습니다" `<p>` 태그를 렌더링하고,
 클라이언트는 localStorage 데이터 → 카드 목록 `<div>`를 렌더링한다.
 HTML 구조 자체가 달라지므로 React가 에러를 던진다.
@@ -101,16 +97,16 @@ can trigger cascading renders
 ```
 
 <Paragraph>
-  `useEffect` 안에서 `setState`를 동기적으로 호출하면 컴포넌트가 마운트되자마자
-  바로 다시 렌더링을 트리거한다. React 19는 이를 "cascading render"로 감지하고
-  경고한다.
+`useEffect` 안에서 `setState`를 동기적으로 호출하면 컴포넌트가 마운트되자마자
+바로 다시 렌더링을 트리거한다. React 19는 이를 "cascading render"로 감지하고
+경고한다.
 </Paragraph>
 
 <Subtitle level={2}>useSyncExternalStore란 무엇인가</Subtitle>
 
 <Paragraph>
-  `useSyncExternalStore`는 React 18에서 도입된 Hook으로, **React 외부의 데이터
-  소스**를 구독하기 위해 만들어졌다.
+`useSyncExternalStore`는 React 18에서 도입된 Hook으로, **React 외부의 데이터
+소스**를 구독하기 위해 만들어졌다.
 </Paragraph>
 
 ```ts
@@ -128,15 +124,13 @@ const value = useSyncExternalStore(
 3. **getServerSnapshot** — SSR 시 사용할 값을 반환하는 함수
 
 <Paragraph>
-  핵심은 세 번째 인자다. 서버에서는 `getServerSnapshot`이 반환하는 값으로
-  렌더링하고, 클라이언트에서는 `getSnapshot`이 반환하는 값으로 렌더링한다.
-  React가 이 차이를 **알고 있으므로** 하이드레이션 불일치를 허용한다.
-</Paragraph>
+핵심은 세 번째 인자다. 서버에서는 `getServerSnapshot`이 반환하는 값으로
+렌더링하고, 클라이언트에서는 `getSnapshot`이 반환하는 값으로 렌더링한다.
+React가 이 차이를 **알고 있으므로** 하이드레이션 불일치를 허용한다.
 
-<Paragraph>
-  `useState` + `useEffect` 방식과의 차이가 여기에 있다. `useEffect`는 React가
-  "이 컴포넌트가 서버/클라이언트 데이터 차이가 있다"는 사실을 모른다.
-  `useSyncExternalStore`는 이 의도를 **명시적으로 선언**한다.
+`useState` + `useEffect` 방식과의 차이가 여기에 있다. `useEffect`는 React가
+"이 컴포넌트가 서버/클라이언트 데이터 차이가 있다"는 사실을 모른다.
+`useSyncExternalStore`는 이 의도를 **명시적으로 선언**한다.
 </Paragraph>
 
 <Subtitle level={2}>해결: useSyncExternalStore 적용</Subtitle>
@@ -227,16 +221,14 @@ The result of getSnapshot should be cached to avoid an infinite loop
 ```
 
 <Paragraph>
-  실제로 이 에러가 터졌다. `getReadPosts()`는 `JSON.parse()`로 매번 새 배열을
-  생성하고, `getCommentedPosts()`는 매번 `new Set()`을 생성한다.
-  `useSyncExternalStore`는 `Object.is()`로 이전 스냅샷과 새 스냅샷을 비교하는데,
-  매번 새 참조이므로 항상 "변경됨"으로 판단하고 리렌더링을 트리거한다. 리렌더링
-  → `getSnapshot` 호출 → 새 참조 → 리렌더링 → 무한 루프.
-</Paragraph>
+실제로 이 에러가 터졌다. `getReadPosts()`는 `JSON.parse()`로 매번 새 배열을
+생성하고, `getCommentedPosts()`는 매번 `new Set()`을 생성한다.
+`useSyncExternalStore`는 `Object.is()`로 이전 스냅샷과 새 스냅샷을 비교하는데,
+매번 새 참조이므로 항상 "변경됨"으로 판단하고 리렌더링을 트리거한다. 리렌더링
+→ `getSnapshot` 호출 → 새 참조 → 리렌더링 → 무한 루프.
 
-<Paragraph>
-  해결법은 모듈 레벨 캐시를 두고, localStorage의 raw 문자열이 변경되었을 때만 새
-  객체를 생성하는 것이다.
+해결법은 모듈 레벨 캐시를 두고, localStorage의 raw 문자열이 변경되었을 때만 새
+객체를 생성하는 것이다.
 </Paragraph>
 
 ```ts
@@ -259,12 +251,10 @@ export function getReadPosts(): ReadRecord[] {
 ```
 
 <Paragraph>
-  `raw` 문자열이 이전과 같으면 `_readPostsCache`를 그대로 반환한다. 같은
-  참조이므로 `Object.is()`가 `true`를 반환하고, React는 리렌더링을 건너뛴다.
-  `getCommentedPosts()`도 동일한 패턴으로 캐싱한다.
-</Paragraph>
+`raw` 문자열이 이전과 같으면 `_readPostsCache`를 그대로 반환한다. 같은
+참조이므로 `Object.is()`가 `true`를 반환하고, React는 리렌더링을 건너뛴다.
+`getCommentedPosts()`도 동일한 패턴으로 캐싱한다.
 
-<Paragraph>
 서버 스냅샷으로 사용하는 빈 배열과 빈 Set은 **모듈 레벨 상수**로 선언한다.
 컴포넌트 안에서 `() => []`를 쓰면 매 렌더링마다 새 참조가 생겨 역시 문제가 된다.
 </Paragraph>
@@ -281,18 +271,18 @@ useSyncExternalStore(subscribe, getSnapshot, () => []);
 <Subtitle level={2}>핵심 교훈</Subtitle>
 
 <Paragraph>
-  localStorage, sessionStorage, IndexedDB 같은 **브라우저 전용 외부 스토어**를
-  읽는 컴포넌트는 `useSyncExternalStore`를 써야 한다.
-</Paragraph>
+localStorage, sessionStorage, IndexedDB 같은 **브라우저 전용 외부 스토어**를
+읽는 컴포넌트는 `useSyncExternalStore`를 써야 한다.
 
-<Paragraph>이 Hook이 해결하는 문제는 두 가지다.</Paragraph>
+이 Hook이 해결하는 문제는 두 가지다.
+</Paragraph>
 
 1. **하이드레이션 불일치** — `getServerSnapshot`으로 서버 렌더링 값을 명시
 2. **cascading render** — `useEffect` + `setState` 없이 외부 데이터를 동기적으로 읽기
 
 <Paragraph>
-  `typeof window !== "undefined"` 분기로 서버/클라이언트를 나누는 건 React가
-  의도를 모르는 상태에서 억지로 맞추는 것이고, `useSyncExternalStore`는 "이
-  데이터는 외부 스토어에서 온다"는 의도를 React에게 선언하는 것이다. 의도를
-  명시하면 프레임워크가 나머지를 처리해준다.
+`typeof window !== "undefined"` 분기로 서버/클라이언트를 나누는 건 React가
+의도를 모르는 상태에서 억지로 맞추는 것이고, `useSyncExternalStore`는 "이
+데이터는 외부 스토어에서 온다"는 의도를 React에게 선언하는 것이다. 의도를
+명시하면 프레임워크가 나머지를 처리해준다.
 </Paragraph>
