@@ -8,7 +8,7 @@
 ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white)
 ![Storybook](https://img.shields.io/badge/Storybook-FF4785?style=flat-square&logo=storybook&logoColor=white)
 
-<div>(https://seojing.tjwlsrb1021.workers.dev/)</div>
+<div>https://seojing.tjwlsrb1021.workers.dev/</div>
 
 개인용 기술 블로그입니다.
 
