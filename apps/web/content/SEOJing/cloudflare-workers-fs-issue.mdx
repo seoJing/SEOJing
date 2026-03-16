@@ -22,15 +22,15 @@ Status Code: 404 Not Found
 ```
 
 <Paragraph>
-`/blog` 인덱스는 되는데 개별 포스트만 안 되는 상황. 라우팅 문제인가 싶었지만,
-원인은 더 근본적인 곳에 있었다. 그리고 이 하나를 고치니 두 번째, 세 번째
-문제가 연달아 터졌다.
+  `/blog` 인덱스는 되는데 개별 포스트만 안 되는 상황. 라우팅 문제인가 싶었지만,
+  원인은 더 근본적인 곳에 있었다. 그리고 이 하나를 고치니 두 번째, 세 번째
+  문제가 연달아 터졌다.
 </Paragraph>
 
 <Subtitle level={2}>이슈 1: Cloudflare Workers에는 파일시스템이 없다</Subtitle>
 
 <Paragraph>
-블로그 포스트를 렌더링하는 `[...slug]/page.tsx`는 이렇게 동작했다.
+  블로그 포스트를 렌더링하는 `[...slug]/page.tsx`는 이렇게 동작했다.
 </Paragraph>
 
 ```ts
@@ -95,6 +95,7 @@ src/generated/
 
 여기서 한 가지 함정이 있었는데, Vite는 동적 경로의 `import()`를 분석하지
 못한다.
+
 </Paragraph>
 
 ```ts
@@ -135,10 +136,10 @@ EvalError: Code generation from strings disallowed for this context
 </Paragraph>
 
 <Paragraph>
-`gray-matter`는 이제 런타임에서 사용하지 않고 빌드 스크립트에서만 쓰는데,
-문제는 `@app/utils`의 barrel export(`index.ts`)를 통해 `content.ts` 전체가
-번들에 딸려오고 있었다. `calculateReadingTime`이나 타입만 import해도 같은
-파일에 있는 `gray-matter` import가 함께 들어온 것이다.
+  `gray-matter`는 이제 런타임에서 사용하지 않고 빌드 스크립트에서만 쓰는데,
+  문제는 `@app/utils`의 barrel export(`index.ts`)를 통해 `content.ts` 전체가
+  번들에 딸려오고 있었다. `calculateReadingTime`이나 타입만 import해도 같은
+  파일에 있는 `gray-matter` import가 함께 들어온 것이다.
 </Paragraph>
 
 <Subtitle level={3}>해결: 모듈 분리 + gray-matter 제거</Subtitle>
@@ -152,9 +153,9 @@ EvalError: Code generation from strings disallowed for this context
 - `content.ts` — fs 기반 함수만 남김 (빌드 스크립트 전용)
 
 <Paragraph>
-`index.ts`(barrel export)에서는 `content-types.ts`와 `reading-time.ts`만
-export한다. 런타임 번들에 `content.ts`가 포함되지 않으므로 `gray-matter`도
-들어오지 않는다.
+  `index.ts`(barrel export)에서는 `content-types.ts`와 `reading-time.ts`만
+  export한다. 런타임 번들에 `content.ts`가 포함되지 않으므로 `gray-matter`도
+  들어오지 않는다.
 </Paragraph>
 
 **2. gray-matter 제거** — frontmatter 파싱을 직접 구현했다. 어차피 frontmatter는 `---`로 구분된 간단한 key-value 블록이다. 사용하는 필드가 `title`, `date`, `tags`, `description` 네 개뿐이니 eval 없는 자체 파서로 충분하다.
@@ -189,8 +190,8 @@ EvalError: Code generation from strings disallowed for this context
 ```
 
 <Paragraph>
-이번엔 `next-mdx-remote/rsc`의 `MDXRemote` 컴포넌트가 범인이었다. 이
-라이브러리의 내부 구현을 까보면 이렇다.
+  이번엔 `next-mdx-remote/rsc`의 `MDXRemote` 컴포넌트가 범인이었다. 이
+  라이브러리의 내부 구현을 까보면 이렇다.
 </Paragraph>
 
 ```js
@@ -214,6 +215,7 @@ MDX의 본질은 마크다운 안에 JSX(React 컴포넌트)를 쓰는 것이다
 
 즉, **MDX를 쓰면서 eval을 안 쓰려면 빌드 타임에 JSX로 변환하는 것이 유일한
 방법**이다.
+
 </Paragraph>
 
 <Subtitle level={3}>해결: 빌드 타임 MDX → JSX 컴파일</Subtitle>
@@ -278,7 +280,7 @@ const MDXContent = content.compiled.default;
 - `gray-matter` — eval 사용, 자체 `parseFrontmatter`로 대체
 - `next-mdx-remote` — 런타임 eval 사용, 빌드 타임 컴파일로 대체
 - `node:fs` 런타임 의존 — 빌드 타임 JSON/JSX 프리컴파일로 대체
-</Paragraph>
+  </Paragraph>
 
 <Subtitle level={2}>핵심 교훈</Subtitle>
 
@@ -289,6 +291,7 @@ const MDXContent = content.compiled.default;
 - Cloudflare Workers → V8 isolate → `fs` 사용 불가, `eval` 사용 불가
 
 Edge 런타임에 배포할 때는 두 가지를 반드시 확인해야 한다.
+
 </Paragraph>
 
 1. **Node.js 전용 API** (`fs`, `path`, `child_process` 등)에 의존하는 코드가
@@ -297,8 +300,8 @@ Edge 런타임에 배포할 때는 두 가지를 반드시 확인해야 한다.
    `Reflect.construct(Function, ...)`)을 사용하는 라이브러리가 있는가?
 
 <Paragraph>
-특히 두 번째는 라이브러리 내부에 숨어있어서 찾기 어렵다. `gray-matter`도
-`next-mdx-remote`도 겉보기엔 평범한 라이브러리인데, 내부적으로 eval을 쓰고
-있었다. Cloudflare Workers에서 원인 모를 `EvalError`가 나면 의존성 내부의
-`eval`/`new Function`을 의심해보자.
+  특히 두 번째는 라이브러리 내부에 숨어있어서 찾기 어렵다. `gray-matter`도
+  `next-mdx-remote`도 겉보기엔 평범한 라이브러리인데, 내부적으로 eval을 쓰고
+  있었다. Cloudflare Workers에서 원인 모를 `EvalError`가 나면 의존성 내부의
+  `eval`/`new Function`을 의심해보자.
 </Paragraph>

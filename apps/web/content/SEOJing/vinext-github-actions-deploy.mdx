@@ -107,6 +107,7 @@ CLOUDFLARE_API_TOKEN=my-api-token-here
 배포할 때는 셸 환경변수나 CI의 secrets로 `CLOUDFLARE_API_TOKEN`을 주입해야 한다.
 
 그리고 `.dev.vars`에는 API 토큰이 들어있으므로 반드시 `.gitignore`에 추가해야 한다.
+
 </Paragraph>
 
 ```gitignore
@@ -143,6 +144,7 @@ npm error Unsupported URL Type "workspace:": workspace:*
 pnpm의 `workspace:*` 프로토콜을 npm이 이해하지 못해서 발생한 문제다.
 
 해결: action을 쓰지 않고, 이미 `pnpm install`로 설치된 wrangler를 직접 실행한다.
+
 </Paragraph>
 
 ```yaml
@@ -175,6 +177,7 @@ Command "wrangler" not found
 이 패키지들이 `devDependencies`에 명시적으로 있어야 한다.
 
 해결: 세 패키지를 모두 devDependency로 추가한다.
+
 </Paragraph>
 
 ```bash
@@ -214,6 +217,7 @@ Cloudflare Workers 런타임에서는 `undefined`를 반환한다.
 `path.resolve`에 `undefined`가 들어가면서 `TypeError`가 발생한 것이다.
 
 해결: nullish coalescing으로 fallback을 추가한다.
+
 </Paragraph>
 
 ```ts
