@@ -123,11 +123,9 @@ const value = useSyncExternalStore(
 
 <Paragraph>세 가지 인자를 받는다.</Paragraph>
 
-<Paragraph>
-  1. **subscribe** — 스토어가 변경될 때 React에게 알리는 구독 함수 2.
-  **getSnapshot** — 클라이언트에서 현재 값을 읽는 함수 3. **getServerSnapshot**
-  — SSR 시 사용할 값을 반환하는 함수
-</Paragraph>
+1. **subscribe** — 스토어가 변경될 때 React에게 알리는 구독 함수
+2. **getSnapshot** — 클라이언트에서 현재 값을 읽는 함수
+3. **getServerSnapshot** — SSR 시 사용할 값을 반환하는 함수
 
 <Paragraph>
   핵심은 세 번째 인자다. 서버에서는 `getServerSnapshot`이 반환하는 값으로
@@ -289,11 +287,8 @@ useSyncExternalStore(subscribe, getSnapshot, () => []);
 
 <Paragraph>이 Hook이 해결하는 문제는 두 가지다.</Paragraph>
 
-<Paragraph>
-  1. **하이드레이션 불일치** — `getServerSnapshot`으로 서버 렌더링 값을 명시 2.
-  **cascading render** — `useEffect` + `setState` 없이 외부 데이터를 동기적으로
-  읽기
-</Paragraph>
+1. **하이드레이션 불일치** — `getServerSnapshot`으로 서버 렌더링 값을 명시
+2. **cascading render** — `useEffect` + `setState` 없이 외부 데이터를 동기적으로 읽기
 
 <Paragraph>
   `typeof window !== "undefined"` 분기로 서버/클라이언트를 나누는 건 React가

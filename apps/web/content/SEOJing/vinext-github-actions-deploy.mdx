@@ -21,14 +21,12 @@ Next.js의 API 표면(App Router, Pages Router, next/* 모듈)을 Vite 위에서
 
 <Subtitle level={3}>1. Cloudflare API Token 발급</Subtitle>
 
-<Paragraph>
-Cloudflare 대시보드에서 API 토큰을 발급받아야 한다.
+<Paragraph>Cloudflare 대시보드에서 API 토큰을 발급받아야 한다.</Paragraph>
 
 1. [Cloudflare 대시보드](https://dash.cloudflare.com) 접속
 2. 좌측 메뉴 → My Profile → API Tokens
 3. "Create Token" → "Edit Cloudflare Workers" 템플릿 선택
 4. 토큰 생성 후 복사
-   </Paragraph>
 
 <Subtitle level={3}>2. Cloudflare Account ID 확인</Subtitle>
 
@@ -40,11 +38,12 @@ Cloudflare 대시보드에서 API 토큰을 발급받아야 한다.
 <Subtitle level={3}>3. GitHub Secrets 등록</Subtitle>
 
 <Paragraph>
-GitHub 레포지토리 → Settings → Secrets and variables → Actions에서 두 개의 secret을 등록한다.
+  GitHub 레포지토리 → Settings → Secrets and variables → Actions에서 두 개의
+  secret을 등록한다.
+</Paragraph>
 
 - `CLOUDFLARE_API_TOKEN`: 위에서 발급받은 API 토큰
 - `CLOUDFLARE_ACCOUNT_ID`: 위에서 확인한 Account ID
-  </Paragraph>
 
 <Subtitle level={2}>GitHub Actions 워크플로우</Subtitle>
 
@@ -265,8 +264,7 @@ pnpm exec prettier --write apps/web/wrangler.jsonc
 
 <Subtitle level={2}>마무리</Subtitle>
 
-<Paragraph>
-정리하면, vinext + GitHub Actions 배포의 핵심은 이렇다.
+<Paragraph>정리하면, vinext + GitHub Actions 배포의 핵심은 이렇다.</Paragraph>
 
 1. `vinext deploy` 대신 **빌드와 배포를 분리**한다 (`vinext build` → `wrangler deploy`)
 2. `cloudflare/wrangler-action`은 pnpm workspace와 충돌하니 **직접 wrangler를 실행**한다
@@ -274,7 +272,7 @@ pnpm exec prettier --write apps/web/wrangler.jsonc
 4. Workers 런타임의 **Node.js 호환성 차이**를 주의한다 (`import.meta.dirname` 등)
 5. `.dev.vars`와 `.wrangler/`는 반드시 **gitignore**한다
 
-vinext는 아직 초기 단계라 CI/CD 관련 공식 문서가 부족한 편이다.
-이 글이 같은 삽질을 하는 누군가에게 도움이 되길 바란다.
-
+<Paragraph>
+  vinext는 아직 초기 단계라 CI/CD 관련 공식 문서가 부족한 편이다. 이 글이 같은
+  삽질을 하는 누군가에게 도움이 되길 바란다.
 </Paragraph>
