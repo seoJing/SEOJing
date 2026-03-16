@@ -11,6 +11,8 @@ import { SearchHighlight } from "@/widgets/search-highlight/SearchHighlight";
 export default function Header() {
   const pathname = usePathname();
   const isBlog = pathname.startsWith("/blog");
+  const isPostDetail =
+    isBlog && pathname.split("/").filter(Boolean).length >= 3;
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const toggleHref = isBlog ? "/" : "/blog";
@@ -26,7 +28,7 @@ export default function Header() {
       <div className="min-w-0 flex-1">
         {isSearchOpen ? (
           <div className="lg:hidden">
-            {isBlog ? (
+            {isBlog && !isPostDetail ? (
               <BlogSearch onClose={() => setIsSearchOpen(false)} />
             ) : (
               <SearchHighlight onClose={() => setIsSearchOpen(false)} />
@@ -81,7 +83,7 @@ export default function Header() {
       <div className="flex shrink-0 items-center gap-2">
         {isSearchOpen && (
           <div className="hidden lg:block w-80 animate-expand-right">
-            {isBlog ? (
+            {isBlog && !isPostDetail ? (
               <BlogSearch onClose={() => setIsSearchOpen(false)} />
             ) : (
               <SearchHighlight onClose={() => setIsSearchOpen(false)} />
