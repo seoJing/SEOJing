@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Paper, Subtitle } from "@app/ui";
 import { cn } from "@app/utils";
@@ -33,8 +34,14 @@ interface RecentlyReadProps {
  * ```
  */
 export function RecentlyRead({ rootPath = "/" }: RecentlyReadProps) {
-  const readPosts = getReadPosts();
-  const commentedPosts = getCommentedPosts();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const readPosts = mounted ? getReadPosts() : [];
+  const commentedPosts = mounted ? getCommentedPosts() : new Set<string>();
 
   const subTree = getSubTree(contentTree as ContentNode[], rootPath);
   const validHrefs = collectHrefs(subTree);

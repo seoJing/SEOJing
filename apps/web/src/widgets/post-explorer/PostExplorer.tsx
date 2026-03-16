@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FileExplorer, Subtitle } from "@app/ui";
 import type { ContentNode } from "@app/utils";
 import contentTree from "@/generated/content-tree.json";
@@ -21,7 +21,15 @@ interface PostExplorerProps {
  */
 export function PostExplorer({ rootPath = "/" }: PostExplorerProps) {
   const [currentPath, setCurrentPath] = useState(rootPath);
-  const visitedHref = new Set(getReadPosts().map((p) => p.href));
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const visitedHref = mounted
+    ? new Set(getReadPosts().map((p) => p.href))
+    : new Set<string>();
 
   const nodes = getItemsForPath(contentTree as ContentNode[], currentPath);
   const items = toExplorerItems(nodes, visitedHref);
