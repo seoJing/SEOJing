@@ -2,15 +2,13 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "web",
   "compatibility_date": "2026-03-16",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "main": "./worker/index.ts",
   "assets": {
     "not_found_handling": "none",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
   },
   "images": {
-    "binding": "IMAGES"
-  }
+    "binding": "IMAGES",
+  },
 }
