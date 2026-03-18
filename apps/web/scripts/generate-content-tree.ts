@@ -74,7 +74,7 @@ async function generateContentFiles(contentDir: string, basePath: string = "") {
 
       const jsxPath = path.join(CONTENT_OUTPUT_DIR, `${slug}.compiled.jsx`);
       fs.writeFileSync(jsxPath, String(compiled), "utf-8");
-
+      console.log(slug);
       count++;
     }
   }

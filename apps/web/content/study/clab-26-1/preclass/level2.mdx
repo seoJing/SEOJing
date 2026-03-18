@@ -1,0 +1,224 @@
+---
+title: "사전 진단 퀴즈 2단계 (HTML/CSS 활용)"
+date: "2026-03-18"
+tags: [프론트엔드, 스터디, HTML, CSS, Flexbox, 사전진단]
+description: "스터디 커리큘럼 방향을 정하기 위한 두 번째 사전 진단 퀴즈입니다. 시맨틱 마크업, 폼 이벤트 제어, CSS 우선순위, Flexbox 레이아웃 등 실전 활용 능력을 점검합니다."
+---
+
+<Subtitle level={2}>실전 마크업과 레이아웃, 제대로 다루고 있나요?</Subtitle>
+
+<Paragraph>
+  1단계에서 웹의 뼈대와 장식을 입히는 기본기를 확인했다면, 2단계에서는 이를 실제
+  서비스 환경에 맞게 '제대로' 활용하는 방법을 점검합니다.
+</Paragraph>
+
+<Paragraph>
+  의미 있는 마크업을 통한 검색 엔진 최적화(SEO), 브라우저의 기본 동작 제어,
+  복잡한 스타일 충돌 해결, 그리고 현대적인 레이아웃 기법은 프론트엔드 개발자를
+  꿈꾼다면 가장 고민해야 할 부분이라고 생각합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>질문 1. 시맨틱 태그 (Semantic Tags)</Subtitle>
+
+<Subtitle level={3}>질문 의도</Subtitle>
+
+<Paragraph>
+  단순히 화면에 보이는 결과물을 위해서라면, div와 span이면 충분하기에 시맨틱
+  태그에 대해 잘 모를 수 있겠다고 생각해 출제한 문제입니다. div 태그만 남발하는
+  것에 'div soup'라는 말이 있을 정도로 유명한 허수 판독기이기에 중요하게
+  생각해야하는 개념입니다.
+</Paragraph>
+
+<Subtitle level={3}>문제</Subtitle>
+
+<Paragraph>
+  시각 장애인용 스크린 리더기를 지원하거나 구글 검색 상단에 노출되게 하려고
+  합니다. 화면을 모두 div로만 구성하는 것과 header, main 등의 시맨틱 태그를
+  목적에 맞게 활용하는 것은 결과적으로 어떤 차이를 만들까요?
+</Paragraph>
+
+<Subtitle level={3}>정답 및 풀이</Subtitle>
+
+- **정답**: 시맨틱 태그를 사용하면 브라우저와 검색 엔진이 페이지의 구조와 핵심 콘텐츠를 명확히 파악할 수 있어 검색 노출 순위가 올라가고, 스크린 리더기가 메뉴와 본문을 구분해서 읽어줄 수 있습니다.
+- **풀이 과정**: div나 span은 형태만 나눌 뿐 아무런 의미를 가지지 않습니다. 반면 시맨틱 태그(의미론적 태그)는 이름 자체에 자신이 담고 있는 콘텐츠의 성격을 규정합니다. 검색 엔진의 봇(Bot)은 이 태그들을 지표 삼아 사이트의 중요 데이터를 수집합니다.
+
+<Subtitle level={3}>관련 개념 설명</Subtitle>
+
+- **SEO (Search Engine Optimization)**: 검색 엔진 최적화. 웹사이트가 검색 결과에 더 잘 보이도록 구조를 개선하는 작업입니다.
+- **AEO (Answer Engine Optimization)**: 답변 엔진 최적화. 음성 비서(시리, 빅스비)나 챗봇, 구글 검색 AI모드 등 직접적인 단일 정답을 제공하는 엔진에 맞게 개선하는 작업입니다.
+- **GEO (Generative Engine Optimization)**: 생성형 엔진 최적화. LLM 기반의 생성형 AI 검색 엔진에 맞게 개선하는 작업입니다. AI를 통한 검색이 굉장히 빨리 성장하고 있어, 전통적인 SEO가 의미없다는 말도 나올 정도로 요즘 화두가 되는 개념입니다.
+- **웹 접근성 (Web Accessibility)**: 신체적 환경적 조건에 관계없이 누구나 웹을 이용할 수 있도록 보장하는 규칙입니다.
+
+<Subtitle level={3}>팁</Subtitle>
+
+- AEO나 GEO가 나왔다고 한들 SEO와 크게 다르지 않는 방법으로 최적화할 수 있습니다. 물론 차이가 없다곤 못하지만 기본적으로 SEO(시맨틱, 구조화, alt)를 지켜야하며 추가적으로, Q&A 형태나 두괄식 게시물이 유리하다고 알려져 있습니다.
+
+<Paragraph>[예시 코드]</Paragraph>
+
+```html
+<div class="header">로고 및 메뉴</div>
+<div class="content">메인 기사 내용</div>
+
+<header>로고 및 메뉴</header>
+<main>메인 기사 내용</main>
+```
+
+---
+
+<Subtitle level={2}>질문 2. 폼 기본 동작 제어</Subtitle>
+
+<Subtitle level={3}>질문 의도</Subtitle>
+
+<Paragraph>
+  브라우저에 내장된 고유의 동작 원리를 이해하고, 이를 자바스크립트로 제어할 수
+  있는지 파악합니다. 리액트와 같은 라이브러리를 사용해 화면 깜빡임 없이 데이터를
+  처리하는 SPA(Single Page Application)를 개발하기 위해 반드시 짚고 넘어가야
+  하는 개념입니다.
+</Paragraph>
+
+<Subtitle level={3}>문제</Subtitle>
+
+<Paragraph>
+  회원가입 폼을 만들었습니다. 사용자가 정보를 다 입력하고 button을 눌렀는데,
+  기껏 입력한 정보가 화면 새로고침과 함께 다 날아가 버렸습니다. form 태그의 기본
+  제출(Submit) 동작을 막으려면 어떻게 처리해야 할까요?
+</Paragraph>
+
+<Subtitle level={3}>정답 및 풀이</Subtitle>
+
+- **정답**: 이벤트 처리 함수에서 이벤트 객체(event)를 받아, event.preventDefault() 메서드를 호출합니다.
+- **풀이 과정**: form 태그 내부의 버튼이 클릭되면, 브라우저는 폼 데이터를 서버로 전송하고 페이지를 완전히 새로고침하는 것을 기본 동작으로 삼고 있습니다. 프론트엔드 환경에서는 이 새로고침을 막은 뒤, 입력된 데이터를 자바스크립트로 가공하여 백엔드 API로 조용히 보내야 합니다.
+
+<Subtitle level={3}>관련 개념 설명</Subtitle>
+
+- **Event Object**: 이벤트가 발생했을 때 해당 이벤트의 모든 정보를 담고 있는 객체입니다.
+- **preventDefault**: 직역하면 '기본 동작을 막다'라는 뜻으로, a 태그의 페이지 이동 기능이나 form 태그의 새로고침 기능을 취소할 때 사용합니다.
+
+<Paragraph>[예시 코드]</Paragraph>
+
+```javascript
+const formElement = document.querySelector("form");
+
+formElement.addEventListener("submit", function (event) {
+  event.preventDefault(); // 화면 새로고침 방지
+  console.log("폼 데이터 전송을 자바스크립트가 가로챘습니다.");
+});
+```
+
+---
+
+<Subtitle level={2}>질문 3. CSS 우선순위 (Specificity)</Subtitle>
+
+<Subtitle level={3}>질문 의도</Subtitle>
+
+<Paragraph>
+  많은 사람들이 CSS가 중요하면 얼마나 중요하겠어 하고 넘어가는 개념들이
+  많습니다. 제가 생각했을 때, 아직도 어렵고 아직도 헷갈리는 개념은 JS도 HTML도
+  아닌 CSS인거 같아요. 스타일이 겹치거나 내가 작성한 CSS가 화면에 적용되지 않을
+  때가 진짜 진짜 많아서, CSS를 얼마나 중요하게 배웠는지 알아보려고 물어봤습니다.
+</Paragraph>
+
+<Subtitle level={3}>문제</Subtitle>
+
+<Paragraph>
+  특정 버튼을 꾸미려고 CSS 파일에 class="btn"으로 파란색을, id="submit-btn"으로
+  빨간색을 지정했습니다. 이 버튼은 최종적으로 무슨 색으로 보이며, CSS의 우선순위
+  규칙은 어떻게 동작할까요?
+</Paragraph>
+
+<Subtitle level={3}>정답 및 풀이</Subtitle>
+
+- **정답**: 빨간색으로 보입니다. CSS에서는 id 선택자가 class 선택자보다 명시도(우선순위)가 더 높기 때문입니다.
+- **풀이 과정**: 브라우저는 여러 스타일이 한 요소에 중복 적용될 때 '명시도 점수'를 계산합니다. 보다 좁고 명확하게 대상을 지정할수록 점수가 높습니다. 태그 이름보다는 클래스가, 클래스보다는 아이디가 더 구체적이므로 아이디의 스타일이 최종적으로 이기게 됩니다.
+
+<Subtitle level={3}>관련 개념 설명</Subtitle>
+
+- **명시도 순서**: 인라인 스타일(가장 높음) > id 선택자 > class 및 가상 클래스 선택자 > 태그 선택자(가장 낮음)
+
+<Subtitle level={3}>팁</Subtitle>
+
+- 여러 외부 라이브러리를 가져다 쓰게 되면, 스타일이 겹치거나 밀리는 경우가 많습니다. 그럴 땐 !important를 사용하면 몸이 편해집니다.
+- 그런데 !important를 남발하면 나중에 걷잡을 수 없이 유지보수가 힘들어집니다. 머리가 아파져요.. 가급적 구체적인 선택자 조합을 통해 자연스럽게 명시도를 높이는 것이 좋습니다.
+
+<Paragraph>[예시 코드]</Paragraph>
+
+```css
+/* 명시도 점수가 낮음 */
+.btn {
+  background-color: blue;
+}
+
+/* 명시도 점수가 높음 (이 스타일이 적용됨) */
+#submit-btn {
+  background-color: red;
+}
+```
+
+---
+
+<Subtitle level={2}>질문 4. 레이아웃 (Flexbox)</Subtitle>
+
+<Subtitle level={3}>질문 의도</Subtitle>
+
+<Paragraph>
+  모던 웹 개발에서 거의 다 쓰는 듯한 flexbox와 grid에 대한 질문입니다. 반응형을
+  구현할 때 정말 좋은 기술이며, 자주 언급되기에 많이들 알고 있지 않을까
+  생각했습니다.
+</Paragraph>
+
+<Subtitle level={3}>문제</Subtitle>
+
+<Paragraph>
+  모바일 화면 한가운데에 로그인 박스를 정렬하고 싶습니다. 부모 요소에 display
+  속성을 flex로 주었다면, 가로와 세로 모두 정중앙에 오도록 하기 위해 어떤 속성
+  두 가지를 추가해야 할까요?
+</Paragraph>
+
+<Subtitle level={3}>정답 및 풀이</Subtitle>
+
+- **정답**: justify-content 속성과 align-items 속성을 모두 center로 지정해야 합니다.
+- **풀이 과정**: Flexbox는 가로축(주축)과 세로축(교차축)을 기준으로 내부 요소들을 정렬합니다. 부모 요소를 flex 컨테이너로 선언한 뒤, 두 속성을 모두 center로 맞추면 내부 요소가 완벽한 정중앙에 위치하게 됩니다.
+
+<Subtitle level={3}>관련 개념 설명</Subtitle>
+
+- **justify-content**: 주축(기본값은 가로)을 기준으로 요소들을 어떻게 배치할지 결정합니다.
+- **align-items**: 교차축(기본값은 세로)을 기준으로 요소들을 어떻게 배치할지 결정합니다.
+
+<Subtitle level={3}>팁</Subtitle>
+
+- 이 방식을 사용하려면 부모 컨테이너가 화면 전체의 높이값을 가지고 있어야 세로 정중앙 배치가 시각적으로 확인됩니다. (예: height: 100vh;)
+- flex의 방향이 col이면 다르게 적용됩니다. 가로와 세로로 배우면 나중에 정말 어려워요. 주축과 교차축을 이해하는게 좋습니다. 여러 flex를 중첩해서 쓰는 상황이 있기 때문이죠. 하지만 어렵다면 스타일을 넣다 뺐다 하면서 눈으로 확인하는 방법도 있습니다.
+
+<Paragraph>[예시 코드]</Paragraph>
+
+```css
+.container {
+  display: flex;
+  justify-content: center; /* 가로 중앙 정렬 */
+  align-items: center; /* 세로 중앙 정렬 */
+  height: 100vh; /* 화면 전체 높이 지정 */
+}
+```
+
+---
+
+<Subtitle level={2}>참고 문헌 (Sources)</Subtitle>
+
+<Paragraph>
+  본 사전 진단 퀴즈의 기초 개념은 다음의 공식 문서를 참고하여 작성되었습니다.
+</Paragraph>
+
+- <Anchor external="https://developer.mozilla.org/ko/docs/Glossary/Semantics#html_%EC%8B%9C%EB%A7%A8%ED%8B%B1">
+    MDN Web Docs: 시맨틱 HTML
+  </Anchor>
+- <Anchor external="https://developer.mozilla.org/ko/docs/Web/API/Event/preventDefault">
+    MDN Web Docs: Event.preventDefault()
+  </Anchor>
+- <Anchor external="https://developer.mozilla.org/ko/docs/Web/CSS/Specificity">
+    MDN Web Docs: 명시도
+  </Anchor>
+- <Anchor external="https://developer.mozilla.org/ko/docs/Learn/CSS/CSS_layout/Flexbox">
+    MDN Web Docs: Flexbox
+  </Anchor>

@@ -1,0 +1,227 @@
+---
+title: "사전 진단 퀴즈 1단계 (HTML/CSS)"
+date: "2026-03-18"
+tags: [프론트엔드, 스터디, HTML, CSS, 사전진단, 퀴즈]
+description: "스터디 커리큘럼 방향을 정하기 위한 첫 번째 사전 진단 퀴즈입니다. HTML 태그 구조부터 CSS 박스 모델까지, 실무와 React 환경에서 이 기초들이 왜 중요한지 점검합니다."
+---
+
+<Subtitle level={2}>프론트엔드 스터디 사전 진단 퀴즈, 왜 필요할까요?</Subtitle>
+
+<Paragraph>
+  프론트엔드 스터디를 기획하며 가장 고민한 부분은 참여자마다 웹 개발 경험의
+  깊이가 다르다는 점이었습니다. 모두가 지루하거나 벅차지 않게 학습하려면,
+  스터디원들의 사전 지식을 파악하는 것이 중요하다고 생각했습니다.
+</Paragraph>
+
+<Paragraph>
+  애초에 평가를 위해 설문을 기획한 것이 아니기에, 정답을 물어보지 않았습니다.
+  스터디원들이 부담없이 설문 해준 것을 바탕으로, "아 HTML은 다들 익숙하구나,
+  그러면 리마인드 정도만 진행해야겠다." 하는 커리큘럼을 정하기 위함이었습니다.
+</Paragraph>
+
+<Paragraph>
+  사전 진단 퀴즈 포스트는 질문 의도, 문제, 정답, 관련 개념 설명, 연관 개념으로
+  이루어지며, 총 5단계로 구성되어 있습니다.
+</Paragraph>
+
+<Paragraph>
+  그래서 1단계에서는 웹 개발의 밑바탕이 되는 HTML과 CSS의 기본 개념을
+  확인했습니다.
+</Paragraph>
+
+<Subtitle level={2}>질문 1. 태그의 구조</Subtitle>
+
+<Subtitle level={3}>질문 의도</Subtitle>
+
+<Paragraph>
+  HTML의 가장 기본적인 뼈대인 '태그의 닫힘' 규칙을 이해하고 있는지 파악하기
+  위함입니다. 빈 태그와 일반 태그의 차이를 안다면, HTML을 한번이라도
+  배워보았다는 의미라고 생각하기 때문이죠. 무엇보다, 이것은 제가 코어팀(CLab
+  개발팀)에서 받은 첫번째 피드백 사항이기도 합니다. 리액트에서도 빈 태그로 만들
+  수 있는 컴포넌트라면 빈 태그로 만드는 것이 관례이며, self-closing을 지키는게
+  정말 기초 실력이라고 생각해 1번 문제로 출제했습니다.
+</Paragraph>
+
+<Subtitle level={3}>문제</Subtitle>
+
+<Paragraph>
+  텍스트를 진하게 만들거나 줄바꿈을 하려고 합니다. strong 태그처럼 여는 태그와
+  닫는 태그가 모두 필요한 경우와, br이나 img처럼 닫는 태그 없이 단독으로 쓰는
+  태그의 차이를 구분해서 사용할 수 있나요?
+</Paragraph>
+
+<Subtitle level={3}>정답 및 풀이</Subtitle>
+
+- **정답**: 내부에 감싸야 할 콘텐츠(텍스트나 다른 태그)가 있는지 여부에 따라 구분합니다.
+- **풀이 과정**: 특정 텍스트 구간에 효과를 주려면 그 구간의 시작과 끝을 명확히 알려주어야 합니다. 반면, 줄바꿈이나 이미지 삽입처럼 그 자체로 독립적인 역할을 하는 요소는 구간을 나눌 필요가 없습니다.
+
+<Subtitle level={3}>관련 개념 설명</Subtitle>
+
+- **빈 태그(Empty Tag)**: 내부 콘텐츠나 닫는 태그가 없는 태그를 의미합니다.
+- **실무 팁**: HTML5에서는 빈 요소의 끝에 슬래시를 생략해도 동작하지만, 리액트의 JSX나 엄격한 마크업 환경에서는 반드시 아래 코드처럼 명시적으로 닫아주어야 에러를 방지할 수 있습니다.
+
+<Paragraph>[예시 코드]</Paragraph>
+
+```html
+<p>
+  <strong>중요한 텍스트 구간입니다.</strong>
+  <br />
+  <img src="logo.png" alt="사이트 로고" />
+</p>
+```
+
+---
+
+<Subtitle level={2}>질문 2. 필수 속성</Subtitle>
+
+<Subtitle level={3}>질문 의도</Subtitle>
+
+<Paragraph>
+  단순히 태그의 이름을 아는 것을 넘어, 태그의 기능을 완성하는 속성(Attribute)을
+  정확하게 알고 있는지 확인합니다. 리액트 환경에서 작업하면서 점점 무뎌지는
+  부분이라고 생각합니다. 이미 만들어진 디자인 시스템을 사용하는 것에
+  익숙해지면서, 검색 엔진 최적화(SEO)이나 웹 접근성에 대해 고민하는 시간이
+  줄어드는데, 이런 점이 HTML을 다시 배운다면 꼭 집고 넘어가고 싶었다고 생각해
+  출제했습니다.
+</Paragraph>
+
+<Subtitle level={3}>문제</Subtitle>
+
+<Paragraph>
+  웹 페이지에 강아지 사진을 넣고, 그 사진을 누르면 특정 사이트로 이동하게
+  만들려고 합니다. img 태그의 이미지 경로를 지정하는 속성(src, alt)과 a 태그의
+  링크 속성(href)을 헷갈리지 않고 정확한 위치에 작성할 수 있나요?
+</Paragraph>
+
+<Subtitle level={3}>정답 및 풀이</Subtitle>
+
+- **정답**: a 태그에는 href 속성을, img 태그에는 src와 alt 속성을 사용합니다.
+- **풀이 과정**: 링크를 연결하는 a 태그가 이미지 태그인 img를 감싸는 형태로 작성해야 합니다. a 태그는 클릭 시 이동할 목적지를 알아야 하고, img 태그는 화면에 그릴 파일의 위치와 대체 텍스트를 가지고 있어야 합니다.
+
+<Subtitle level={3}>관련 개념 설명</Subtitle>
+
+- **href**: 이동할 목적지 URL을 지정합니다.
+- **src**: 브라우저가 불러올 파일의 경로를 지정합니다.
+- **alt**: 이미지를 로드하지 못했을 때 보여줄 텍스트이자, 시각 장애인을 위한 스크린 리더기가 읽어줄 필수 접근성 정보입니다.
+
+<Subtitle level={3}>팁</Subtitle>
+
+- 웹 접근성 검사 도구에서 alt 속성이 누락된 img 태그는 감점 요소입니다. 단순 장식용 이미지라서 읽어줄 필요가 없다면 alt 속성에 빈 문자열을 명시해 주는 것이 원칙입니다.
+- SEO에 대해 최근 화두에 오른 GEO, AEO에서도 중요한 요소 중 하나입니다.
+- 사실 HTML5 시멘틱 태그로 넘어오면서 속성으로 aria를 맞추는 일이 줄어들긴 했습니다. 그러나 리액트에서 뭔가 시멘틱으로 만들기 애매한 컴포먼트(모달, 탭)는 속성 값을 넣어주는게 좋겠죠?
+
+<Paragraph>[예시 코드]</Paragraph>
+
+```html
+<a href="https://example.com">
+  <img src="dog.jpg" alt="뛰어노는 강아지" />
+</a>
+```
+
+---
+
+<Subtitle level={2}>질문 3. CSS 연결 방식</Subtitle>
+
+<Subtitle level={3}>질문 의도</Subtitle>
+
+<Paragraph>
+  HTML(구조)과 CSS(스타일)를 분리하는 관심사의 분리(Separation of Concerns)
+  개념을 알고 있는지 평가합니다. 단순히 HTML, CSS를 연결하는 방법으로만 배우면
+  정말 쉽지만, 앞으로 계속해서 나올 관심사의 분리를 느낄 수 있는 첫 번째
+  상황이라고 생각합니다. 수천 줄의 코드를 여러 개발자가 함께 관리하므로,
+  관심사를 분리하지 않는다면 유지보수가 어려워집니다. 외부 스타일시트를 연결하여
+  코드의 재사용성을 높이는 구조적 사고를 묻는 질문입니다.
+</Paragraph>
+
+<Subtitle level={3}>문제</Subtitle>
+
+<Paragraph>
+  HTML 파일에 작성한 글자 색상을 파란색으로 바꾸고 싶습니다. 태그 안에 직접
+  style 속성을 적는 방식과, 파일 위쪽에 style 태그를 쓰는 방식, 그리고 별도의
+  css 파일을 만들어서 link로 연결하는 방식의 차이점을 알고 있나요?
+</Paragraph>
+
+<Subtitle level={3}>정답 및 풀이</Subtitle>
+
+- **정답**: 적용 범위와 유지보수의 용이성에 차이가 있으며, 주로 별도의 css 파일을 만들어 link로 연결하는 방식을 사용합니다.
+- **풀이 과정**: 태그에 직접 적는 인라인 방식은 가장 강력하게 적용되지만 코드가 지저분해집니다. HTML 문서 내부에 적는 방식은 해당 문서 안에서만 적용됩니다. 외부 파일을 연결하면 여러 HTML 페이지에서 하나의 CSS 파일을 공유할 수 있어 일관된 디자인 수정이 가능합니다.
+
+<Subtitle level={3}>관련 개념 설명</Subtitle>
+
+- **인라인 스타일**: 태그 내부에 직접 작성 (재사용 불가)
+- **내부 스타일시트**: HTML 문서의 head 태그 내부에 작성
+- **외부 스타일시트**: 별도의 css 파일을 만들어 head 태그 내에서 link로 불러옴
+
+<Subtitle level={3}>팁</Subtitle>
+
+- 특별히 자바스크립트로 동적인 스타일 값을 계산해서 넣어주어야 하는 상황이 아니라면, 인라인 스타일 사용은 최대한 지양하는 것이 좋습니다.
+- 사실 tailwindCSS 같은 스타일 프레임워크를 사용할 땐, 인라인 스타일 느낌으로 사용합니다.
+- 최근 많이 쓰이는 바닐라 익스트랙(Vanilla Extract) 같은 라이브러리는 성능 최적화를 위해 자바스크립트 대신 빌드 타임에 외부 스타일시트(정적 CSS 파일)를 생성해 냅니다. 이처럼 최신 프레임워크들도 결국 CSS 분리라는 기본 원리를 활용하고 있으니 꼭 알아야 하는 개념입니다.
+
+<Paragraph>[예시 코드]</Paragraph>
+
+```html
+<head>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+```
+
+---
+
+<Subtitle level={2}>질문 4. 박스 모델</Subtitle>
+
+<Subtitle level={3}>질문 의도</Subtitle>
+
+<Paragraph>
+  CSS 레이아웃을 다루기 위한 기초인 margin, padding 자체를 물으면서 박스
+  모델(Box Model)의 이해도를 묻는 질문입니다. 여백이 예상과 다르게 적용될 때
+  브라우저의 개발자 도구를 열어 문제를 추적하려면 margin과 padding의 차이를
+  정확히 알아야 합니다. 그냥 간격을 맞출려면 margin이든 padding이든 맞출 수
+  있습니다. 그러나 그렇게 맞춰둔 걸 다른 곳에서 재사용한다면, 분명 밀려날꺼에요.
+</Paragraph>
+
+<Subtitle level={3}>문제</Subtitle>
+
+<Paragraph>
+  버튼을 하나 만들었는데, 글자 주변의 '내부 여백'을 넓히고 싶고, 다른 버튼과의
+  '외부 간격'도 띄우고 싶습니다. 이때 margin과 padding 중 어떤 것을 어디에
+  적용해야 하는지 정확히 알고 있나요?
+</Paragraph>
+
+<Subtitle level={3}>정답 및 풀이</Subtitle>
+
+- **정답**: 글자 주변의 내부 여백은 padding을, 다른 버튼과의 외부 간격은 margin을 사용합니다.
+- **풀이 과정**: 모든 HTML 요소는 보이지 않는 사각형 박스로 이루어져 있습니다. 콘텐츠(글자)와 테두리(border) 사이의 공간을 넓히려면 padding을 늘려야 하고, 내 버튼의 테두리와 다른 요소 사이의 거리를 벌리려면 margin을 늘려야 합니다.
+
+<Subtitle level={3}>관련 개념 설명</Subtitle>
+
+- **Padding**: 요소의 테두리 안쪽 여백. 배경색이 적용되는 영역입니다.
+- **Margin**: 요소의 테두리 바깥쪽 여백. 다른 요소와의 간격을 밀어냅니다.
+
+<Subtitle level={3}>팁</Subtitle>
+
+- margin과 padding이 직관적으로 모르겠고, 왜 따로 쓰는지 모르겠다면, F12로 관리자 모드를 켜보시고 왼쪽 상단의 화살표가 있는 버튼을 눌러보세요. 화면을 구성하는 요소들의 margin, padding을 시각적으로 볼 수 있습니다.
+
+<Paragraph>[예시 코드]</Paragraph>
+
+```css
+.button {
+  padding: 10px 20px; /* 위아래 10px, 양옆 20px의 내부 여백 */
+  margin-right: 15px; /* 오른쪽 다른 버튼과의 외부 간격 15px */
+}
+```
+
+---
+
+<Subtitle level={2}>참고 문헌 (Sources)</Subtitle>
+
+<Paragraph>
+  본 사전 진단 퀴즈의 기초 개념은 다음의 공식 문서를 참고하여 작성되었습니다.
+</Paragraph>
+
+- <Anchor external="https://developer.mozilla.org/ko/docs/Learn/HTML/Introduction_to_HTML/Getting_started">
+    MDN Web Docs: HTML 시작하기
+  </Anchor>
+- <Anchor external="https://developer.mozilla.org/ko/docs/Learn/CSS/Building_blocks/The_box_model">
+    MDN Web Docs: CSS 박스 모델
+  </Anchor>
