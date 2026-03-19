@@ -1,0 +1,78 @@
+{
+  "$schema": "https://frontmatter.codes/frontmatter.schema.json",
+  "frontMatter.taxonomy.contentTypes": [
+    {
+      "name": "default",
+      "pageBundle": false,
+      "previewPath": "blog/{{pathToken.relPath}}",
+      "fields": [
+        {
+          "title": "Title",
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "title": "Description",
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "title": "Publishing date",
+          "name": "date",
+          "type": "datetime",
+          "default": "{{now}}",
+          "isPublishDate": true
+        },
+        {
+          "title": "Content preview",
+          "name": "preview",
+          "type": "image"
+        },
+        {
+          "title": "Is in draft",
+          "name": "draft",
+          "type": "draft"
+        },
+        {
+          "title": "Tags",
+          "name": "tags",
+          "type": "tags"
+        },
+        {
+          "title": "Categories",
+          "name": "categories",
+          "type": "categories"
+        }
+      ]
+    }
+  ],
+  "frontMatter.taxonomy.dateFormat": "yyyy-MM-dd",
+  "frontMatter.content.pageFolders": [
+    {
+      "title": "content",
+      "path": "[[workspace]]/apps/web/content"
+    }
+  ],
+  "frontMatter.framework.startCommand": "pnpm dev",
+  "frontMatter.preview.host": "http://localhost:3000",
+  "frontMatter.content.snippets": [
+    {
+      "title": "🖼️ ArticleImage 추가",
+      "description": "본문에 캡션이 있는 이미지를 삽입합니다.",
+      "body": "<ArticleImage\n  src=\"[[이미지 URL]]\"\n  alt=\"[[대체 텍스트]]\"\n  caption=\"[[캡션(선택)]]\"\n/>"
+    },
+    {
+      "title": "💻 CodeBlock 추가",
+      "description": "언어가 지정된 코드 블록을 삽입합니다.",
+      "body": "<CodeBlock\n  language=\"[[언어(예: ts, html)]]\"\n  code={`[[코드 내용]]`}\n/>"
+    },
+    {
+      "title": "🔗 Anchor (커스텀 링크) 추가",
+      "description": "디자인 시스템이 적용된 링크를 삽입합니다.",
+      "body": "<Anchor variant=\"[[스타일(default, primary, secondary)]]\" href=\"[[링크 주소]]\" external={[[새창열기(true/false)]]}>\n  [[링크 텍스트]]\n</Anchor>"
+    }
+  ],
+  "frontMatter.content.publicFolder": "public",
+  "frontMatter.framework.id": "next",
+  "frontMatter.git.enabled": true
+}

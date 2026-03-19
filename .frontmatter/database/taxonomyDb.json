@@ -1,0 +1,40 @@
+{
+  "taxonomy": {
+    "tags": [
+      "CI/CD",
+      "CSS",
+      "Cloudflare Workers",
+      "DOM",
+      "DevLog",
+      "DevOps",
+      "Flexbox",
+      "GitHub Actions",
+      "HTML",
+      "Hydration",
+      "JavaScript",
+      "MDX",
+      "RSC",
+      "React",
+      "SEO Jing",
+      "Shiki",
+      "WebAssembly",
+      "intro",
+      "localStorage",
+      "resume",
+      "useSyncExternalStore",
+      "vinext",
+      "배열",
+      "비동기",
+      "사전진단",
+      "상태관리",
+      "생명주기",
+      "스코프",
+      "스터디",
+      "이벤트버블링",
+      "퀴즈",
+      "트러블슈팅",
+      "프론트엔드"
+    ],
+    "categories": []
+  }
+}
