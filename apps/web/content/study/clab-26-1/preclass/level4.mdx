@@ -1,0 +1,236 @@
+---
+title: 사전 진단 퀴즈 4단계 (배열, 함수, 비동기)
+date: 2026-03-19
+tags:
+  - 프론트엔드
+  - 스터디
+  - JavaScript
+  - 배열
+  - 비동기
+  - React
+description: 스터디 커리큘럼 방향을 정하기 위한 마지막 사전 진단 퀴즈입니다. React 컴포넌트를 다루기 위해 필수적인 배열 고차 함수(map, filter)와 비동기 통신(async/await) 능력을 점검합니다.
+---
+
+<Subtitle level={2}>리액트에서도 많이 사용하는 개념들</Subtitle>
+
+<Paragraph>
+  4단계는 단순한 자바스크립트 문법을 넘어, 실제 프론트엔드 프레임워크인
+  리액트에서도 많이 사용하는 자바스크립트 문법을 점검합니다.
+</Paragraph>
+
+<Paragraph>
+  이 단계의 질문들은 리액트 컴포넌트를 만들고, 상태를 변경하며, 서버와 통신하는
+  과정과 직접적으로 맞닿아 있습니다. 이 개념들을 확실히 쥐고 있다면, 리액트의
+  낯선 문법을 만나도 "아, 이건 자바스크립트의 그 문법이네, 먹던 맛인데?" 하고
+  쉽게 적응할 수 있습니다.
+</Paragraph>
+
+<Paragraph>
+  다른 단계 요소에 더불어, 리액트에서 어떻게 쓰는가를 보여줄려고 합니다. 사전
+  진단이지만 앞으로 우리가 배울 프리뷰 느낌이라고 생각해주세요.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>질문 1. 배열 순회 (map vs forEach)</Subtitle>
+
+<Subtitle level={3}>질문 의도</Subtitle>
+
+<Paragraph>
+  배열을 다루는 메서드의 '반환값 유무'를 묻는 질문입니다. 프론트엔드 개발에서는
+  서버에서 받아온 수십, 수백 개의 데이터를 화면에 리스트 형태로 뿌려주는 작업이
+  대다수를 차지합니다. 리액트에서 데이터를 화면(UI 컴포넌트)으로 변환할 때 어떤
+  메서드를 써야 하는지 아는 것은 기본 중의 기본 개념입니다.
+</Paragraph>
+
+<Subtitle level={3}>문제</Subtitle>
+
+<Paragraph>
+  서버에서 쇼핑몰 상품 목록 100개가 담긴 배열을 받아왔습니다. 이 데이터를 사용해
+  화면에 그릴 HTML 리스트 태그 문자열을 새로 '반환'받아 만들어내야 한다면,
+  forEach와 map 중 어떤 메서드를 사용하는 것이 적절할까요?
+</Paragraph>
+
+<Subtitle level={3}>정답 및 풀이</Subtitle>
+
+- **정답**: 결과물을 새로운 배열로 반환해 주는 map 메서드를 사용해야 합니다.
+- **풀이 과정**: forEach는 단순히 배열의 요소를 한 번씩 순회하며 특정 동작을 실행할 뿐, 작업이 끝나면 undefined를 반환합니다. 반면 map은 기존 배열의 각 요소를 가공하여 똑같은 길이의 '새로운 배열'을 만들어냅니다.
+
+<Subtitle level={3}>💡 리액트 연계 포인트</Subtitle>
+
+<Paragraph>
+  리액트의 JSX 문법 안에서는 배열을 그대로 렌더링할 수 있습니다. 따라서 데이터가
+  담긴 배열을 map으로 순회하면서, 각 데이터를 HTML 태그(컴포넌트)로
+  매핑(Mapping)하여 뱉어내는 패턴을 정말 자주 사용합니다.
+</Paragraph>
+
+```jsx
+// React 컴포넌트 내부에서의 map 활용
+const products = [
+  { id: 1, name: "노트북" },
+  { id: 2, name: "마우스" },
+];
+
+function ProductList() {
+  return (
+    <ul>
+      {products.map((product) => (
+        <li key={product.id}>{product.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+---
+
+<Subtitle level={2}>질문 2. 배열 가공 (filter)</Subtitle>
+
+<Subtitle level={3}>질문 의도</Subtitle>
+
+<Paragraph>
+  특정 조건에 맞는 데이터만 추출하는 능력을 묻습니다. 이 메서드 역시 원본
+  데이터를 훼손하지 않고 새로운 배열을 만든다는 점에서 매우 중요합니다.
+  리액트에서 '삭제'나 '검색' 기능을 구현할 때 불변성을 유지하는 핵심 개념입니다.
+</Paragraph>
+
+<Subtitle level={3}>문제</Subtitle>
+
+<Paragraph>
+  게시판에서 '삭제' 버튼을 눌러 특정 글을 지우려 합니다. 기존 글 배열에서 삭제할
+  글의 id값만 제외하고 나머지 글들만 모아 새로운 배열을 만들고 싶을 때, filter
+  메서드를 어떻게 활용할 수 있을까요?
+</Paragraph>
+
+<Subtitle level={3}>정답 및 풀이</Subtitle>
+
+- **정답**: 조건식에 지우고자 하는 글의 id와 일치하지 않는 데이터만 통과시키도록 작성하여 새로운 배열을 만듭니다.
+- **풀이 과정**: filter 메서드는 배열을 순회하며 조건식이 true를 반환하는 요소들만 모아 새로운 배열을 생성합니다. 원본 배열은 그대로 유지되므로 안전하게 데이터를 가공할 수 있습니다.
+
+<Subtitle level={3}>💡 리액트 연계 포인트</Subtitle>
+
+<Paragraph>
+  리액트에서는 상태(State)의 변화를 감지해 화면을 리렌더링합니다. 그런데
+  상태(State) 배열을 수정할 때 기존 배열을 직접 자르거나 변경(splice 등)하면
+  화면이 업데이트되지 않습니다. 반드시 불변성을 지켜야 하므로, 지울 데이터를
+  제외한 나머지 데이터들만 filter로 걸러내어 아예 새로운 상태 배열로 교체하는
+  방식을 사용합니다.
+</Paragraph>
+
+<Paragraph>[예시 코드]</Paragraph>
+
+```javascript
+// React에서의 삭제 기능 구현 패턴
+const posts = [
+  { id: 1, title: "첫 글" },
+  { id: 2, title: "두 번째 글" },
+];
+const deleteId = 1;
+
+// id가 1이 아닌 글만 남겨서 새로운 상태 배열로 만듦
+const newPosts = posts.filter((post) => post.id !== deleteId);
+// 결과: [{ id: 2, title: "두 번째 글" }]
+```
+
+---
+
+<Subtitle level={2}>질문 3. 화살표 함수와 this</Subtitle>
+
+<Subtitle level={3}>질문 의도</Subtitle>
+
+<Paragraph>
+  모던 자바스크립트의 상징인 화살표 함수의 동작 원리, 특히 일반 함수와의 가장 큰
+  차이인 this 바인딩의 차이를 아는지 묻습니다. 리액트에서 이벤트 핸들러를 자식
+  컴포넌트에게 넘겨줄 때 생기는 컨텍스트 소실(Context Loss) 문제를 이해하는 데
+  중요한 지식입니다.
+</Paragraph>
+
+<Subtitle level={3}>문제</Subtitle>
+
+<Paragraph>
+  리액트 컴포넌트를 만들거나 콜백 함수를 넘길 때 화살표 함수를 즐겨 씁니다.
+  단순히 코드가 짧아지는 것 외에, this 키워드가 가리키는 대상에 있어서 일반
+  함수와 어떤 결정적인 차이가 있을까요?
+</Paragraph>
+
+<Subtitle level={3}>정답 및 풀이</Subtitle>
+
+- **정답**: 일반 함수는 누가 어떻게 호출했느냐에 따라 this가 동적으로 변하지만, 화살표 함수는 자신이 선언된 위치의 상위 스코프의 this를 영구적으로 물려받습니다(Lexical this).
+- **풀이 과정**: 자바스크립트의 일반 함수에서 this는 함수를 호출한 객체를 가리킵니다. 그래서 콜백 함수로 넘겨지는 순간 호출자가 브라우저나 전역 객체로 바뀌어 this를 잃어버리는 일이 잦습니다. 하지만 화살표 함수는 고유의 this를 아예 가지지 않기 때문에, 언제나 자기가 태어난 환경의 this를 가리킵니다.
+
+<Subtitle level={3}>💡 리액트 연계 포인트</Subtitle>
+
+<Paragraph>
+
+초기 리액트에서는 클래스로 컴포넌트를 정의했습니다. 그렇기에 이벤트 리스너를 등록할 때 bind(this)처럼 호출 위치를 매번 정해줘야하는 문제가 있었는데요. 화살표 함수를 사용하면서 이 문제점을 해결할 수 있습니다. 현재의 함수형 컴포넌트에서도 콜백 함수를 직관적으로
+다루기 위해 화살표 함수를 기본 포맷으로 사용합니다.
+
+</Paragraph>
+
+---
+
+<Subtitle level={2}>질문 4. 비동기 처리 (async / await)</Subtitle>
+
+<Subtitle level={3}>질문 의도</Subtitle>
+
+<Paragraph>
+  서버와 데이터를 주고 받을 때 자주 사용하는 비동기 실행 흐름을 알고 있는지
+  확인합니다. 사실 이 개념을 숙지하고 있다면 스터디를 듣지 않아도 될 정도로
+  공부를 열심히 한 사람이라고 생각해요. 사실 상 프리뷰에 가까운 질문입니다.
+</Paragraph>
+
+<Subtitle level={3}>문제</Subtitle>
+
+<Paragraph>
+  날씨 API를 호출해서 내일의 날씨 데이터를 화면에 보여주려 합니다. 하지만
+  데이터를 다 받아오기도 전에 화면을 그리는 코드가 먼저 실행되어 에러가
+  났습니다. 이를 해결하기 위해 async/await나 Promise를 어떻게 적용해야 할까요?
+</Paragraph>
+
+<Subtitle level={3}>정답 및 풀이</Subtitle>
+
+- **정답**: 데이터를 요청하는 API 함수 앞에 await 키워드를 붙이고, 그 코드를 감싸는 상위 함수에 async 키워드를 붙여 데이터가 도착할 때까지 다음 코드의 실행을 일시 정지시킵니다.
+- **풀이 과정**: 자바스크립트는 기본적으로 네트워크 통신처럼 오래 걸리는 작업이 끝나기를 기다려주지 않고 바로 다음 줄의 코드를 실행해 버립니다(비동기). 이를 우리가 글을 읽는 것처럼 순서대로(동기적으로) 흐르게 만들어주는 도구가 바로 async/await입니다.
+
+```javascript
+// React 컴포넌트 내부에서의 데이터 통신 패턴
+async function fetchWeather() {
+  try {
+    // 데이터를 받아올 때까지 이 줄에서 대기
+    const response = await fetch("https://api.weather.com/...");
+    const data = await response.json();
+
+    // 데이터를 다 받아오면 비로소 상태 업데이트
+    setWeatherState(data);
+  } catch (error) {
+    console.log("데이터를 불러오지 못했습니다.");
+  }
+}
+```
+
+<Subtitle level={3}>💡 리액트 연계 포인트</Subtitle>
+
+<Paragraph>
+  리액트에서 컴포넌트가 처음 화면에 나타날 때(Mount) 서버에서 데이터를
+  불러오려면 useEffect라는 훅(Hook)을 사용합니다. 이때 내부에서 async/await를
+  사용해 데이터를 안전하게 다 가져온 뒤, 상태(State)에 저장하여 화면을
+  업데이트하는 것이 가장 기본적인 데이터 페칭(Data Fetching) 패턴입니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>참고 문헌 (Sources)</Subtitle>
+
+<Paragraph>
+  본 사전 진단 퀴즈의 기초 개념은 다음의 공식 문서를 참고하여 작성되었습니다.
+</Paragraph>
+
+- <Anchor external="https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/map">
+    MDN Web Docs: Array.prototype.map()
+  </Anchor>
+- <Anchor external="https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Functions/Arrow_functions">
+    MDN Web Docs: 화살표 함수
+  </Anchor>
+- <Anchor external="https://developer.mozilla.org/ko/docs/Learn/JavaScript/Asynchronous/Promises">
+    MDN Web Docs: async와 await
+  </Anchor>
