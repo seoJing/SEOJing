@@ -1,0 +1,369 @@
+---
+title: "프론트엔드 스터디 3주차: 프론트엔드의 첫 번째 벽, 박스 모델과 스타일링"
+date: 2026-04-06
+tags:
+  - 프론트엔드
+  - 스터디
+  - CSS
+  - 박스모델
+  - 레이아웃
+description: 폰트와 색상을 다루고, 인라인과 블록 요소의 차이를 이해하며, 마진·패딩으로 구성되는 박스 모델을 완벽하게 익힙니다. 요소들 사이의 여백을 자유자재로 제어하고 화면이 찌그러지지 않게 박스 크기를 다루는 것이 이번 주 목표입니다.
+---
+
+<Subtitle level={3}>3주차 영상</Subtitle>
+
+- **학습 구간:** [02:59:19 ~ 04:28:10] 폰트/색상 제어부터 박스 모델까지
+- **강의 바로가기:** [제대로 파는 HTML & CSS - 3주차 진도 시청하기](https://youtu.be/TrC2x4N0XqY?t=10759)
+
+<Subtitle level={2}>
+  안녕하세요. 프론트엔드 스터디 3주차에 오신 것을 환영합니다.
+</Subtitle>
+
+<Paragraph>
+  이번 주차에서는 CSS의 본격적인 스타일링에 들어갔습니다. 글꼴과 색상을
+  제어하고, HTML 요소가 화면에서 어떻게 공간을 차지하는지를 결정하는 **인라인 vs
+  블록** 개념, 그리고 프론트엔드 초심자가 가장 먼저 부딪히는 벽인 **박스
+  모델(마진·패딩·보더)**을 배웠습니다. 이 개념을 잡아야 "왜 여백이 이상하지?"
+  라는 의문에서 벗어날 수 있습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>스킵 진단 문제</Subtitle>
+
+<Paragraph>
+  아래 10문제를 막힘없이 풀 수 있다면, **이번 주 학습 영상을 생략하거나, 필요한
+  부분만 선택적으로 시청하셔도 좋습니다.** 바로 하단의 제가 추가로 알면 좋은
+  개념들을 확인해보세요.
+</Paragraph>
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="CSS에서 글꼴을 지정할 때, 사용자의 컴퓨터에 첫 번째 폰트가 없을 경우를 대비해 여러 폰트를 나열하는 속성은 무엇일까요?"
+    choices={["font-style", "font-weight", "font-family", "font-size"]}
+    answer={2}
+    explanation="font-family 속성에 쉼표(,)로 여러 폰트를 나열하면, 앞에서부터 순서대로 사용 가능한 폰트를 적용합니다. 마지막에는 sans-serif 같은 일반 폰트 패밀리를 넣는 것이 관례입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="CSS에서 색상을 지정하는 방법 중, '#FF5733'과 같은 표기법의 이름은 무엇일까요?"
+    choices={[
+      "RGB 함수 표기법",
+      "HSL 함수 표기법",
+      "16진수(Hex) 표기법",
+      "키워드 표기법",
+    ]}
+    answer={2}
+    explanation="#FF5733처럼 #과 6자리 16진수로 색상을 표현하는 방식을 Hex(16진수) 표기법이라 합니다. 앞 두 자리가 빨강, 중간 두 자리가 초록, 마지막 두 자리가 파랑을 나타냅니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="<span>, <a>, <strong> 태그처럼 콘텐츠 영역만큼만 차지하며, width/height 설정이 적용되지 않는 요소의 유형은 무엇일까요?"
+    choices={[
+      "블록(Block) 요소",
+      "인라인(Inline) 요소",
+      "인라인 블록(Inline-block) 요소",
+      "플렉스(Flex) 요소",
+    ]}
+    answer={1}
+    explanation="인라인 요소는 콘텐츠 크기만큼만 공간을 차지하고, 줄바꿈 없이 옆으로 나란히 배치됩니다. width와 height를 지정해도 적용되지 않습니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="<div>, <p>, <h1> 태그처럼 항상 새로운 줄에서 시작하고, 가로 폭 전체를 차지하는 요소의 유형은 무엇일까요?"
+    choices={[
+      "인라인(Inline) 요소",
+      "블록(Block) 요소",
+      "인라인 블록(Inline-block) 요소",
+      "절대 위치(Absolute) 요소",
+    ]}
+    answer={1}
+    explanation="블록 요소는 항상 새 줄에서 시작하며, 부모 요소의 가로 폭 전체를 차지합니다. width를 지정해도 나머지 공간은 마진으로 채워집니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="CSS 박스 모델에서, 콘텐츠 영역과 테두리(border) 사이의 안쪽 여백을 무엇이라 할까요?"
+    choices={["margin", "padding", "gap", "spacing"]}
+    answer={1}
+    explanation="padding은 콘텐츠와 테두리 사이의 안쪽 여백입니다. 배경색이 패딩 영역까지 적용되므로, 요소 안의 콘텐츠에 '숨 쉴 공간'을 주는 역할을 합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="CSS 박스 모델에서, 테두리(border) 바깥쪽의 다른 요소와의 간격을 만드는 속성은 무엇일까요?"
+    choices={["padding", "border-spacing", "margin", "outline"]}
+    answer={2}
+    explanation="margin은 요소의 테두리 바깥쪽 여백으로, 다른 요소와의 간격을 만듭니다. 배경색이 적용되지 않는 투명한 영역입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="box-sizing: border-box;를 적용하면, width: 200px로 지정한 요소의 실제 화면 너비는 어떻게 될까요? (padding: 20px, border: 5px 가정)"
+    choices={[
+      "250px (200 + 20*2 + 5*2)",
+      "200px (패딩과 보더가 200px 안에 포함)",
+      "240px (200 + 20*2)",
+      "210px (200 + 5*2)",
+    ]}
+    answer={1}
+    explanation="border-box는 width 값 안에 패딩과 보더를 포함시킵니다. 따라서 콘텐츠 영역이 자동으로 줄어들어 전체 너비가 정확히 200px이 됩니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="두 블록 요소가 수직으로 인접할 때, 위 요소의 margin-bottom: 30px과 아래 요소의 margin-top: 20px이 만나면 실제 간격은 얼마일까요?"
+    choices={["50px", "30px", "20px", "25px"]}
+    answer={1}
+    explanation="수직 방향의 마진은 합쳐지지 않고, 둘 중 큰 값만 적용됩니다. 이를 '마진 겹침(Margin Collapsing)' 현상이라 합니다. 30px과 20px 중 큰 30px이 최종 간격이 됩니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="인라인 요소처럼 옆으로 나란히 배치되면서도, 블록 요소처럼 width와 height를 지정할 수 있게 하는 display 값은 무엇일까요?"
+    choices={[
+      "display: flex",
+      "display: inline-block",
+      "display: block",
+      "display: inline",
+    ]}
+    answer={1}
+    explanation="inline-block은 인라인처럼 한 줄에 나란히 배치되면서도, 블록처럼 width/height/margin/padding이 모두 적용되는 하이브리드 속성입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="블록 요소를 수평 가운데 정렬하기 위해 가장 흔히 사용하는 방법은 무엇일까요?"
+    choices={[
+      "text-align: center",
+      "vertical-align: middle",
+      "margin: 0 auto",
+      "float: center",
+    ]}
+    answer={2}
+    explanation="블록 요소에 width를 지정한 뒤 margin: 0 auto를 적용하면, 좌우 마진이 균등하게 배분되어 수평 가운데 정렬이 됩니다. text-align: center는 인라인 콘텐츠를 정렬할 때 사용합니다."
+  />
+</ArticleQuiz>
+
+---
+
+<Subtitle level={2}>1. 폰트 단위 px, em, rem — 뭘 써야 할까?</Subtitle>
+
+<Paragraph>
+  CSS에서 글꼴 크기를 지정할 때 `px`, `em`, `rem` 세 가지를 자주 마주칩니다. 셋
+  다 크기를 정하는 단위이지만, **기준점**이 다릅니다.
+</Paragraph>
+
+<Paragraph>
+  - **`px`**: 화면의 물리적 픽셀을 기준으로 합니다. `font-size: 16px`이면 어디서든 16픽셀입니다. 직관적이지만, 사용자가 브라우저 기본 글꼴 크기를 변경해도 반응하지 않습니다.
+  - **`em`**: **부모 요소의 font-size**를 기준으로 합니다. 부모가 `16px`일 때 `1.5em`은 `24px`입니다. 중첩이 깊어지면 계산이 복잡해지는 단점이 있습니다.
+  - **`rem`**: **루트 요소(`<html>`)의 font-size**를 기준으로 합니다. 중첩과 무관하게 항상 같은 기준이라 예측이 쉽습니다.
+</Paragraph>
+
+```css
+html {
+  font-size: 16px;
+} /* 루트 기준 설정 */
+
+.parent {
+  font-size: 20px;
+}
+.child-px {
+  font-size: 14px;
+} /* 항상 14px */
+.child-em {
+  font-size: 1.5em;
+} /* 부모 20px × 1.5 = 30px */
+.child-rem {
+  font-size: 1.5rem;
+} /* 루트 16px × 1.5 = 24px */
+```
+
+<Paragraph>
+  실무에서는 **`rem`을 기본 단위로, `px`은 1~2px 같은 미세한 값에** 사용하는
+  것이 일반적입니다. `em`은 부모에 상대적으로 커지거나 작아져야 하는 특수한
+  경우(예: 버튼 안의 아이콘 크기)에 유용합니다.
+</Paragraph>
+
+<Subtitle level={2}>2. 인라인 vs 블록, 진짜 차이를 체감하는 법</Subtitle>
+
+<Paragraph>
+  강의에서 인라인과 블록의 차이를 배웠지만, 실제로 코드를 짤 때 "이 요소가 왜 내
+  말을 안 듣지?" 싶은 순간이 옵니다. 가장 흔한 함정을 정리해보겠습니다.
+</Paragraph>
+
+```css
+/* 인라인 요소에 width/height를 줘도 무시됩니다 */
+span {
+  width: 200px; /* 적용 안 됨 */
+  height: 100px; /* 적용 안 됨 */
+  margin-top: 20px; /* 적용 안 됨 */
+  margin-bottom: 20px; /* 적용 안 됨 */
+  margin-left: 10px; /* 이건 적용 됨! */
+  margin-right: 10px; /* 이건 적용 됨! */
+}
+
+/* 해결: display를 바꿔줍니다 */
+span {
+  display: inline-block; /* 인라인처럼 나란히 + 블록처럼 크기 제어 */
+  width: 200px;
+  height: 100px;
+}
+```
+
+<Paragraph>핵심 규칙을 정리하면 이렇습니다.</Paragraph>
+
+<Paragraph>
+  - **인라인(Inline)**: 좌우 margin만 적용, width/height 무시, 상하 margin 무시
+  - **블록(Block)**: width/height 적용, 상하좌우 margin 모두 적용, 항상 새 줄
+  시작 - **인라인 블록(Inline-block)**: 나란히 배치 + width/height/margin 모두
+  적용
+</Paragraph>
+
+<Paragraph>
+  "이 요소에 크기를 주고 싶은데 안 먹힌다"면, 십중팔구 인라인 요소에
+  width/height를 주고 있는 겁니다. `display: inline-block` 또는 `display:
+  block`으로 바꿔주면 해결됩니다.
+</Paragraph>
+
+<Subtitle level={2}>
+  3. 마진 겹침(Margin Collapsing) — 여백이 사라지는 미스터리
+</Subtitle>
+
+<Paragraph>
+  박스 모델을 처음 배우면 가장 당황스러운 현상이 바로 **마진 겹침**입니다. 분명
+  위 요소에 `margin-bottom: 40px`, 아래 요소에 `margin-top: 30px`을 줬는데, 실제
+  간격은 70px이 아니라 40px만 생깁니다.
+</Paragraph>
+
+```css
+.box-a {
+  margin-bottom: 40px;
+}
+.box-b {
+  margin-top: 30px;
+}
+/* 실제 간격: 70px이 아니라 40px (둘 중 큰 값) */
+```
+
+<Paragraph>
+이것은 CSS가 의도적으로 설계한 동작입니다. 수직 방향으로 인접한 마진은 **합쳐지지 않고, 둘 중 큰 값만 적용**됩니다. 이 규칙이 왜 존재할까요? 문단(`<p>`) 태그를 생각해보면 이해가 됩니다. 각 문단에 `margin-top: 20px`과 `margin-bottom: 20px`이 있다면, 겹침 없이는 문단 사이 간격이 40px로 벌어지겠죠. 마진 겹침 덕분에 20px로 자연스러운 간격이 유지됩니다.
+</Paragraph>
+
+<Paragraph>마진 겹침이 발생하는 세 가지 경우를 기억해두세요.</Paragraph>
+
+<Paragraph>
+  - **인접 형제 요소**: 위 요소의 margin-bottom과 아래 요소의 margin-top이 겹침
+  - **부모와 첫째/마지막 자식**: 부모에 padding이나 border가 없으면, 자식의
+  margin이 부모 밖으로 "새어 나감" - **빈 블록 요소**: 콘텐츠가 없는 요소의
+  margin-top과 margin-bottom끼리 겹침
+</Paragraph>
+
+```css
+/* 부모-자식 마진 겹침 방지 */
+.parent {
+  /* 아래 중 하나만 적용해도 해결됩니다 */
+  padding-top: 1px; /* 패딩으로 경계 만들기 */
+  border-top: 1px solid transparent; /* 보더로 경계 만들기 */
+  overflow: hidden; /* BFC(Block Formatting Context) 생성 */
+}
+```
+
+<Subtitle level={2}>4. box-sizing: border-box — 현대 CSS의 필수 설정</Subtitle>
+
+<Paragraph>
+  CSS 박스 모델의 기본 동작(`content-box`)에서는 `width: 200px`을 지정하면,
+  여기에 padding과 border가 **추가로** 더해집니다. 즉, `padding: 20px`과
+  `border: 5px`을 주면 실제 너비는 `200 + 40 + 10 = 250px`이 됩니다. 계산이 너무
+  복잡하죠.
+</Paragraph>
+
+```css
+/* content-box (기본값): width = 콘텐츠 영역만 */
+.box-content {
+  box-sizing: content-box;
+  width: 200px;
+  padding: 20px;
+  border: 5px solid black;
+  /* 실제 화면 너비: 200 + 20*2 + 5*2 = 250px */
+}
+
+/* border-box: width = 콘텐츠 + 패딩 + 보더 전부 포함 */
+.box-border {
+  box-sizing: border-box;
+  width: 200px;
+  padding: 20px;
+  border: 5px solid black;
+  /* 실제 화면 너비: 정확히 200px */
+}
+```
+
+<Paragraph>
+  `border-box`를 사용하면 **"내가 200px이라고 썼으니, 화면에서도 200px"**이라는
+  직관적인 결과를 얻습니다. 그래서 현대 웹 개발에서는 거의 모든 프로젝트가 아래
+  리셋 코드로 시작합니다.
+</Paragraph>
+
+```css
+/* 현대 CSS 프로젝트의 첫 줄이라 해도 과언이 아닙니다 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+```
+
+<Paragraph>
+  이 한 줄을 초반에 넣어두면, 이후 모든 요소에서 패딩과 보더 때문에 레이아웃이
+  밀리는 문제를 겪지 않습니다. 강의에서 직접 경험해보셨겠지만, 이 설정 없이
+  레이아웃을 짜면 "분명 300px인데 왜 삐져나오지?" 라는 상황을 계속 마주하게
+  됩니다.
+</Paragraph>
+
+<Subtitle level={2}>
+  5. CSS 리셋과 Normalize — 브라우저마다 다른 기본 스타일
+</Subtitle>
+
+<Paragraph>
+아무런 CSS를 작성하지 않아도 `<h1>`은 크고 굵게, `<p>`에는 위아래 여백이, `<ul>`에는 점이 찍혀 나옵니다. 이것은 **브라우저가 기본으로 적용하는 스타일(User Agent Stylesheet)** 때문입니다. 문제는 이 기본 스타일이 **브라우저마다 조금씩 다르다**는 점입니다.
+</Paragraph>
+
+<Paragraph>
+  크롬에서는 멀쩡한데 사파리에서는 여백이 다르고, 파이어폭스에서는 또 다르고…
+  이런 차이를 해결하기 위해 두 가지 접근법이 있습니다.
+</Paragraph>
+
+<Paragraph>
+  - **CSS Reset**: 브라우저의 기본 스타일을 **전부 제거**합니다. 모든 요소의
+  margin, padding, font-size 등을 0으로 밀어버리고, 백지 상태에서 시작합니다. -
+  **Normalize.css**: 기본 스타일을 제거하는 대신 **브라우저 간 차이만
+  통일**합니다. 유용한 기본 스타일은 살려두되, 브라우저마다 다른 부분만
+  맞춰줍니다.
+</Paragraph>
+
+```css
+/* CSS Reset 스타일 예시 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 이 위에 원하는 스타일을 자유롭게 쌓아갑니다 */
+body {
+  font-family: "Pretendard", sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+```
+
+<Paragraph>
+  최근 실무에서는 완전한 Reset보다는 Normalize.css를 기반으로 하면서 필요한
+  부분만 추가로 리셋하는 방식이 많이 쓰입니다. 어떤 방법을 선택하든, **프로젝트
+  초반에 기본 스타일을 정리하고 시작하는 습관**이 중요합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>📝 3주차 스터디 인증 미션</Subtitle>
+
+<Paragraph>
+  다가오는 스터디 모임 전, 아래 질문에 대해 본인만의 생각을 댓글로 남겨주세요.
+</Paragraph>
+
+> **Q. `box-sizing: content-box`(기본값) 상태에서 `width: 300px`, `padding: 20px`, `border: 10px solid black`을 준 요소의 실제 화면 너비는 몇 px일까요? 또한, 이 요소에 `box-sizing: border-box`를 적용하면 실제 화면 너비와 콘텐츠 영역 너비는 각각 어떻게 변할까요? 직접 계산해보세요.**

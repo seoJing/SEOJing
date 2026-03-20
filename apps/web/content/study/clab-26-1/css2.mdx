@@ -1,0 +1,351 @@
+---
+title: "프론트엔드 스터디 4주차: 자유자재 레이아웃 (포지션과 플렉스박스)"
+date: 2026-04-13
+tags:
+  - 프론트엔드
+  - 스터디
+  - CSS
+  - Position
+  - Flexbox
+description: 배경 이미지를 제어하고, Position으로 요소를 원하는 위치에 배치하며, Flexbox로 유연한 가로·세로 레이아웃을 구성합니다. 요소를 화면 정중앙에 띄우거나, 내비게이션 바처럼 가로로 예쁘게 정렬하는 것이 이번 주 목표입니다.
+---
+
+<Subtitle level={3}>4주차 영상</Subtitle>
+
+- **학습 구간:** [04:28:10 ~ 05:28:02] 배경 이미지 제어부터 Flexbox 레이아웃까지
+- **강의 바로가기:** [제대로 파는 HTML & CSS - 4주차 진도 시청하기](https://youtu.be/TrC2x4N0XqY?t=16090)
+
+<Subtitle level={2}>
+  안녕하세요. 프론트엔드 스터디 4주차에 오신 것을 환영합니다.
+</Subtitle>
+
+<Paragraph>
+  이번 주차에서는 CSS의 꽃이라 할 수 있는 **레이아웃**을 본격적으로 다뤘습니다.
+  배경 이미지를 자유롭게 제어하는 법, **Position**으로 요소를 문서 흐름에서
+  꺼내 원하는 곳에 배치하는 법, 그리고 현대 웹 레이아웃의 핵심인
+  **Flexbox**를 배웠습니다. 3주차까지 "칸 하나"를 다뤘다면, 이번 주부터는
+  "칸들을 어떻게 배열할 것인가"를 다루는 거예요.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>스킵 진단 문제</Subtitle>
+
+<Paragraph>
+  아래 10문제를 막힘없이 풀 수 있다면, **이번 주 학습 영상을 생략하거나, 필요한
+  부분만 선택적으로 시청하셔도 좋습니다.** 바로 하단의 제가 추가로 알면 좋은
+  개념들을 확인해보세요.
+</Paragraph>
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="배경 이미지가 요소 크기보다 작을 때, 이미지가 반복되지 않도록 하는 CSS 속성과 값은 무엇일까요?"
+    choices={[
+      "background-size: cover",
+      "background-repeat: no-repeat",
+      "background-position: center",
+      "background-image: none",
+    ]}
+    answer={1}
+    explanation="background-repeat: no-repeat를 지정하면 배경 이미지가 한 번만 표시되고 타일처럼 반복되지 않습니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="배경 이미지를 요소 전체에 빈틈없이 채우되, 비율을 유지하면서 필요하면 잘리는 것을 허용하는 background-size 값은 무엇일까요?"
+    choices={["contain", "cover", "100% 100%", "auto"]}
+    answer={1}
+    explanation="cover는 이미지의 비율을 유지하면서 요소를 완전히 덮도록 확대합니다. 이미지가 요소보다 크면 일부가 잘릴 수 있지만, 빈 공간은 생기지 않습니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="position: relative를 적용한 요소에 top: 20px을 주면 어떤 일이 일어날까요?"
+    choices={[
+      "요소가 문서 최상단에서 20px 아래로 이동한다",
+      "요소가 원래 자기 위치에서 20px 아래로 밀려난다",
+      "요소가 부모 요소의 상단에서 20px 아래에 고정된다",
+      "요소가 브라우저 화면 상단에서 20px 아래에 고정된다",
+    ]}
+    answer={1}
+    explanation="relative는 요소가 원래 있어야 할 위치(정상 흐름)를 기준으로 이동합니다. 다른 요소의 배치에는 영향을 주지 않고, 자기 자신만 시각적으로 이동합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="position: absolute를 적용한 요소가 위치의 기준으로 삼는 것은 무엇일까요?"
+    choices={[
+      "항상 브라우저 화면(뷰포트) 기준",
+      "항상 바로 위 부모 요소 기준",
+      "가장 가까운 position이 static이 아닌 조상 요소 기준",
+      "항상 body 태그 기준",
+    ]}
+    answer={2}
+    explanation="absolute는 가장 가까운 '위치가 지정된(positioned)' 조상, 즉 position이 static이 아닌 조상을 기준으로 배치됩니다. 그런 조상이 없으면 뷰포트가 기준이 됩니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="스크롤을 내려도 항상 화면의 같은 위치에 고정되어 따라오는 요소를 만들려면 어떤 position 값을 사용해야 할까요?"
+    choices={["static", "relative", "absolute", "fixed"]}
+    answer={3}
+    explanation="fixed는 요소를 뷰포트(브라우저 화면)를 기준으로 고정합니다. 스크롤과 무관하게 항상 같은 위치에 머무르므로, 고정 헤더나 플로팅 버튼에 사용됩니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="Flexbox 레이아웃을 활성화하기 위해 부모 요소에 적용해야 하는 CSS 속성은 무엇일까요?"
+    choices={[
+      "display: flex",
+      "flex: 1",
+      "flex-direction: row",
+      "align-items: center",
+    ]}
+    answer={0}
+    explanation="display: flex를 부모(컨테이너)에 적용하면 자식 요소들이 플렉스 아이템이 되어 Flexbox 레이아웃 규칙을 따르게 됩니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="Flexbox에서 자식 요소들의 배치 방향을 세로(위에서 아래)로 바꾸는 속성과 값은 무엇일까요?"
+    choices={[
+      "flex-direction: row",
+      "flex-direction: column",
+      "flex-wrap: wrap",
+      "align-items: column",
+    ]}
+    answer={1}
+    explanation="flex-direction: column은 주축(Main Axis)을 세로 방향으로 바꿉니다. 기본값은 row(가로)입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="Flexbox에서 주축(Main Axis) 방향으로 자식 요소들을 가운데 정렬하는 속성은 무엇일까요?"
+    choices={[
+      "align-items: center",
+      "justify-content: center",
+      "text-align: center",
+      "margin: 0 auto",
+    ]}
+    answer={1}
+    explanation="justify-content는 주축 방향의 정렬을 담당합니다. center 값을 주면 자식 요소들이 주축의 가운데에 모입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="Flexbox에서 교차축(Cross Axis) 방향으로 자식 요소들을 가운데 정렬하는 속성은 무엇일까요?"
+    choices={[
+      "justify-content: center",
+      "align-items: center",
+      "align-content: center",
+      "vertical-align: middle",
+    ]}
+    answer={1}
+    explanation="align-items는 교차축 방향의 정렬을 담당합니다. flex-direction이 row일 때 교차축은 세로 방향이므로, align-items: center는 세로 가운데 정렬이 됩니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="Flexbox로 요소를 화면 정중앙(수평 + 수직 가운데)에 배치하기 위한 올바른 조합은 무엇일까요?"
+    choices={[
+      "justify-content: center + align-items: center",
+      "text-align: center + vertical-align: middle",
+      "margin: auto + padding: auto",
+      "position: center + display: flex",
+    ]}
+    answer={0}
+    explanation="display: flex와 함께 justify-content: center(주축 가운데)와 align-items: center(교차축 가운데)를 조합하면 완벽한 정중앙 배치가 됩니다."
+  />
+</ArticleQuiz>
+
+---
+
+<Subtitle level={2}>1. background 속성 한 줄로 합치기 (Shorthand)</Subtitle>
+
+<Paragraph>
+배경 이미지를 다룰 때 `background-image`, `background-size`, `background-repeat`, `background-position`을 하나씩 쓰다 보면 코드가 길어집니다. CSS는 이것들을 `background` 하나로 합쳐 쓸 수 있는 **단축 속성(Shorthand)**을 제공합니다.
+</Paragraph>
+
+```css
+/* 하나씩 쓰는 방식 */
+.hero {
+  background-image: url("hero.jpg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* 단축 속성으로 합치기 */
+.hero {
+  background: url("hero.jpg") center / cover no-repeat;
+}
+```
+
+<Paragraph>
+단축 속성을 쓸 때 주의할 점이 하나 있습니다. `background-size`는 반드시 `background-position` 바로 뒤에 슬래시(`/`)로 구분해서 써야 합니다. `center / cover`처럼요. 이 규칙을 모르면 "단축 속성으로 바꿨더니 배경이 안 나와요"라는 상황을 마주하게 됩니다.
+</Paragraph>
+
+<Subtitle level={2}>2. Position 완벽 정리 — static, relative, absolute, fixed</Subtitle>
+
+<Paragraph>
+Position은 처음 배울 때 가장 혼란스러운 속성 중 하나입니다. 핵심은 **"기준점이 어디인가"**를 이해하는 것입니다.
+</Paragraph>
+
+```css
+/* 1. static (기본값): 문서 흐름대로 배치, top/left 등 무시 */
+.box-static {
+  position: static;
+}
+
+/* 2. relative: 원래 위치를 기준으로 이동, 원래 자리는 유지 */
+.box-relative {
+  position: relative;
+  top: 10px;  /* 원래 위치에서 아래로 10px */
+  left: 20px; /* 원래 위치에서 오른쪽으로 20px */
+}
+
+/* 3. absolute: positioned 조상을 기준으로 배치, 문서 흐름에서 빠짐 */
+.box-absolute {
+  position: absolute;
+  top: 0;
+  right: 0; /* 기준 요소의 우상단에 붙음 */
+}
+
+/* 4. fixed: 뷰포트(화면)를 기준으로 고정, 스크롤해도 안 움직임 */
+.box-fixed {
+  position: fixed;
+  bottom: 20px;
+  right: 20px; /* 화면 우하단에 고정 */
+}
+```
+
+<Paragraph>
+`absolute`를 사용할 때 가장 흔한 실수는 부모에 `position: relative`를 빼먹는 것입니다. 기준이 될 조상 요소에 `position: relative`를 줘야 자식의 `absolute`가 그 부모를 기준으로 배치됩니다. 이걸 잊으면 요소가 의도치 않게 페이지 끝으로 날아가버립니다.
+</Paragraph>
+
+```html
+<!-- absolute의 올바른 사용 패턴 -->
+<div style="position: relative;">
+  <!-- 이 div가 기준점 역할 -->
+  <span style="position: absolute; top: 5px; right: 5px;">
+    NEW
+  </span>
+</div>
+```
+
+<Subtitle level={2}>3. z-index — 겹치는 요소의 앞뒤 순서</Subtitle>
+
+<Paragraph>
+Position을 사용하면 요소들이 서로 겹치는 상황이 생깁니다. 이때 **어떤 요소가 위에 보일지** 결정하는 것이 `z-index`입니다. 숫자가 클수록 앞쪽(위쪽)에 보입니다.
+</Paragraph>
+
+```css
+.background-layer { z-index: 1; }
+.content-layer { z-index: 10; }
+.modal-layer { z-index: 100; }
+.tooltip-layer { z-index: 1000; }
+```
+
+<Paragraph>
+다만 `z-index`는 `position: static`(기본값)인 요소에는 작동하지 않습니다. 반드시 `position`이 `relative`, `absolute`, `fixed` 중 하나로 설정된 요소에만 적용됩니다. 또한 `z-index: 9999` 같은 터무니없이 큰 값을 남발하면 나중에 관리가 불가능해지니, 위 예시처럼 **역할별로 범위를 정해두는 것**이 좋습니다.
+</Paragraph>
+
+<Subtitle level={2}>4. Flexbox 핵심 — 주축과 교차축만 이해하면 끝</Subtitle>
+
+<Paragraph>
+Flexbox는 속성이 많아 보이지만, 딱 하나만 이해하면 나머지가 전부 자연스럽게 따라옵니다. 바로 **주축(Main Axis)과 교차축(Cross Axis)**의 개념입니다.
+</Paragraph>
+
+<Paragraph>
+  - `flex-direction: row`(기본값)일 때 → 주축은 **가로**, 교차축은 **세로**
+  - `flex-direction: column`일 때 → 주축은 **세로**, 교차축은 **가로**
+</Paragraph>
+
+<Paragraph>
+이 축을 기준으로 정렬 속성이 나뉩니다.
+</Paragraph>
+
+<Paragraph>
+  - **`justify-content`**: 주축 방향 정렬 (flex-start, center, space-between 등)
+  - **`align-items`**: 교차축 방향 정렬 (flex-start, center, stretch 등)
+</Paragraph>
+
+```css
+/* 내비게이션 바: 로고는 왼쪽, 메뉴는 오른쪽 */
+.navbar {
+  display: flex;
+  justify-content: space-between; /* 주축: 양 끝에 배치 */
+  align-items: center;            /* 교차축: 세로 가운데 */
+}
+
+/* 카드 목록: 일정 간격으로 가로 배치, 넘치면 줄바꿈 */
+.card-list {
+  display: flex;
+  flex-wrap: wrap;       /* 넘치면 다음 줄로 */
+  gap: 16px;             /* 카드 사이 간격 */
+}
+
+/* 완벽한 정중앙 배치 (가장 자주 쓰이는 패턴) */
+.center-box {
+  display: flex;
+  justify-content: center; /* 가로 가운데 */
+  align-items: center;     /* 세로 가운데 */
+  height: 100vh;           /* 화면 전체 높이 */
+}
+```
+
+<Paragraph>
+"주축 정렬은 justify, 교차축 정렬은 align"이라는 규칙만 외우면, `flex-direction`이 바뀌어도 헷갈리지 않습니다. direction이 column이면 justify가 세로 정렬이 되고, align이 가로 정렬이 됩니다.
+</Paragraph>
+
+<Subtitle level={2}>5. flex-grow, flex-shrink, flex-basis — 유연한 크기 제어</Subtitle>
+
+<Paragraph>
+Flexbox의 진짜 강력함은 자식 요소들이 **남은 공간을 자동으로 나눠 가지는 것**에 있습니다. 이것을 제어하는 세 가지 속성이 있습니다.
+</Paragraph>
+
+<Paragraph>
+  - **`flex-basis`**: 아이템의 기본 크기를 지정합니다. width와 비슷하지만, Flex 컨테이너 안에서의 기본 크기입니다.
+  - **`flex-grow`**: 남는 공간을 얼마나 가져갈지 비율을 정합니다. 기본값은 0(안 늘어남)입니다.
+  - **`flex-shrink`**: 공간이 부족할 때 얼마나 줄어들지 비율을 정합니다. 기본값은 1(줄어듦)입니다.
+</Paragraph>
+
+```css
+/* 사이드바(고정) + 메인 콘텐츠(나머지 전부) 레이아웃 */
+.sidebar {
+  flex: 0 0 250px; /* 안 늘어남, 안 줄어듦, 250px 고정 */
+}
+.main-content {
+  flex: 1; /* 남은 공간 전부 차지 (flex: 1 0 0의 단축) */
+}
+
+/* 3등분 레이아웃 */
+.column {
+  flex: 1; /* 세 요소가 균등하게 1:1:1 */
+}
+```
+
+<Paragraph>
+`flex: 1`은 실무에서 가장 많이 쓰이는 패턴입니다. "이 요소가 남은 공간을 전부 가져가라"는 뜻이에요. 사이드바와 메인 콘텐츠 레이아웃, 동일 너비 컬럼 배치 등에서 항상 등장합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>📝 4주차 스터디 인증 미션</Subtitle>
+
+<Paragraph>
+  다가오는 스터디 모임 전, 아래 코드를 읽고 질문에 답한 뒤 댓글로
+  남겨주세요.
+</Paragraph>
+
+```html
+<div id="A" style="position: relative;">
+  <div id="B" style="position: static;">
+    <div id="C" style="position: absolute;">
+      <div id="D" style="position: relative;">
+        <div id="E" style="position: absolute; top: 10px; left: 20px;">
+          여기는 어디 기준?
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+> **Q1. `#C`에 `top: 0; left: 0;`을 주면, `#C`는 `#A`, `#B`, 뷰포트 중 어느 것을 기준으로 배치될까요? 그 이유는 무엇인가요?**
+>
+> **Q2. `#E`에 `top: 10px; left: 20px;`이 적용되어 있습니다. `#E`는 `#C`, `#D` 중 어느 것을 기준으로 배치될까요? 그 이유는 무엇인가요?**
+>
+> **Q3. 만약 `#D`의 `position: relative`를 `position: static`으로 바꾸면, `#E`의 기준은 어떻게 달라질까요?**

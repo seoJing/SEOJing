@@ -1,0 +1,275 @@
+---
+title: "프론트엔드 스터디 1주차: 마크업 그 이상, 실무를 위한 중급 HTML 가이드"
+date: 2026-03-23
+tags:
+  - 프론트엔드
+  - 스터디
+  - HTML
+  - SEO
+  - 웹접근성
+description: 기초 태그 강의에서 한 걸음 더 나아갑니다. 카카오톡 공유 썸네일, 모바일 데이터 절약, 스크린 리더기를 위한 숨은 정보 등 실무에서 마주하게 될 중급 HTML 개념들을 가볍게 훑어봅니다.
+---
+
+<Subtitle level={3}>1주차 영상</Subtitle>
+
+- **학습 구간:** [00:00:00 ~ 01:36:21] 개발 환경 세팅부터 표(Table) 만들기까지
+- **강의 바로가기:** [제대로 파는 HTML & CSS - 1주차 진도 시청하기](https://youtu.be/TrC2x4N0XqY?t=0)
+
+<Subtitle level={2}>
+  안녕하세요. 프론트엔드 스터디 1주차에 오신 것을 환영합니다.
+</Subtitle>
+
+<Paragraph>
+  이번 주차 영상을 통해 우리는 제목, 문단, 이미지, 표 등 화면에 정보를 나타내는
+  가장 기본적인 HTML 태그들을 배웠습니다. 브라우저가 화면을 첫 번째 경험을
+  하신거에요.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>스킵 진단 문제</Subtitle>
+
+<Paragraph>
+  아래 10문제를 막힘없이 풀 수 있다면, **이번 주 학습 영상을 생략하거나, 필요한
+  부분만 선택적으로 시청하셔도 좋습니다.** 바로 하단의 제가 추가로 알면 좋은
+  개념들을 확인해보세요.
+</Paragraph>
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="웹 페이지에서 가장 중요한 대제목을 작성할 때 사용하며, 한 페이지당 가급적 한 번만 사용하는 것이 권장되는 태그는 무엇일까요?"
+    choices={["<header>", "<h1>", "<title>", "<strong>"]}
+    answer={1}
+    explanation="<h1>은 페이지의 최상위 제목을 나타내며, 문서 구조화와 검색 엔진 최적화(SEO)에 중요한 역할을 합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="단순히 글자를 굵게 보이게 하는 것을 넘어, 컴퓨터와 검색 엔진에 '이 텍스트는 내용상 매우 중요하다'는 의미를 전달하기 위해 사용하는 시맨틱(Semantic) 태그는 무엇일까요?"
+    choices={["<b>", "<em>", "<strong>", "<mark>"]}
+    answer={2}
+    explanation="<strong>은 시각적인 굵기를 넘어, 문서 구조상 강한 중요성을 지닌다는 의미론적(Semantic) 가치를 부여합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="<img> 태그를 사용할 때, 이미지가 깨지거나 스크린 리더기를 사용할 때 읽어줄 수 있도록 이미지에 대한 설명을 넣는 필수 속성은 무엇일까요?"
+    choices={["title", "src", "description", "alt"]}
+    answer={3}
+    explanation="alt 속성은 이미지를 렌더링할 수 없을 때 표시할 대체(Alternative) 텍스트를 정의하여 웹 접근성을 높여줍니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="순서가 중요하지 않은 목록(예: 장바구니 항목 등)을 작성할 때, 목록 전체를 감싸는 태그로 올바른 것은 무엇일까요?"
+    choices={["<ul>", "<ol>", "<dl>", "<li>"]}
+    answer={0}
+    explanation="<ul>은 순서가 없는 목록(Unordered List)을 정의할 때 사용하며, 내부 항목은 <li>로 구성됩니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="용어와 그에 대한 정의(설명)를 사전처럼 나열할 때 사용하는 태그 그룹으로 올바르게 짝지어진 것은 무엇일까요?"
+    choices={[
+      "<ul>, <li>, <p>",
+      "<dl>, <dt>, <dd>",
+      "<ol>, <li>, <span>",
+      "<table>, <tr>, <td>",
+    ]}
+    answer={1}
+    explanation="설명 목록(dl), 용어(dt), 그리고 그 용어에 대한 설명(dd)을 의미론적으로 묶어주는 조합입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="<a> 태그로 링크를 만들 때, 해당 링크를 클릭했을 때 '새 탭'에서 열리게 하려면 어떤 속성과 값을 사용해야 할까요?"
+    choices={[
+      "href='_blank'",
+      "window='_new'",
+      "target='_blank'",
+      "open='_tab'",
+    ]}
+    answer={2}
+    explanation="target 속성에 _blank 값을 지정하면 브라우저가 링크를 새로운 탭이나 창에서 엽니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="다른 출처에서 분량이 긴 문장이나 문단을 통째로 인용해 올 때 사용하는 태그로 올바른 것은 무엇일까요?"
+    choices={["<q>", "<blockquote>", "<cite>", "<mark>"]}
+    answer={1}
+    explanation="<blockquote>는 독립된 블록 형태의 긴 인용문을 나타낼 때 사용하며, 시각적으로 들여쓰기가 적용되는 경우가 많습니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="상대 경로를 지정할 때, 현재 위치한 폴더에서 '한 단계 위(상위 폴더)'로 이동한 후 이미지를 불러오기 위한 올바른 경로는 무엇일까요?"
+    choices={[
+      "./images/logo.png",
+      "/images/logo.png",
+      "~/images/logo.png",
+      "../images/logo.png",
+    ]}
+    answer={3}
+    explanation="../ 기호는 현재 디렉토리에서 한 단계 상위 디렉토리로 이동함을 의미하는 상대 경로입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="<table> 태그를 이용해 표를 만들 때, 가로로 이웃한 여러 '열(Column)'을 하나로 병합하기 위해 사용하는 속성은 무엇일까요?"
+    choices={["colspan", "rowspan", "merge", "span"]}
+    answer={0}
+    explanation="colspan은 지정한 숫자만큼 열(Column)을 가로로 병합하여 하나의 셀로 만듭니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="HTML 표 구조를 의미론적으로 나눌 때, 요약이나 결과를 보여주는 표의 '바닥글(Footer)' 행들을 묶어주는 태그는 무엇일까요?"
+    choices={["<tbody>", "<thead>", "<tfoot>", "<caption>"]}
+    answer={2}
+    explanation="<tfoot>은 표의 하단에 위치하여 합계나 요약 정보 등의 바닥글을 명시적으로 구분할 때 사용합니다."
+  />
+</ArticleQuiz>
+
+---
+
+<Subtitle level={2}>1. 카카오톡 링크 썸네일 (Open Graph)</Subtitle>
+
+<Paragraph>
+카카오톡이나 슬랙에서 링크를 공유하면 제목, 설명, 이미지가 자동으로 미리보기 카드에 표시되는 것을 본 적이 있으실 겁니다. 이 정보는 HTML을 파싱해서 가져오는 것이 아니라, `<head>` 태그 내부에 있는 **Open Graph (og)** 메타 태그를 읽어와서 보여주는 것입니다.
+</Paragraph>
+
+<Paragraph>
+Open Graph는 페이스북이 2010년에 만든 프로토콜로, 웹 페이지가 소셜 미디어에서 어떻게 보일지 제어할 수 있게 해줍니다. 아래처럼 `<meta>` 태그에 `property`와 `content` 속성을 지정하면 됩니다.
+</Paragraph>
+
+```html
+<head>
+  <meta property="og:title" content="프론트엔드 스터디 1주차 모집" />
+  <meta
+    property="og:description"
+    content="웹 개발의 기초부터 탄탄하게 함께 공부해요."
+  />
+  <meta property="og:image" content="https://mysite.com/thumbnail.png" />
+  <meta property="og:url" content="https://mysite.com/study/week1" />
+</head>
+```
+
+<Paragraph>
+  만약 og 태그를 설정하지 않으면, 각 플랫폼이 자체 알고리즘으로 페이지 내용을
+  추측해서 보여주기 때문에 의도하지 않은 텍스트나 이미지가 표시될 수 있습니다.
+  실무에서는 og 태그 설정이 거의 필수입니다.
+</Paragraph>
+
+<ArticleImage
+  src="/images/screenshot_20260321_022923.png"
+  alt="og 태그 작업 이전"
+  caption="og 태그 작업 이전"
+  size="sm"
+/>
+<ArticleImage
+  src="/images/screenshot_20260321_022923.png"
+  alt="og 태그 작업 이후"
+  caption="og 태그 작업 이후"
+  size="sm"
+/>
+
+<Subtitle level={2}>2. 데이터 요금을 아껴주는 똑똑한 이미지 (srcset)</Subtitle>
+
+<Paragraph>
+하나의 웹 페이지를 데스크톱, 태블릿, 스마트폰 등 다양한 기기에서 열어볼 수 있습니다. 그런데 작은 스마트폰 화면에 4K 해상도의 거대한 이미지를 다운로드하는 것은 데이터 낭비이겠죠? `<img>`의 `srcset` 속성이나 `<picture>` 태그를 사용하면 **브라우저가 사용자의 화면 크기와 해상도에 맞춰 가장 적절한 이미지를 스스로 골라** 다운로드합니다.
+</Paragraph>
+
+<Paragraph>
+`<picture>` 태그는 여러 `<source>`를 나열하고, 조건에 맞는 첫 번째 이미지를 사용합니다. 어떤 조건에도 해당하지 않으면 `<img>`에 지정된 기본 이미지를 보여줍니다.
+</Paragraph>
+
+```html
+<picture>
+  <source media="(min-width: 800px)" srcset="desktop-image.jpg" />
+  <img src="mobile-image.jpg" alt="팀 프로젝트 회의 모습" />
+</picture>
+```
+
+<Paragraph>
+위 코드에서 브라우저 화면이 800px 이상이면 `desktop-image.jpg`를, 그보다 작으면 `mobile-image.jpg`를 불러옵니다. 이 외에도 `srcset`과 `sizes` 속성을 `<img>` 태그에 직접 사용하는 방법도 있습니다.
+</Paragraph>
+
+```html
+<img
+  src="small.jpg"
+  srcset="small.jpg 480w, medium.jpg 800w, large.jpg 1200w"
+  sizes="(max-width: 600px) 480px, (max-width: 1000px) 800px, 1200px"
+  alt="팀 프로젝트 회의 모습"
+/>
+```
+
+<Paragraph>
+  `480w`, `800w`, `1200w`는 각 이미지의 실제 너비(픽셀)를 브라우저에 알려주는
+  것이고, `sizes`는 화면 크기에 따라 이미지가 차지할 공간을 알려줍니다.
+  브라우저는 이 두 정보를 조합해서 최적의 이미지를 선택합니다.
+</Paragraph>
+
+<Subtitle level={2}>3. article과 section의 차이</Subtitle>
+
+<Paragraph>
+제가 생각했을 때, 시맨틱 HTML을 작성할 때 가장 헷갈리는 부분 중 하나가 `<article>`과 `<section>`의 구분입니다. 둘 다 콘텐츠를 묶는 역할을 하지만, **의미**가 다릅니다.
+</Paragraph>
+
+<Paragraph>
+  - **`<article>`**: 그 구역만 떼어내서 다른 곳에 붙여넣어도 **독립적으로 의미가 통하는** 콘텐츠에 사용합니다. 블로그 글, 뉴스 기사, 댓글 하나하나, 상품 카드 등이 해당됩니다.
+  - **`<section>`**: 하나의 페이지 안에서 **주제별로 내용을 그룹화**할 때 사용합니다. "소개", "특징", "가격표"처럼 논리적으로 구분되는 영역을 나눌 때 적합합니다.
+</Paragraph>
+
+```html
+<!-- 블로그 페이지 예시 -->
+<section>
+  <h2>최신 글 목록</h2>
+  <article>
+    <h3>HTML 시맨틱 태그의 중요성</h3>
+    <p>시맨틱 태그를 사용하면 검색 엔진과 스크린 리더가...</p>
+  </article>
+  <article>
+    <h3>CSS Grid vs Flexbox</h3>
+    <p>레이아웃을 잡을 때 어떤 도구를 선택해야 할까...</p>
+  </article>
+</section>
+```
+
+<Paragraph>
+쉽게 기억하는 팁: "이 콘텐츠를 RSS 피드에 넣어도 자연스러울까?" 그렇다면 `<article>`, 아니라면 `<section>`입니다.
+</Paragraph>
+
+<Subtitle level={2}>4. 눈에 보이지 않는 정보 (ARIA)</Subtitle>
+
+<Paragraph>
+  웹사이트를 눈으로 보는 사람은 돋보기 아이콘이 있는 버튼을 보고 "검색
+  버튼이구나"라고 바로 알 수 있습니다. 하지만 시각 장애가 있어 **스크린
+  리더기**를 사용하는 분들은 코드 상의 텍스트 정보에 의존합니다. 아이콘만
+  들어있는 버튼에 텍스트가 없다면, 스크린 리더는 "버튼"이라고만 읽어주게 됩니다.
+</Paragraph>
+
+<Paragraph>
+  이때 **ARIA(Accessible Rich Internet Applications)** 속성을 활용하면
+  시각적으로는 보이지 않지만 스크린 리더가 읽을 수 있는 정보를 추가할 수
+  있습니다.
+</Paragraph>
+
+```html
+<!-- aria-label: 요소에 이름표를 붙여줍니다 -->
+<button aria-label="검색">
+  <img src="search-icon.png" alt="" />
+</button>
+
+<!-- aria-hidden: 장식용 요소를 스크린 리더가 무시하게 합니다 -->
+<span aria-hidden="true">★</span> 평점 4.5점
+
+<!-- aria-expanded: 열림/닫힘 상태를 알려줍니다 -->
+<button aria-expanded="false">메뉴 열기</button>
+```
+
+<Paragraph>
+다만 ARIA를 사용하기 전에, 먼저 올바른 시맨틱 HTML 태그를 사용하는 것이 우선입니다. 예를 들어, 클릭 가능한 요소라면 `<div>`에 ARIA를 잔뜩 붙이는 것보다 `<button>` 태그를 쓰는 것이 훨씬 낫습니다. ARIA는 시맨틱 태그만으로 부족할 때 보충하는 역할로 생각하면 좋습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>📝 1주차 스터디 인증 미션</Subtitle>
+
+<Paragraph>
+  다가오는 스터디 모임 전, 아래 질문에 대해 본인만의 생각을 댓글로 남겨주세요.
+</Paragraph>
+
+> **Q. 웹 접근성과 검색 엔진 최적화(SEO)를 고려할 때, `<img>` 태그에 `alt` 속성을 아예 생략하면 어떤 치명적인 문제가 발생할까요? 또한, 단순히 화면의 여백을 채우기 위한 '장식용 이미지'일 경우에는 이 속성을 어떻게 처리해야 할까요?**
