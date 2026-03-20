@@ -76,6 +76,8 @@ export {
   CodeBlock,
   ArticleImage,
   ArticleTable,
+  ArticleQuiz,
+  ArticleQuizItem,
 } from "./article";
 export type {
   ArticleHeaderProps,

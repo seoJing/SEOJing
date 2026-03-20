@@ -1,15 +1,29 @@
 import { cn } from "@app/utils";
-import type { ArticleImageProps } from "./article.types";
+import type { ArticleImageProps, ArticleImageSize } from "./article.types";
+
+const sizeClasses: Record<ArticleImageSize, string> = {
+  sm: "max-w-sm",
+  md: "max-w-md",
+  lg: "max-w-lg",
+  full: "w-full",
+};
 
 export function ArticleImage({
   src,
   alt,
   caption,
+  size = "full",
   className,
   ...props
 }: ArticleImageProps) {
   return (
-    <figure className="my-6 sm:my-8">
+    <figure
+      className={cn(
+        "my-6 sm:my-8",
+        size !== "full" && "mx-auto",
+        sizeClasses[size],
+      )}
+    >
       <img
         src={src}
         alt={alt}

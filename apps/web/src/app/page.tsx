@@ -3,6 +3,7 @@ import { loadContent } from "@/shared/config";
 import { ArticleHeader, Paper } from "@app/ui";
 import { calculateReadingTime } from "@app/utils";
 import { ArticleToolbar } from "@/widgets/article-toolbar/ArticleToolbar";
+import type { MDXComponents } from "mdx/types";
 
 export default async function Home() {
   const content = await loadContent(["resume"]);
@@ -28,7 +29,7 @@ export default async function Home() {
           tags={content.frontmatter.tags}
           readingTime={calculateReadingTime(content.source)}
         />
-        <MDXContent components={mdxComponents} />
+        <MDXContent components={mdxComponents as MDXComponents} />
         <ArticleToolbar slug={"resume"} title={content.frontmatter.title} />
       </Paper>
     </>

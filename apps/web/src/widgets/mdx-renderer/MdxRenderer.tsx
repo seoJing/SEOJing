@@ -5,6 +5,8 @@ import {
   ArticleHeader,
   ArticleTable,
   Anchor,
+  ArticleQuiz,
+  ArticleQuizItem,
 } from "@app/ui";
 import { cn } from "@app/utils";
 import type { ComponentPropsWithoutRef } from "react";
@@ -20,6 +22,8 @@ import type { ComponentPropsWithoutRef } from "react";
 export const mdxComponents: Record<string, unknown> = {
   ArticleHeader,
   ArticleImage,
+  ArticleQuiz,
+  ArticleQuizItem,
   Subtitle,
   Paragraph,
   Anchor,

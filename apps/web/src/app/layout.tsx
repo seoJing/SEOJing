@@ -13,7 +13,30 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "SEOJing",
-  description: "SEOJing은 프론트엔드 개발 블로그 플랫폼입니다.",
+  description: "SEOJing's 프론트엔드 개발 블로그 플랫폼",
+  metadataBase: new URL("https://seojing.tjwlsrb1021.workers.dev"),
+  openGraph: {
+    title: "SEOJing",
+    description: "SEOJing's 프론트엔드 개발 블로그 플랫폼",
+    url: "https://seojing.tjwlsrb1021.workers.dev",
+    siteName: "SEOJing",
+    images: [
+      {
+        url: "/logo.png",
+        width: 800,
+        height: 800,
+        alt: "SEOJing 로고",
+      },
+    ],
+    locale: "ko_KR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "SEOJing",
+    description: "SEOJing's 프론트엔드 개발 블로그 플랫폼",
+    images: ["/logo.png"],
+  },
 };
 
 export default function RootLayout({
