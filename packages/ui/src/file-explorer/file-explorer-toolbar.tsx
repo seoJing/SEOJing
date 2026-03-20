@@ -48,11 +48,11 @@ export function FileExplorerToolbar({
       <div
         className={cn(
           "flex items-center",
-          "border-t border-gray-200 dark:border-gray-700",
+          "border-t border-gray-200 dark:border-gray-700 whitespace-nowrap",
           EXPLORER_TEXT_SIZES[size],
         )}
       >
-        <ToolbarButton onClick={handleGoHome} label="기본위치">
+        <ToolbarButton onClick={handleGoHome} label="홈">
           <IoHome />
         </ToolbarButton>
 

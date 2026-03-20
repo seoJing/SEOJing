@@ -10,16 +10,20 @@ import {
 } from "./file-explorer.constants";
 import type { FileItemProps } from "./file-explorer.types";
 
-export function FileItem({ file, size = "md" }: FileItemProps) {
+export function FileItem({
+  file,
+  size = "md",
+  isHighLighting = false,
+}: FileItemProps) {
   const IconComponent = FILE_ICON_MAP[file.extension] ?? DefaultFileIcon;
   const iconColor = FILE_ICON_COLORS[file.extension] ?? "text-gray-400";
-
   return (
     <a
       href={file.href}
       className={cn(
         "flex w-full items-center",
         "border-b border-gray-200 dark:border-gray-800",
+        isHighLighting ? "border-l-4 border-l-blue-600" : "",
         "hover:bg-gray-100 dark:hover:bg-gray-800/50",
         "cursor-pointer transition-colors",
         EXPLORER_TEXT_SIZES[size],
@@ -33,9 +37,11 @@ export function FileItem({ file, size = "md" }: FileItemProps) {
       <span
         className={cn(
           "flex-1 text-left font-sans truncate",
-          file.visited
-            ? "text-gray-400 dark:text-gray-500"
-            : "text-gray-800 dark:text-gray-200",
+          isHighLighting
+            ? "text-blue-600 font-semibold"
+            : file.visited
+              ? "text-gray-400 dark:text-gray-500"
+              : "text-gray-800 dark:text-gray-200",
         )}
       >
         {file.name}

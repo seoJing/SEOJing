@@ -34,6 +34,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   const MDXContent = content.compiled.default;
+  const wayFindingPath = `/blog/${slug.join("/")}`;
+  const rootPath = `/${slug.slice(0, -1).join("/")}`;
 
   return (
     <div className="relative min-h-[calc(100vh-25rem)]">
@@ -49,6 +51,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           slug={slug.join("/")}
           title={content.frontmatter.title}
         />
+        <PostExplorer rootPath={rootPath} wayFindingPath={wayFindingPath} />
       </Paper>
     </div>
   );

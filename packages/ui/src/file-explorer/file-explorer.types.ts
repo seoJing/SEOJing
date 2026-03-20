@@ -40,6 +40,8 @@ export interface FileExplorerProps extends Omit<
   currentPath: string;
   /** 홈 경로 (예: "/study") */
   homePath?: string;
+  /** 웨이 파인딩 용 경로 (예: "/study/html/html1") */
+  wayFindingPath?: string;
   /** 폴더 클릭 시 경로 변경 콜백 */
   onNavigate: (path: string) => void;
   /** 상단 툴바 표시 여부 */
@@ -84,6 +86,7 @@ export interface FolderItemProps {
 export interface FileItemProps {
   file: FileData;
   size?: FileExplorerSize;
+  isHighLighting: boolean;
 }
 
 export type Language = "ko" | "en";

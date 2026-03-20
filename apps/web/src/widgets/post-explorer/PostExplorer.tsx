@@ -16,6 +16,7 @@ function subscribeStorage(cb: () => void) {
 
 interface PostExplorerProps {
   rootPath?: string;
+  wayFindingPath?: string;
 }
 
 /**
@@ -26,7 +27,10 @@ interface PostExplorerProps {
  * <PostExplorer rootPath="/study" />
  * ```
  */
-export function PostExplorer({ rootPath = "/" }: PostExplorerProps) {
+export function PostExplorer({
+  rootPath = "/",
+  wayFindingPath,
+}: PostExplorerProps) {
   const [currentPath, setCurrentPath] = useState(rootPath);
   const readPosts = useSyncExternalStore(
     subscribeStorage,
@@ -45,6 +49,7 @@ export function PostExplorer({ rootPath = "/" }: PostExplorerProps) {
         items={items}
         currentPath={currentPath}
         homePath={rootPath}
+        wayFindingPath={wayFindingPath}
         onNavigate={setCurrentPath}
         showToolbar
         showPathBar

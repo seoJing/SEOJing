@@ -12,6 +12,7 @@ export function FileExplorer({
   items,
   currentPath,
   homePath = "/",
+  wayFindingPath,
   onNavigate,
   showToolbar = true,
   showPathBar = true,
@@ -86,7 +87,12 @@ export function FileExplorer({
           />
         ))}
         {files.map((file) => (
-          <FileItem key={file.name} file={file} size={size} />
+          <FileItem
+            key={file.name}
+            file={file}
+            size={size}
+            isHighLighting={file.href === wayFindingPath}
+          />
         ))}
       </div>
 

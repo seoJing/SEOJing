@@ -3,17 +3,17 @@ import { SiNotion } from "react-icons/si";
 
 const SOCIAL_LINKS = [
   {
-    href: "https://github.com/seojingyu",
+    href: "https://github.com/seojing",
     label: "GitHub",
     icon: <IoLogoGithub className="size-5" />,
   },
   {
-    href: "https://instagram.com/seojingyu",
+    href: "https://www.instagram.com/seojing__/",
     label: "Instagram",
     icon: <IoLogoInstagram className="size-5" />,
   },
   {
-    href: "https://notion.so/seojingyu",
+    href: "https://fresh-neighbor-48b.notion.site/b947f46ec7b849b6b0b7e5d796898541",
     label: "Notion",
     icon: <SiNotion className="size-4" />,
   },
