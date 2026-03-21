@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { cn } from "@app/utils";
 import { FileExplorerToolbar } from "./file-explorer-toolbar";
 import { FolderItem } from "./folder-item";
@@ -27,8 +27,15 @@ export function FileExplorer({
   ...props
 }: FileExplorerProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [flashing, setFlashing] = useState(false);
   const folders = items.filter((item) => item.type === "folder");
   const files = items.filter((item) => item.type === "file");
+
+  const handleRefresh = useCallback(() => {
+    setFlashing(true);
+    onRefresh?.();
+    setTimeout(() => setFlashing(false), 150);
+  }, [onRefresh]);
 
   function handleFolderClick(folderName: string) {
     const newPath =
@@ -41,13 +48,21 @@ export function FileExplorer({
   return (
     <div
       className={cn(
-        "w-full overflow-hidden",
+        "relative w-full overflow-hidden",
         "rounded-lg border border-gray-200 dark:border-gray-700",
         "bg-paper-light dark:bg-paper-dark",
         className,
       )}
       {...props}
     >
+      {/* 깜빡임 오버레이 (새로고침 장식 효과) */}
+      {flashing && (
+        <div
+          className="absolute inset-0 z-10 bg-white dark:bg-black pointer-events-none animate-pulse"
+          aria-hidden="true"
+        />
+      )}
+
       {/* 툴바 */}
       {showToolbar && (
         <FileExplorerToolbar
@@ -58,7 +73,7 @@ export function FileExplorer({
           showGoUp={showGoUp}
           showRefresh={showRefresh}
           showViewSettings={showViewSettings}
-          onRefresh={onRefresh}
+          onRefresh={handleRefresh}
           onViewSettings={() => setSettingsOpen(true)}
           size={size}
         />

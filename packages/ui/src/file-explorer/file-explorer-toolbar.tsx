@@ -57,7 +57,13 @@ export function FileExplorerToolbar({
         </ToolbarButton>
 
         {showRefresh && (
-          <ToolbarButton onClick={onRefresh} label="새로고침">
+          <ToolbarButton
+            onClick={onRefresh}
+            label="새로고침"
+            className="hidden sm:flex"
+            aria-label="새로고침 (장식용 기능)"
+            aria-roledescription="장식용 버튼"
+          >
             <IoRefresh />
           </ToolbarButton>
         )}
@@ -86,13 +92,16 @@ function ToolbarButton({
   onClick,
   label,
   disabled = false,
+  className,
   children,
+  ...rest
 }: {
   onClick?: () => void;
   label: string;
   disabled?: boolean;
+  className?: string;
   children: React.ReactNode;
-}) {
+} & React.AriaAttributes) {
   return (
     <button
       type="button"
@@ -106,7 +115,9 @@ function ToolbarButton({
         "transition-colors cursor-pointer",
         "disabled:opacity-40 disabled:cursor-not-allowed",
         "text-sm font-sans",
+        className,
       )}
+      {...rest}
     >
       <span className="text-base">{children}</span>
       <span>{label}</span>
