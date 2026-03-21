@@ -120,7 +120,7 @@ export const mdxComponents: Record<string, unknown> = {
   }: ComponentPropsWithoutRef<"blockquote">) => (
     <blockquote
       className={cn(
-        "my-6 border-l-4 border-gray-300 pl-4 italic text-gray-600 dark:border-gray-700 dark:text-gray-400",
+        "my-6 border-l-4 border-gray-300 pl-4 text-gray-600 dark:border-gray-700 dark:text-gray-400",
         className,
       )}
       {...props}
