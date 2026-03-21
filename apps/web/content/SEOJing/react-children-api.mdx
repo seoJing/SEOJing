@@ -382,6 +382,69 @@ function Tooltip({
   가지 조건이 맞아떨어져서 `React.Children`이 최선의 선택이 되었다.
 </Paragraph>
 
+<Subtitle level={2}>트러블슈팅: cloneElement가 DOM에 prop을 흘린다</Subtitle>
+
+<Paragraph>
+  구현을 끝내고 브라우저를 열었더니 콘솔에 경고가 떴다.
+</Paragraph>
+
+```
+React does not recognize the `stepIndex` prop on a DOM element.
+If you intentionally want it to appear in the DOM as a custom attribute,
+spell it as lowercase `stepindex` instead.
+```
+
+<Paragraph>
+  원인은 `cloneElement`로 주입한 prop이 `ArticleQuizItem` 내부에서 `{...props}`로 DOM까지 전달된 것이었다.
+</Paragraph>
+
+```tsx
+// ArticleQuiz — cloneElement로 내부 prop 주입
+React.cloneElement(items[currentStep] as React.ReactElement, {
+  stepIndex: currentStep,  // ← 이 prop이 문제
+  currentStep,
+  onResult: handleResult,
+  onNext: handleNext,
+});
+
+// ArticleQuizItem — ...props가 DOM div에 그대로 전달됨
+function ArticleQuizItem({ mode, question, onResult, onNext, ...props }) {
+  return <div {...props}>...</div>;
+  //          ^^^^^^^^ stepIndex, currentStep이 DOM attribute로 들어감
+}
+```
+
+<Paragraph>
+  `cloneElement`는 기존 props에 새 props를 **merge**한다. `ArticleQuizItem`에서 명시적으로 destructure하지 않은 prop은 `...props`에 포함되고, 이것이 `<div>`까지 흘러간다. React는 DOM element에 `stepIndex` 같은 비표준 attribute가 들어오면 경고를 띄운다.
+</Paragraph>
+
+<Paragraph>
+  해결은 간단하다. **내부 전용 prop을 destructure에서 빼내면 된다.**
+</Paragraph>
+
+```tsx
+function ArticleQuizItem({
+  mode,
+  question,
+  choices,
+  answer,
+  explanation,
+  onResult,
+  onNext,
+  className,
+  stepIndex: _stepIndex,     // destructure만 하고 사용하지 않음
+  currentStep: _currentStep, // DOM으로 전달되는 것을 방지
+  ...props
+}: ArticleQuizItemProps) {
+  return <div className={cn("flex flex-col gap-4", className)} {...props}>...</div>;
+  //          이제 stepIndex, currentStep은 ...props에 포함되지 않음
+}
+```
+
+<Paragraph>
+  이건 `cloneElement` 패턴에서 흔히 발생하는 문제다. 부모가 주입하는 prop과 DOM에 전달되는 prop의 경계가 암묵적이기 때문이다. 이 점이 앞서 언급한 **"cloneElement의 암묵성"** 한계와 직결된다. 주입되는 prop이 추가될 때마다 자식 컴포넌트의 destructure 목록도 함께 업데이트해야 한다는 점을 기억해둬야 한다.
+</Paragraph>
+
 <Subtitle level={2}>참고 문헌</Subtitle>
 
 - <Anchor external="https://react.dev/reference/react/Children">
