@@ -16,6 +16,8 @@ export interface ModalProps extends Omit<
   size?: ModalSize;
   /** 백드롭 클릭으로 닫기 허용 */
   closeOnBackdrop?: boolean;
+  /** 기본 닫기 버튼 숨김 (커스텀 닫기 UI 사용 시) */
+  hideCloseButton?: boolean;
   /** 자식 요소 */
   children: ReactNode;
 }

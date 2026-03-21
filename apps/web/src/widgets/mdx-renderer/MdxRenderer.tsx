@@ -7,6 +7,7 @@ import {
   Anchor,
   ArticleQuiz,
   ArticleQuizItem,
+  CodeBlock,
 } from "@app/ui";
 import { cn } from "@app/utils";
 import type { ComponentPropsWithoutRef } from "react";
@@ -79,24 +80,9 @@ export const mdxComponents: Record<string, unknown> = {
         findLang(codeProps.className) ?? findLang(preClassName as string);
 
       return (
-        <div className="my-8">
-          {language && (
-            <div className="rounded-t-lg bg-gray-800 px-4 py-2 dark:bg-gray-900">
-              <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
-                {language}
-              </span>
-            </div>
-          )}
-          <pre
-            className={cn(
-              "overflow-x-auto bg-gray-900 p-4 text-sm leading-6 text-gray-100 dark:bg-gray-950",
-              language ? "rounded-b-lg" : "rounded-lg",
-            )}
-            {...props}
-          >
-            <code className="font-mono">{codeProps.children}</code>
-          </pre>
-        </div>
+        <CodeBlock language={language} {...props}>
+          {codeProps.children}
+        </CodeBlock>
       );
     }
     return (

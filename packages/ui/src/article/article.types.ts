@@ -32,10 +32,12 @@ export type ParagraphProps = HTMLAttributes<HTMLDivElement>;
 
 /** CodeBlock — 코드 블록 */
 export interface CodeBlockProps extends HTMLAttributes<HTMLPreElement> {
-  /** 코드 문자열 */
-  code: string;
+  /** 코드 HTML 문자열 (shiki 등 하이라이터 출력). children과 택일 */
+  code?: string;
   /** 언어 표시 (우측 상단 라벨) */
   language?: string;
+  /** 클립보드 복사용 순수 텍스트 (없으면 자동 추출) */
+  plainText?: string;
 }
 
 /** ArticleTable — 가로 스크롤 지원 테이블 래퍼 */

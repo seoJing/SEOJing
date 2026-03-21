@@ -14,6 +14,7 @@ export function Modal({
   title,
   size = "md",
   closeOnBackdrop = true,
+  hideCloseButton = false,
   children,
   className,
   ...props
@@ -79,7 +80,7 @@ export function Modal({
         )}
 
         {/* Header 없을 때 닫기 버튼 */}
-        {title == null && (
+        {title == null && !hideCloseButton && (
           <div className="absolute right-3 top-3">
             <IconButton
               variant="ghost"

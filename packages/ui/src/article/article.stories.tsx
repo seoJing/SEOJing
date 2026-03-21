@@ -171,6 +171,63 @@ export const FullArticle: HeaderStory = {
   ),
 };
 
+/* ─────────────────────────────────────────────
+   CodeBlock 기능 데모
+   ───────────────────────────────────────────── */
+
+/** 복사 버튼 + 기본 코드 블록 */
+export const CodeBlockWithCopy: HeaderStory = {
+  render: () => (
+    <Paper animated={false} size="md" padding="lg">
+      <CodeBlock
+        language="typescript"
+        code={`function greet(name: string): string {
+  return \`Hello, \${name}!\`;
+}
+
+const result = greet("World");
+console.log(result);`}
+      />
+    </Paper>
+  ),
+};
+
+/** 코드 가리기 (hidden sections) 데모 */
+export const CodeBlockWithHidden: HeaderStory = {
+  render: () => (
+    <Paper animated={false} size="md" padding="lg">
+      <Subtitle level={2}>코드 가리기 데모</Subtitle>
+      <Paragraph>
+        아래 코드에서 일부가 가려져 있습니다. 클릭하면 숨겨진 코드를 확인할 수
+        있습니다.
+      </Paragraph>
+      <CodeBlock
+        language="typescript"
+        code={`import { useState } from "react";
+
+function Counter() {
+// @hidden-start
+  const [count, setCount] = useState(0);
+
+  const increment = () => setCount((prev) => prev + 1);
+  const decrement = () => setCount((prev) => prev - 1);
+// @hidden-end
+
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Count: {count}&lt;/p&gt;
+// @hidden-start
+      &lt;button onClick={increment}&gt;+&lt;/button&gt;
+      &lt;button onClick={decrement}&gt;-&lt;/button&gt;
+// @hidden-end
+    &lt;/div&gt;
+  );
+}`}
+      />
+    </Paper>
+  ),
+};
+
 /** 다크 모드 전체 아티클 */
 export const DarkModeArticle: HeaderStory = {
   decorators: [
