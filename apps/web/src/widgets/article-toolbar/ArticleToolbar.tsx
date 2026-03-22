@@ -3,8 +3,13 @@
 import { useEffect, useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconButton } from "@app/ui";
-import { IoArrowBack, IoChatbubbleOutline } from "react-icons/io5";
+import {
+  IoArrowBack,
+  IoChatbubbleOutline,
+  IoEaselOutline,
+} from "react-icons/io5";
 import { CommentModal } from "@/widgets/comment";
+import { PresentationView } from "@/widgets/presentation";
 import {
   markAsRead,
   updateReadProgress,
@@ -27,11 +32,17 @@ interface ArticleToolbarProps {
 export function ArticleToolbar({ slug, title }: ArticleToolbarProps) {
   const router = useRouter();
   const [commentOpen, setCommentOpen] = useState(false);
+  const [presentationOpen, setPresentationOpen] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const articleSectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     markAsRead(`/blog/${slug}`, title);
   }, [slug, title]);
+
+  useEffect(() => {
+    articleSectionRef.current = toolbarRef.current?.closest("section") ?? null;
+  }, []);
 
   // 스크롤 진행률 추적
   useEffect(() => {
@@ -76,6 +87,14 @@ export function ArticleToolbar({ slug, title }: ArticleToolbarProps) {
           <IconButton
             variant="ghost"
             size="sm"
+            aria-label="프레젠테이션"
+            onClick={() => setPresentationOpen(true)}
+          >
+            <IoEaselOutline className="size-5" />
+          </IconButton>
+          <IconButton
+            variant="ghost"
+            size="sm"
             aria-label="댓글"
             onClick={() => setCommentOpen(true)}
           >
@@ -97,6 +116,12 @@ export function ArticleToolbar({ slug, title }: ArticleToolbarProps) {
         slug={slug}
         onComment={handleComment}
       />
+      {presentationOpen && (
+        <PresentationView
+          articleRef={articleSectionRef}
+          onClose={() => setPresentationOpen(false)}
+        />
+      )}
     </>
   );
 }

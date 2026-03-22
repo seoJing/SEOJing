@@ -20,8 +20,6 @@ import { cn } from "@app/utils";
 import { IconButton } from "../icon-button";
 import type { CodeBlockProps } from "./article.types";
 
-/* ── 유틸 ─────────────────────────────────────────── */
-
 /** HTML 태그 제거 + 엔티티 디코딩 → 순수 텍스트 */
 function stripHtmlTags(html: string): string {
   return html
@@ -74,8 +72,6 @@ function processHiddenSections(html: string): CodeSegment[] {
   flush(inHidden ? "hidden" : "visible");
   return segments;
 }
-
-/* ── 전체보기 오버레이 ──────────────────────────────── */
 
 const LONG_PRESS_MS = 1500;
 
@@ -142,12 +138,10 @@ function FullscreenView({
           transform: "translate(-50%, -50%) rotate(90deg)",
         }}
       >
-        {/* 코드 영역 */}
         <pre className="flex-1 overflow-auto bg-gray-900 p-4 text-sm leading-6 text-gray-100">
           {children}
         </pre>
 
-        {/* 하단 바 */}
         <div className="flex shrink-0 items-center justify-between bg-gray-800 px-4 py-2">
           <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
             {language}
@@ -162,8 +156,6 @@ function FullscreenView({
     </div>
   );
 }
-
-/* ── 컴포넌트 ──────────────────────────────────────── */
 
 /**
  * 코드 블록을 렌더링한다.
@@ -222,10 +214,7 @@ export function CodeBlock({
     });
   }, []);
 
-  /* ── 코드 본문 렌더링 ──────────────────────────── */
-
   const renderCodeBody = (): ReactNode => {
-    // children 모드 (MDX)
     if (!isHtmlMode) {
       return (
         <code ref={codeRef} className="font-mono">
@@ -234,7 +223,6 @@ export function CodeBlock({
       );
     }
 
-    // HTML 문자열 모드 - hidden 섹션 없음
     if (!hasHidden) {
       return (
         <code
@@ -245,7 +233,6 @@ export function CodeBlock({
       );
     }
 
-    // HTML 문자열 모드 - hidden 섹션 있음
     return (
       <code ref={codeRef} className="font-mono">
         {segments.map((segment, i) => {
@@ -283,8 +270,6 @@ export function CodeBlock({
     );
   };
 
-  /* ── 전체보기 모달 내부 코드 렌더링 ────────────── */
-
   const renderFullscreenCode = (): ReactNode => {
     if (!isHtmlMode) {
       return <code className="font-mono">{children}</code>;
@@ -296,7 +281,6 @@ export function CodeBlock({
 
   return (
     <div className="my-8">
-      {/* ── 헤더 바 ──────────────────────────────── */}
       {language && (
         <div className="flex items-center rounded-t-lg bg-gray-800 px-4 py-2 dark:bg-gray-900">
           <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
@@ -304,7 +288,6 @@ export function CodeBlock({
           </span>
 
           <div className="ml-auto flex items-center gap-1">
-            {/* 전체보기 - 모바일 전용 */}
             <IconButton
               variant="ghost"
               size="sm"
@@ -315,7 +298,6 @@ export function CodeBlock({
               <IoExpand className="size-3.5" />
             </IconButton>
 
-            {/* 코드 복사 */}
             <IconButton
               variant="ghost"
               size="sm"
@@ -333,7 +315,6 @@ export function CodeBlock({
         </div>
       )}
 
-      {/* ── 코드 본문 ────────────────────────────── */}
       <pre
         className={cn(
           "overflow-x-auto bg-gray-900 p-4 text-sm leading-6 text-gray-100 dark:bg-gray-950",
@@ -345,7 +326,6 @@ export function CodeBlock({
         {renderCodeBody()}
       </pre>
 
-      {/* ── 전체보기 (모바일) ────────────────── */}
       {fullscreenOpen &&
         createPortal(
           <FullscreenView
