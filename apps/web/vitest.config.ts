@@ -20,6 +20,7 @@ export default defineConfig({
         "src/**/*.spec.ts",
         "src/**/index.ts",
         "src/app/**",
+        "src/generated/**",
         "src/shared/config/**",
         "src/widgets/header/header.constants.ts",
         "src/shared/lib/cn.ts",
