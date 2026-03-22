@@ -1,0 +1,46 @@
+---
+title: "Day 8 - 아티클 퀴즈와 스터디 자료"
+date: "2026-03-21"
+tags:
+  - DevLog
+  - SEO Jing
+description: SEO Jing 개발 여덟째 날. 아티클 퀴즈 디자인시스템 구현과 스터디 대면 자료 작성.
+---
+
+<Subtitle level={2}>아티클 퀴즈 디자인시스템</Subtitle>
+
+<Paragraph>
+  스터디 자료에 퀴즈를 넣고 싶어서 `ArticleQuiz` 디자인시스템 컴포넌트를
+  구현했다. 객관식(`multiple`)과 서술형(`description`) 두 가지 모드를 지원한다.
+</Paragraph>
+
+<Paragraph>
+  객관식은 선택지를 클릭하면 정답/오답 피드백이 나오고, 서술형은 토글로 정답을
+  확인할 수 있다. `MdxRenderer`에 매핑해서 MDX에서 바로 쓸 수 있게 했다.
+</Paragraph>
+
+<Paragraph>
+  구현하면서 `ArticleImage` 컴포넌트도 같이 수정했다. 이미지 사이즈 옵션을
+  정리하고, 레이아웃 관련 코드를 깔끔하게 정리.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>React Children API 포스트</Subtitle>
+
+<Paragraph>
+  퀴즈 컴포넌트를 만들면서 `React.Children` API를 깊게 파게 됐다. 그래서 아예
+  블로그 포스트로 정리했다.
+</Paragraph>
+
+<Anchor external="/blog/SEOJing/react-children-api">React Children API</Anchor>
+
+---
+
+<Subtitle level={2}>스터디 대면 자료</Subtitle>
+
+<Paragraph>
+  씨랩 스터디 1주차 대면 자료와 HTML/CSS 기초 자료를 작성했다. 이미지도
+  정리하고, 포스트 메타데이터도 수정. 이제 모레(03.23)가 첫 대면인데, 보여줄
+  컨텐츠가 꽤 됐다.
+</Paragraph>

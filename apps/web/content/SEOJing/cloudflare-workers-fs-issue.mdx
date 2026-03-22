@@ -19,7 +19,7 @@ description: 배포 후 블로그 포스트가 404를 반환하던 문제부터,
 
 <Paragraph>
   그런데 개별 포스트를 클릭하면 아무것도 안 뜬다. 브라우저 Network 탭을 열어보니
-  `.rsc` 요청이 **404 Not Found**를 반환하고 있었다.
+  `.rsc` 요청이 <strong>404 Not Found</strong>를 반환하고 있었다.
 </Paragraph>
 
 ```
@@ -53,7 +53,7 @@ export function getContentBySlug(contentDir: string, slug: string[]) {
 Node.js의 `fs.readFileSync`로 MDX 파일을 직접 읽고 있다.
 로컬 `vinext dev`에서는 Node.js 런타임이니까 당연히 동작한다.
 
-하지만 **Cloudflare Workers는 Node.js가 아니다.**
+하지만 <strong>Cloudflare Workers는 Node.js가 아니다.</strong>
 V8 isolate 기반의 경량 런타임이라 `fs` 모듈이 존재하지 않는다.
 `nodejs_compat` 플래그를 켜면 일부 Node.js API를 폴리필해주긴 하지만,
 파일시스템 접근은 지원하지 않는다.
@@ -152,7 +152,8 @@ EvalError: Code generation from strings disallowed for this context
 
 <Paragraph>두 가지를 동시에 진행했다.</Paragraph>
 
-**1. 모듈 분리** — `content.ts`(fs + gray-matter 의존)에서 순수 함수와 타입을 별도 파일로 분리했다.
+<strong>1. 모듈 분리</strong> — `content.ts`(fs + gray-matter 의존)에서 순수
+함수와 타입을 별도 파일로 분리했다.
 
 - `content-types.ts` — 타입(`ContentFrontmatter`, `ContentNode`, `ContentTree`)과 순수 함수(`getItemsForPath`)
 - `reading-time.ts` — `calculateReadingTime`
@@ -164,7 +165,9 @@ EvalError: Code generation from strings disallowed for this context
   들어오지 않는다.
 </Paragraph>
 
-**2. gray-matter 제거** — frontmatter 파싱을 직접 구현했다. 어차피 frontmatter는 `---`로 구분된 간단한 key-value 블록이다. 사용하는 필드가 `title`, `date`, `tags`, `description` 네 개뿐이니 eval 없는 자체 파서로 충분하다.
+<strong>2. gray-matter 제거</strong> — frontmatter 파싱을 직접 구현했다. 어차피
+frontmatter는 `---`로 구분된 간단한 key-value 블록이다. 사용하는 필드가 `title`,
+`date`, `tags`, `description` 네 개뿐이니 eval 없는 자체 파서로 충분하다.
 
 ```ts
 // parseFrontmatter — eval 없는 자체 구현
@@ -206,10 +209,10 @@ const hydrateFn = Reflect.construct(Function, keys.concat(`${compiledSource}`));
 ```
 
 <Paragraph>
-MDX 소스 문자열을 받아서 `@mdx-js/mdx`로 컴파일한 뒤, **`new Function()`으로
-런타임에 실행**한다. 이것도 본질적으로 `eval`이니 Workers에서 차단된다.
+MDX 소스 문자열을 받아서 `@mdx-js/mdx`로 컴파일한 뒤, <strong>`new Function()`으로
+런타임에 실행</strong>한다. 이것도 본질적으로 `eval`이니 Workers에서 차단된다.
 
-여기서 근본적인 질문이 생겼다. **MDX를 쓰면서 eval을 안 쓸 수 있는가?**
+여기서 근본적인 질문이 생겼다. <strong>MDX를 쓰면서 eval을 안 쓸 수 있는가?</strong>
 
 MDX의 본질은 마크다운 안에 JSX(React 컴포넌트)를 쓰는 것이다. 이걸
 렌더링하려면 마크다운+JSX → 실행 가능한 JavaScript로 변환해야 한다.
@@ -218,12 +221,14 @@ MDX의 본질은 마크다운 안에 JSX(React 컴포넌트)를 쓰는 것이다
 
 </Paragraph>
 
-- **런타임 변환** — MDX 소스 문자열 → `new Function()` → 실행. `next-mdx-remote`가 하는 방식. eval 필수.
-- **빌드 타임 변환** — MDX → `.jsx` 파일 → Vite가 일반 모듈로 번들. eval 불필요.
+- <strong>런타임 변환</strong> — MDX 소스 문자열 → `new Function()` → 실행.
+  `next-mdx-remote`가 하는 방식. eval 필수.
+- <strong>빌드 타임 변환</strong> — MDX → `.jsx` 파일 → Vite가 일반 모듈로 번들.
+  eval 불필요.
 
 <Paragraph>
-즉, **MDX를 쓰면서 eval을 안 쓰려면 빌드 타임에 JSX로 변환하는 것이 유일한
-방법**이다.
+즉, <strong>MDX를 쓰면서 eval을 안 쓰려면 빌드 타임에 JSX로 변환하는 것이 유일한
+방법</strong>이다.
 
 </Paragraph>
 
@@ -292,7 +297,7 @@ const MDXContent = content.compiled.default;
 <Subtitle level={2}>핵심 교훈</Subtitle>
 
 <Paragraph>
-  이 문제의 본질은 **개발 환경과 배포 환경의 런타임 차이**다.
+  이 문제의 본질은 <strong>개발 환경과 배포 환경의 런타임 차이</strong>다.
 </Paragraph>
 
 - 로컬 `vinext dev` → Node.js → `fs` 사용 가능, `eval` 사용 가능
@@ -300,9 +305,9 @@ const MDXContent = content.compiled.default;
 
 <Paragraph>Edge 런타임에 배포할 때는 두 가지를 반드시 확인해야 한다.</Paragraph>
 
-1. **Node.js 전용 API** (`fs`, `path`, `child_process` 등)에 의존하는 코드가
-   런타임 번들에 포함되는가?
-2. **런타임 코드 생성** (`eval`, `new Function`,
+1. <strong>Node.js 전용 API</strong> (`fs`, `path`, `child_process` 등)에
+   의존하는 코드가 런타임 번들에 포함되는가?
+2. <strong>런타임 코드 생성</strong> (`eval`, `new Function`,
    `Reflect.construct(Function, ...)`)을 사용하는 라이브러리가 있는가?
 
 <Paragraph>

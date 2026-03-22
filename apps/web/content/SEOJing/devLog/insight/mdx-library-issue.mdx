@@ -1,0 +1,104 @@
+---
+title: "MDX 관련 이슈 노트"
+date: "2026-03-15"
+tags:
+  - DevLog
+  - SEO Jing
+  - Insight
+description: 블로그 디테일 페이지에서 MDX를 렌더링하기 위해 검토한 라이브러리들과 최종 선택 과정.
+---
+
+<Subtitle level={2}>배경</Subtitle>
+
+<Paragraph>
+  블로그 디테일 페이지에서 `content/` 디렉토리의 `.mdx` 파일을 읽어 React
+  컴포넌트로 렌더링해야 했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>검토한 라이브러리들</Subtitle>
+
+<Subtitle level={3}>1. @mdx-js/mdx — MDX 공식 컴파일러</Subtitle>
+
+<Paragraph>
+  MDX를 JavaScript로 컴파일하는 핵심 라이브러리. `compile()`로 MDX 문자열을 JS
+  코드로 변환하고, `run()`이나 `evaluate()`로 실행하여 React 컴포넌트를 얻는다.
+  프레임워크 비의존적이지만, `run()` 내부에서 `new Function()` (사실상 `eval`)을
+  사용하여 컴파일된 JS를 실행한다. 콘텐츠가 본인이 작성한 로컬 파일이면 실질적
+  위험은 낮지만, 런타임 코드 실행이라는 본질적 보안 우려가 있다.
+</Paragraph>
+
+<Subtitle level={3}>2. @mdx-js/rollup — Vite/Rollup 빌드타임 플러그인</Subtitle>
+
+<Paragraph>
+  MDX 파일을 빌드타임에 JS 모듈로 컴파일하는 Rollup 플러그인. vinext가 이
+  플러그인을 자동 감지하여 주입하는 기능을 내장하고 있었다. `import()`로 MDX
+  파일을 가져오면 빌드 시 컴파일되므로 런타임 eval이 없어 보안상 이상적이었지만,{" "}
+  <strong>
+    동적 라우트(`[...slug]`)에서 `import()`의 경로가 빌드타임에 정적 분석이
+    불가능
+  </strong>
+  하여 동작하지 않았다. Vite의 동적 import는 glob 패턴이 빌드 시 확정 가능해야
+  하는데, catch-all 라우트의 slug는 런타임에만 결정되기 때문이다.
+</Paragraph>
+
+<Subtitle level={3}>
+  3. next-mdx-remote — HashiCorp의 원격 MDX 렌더링 라이브러리
+</Subtitle>
+
+<Paragraph>
+  Next.js App Router의 React Server Component(RSC) 환경에서 MDX를 렌더링하기
+  위한 라이브러리. 내부적으로 `@mdx-js/mdx`의 `compile()`을 사용하지만, 이를
+  서버 컴포넌트 친화적인 API로 감싸 제공한다.
+</Paragraph>
+
+<Subtitle level={3}>4. Contentlayer / Velite — 빌드타임 콘텐츠 레이어</Subtitle>
+
+<Paragraph>
+  설정 파일을 작성하면 빌드 시 MDX를 자동으로 타입 안전한 JSON/JS로 변환해주는
+  도구들. DX는 좋지만 설정이 무겁고, Next.js 외 환경(vinext)에서 호환성 이슈가
+  있어 제외했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>최종 선택: next-mdx-remote v6.0.0</Subtitle>
+
+<Paragraph>
+<strong>선택 이유:</strong>
+
+- <strong>기존 패턴과의 일관성</strong>: 프로젝트에서 이미 `fs.readFileSync` +
+  `gray-matter`로 MDX 파일을 읽고 frontmatter를 파싱하는 패턴이 있었다.
+  `next-mdx-remote`는 이 흐름에 자연스럽게 붙는다.
+- <strong>보안 개선 (v6.0.0)</strong>: 2026년 2월 CVE-2026-0969가 공개되었다.
+  v4.3.0~v5.0.0에서 MDX 내 JS 표현식이 SSR 중 서버 권한으로 실행되는 RCE
+  취약점이었다. v6.0.0에서 `blockJS: true`가 기본값으로 설정되어 JS 표현식
+  실행이 차단된다.
+- <strong>vinext 호환성</strong>: vinext는 Next.js API surface를 Vite 위에서
+  재구현한 프레임워크다. `next-mdx-remote/rsc`의 `MDXRemote`는 내부적으로
+  `@mdx-js/mdx`의 `compile`만 사용하고 Next.js 전용 API에 의존하지 않아 vinext
+  RSC 환경에서 정상 동작했다.
+- <strong>서버 전용 실행</strong>: `MDXRemote`는 async 서버 컴포넌트이므로 컴파일된 코드가 클라이언트에 노출되지 않는다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>구현 과정에서 마주친 문제들</Subtitle>
+
+<Subtitle level={3}>1. [...slug] 라우트 404 문제</Subtitle>
+
+<Paragraph>
+  vinext에서 catch-all 라우트를 생성한 후 dev 서버가 404를 반환했다. 원인은
+  vinext의 라우트 캐싱이었고, 서버를 완전히 재시작하면 해결되었다. HMR은 새
+  디렉토리 추가를 감지하지 못한다.
+</Paragraph>
+
+<Subtitle level={3}>2. import.meta.dirname 경로 계산 오류</Subtitle>
+
+<Paragraph>
+  처음에 `../../../../content`로 4단계를 올라갔는데, 실제 파일 위치가
+  `apps/web/src/app/(main)/blog/[...slug]/page.tsx`이므로 `apps/web/content`에
+  도달하려면 `../../../../../content`로 5단계를 올라가야 했다. `(main)` 라우트
+  그룹 디렉토리를 빠뜨린 것이 원인이었다.
+</Paragraph>

@@ -1,0 +1,164 @@
+---
+title: "Storybook으로 디자인 시스템 테스팅하기"
+date: "2026-03-13"
+tags:
+  - DevLog
+  - SEO Jing
+  - Insight
+description: Storybook의 사용법과 디자인 시스템 개발에서의 장점을 정리했다.
+---
+
+<Subtitle level={2}>Storybook이란</Subtitle>
+
+<Paragraph>
+  UI 컴포넌트를 <strong>앱과 분리된 환경</strong>에서 독립적으로
+  개발·테스트·문서화하는 도구다. 이 프로젝트에서는 `packages/ui/.storybook/`에
+  설정되어 있고, `packages/ui/src/**/*.stories.tsx` 파일들이 각 컴포넌트의
+  스토리다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>기본 사용법</Subtitle>
+
+<Paragraph>스토리 파일은 크게 세 부분으로 구성된다.</Paragraph>
+
+```tsx
+// 1. Meta — 컴포넌트 등록 + 컨트롤 설정
+const meta: Meta<typeof Paper> = {
+  title: "Design System/Paper", // 좌측 사이드바 경로
+  component: Paper, // 대상 컴포넌트
+  argTypes: {
+    // Controls 패널에서 조작할 props
+    variant: {
+      control: "select",
+      options: ["default", "outlined", "elevated"],
+    },
+    padding: { control: "select", options: ["none", "sm", "md", "lg", "xl"] },
+  },
+};
+export default meta;
+
+// 2. Story — 컴포넌트의 특정 상태를 정의
+export const Default: Story = {
+  args: { children: <p>내용</p> },
+};
+
+// 3. 복합 스토리 — render 함수로 여러 컴포넌트 조합
+export const AllSizes: Story = {
+  render: () => (
+    <div className="flex flex-col gap-4">
+      {["sm", "md", "lg"].map((size) => (
+        <Paper key={size} size={size}>
+          ...
+        </Paper>
+      ))}
+    </div>
+  ),
+};
+```
+
+---
+
+<Subtitle level={2}>핵심 개념</Subtitle>
+
+| 개념       | 설명                                                              |
+| :--------- | :---------------------------------------------------------------- |
+| Story      | 컴포넌트의 특정 상태 하나. `Default`, `DarkMode`, `ErrorState` 등 |
+| Args       | Story에 전달하는 props. Controls 패널에서 실시간 조작 가능        |
+| Decorators | Story를 감싸는 래퍼. 다크 모드 테스트 시 래핑 등                  |
+| ArgTypes   | Controls 패널의 UI 종류 지정 (`select`, `boolean`, `range` 등)    |
+
+---
+
+<Subtitle level={2}>장점</Subtitle>
+
+<Subtitle level={3}>1. 앱 없이 컴포넌트 개발 가능</Subtitle>
+
+<Paragraph>
+  Next.js 앱을 띄우지 않아도 컴포넌트만 독립적으로 개발할 수 있다. 라우팅, 인증,
+  API 연결 같은 앱 레벨 의존성 없이 순수하게 UI만 작업한다.
+</Paragraph>
+
+<Subtitle level={3}>2. 모든 상태를 한눈에 확인</Subtitle>
+
+<Paragraph>
+  하나의 컴포넌트가 가질 수 있는 상태를 전부 나열해둘 수 있다. 실제 앱에서는
+  에러 상태나 엣지 케이스를 재현하기 어렵지만, Storybook에서는 바로 확인할 수
+  있다.
+</Paragraph>
+
+<Subtitle level={3}>3. Controls 패널로 실시간 조작</Subtitle>
+
+<Paragraph>
+  `argTypes`에 등록한 props를 브라우저에서 드롭다운·슬라이더·체크박스로 바꿔가며
+  테스트한다. 코드를 수정하고 새로고침할 필요 없이 즉시 확인 가능.
+</Paragraph>
+
+<Subtitle level={3}>4. 디자이너·기획자와의 소통 도구</Subtitle>
+
+<Paragraph>
+  Storybook을 배포하면(Chromatic, Vercel 등) 개발자가 아닌 사람도 브라우저에서
+  컴포넌트를 직접 보고 피드백할 수 있다.
+</Paragraph>
+
+<Subtitle level={3}>5. 시각적 회귀 테스트</Subtitle>
+
+<Paragraph>
+  컴포넌트를 수정했을 때 기존 스토리들의 스크린샷을 비교해서 의도치 않은 UI
+  변경을 잡아낸다.
+</Paragraph>
+
+<Subtitle level={3}>6. 문서화가 자동으로 됨</Subtitle>
+
+<Paragraph>
+  TypeScript 타입에서 props 테이블이 자동 생성되고, JSDoc 주석이 설명으로
+  표시된다. 별도 문서를 작성하지 않아도 인터페이스가 곧 문서.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>이 프로젝트의 Storybook 설정</Subtitle>
+
+```ts
+const config: StorybookConfig = {
+  stories: ["../src/**/*.stories.@(ts|tsx)"],
+  framework: "@storybook/react-vite",
+  viteFinal: async (config) => {
+    const { default: tailwindcss } = await import("@tailwindcss/vite");
+    config.plugins = [...(config.plugins || []), tailwindcss()];
+    return config;
+  },
+};
+```
+
+<Paragraph>
+  - <strong>Vite 기반</strong>: webpack보다 빠른 HMR과 빌드 -{" "}
+  <strong>Tailwind CSS v4 플러그인 통합</strong>: Storybook 안에서도 Tailwind
+  유틸리티 클래스가 동작 - `storybook.css`에 앱과 동일한 폰트·색상·애니메이션
+  토큰을 복제해서 앱과 똑같은 환경을 재현
+</Paragraph>
+
+---
+
+<Subtitle level={2}>언제 Storybook을 쓰면 좋은가</Subtitle>
+
+| 상황                                         | 필요도 |
+| :------------------------------------------- | :----- |
+| 디자인 시스템 / 공통 컴포넌트 라이브러리     | 필수   |
+| 복잡한 상태를 가진 컴포넌트 (폼, 모달, 에러) | 높음   |
+| 여러 팀이 같은 컴포넌트를 쓰는 경우          | 높음   |
+| 페이지 레벨의 비즈니스 로직                  | 낮음   |
+| 1회성 프로토타입                             | 불필요 |
+
+---
+
+<Subtitle level={2}>정리</Subtitle>
+
+<Paragraph>
+  Storybook의 가장 큰 가치는{" "}
+  <strong>컴포넌트를 앱의 복잡성으로부터 격리</strong>하는 것이다. Paper
+  컴포넌트의 애니메이션을 수차례 바꾸는 작업을 할 때, Next.js 앱 전체를 띄우지
+  않고 Storybook에서 해당 컴포넌트만 보면서 빠르게 반복할 수 있었던 것이 그
+  예다.
+</Paragraph>

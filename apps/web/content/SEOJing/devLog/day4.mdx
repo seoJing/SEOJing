@@ -1,0 +1,45 @@
+---
+title: "Day 4 - 배포와 CI/CD"
+date: "2026-03-16"
+tags:
+  - DevLog
+  - SEO Jing
+description: SEO Jing 개발 넷째 날. lint, codecov, Cloudflare 배포, fs 런타임 이슈.
+---
+
+<Subtitle level={2}>Lint 이슈</Subtitle>
+
+<Paragraph>
+  이제 푸쉬 하고 배포를 할려고 한다. 문제는 자꾸 lint에 문제가 있는 건데, `pnpm
+  lint:fix`나 format을 해도 문제가 해결되지 않아서, 그냥 콘솔보고 손수 고쳐줌.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>Codecov 설정</Subtitle>
+
+<Paragraph>
+그리곤 codecov에 연결했는데, 컴포넌트에 대한 테스팅을 안 꺼둬서 커버 퍼센트가 8~9프로 나오는 문제를 발견. 로직이 복잡한 컴포넌트 빼곤 무시하고, 일부는 수동으로 테스팅을 포함시킴.
+
+우여곡절 끝에 codecov 설정 완료.
+
+</Paragraph>
+
+---
+
+<Subtitle level={2}>배포 이슈</Subtitle>
+
+<Paragraph>
+배포하는데 온갖 에러가 다 나고 있다. 이건 나중에 vinext, 클플로 배포하는 법을 포스팅하면 좋을듯.
+
+배포하면서 발생한 가장 큰 이슈가, 런타임에서 Node의 `fs`가 실행하지 않는다는 점이다. 이것 때문에 파일을 제대로 못 읽어 404 에러가 나기 시작함.
+
+처음엔 그저 실행 시점의 이슈인줄 알고 우회를 해서 배포를 했는데, 여전히 파일을 못 읽어 404 에러 발생. 그래서 파일 트리처럼 JSON으로 번들에 포함시켜버리는 걸로 변경했다.
+
+</Paragraph>
+
+<Anchor external="/blog/SEOJing/cloudflare-workers-fs-issue">
+  Cloudflare Workers fs 이슈
+</Anchor>
+
+<Paragraph>여기서 부턴 블로그를 작성하면서 이슈를 정리했음.</Paragraph>

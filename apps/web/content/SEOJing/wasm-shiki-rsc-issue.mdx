@@ -31,7 +31,8 @@ instance.exports.someFunction();
 ```
 
 <Paragraph>
-  문제는 **모든 런타임이 WebAssembly를 허용하지는 않는다**는 점이다.
+  문제는 <strong>모든 런타임이 WebAssembly를 허용하지는 않는다</strong>는
+  점이다.
 </Paragraph>
 
 <Subtitle level={2}>Shiki는 왜 WebAssembly를 쓰는가</Subtitle>
@@ -102,8 +103,9 @@ CompileError: WebAssembly.instantiate(): Wasm code generation disallowed by embe
 
 <Paragraph>이때 "서버"가 어디서 실행되느냐가 핵심이다.</Paragraph>
 
-- **Node.js 서버** — WebAssembly 완전 지원. 문제없다.
-- **Cloudflare Workers** — V8 isolate 기반. WebAssembly를 제한적으로 지원한다.
+- <strong>Node.js 서버</strong> — WebAssembly 완전 지원. 문제없다.
+- <strong>Cloudflare Workers</strong> — V8 isolate 기반. WebAssembly를
+  제한적으로 지원한다.
 
 <Paragraph>
   Cloudflare Workers에서 WebAssembly를 사용하려면 모듈을 정적으로 import하는
@@ -137,14 +139,15 @@ await WebAssembly.instantiateStreaming(response);
 
 <Paragraph>문제의 본질을 정리하면 이렇다.</Paragraph>
 
-- Shiki는 **런타임**에 WebAssembly로 구문 강조를 수행한다.
-- RSC 렌더링이 일어나는 Workers 환경에서는 이 방식의 WASM 로드가 **차단**된다.
-- 따라서 구문 강조를 **빌드 타임**으로 옮기면 런타임에서 WASM이 필요 없어진다.
+- Shiki는 <strong>런타임</strong>에 WebAssembly로 구문 강조를 수행한다.
+- RSC 렌더링이 일어나는 Workers 환경에서는 이 방식의 WASM 로드가 <strong>차단</strong>된다.
+- 따라서 구문 강조를 <strong>빌드 타임</strong>으로 옮기면 런타임에서 WASM이 필요 없어진다.
 
 <Paragraph>
   `rehype-prism-plus`를 선택했다. 이 라이브러리는 Prism.js 기반의 rehype
-  플러그인으로, **순수 JavaScript**만 사용한다. WASM 의존성이 전혀 없다. 그리고
-  rehype 플러그인이므로 MDX **컴파일 시점**에 동작한다.
+  플러그인으로, <strong>순수 JavaScript</strong>만 사용한다. WASM 의존성이 전혀
+  없다. 그리고 rehype 플러그인이므로 MDX <strong>컴파일 시점</strong>에
+  동작한다.
 </Paragraph>
 
 <Subtitle level={3}>1. 의존성 교체</Subtitle>
@@ -269,8 +272,9 @@ globals.css에 GitHub Dark 스타일의 Prism 토큰 CSS를 추가했다.
 <Subtitle level={2}>핵심 교훈</Subtitle>
 
 <Paragraph>
-  이 문제는 이전 포스트의 eval 차단 이슈와 같은 뿌리에서 나온다. **런타임에서 할
-  필요 없는 작업을 런타임에서 하고 있었다**는 것이다.
+  이 문제는 이전 포스트의 eval 차단 이슈와 같은 뿌리에서 나온다.{" "}
+  <strong>런타임에서 할 필요 없는 작업을 런타임에서 하고 있었다</strong>는
+  것이다.
 </Paragraph>
 
 - `gray-matter`의 `eval()` → 빌드 타임 frontmatter 파싱으로 해결
@@ -278,9 +282,12 @@ globals.css에 GitHub Dark 스타일의 Prism 토큰 CSS를 추가했다.
 - Shiki의 `WebAssembly.instantiate()` → 빌드 타임 구문 강조로 해결
 
 <Paragraph>
-  패턴이 보인다. Edge 런타임(Cloudflare Workers, Vercel Edge 등)에서는 **런타임
-  코드 생성(`eval`, `new Function`)과 WASM 동적 로드가 차단**된다. 이 제약을
-  만나면 해결책은 항상 같다 — **빌드 타임으로 옮기기**.
+  패턴이 보인다. Edge 런타임(Cloudflare Workers, Vercel Edge 등)에서는{" "}
+  <strong>
+    런타임 코드 생성(`eval`, `new Function`)과 WASM 동적 로드가 차단
+  </strong>
+  된다. 이 제약을 만나면 해결책은 항상 같다 —{" "}
+  <strong>빌드 타임으로 옮기기</strong>.
 </Paragraph>
 
 <Paragraph>

@@ -1,0 +1,73 @@
+---
+title: "Day 9 - 프레젠테이션 모드, 코드블럭 개선, 테스팅"
+date: "2026-03-22"
+tags:
+  - DevLog
+  - SEO Jing
+description: SEO Jing 개발 아홉째 날. 프레젠테이션 기능 추가, 퀴즈 구조 변경, 모바일 반응형, 코드블럭 사용성, 테스팅 도입.
+---
+
+<Subtitle level={2}>퀴즈 구조 변경</Subtitle>
+
+<Paragraph>
+  어제 만든 퀴즈 컴포넌트의 구조를 변경했다. 기존 구조가 MDX에서 쓰기
+  불편했는데, props 기반으로 깔끔하게 정리했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>파일 탐색기 모바일 반응형</Subtitle>
+
+<Paragraph>
+  파일 탐색기가 모바일에서 좀 구렸다. 터치 영역이 너무 작고, 가로 스크롤이
+  생기는 문제가 있었다. 모바일 반응형을 제대로 수정했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>코드 블럭 사용성 증대</Subtitle>
+
+<Paragraph>
+  코드 블럭에 복사 버튼, 언어 표시, 줄 번호 등 사용성을 높이는 기능들을
+  추가했다. 모바일에서 코드 블럭을 가로로 눕혀서 볼 수 있는 기능도 구상 중.
+</Paragraph>
+
+<Anchor external="/blog/SEOJing/mobile-landscape-code-viewer">
+  모바일 가로 코드 뷰어
+</Anchor>
+
+---
+
+<Subtitle level={2}>프레젠테이션 기능</Subtitle>
+
+<Paragraph>
+스터디에서 PPT를 만들지 말고, 블로그에 발표 모드를 넣자는 아이디어를 실행에 옮겼다. `ArticleToolbar`에 프레젠테이션 버튼을 추가하고, `PresentationView` 컴포넌트를 새로 만들었다.
+
+MDX 컨텐츠를 `---` 구분선 기준으로 슬라이드 단위로 나누고, 좌우 화살표로 넘길 수 있게 했다. 풀스크린 모드도 지원. 이제 블로그 글 하나가 곧 발표 자료가 된다.
+
+</Paragraph>
+
+<Anchor external="/blog/SEOJing/mobile-presentation-mode">
+  모바일 프레젠테이션 모드
+</Anchor>
+
+---
+
+<Subtitle level={2}>테스팅 도입</Subtitle>
+
+<Paragraph>
+프레젠테이션 유틸 로직을 분리하면서 테스트 코드도 작성했다. `presentation.utils.test.ts`에 MDX 파싱, 슬라이드 분리 등의 테스트를 추가. `ArticleQuiz` 컴포넌트 테스트도 작성했다.
+
+유틸 함수들도 별도 파일로 분리하고, `vitest.config.ts`에 테스트 설정을 추가. 커밋 로그를 보면 테스트 오류 수정 → 배포 오류 수정이 연달아 있는데, CI에서 터진 걸 잡느라 좀 고생했다.
+
+</Paragraph>
+
+---
+
+<Subtitle level={2}>스터디 주차별 자료 완성</Subtitle>
+
+<Paragraph>
+  씨랩 스터디 1~4주차 자료를 모두 작성했다. 내일이 첫 대면 날인데, 드디어 준비가
+  끝난 느낌. 해커톤 마인드로 10일간 달려왔는데, 블로그도 만들고 스터디 자료도
+  완성했다. 나름 성공적.
+</Paragraph>

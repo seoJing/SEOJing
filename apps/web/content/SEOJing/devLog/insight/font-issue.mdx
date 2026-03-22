@@ -1,0 +1,52 @@
+---
+title: "폰트는 왜 메인 페이지에서만 적용이 안되고 있었을까?"
+date: "2026-03-14"
+tags:
+  - DevLog
+  - SEO Jing
+  - Insight
+description: Tailwind v4 환경에서 폰트가 메인 페이지에서만 적용되지 않던 원인과 Hydration Mismatch 이슈를 정리했다.
+---
+
+<Subtitle level={2}>1. 폰트 미적용 문제</Subtitle>
+
+<Paragraph>
+  <strong>증상</strong>: 스토리북에서는 A2z/Paperlogy 폰트 정상인데, Next.js
+  메인 페이지에서는 폰트가 안 먹힘.
+</Paragraph>
+
+<Subtitle level={3}>원인 2가지</Subtitle>
+
+<Paragraph>
+  - `globals.css`의 `@theme`에서 `--font-sans: "A2z", var(--font-geist-sans),
+  ...`로 정의했는데, `--font-geist-sans`가 실제로 정의되지 않아서 CSS 변수 체인
+  전체가 실패 - `body`에 `font-family: var(--font-sans)`를 수동으로 지정했는데,
+  Tailwind v4는 `@theme`의 `--font-sans`를 `html`에 자동 매핑하므로 불필요 +
+  레이어 우선순위 충돌
+</Paragraph>
+
+<Subtitle level={3}>수정</Subtitle>
+
+<Paragraph>
+  - `--font-sans`에서 `var(--font-geist-sans)` 참조 제거 - `body`의
+  `font-family` 줄 제거
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. Hydration Mismatch</Subtitle>
+
+<Paragraph>
+  <strong>증상</strong>: `Hydration failed` 에러, 서버는 `/` 클라이언트는
+  `/frontend`
+</Paragraph>
+
+<Paragraph>
+  <strong>원인</strong>: `useState(getPathFromUrl)` 초기값 함수에서 `typeof
+  window === "undefined"` 분기로 서버/클라이언트 초기값이 다름.
+</Paragraph>
+
+<Paragraph>
+  <strong>수정</strong>: `useState("/")`로 고정하고, `useEffect`에서 마운트 후
+  URL 동기화.
+</Paragraph>

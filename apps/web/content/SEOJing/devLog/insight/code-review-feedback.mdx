@@ -1,0 +1,111 @@
+---
+title: "엄청난 피드백"
+date: "2026-03-15"
+tags:
+  - DevLog
+  - SEO Jing
+  - Insight
+description: CLI 코드 리뷰에서 받은 피드백과 전체 코드 수정 계획을 정리했다.
+---
+
+<Subtitle level={2}>코드 리뷰 배경</Subtitle>
+
+<Paragraph>
+  개발을 어느 정도 마무리한 뒤, CLI에게 코드 리뷰를 부탁했다. 보안/버그/품질
+  이슈를 수정하고, 전체 주석 스타일을 통일하는 계획이 나왔다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>주석 규칙</Subtitle>
+
+<Paragraph>
+  - 불필요한 자질구래한 주석 삭제 (자명한 코드에 대한 설명) - 단일 주석: `//`로
+  통일 - TSX 내부 주석: `{/* */}`로 통일 - export 되는 함수: JSDoc `/** */` +
+  `@example` + 간단 설명
+</Paragraph>
+
+---
+
+<Subtitle level={2}>보안/버그 수정</Subtitle>
+
+<Subtitle level={3}>packages/utils/src/content.ts</Subtitle>
+
+<Paragraph>
+  - <strong>Path traversal 방어</strong>: `getContentBySlug`,
+  `isContentFolder`에서 resolved path가 contentDir 내부인지 검증 -{" "}
+  <strong>에러 핸들링</strong>: `getContentBySlug`, `scanContentDir`에 try-catch
+  추가
+</Paragraph>
+
+<Subtitle level={3}>packages/ui/src/article/code-block.tsx</Subtitle>
+
+<Paragraph>
+  - `dangerouslySetInnerHTML` 주의 JSDoc 추가 (신뢰된 HTML만 사용 명시)
+</Paragraph>
+
+<Subtitle level={3}>
+  apps/web/src/widgets/recently-read/RecentlyRead.tsx
+</Subtitle>
+
+<Paragraph>
+  - <strong>`console.log(commentedPosts)` 삭제</strong>-{" "}
+  <strong>N+1 성능 개선</strong>: `findDescription`을 Map 기반으로 전환 -{" "}
+  <strong>localStorage try-catch</strong>: `markAsRead`, `updateReadProgress`에
+  추가
+</Paragraph>
+
+<Subtitle level={3}>기타</Subtitle>
+
+<Paragraph>
+  - `.gitignore`: `#cluade` → `#claude` 오타 수정 - `comment-tracker.ts`:
+  localStorage try-catch 추가 - `theme-provider.tsx`: localStorage try-catch
+  추가
+</Paragraph>
+
+---
+
+<Subtitle level={2}>수정 대상 파일 전체 목록</Subtitle>
+
+<Subtitle level={3}>packages/utils/src/</Subtitle>
+
+<Paragraph>- `content.ts` — path traversal 방어 + 에러핸들링 + 주석</Paragraph>
+
+<Subtitle level={3}>packages/ui/src/</Subtitle>
+
+<Paragraph>
+  - `article/code-block.tsx` — JSDoc 추가 - `theme/theme-provider.tsx` —
+  localStorage try-catch
+</Paragraph>
+
+<Subtitle level={3}>apps/web/src/widgets/</Subtitle>
+
+<Paragraph>
+  - `blog-search/BlogSearch.tsx` — 주석 정리 + JSDoc - `header/Header.tsx` —
+  주석 정리 - `mdx-renderer/MdxRenderer.tsx` — 주석 정리 + JSDoc -
+  `article-toolbar/ArticleToolbar.tsx` — 주석 정리 + JSDoc -
+  `comment/GiscusComment.tsx` — 주석 정리 + JSDoc - `comment/CommentModal.tsx` —
+  주석 정리 + JSDoc - `comment/comment-tracker.ts` — try-catch + 주석 + JSDoc -
+  `post-explorer/PostExplorer.tsx` — 주석 정리 + JSDoc -
+  `recently-read/RecentlyRead.tsx` — console.log 삭제 + N+1 수정 + try-catch -
+  `new-posts-carousel/NewPostsCarousel.tsx` — 주석 정리 + JSDoc
+</Paragraph>
+
+---
+
+<Subtitle level={2}>검증</Subtitle>
+
+<Paragraph>
+  1. `pnpm build` 성공 확인 2. `pnpm test` 통과 확인 3. TypeScript 컴파일 에러
+  없음 확인
+</Paragraph>
+
+---
+
+<Subtitle level={2}>느낀 점</Subtitle>
+
+<Paragraph>
+  SEO 블로그기에 필요한 설정, 주석 정리, 라우터 관리 뿐만 아니라, 순회
+  로직까지도 깐깐하게 체킹해줬다. 그리고 이번엔 커밋을 분리하지 않고 바로 작업
+  했더니 `console.log` 지우는거 까먹고, `try-catch` 빼먹고 난리도 아님.
+</Paragraph>

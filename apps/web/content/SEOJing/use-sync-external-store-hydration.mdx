@@ -64,8 +64,8 @@ export function getReadPosts(): ReadRecord[] {
 서버에서는 `window`가 없으므로 빈 배열을 반환한다. 클라이언트에서는
 localStorage에서 데이터를 읽어 반환한다.
 
-하이드레이션의 핵심 규칙은 이것이다 — **서버에서 렌더링한 HTML과 클라이언트의
-첫 번째 렌더링 결과가 동일해야 한다.**
+하이드레이션의 핵심 규칙은 이것이다 — <strong>서버에서 렌더링한 HTML과 클라이언트의
+첫 번째 렌더링 결과가 동일해야 한다.</strong>
 
 서버는 빈 배열 → "열람한 페이지가 없습니다" `<p>` 태그를 렌더링하고,
 클라이언트는 localStorage 데이터 → 카드 목록 `<div>`를 렌더링한다.
@@ -112,8 +112,8 @@ can trigger cascading renders
 <Subtitle level={2}>useSyncExternalStore란 무엇인가</Subtitle>
 
 <Paragraph>
-  `useSyncExternalStore`는 React 18에서 도입된 Hook으로, **React 외부의 데이터
-  소스**를 구독하기 위해 만들어졌다.
+  `useSyncExternalStore`는 React 18에서 도입된 Hook으로,{" "}
+  <strong>React 외부의 데이터 소스</strong>를 구독하기 위해 만들어졌다.
 </Paragraph>
 
 ```ts
@@ -126,18 +126,18 @@ const value = useSyncExternalStore(
 
 <Paragraph>세 가지 인자를 받는다.</Paragraph>
 
-1. **subscribe** — 스토어가 변경될 때 React에게 알리는 구독 함수
-2. **getSnapshot** — 클라이언트에서 현재 값을 읽는 함수
-3. **getServerSnapshot** — SSR 시 사용할 값을 반환하는 함수
+1. <strong>subscribe</strong> — 스토어가 변경될 때 React에게 알리는 구독 함수
+2. <strong>getSnapshot</strong> — 클라이언트에서 현재 값을 읽는 함수
+3. <strong>getServerSnapshot</strong> — SSR 시 사용할 값을 반환하는 함수
 
 <Paragraph>
 핵심은 세 번째 인자다. 서버에서는 `getServerSnapshot`이 반환하는 값으로
 렌더링하고, 클라이언트에서는 `getSnapshot`이 반환하는 값으로 렌더링한다.
-React가 이 차이를 **알고 있으므로** 하이드레이션 불일치를 허용한다.
+React가 이 차이를 <strong>알고 있으므로</strong> 하이드레이션 불일치를 허용한다.
 
 `useState` + `useEffect` 방식과의 차이가 여기에 있다. `useEffect`는 React가
 "이 컴포넌트가 서버/클라이언트 데이터 차이가 있다"는 사실을 모른다.
-`useSyncExternalStore`는 이 의도를 **명시적으로 선언**한다.
+`useSyncExternalStore`는 이 의도를 <strong>명시적으로 선언</strong>한다.
 
 </Paragraph>
 
@@ -219,9 +219,9 @@ export function PostExplorer({ rootPath = "/" }: PostExplorerProps) {
 <Subtitle level={2}>주의할 점 — getSnapshot은 반드시 캐싱해야 한다</Subtitle>
 
 <Paragraph>
-  `getSnapshot` 함수는 호출될 때마다 **동일한 참조**를 반환하거나, 값이 실제로
-  변경되었을 때만 새 객체를 반환해야 한다. 매 호출마다 새 객체를 반환하면
-  React가 무한 리렌더링을 일으킨다.
+  `getSnapshot` 함수는 호출될 때마다 <strong>동일한 참조</strong>를 반환하거나,
+  값이 실제로 변경되었을 때만 새 객체를 반환해야 한다. 매 호출마다 새 객체를
+  반환하면 React가 무한 리렌더링을 일으킨다.
 </Paragraph>
 
 ```
@@ -264,7 +264,7 @@ export function getReadPosts(): ReadRecord[] {
 참조이므로 `Object.is()`가 `true`를 반환하고, React는 리렌더링을 건너뛴다.
 `getCommentedPosts()`도 동일한 패턴으로 캐싱한다.
 
-서버 스냅샷으로 사용하는 빈 배열과 빈 Set은 **모듈 레벨 상수**로 선언한다.
+서버 스냅샷으로 사용하는 빈 배열과 빈 Set은 <strong>모듈 레벨 상수</strong>로 선언한다.
 컴포넌트 안에서 `() => []`를 쓰면 매 렌더링마다 새 참조가 생겨 역시 문제가 된다.
 
 </Paragraph>
@@ -281,15 +281,17 @@ useSyncExternalStore(subscribe, getSnapshot, () => []);
 <Subtitle level={2}>핵심 교훈</Subtitle>
 
 <Paragraph>
-localStorage, sessionStorage, IndexedDB 같은 **브라우저 전용 외부 스토어**를
+localStorage, sessionStorage, IndexedDB 같은 <strong>브라우저 전용 외부 스토어</strong>를
 읽는 컴포넌트는 `useSyncExternalStore`를 써야 한다.
 
 이 Hook이 해결하는 문제는 두 가지다.
 
 </Paragraph>
 
-1. **하이드레이션 불일치** — `getServerSnapshot`으로 서버 렌더링 값을 명시
-2. **cascading render** — `useEffect` + `setState` 없이 외부 데이터를 동기적으로 읽기
+1. <strong>하이드레이션 불일치</strong> — `getServerSnapshot`으로 서버 렌더링
+   값을 명시
+2. <strong>cascading render</strong> — `useEffect` + `setState` 없이 외부
+   데이터를 동기적으로 읽기
 
 <Paragraph>
   `typeof window !== "undefined"` 분기로 서버/클라이언트를 나누는 건 React가

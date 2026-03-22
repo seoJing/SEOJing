@@ -1,0 +1,99 @@
+---
+title: "Day 3 - MDX 이슈, 반응형, 다크모드"
+date: "2026-03-15"
+tags:
+  - DevLog
+  - SEO Jing
+description: SEO Jing 개발 셋째 날. MDX 라이브러리 이슈, 반응형, 코드블럭, 댓글, 다크모드, 코드 리뷰.
+---
+
+<Subtitle level={2}>MDX 라이브러리 이슈</Subtitle>
+
+<Paragraph>
+한가지 문제가 생겼다. 기존에 Next에선 mdx-remote를 사용했는데, 이게 Next 기반, 정확히는 Node 기반이라 Vite 환경에서 읽지 못하는 이슈가 있음.
+
+그래서 `@mdx-js/react` (Vite 기반 MDX 리더) 로 적용할려고 했더니 `run()` 함수가 `eval()`과 같은 인젝션 문제가 있을 수 있다는 걸 발견. 물론 내부 MDX로만 작성할꺼라 문제가 되진 않겠지만, 더 큰 문제는 동적 라우팅의 매핑 문제가 생김. vinext의 라우터가 동적 라우팅을 못잡아서 404 에러가 발생.
+
+</Paragraph>
+
+<Paragraph>
+  찾아보니 remote를 못쓸 이유가 없다. 이미 파일 구조를 찾는데 Node의 `fs`를
+  썼거든, 문제 없었단 말이지.
+</Paragraph>
+
+<Anchor external="/blog/SEOJing/devLog/insight/mdx-library-issue">
+  MDX 관련 이슈 노트
+</Anchor>
+
+---
+
+<Subtitle level={2}>반응형과 PC 뷰</Subtitle>
+
+<Paragraph>
+  반응형을 구현하면서, PC 뷰도 만들었다. 중간에 간격을 모두 통일하고 싶어서
+  CLI를 돌렸는데, `global.css`에 `*` 속성자로 마진을 모두 없애는 코드를
+  작성해둔거임. 그런 것도 모르고 왜 `mx-auto`가 안되는지 한참 코드를 찾아봤다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>코드 블럭</Subtitle>
+
+<Paragraph>
+  코드 블럭을 shiki를 통해 테마를 입혔고, 하단에 알약 형태의 툴바를 만듦.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>모달과 댓글</Subtitle>
+
+<Paragraph>
+  모달 디자인 시스템을 구현하면서 giscus로 댓글도 서버리스로 구현했는데, Members
+  구현할 때 CRUD UI 구현했던거 생각하면 진짜 편한듯.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>다크 모드</Subtitle>
+
+<Paragraph>
+  다크 모드를 넣어봤다. 초기부터 theme을 주면서 작업했더니, 금방 적용되더라.
+  근데 문제는 다크 모드일 때 색감이 너무 구린데, 어떻게 할 수가 없네.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>최근 읽은 글과 완독 기능</Subtitle>
+
+<Paragraph>
+  최근 읽은 글을 작업했다. 이게 조금 어려웠는데, 기존에는 giscus에서 콜백되는 걸
+  받아서, 댓글을 적었는지 판단할려고 했다.
+</Paragraph>
+
+<Anchor external="/blog/SEOJing/devLog/insight/comment-read-tracking">
+  생각보다 어려워던 댓글, 완독 로컬스토리지
+</Anchor>
+
+<Paragraph>
+그래서 그냥 댓글을 달기 전 후로 전체 코멘트 개수를 받아서 비교하는 식으로 했다. 로직적으로 문제가 생길 수 있지만, 어짜피 트리거가 되는 순간에 비교하는거라, 크게 악의를 품지 않는다면 문제가 없어보임.
+
+그리고 ref로 스크롤을 검사해서 로컬스토리지에 완독도 표시했음. 그리고 도장 처럼 찍어주는 디자인을 해봤는데, 완독, 댓글에 대한 이미지를 만들어봐야겠다.
+
+</Paragraph>
+
+---
+
+<Subtitle level={2}>코드 리뷰</Subtitle>
+
+<Paragraph>이제 정리할겸, CLI에게 코드 리뷰를 부탁했는데...</Paragraph>
+
+<Anchor external="/blog/SEOJing/devLog/insight/code-review-feedback">
+  엄청난 피드백
+</Anchor>
+
+<Paragraph>
+SEO 블로그기에 필요한 설정, 주석 정리, 라우터 관리 뿐만 아니라, 순회 로직까지도 깐깐하게 체킹해줬다.
+
+그리고 이번엔 커밋을 분리하지 않고 바로 작업 했더니 `console.log` 지우는거 까먹고, `try-catch` 빼먹고 난리도 아님.
+
+</Paragraph>

@@ -50,8 +50,13 @@ description: 스터디 커리큘럼 방향을 정하기 위한 세 번째 사전
 
 <Subtitle level={3}>정답 및 풀이</Subtitle>
 
-- **정답**: let으로 선언한 변수는 참조 에러(ReferenceError)를 발생시키지만, var로 선언한 변수는 반복문이 끝난 후의 최종 숫자를 정상적으로 출력합니다.
-- **풀이 과정**: let은 '블록 레벨 스코프'를 가지므로 중괄호 안에서만 존재하고 밖에서는 소멸합니다. 반면 var는 '함수 레벨 스코프'를 가지기 때문에, 함수 내부가 아니라면 단순한 제어문이나 반복문의 블록을 무시하고 전역 혹은 상위 스코프로 새어나가게 됩니다.
+- <strong>정답</strong>: let으로 선언한 변수는 참조 에러(ReferenceError)를
+  발생시키지만, var로 선언한 변수는 반복문이 끝난 후의 최종 숫자를 정상적으로
+  출력합니다.
+- <strong>풀이 과정</strong>: let은 '블록 레벨 스코프'를 가지므로 중괄호
+  안에서만 존재하고 밖에서는 소멸합니다. 반면 var는 '함수 레벨 스코프'를 가지기
+  때문에, 함수 내부가 아니라면 단순한 제어문이나 반복문의 블록을 무시하고 전역
+  혹은 상위 스코프로 새어나가게 됩니다.
 
 ```javascript
 for (var i = 0; i < 3; i++) {}
@@ -63,9 +68,14 @@ console.log(j); // ReferenceError: j is not defined (안전하게 보호됨)
 
 <Subtitle level={3}>관련 개념 설명</Subtitle>
 
-- **블록 레벨 스코프**: 중괄호로 감싸진 코드 블록 내부에서만 변수가 유효합니다.
-- **함수 레벨 스코프**: 함수의 코드 블록 내부에서만 변수가 유효합니다.
-- **팁**: var는 예기치 못한 곳에서 변수 값이 변경되는 사이드 이펙트를 유발하므로, 현대 프론트엔드 개발에서는 절대 사용하지 않는 것이 원칙입니다. 기본적으로 const를 사용하고, 재할당이 꼭 필요한 경우에만 제한적으로 let을 사용합니다.
+- <strong>블록 레벨 스코프</strong>: 중괄호로 감싸진 코드 블록 내부에서만 변수가
+  유효합니다.
+- <strong>함수 레벨 스코프</strong>: 함수의 코드 블록 내부에서만 변수가
+  유효합니다.
+- <strong>팁</strong>: var는 예기치 못한 곳에서 변수 값이 변경되는 사이드
+  이펙트를 유발하므로, 현대 프론트엔드 개발에서는 절대 사용하지 않는 것이
+  원칙입니다. 기본적으로 const를 사용하고, 재할당이 꼭 필요한 경우에만
+  제한적으로 let을 사용합니다.
 
 ---
 
@@ -90,8 +100,13 @@ console.log(j); // ReferenceError: j is not defined (안전하게 보호됨)
 
 <Subtitle level={3}>정답 및 풀이</Subtitle>
 
-- **정답**: 객체는 실제 값이 아닌 데이터가 저장된 메모리 주소를 참조하기 때문입니다. 이를 예방하려면 스프레드 연산자(...) 등을 사용하여 얕은 복사나 깊은 복사를 해야 합니다.
-- **풀이 과정**: 숫자나 문자는 변수에 실제 값이 그대로 들어갑니다. 하지만 객체나 배열은 크기가 유동적이므로 메모리 어딘가에 저장해 두고 그 위치(주소)만 변수에 기록합니다. 따라서 할당 기호(=)로 복사하면 주소만 복사되므로, 결국 두 변수가 같은 원본 데이터를 바라보게 됩니다.
+- <strong>정답</strong>: 객체는 실제 값이 아닌 데이터가 저장된 메모리 주소를
+  참조하기 때문입니다. 이를 예방하려면 스프레드 연산자(...) 등을 사용하여 얕은
+  복사나 깊은 복사를 해야 합니다.
+- <strong>풀이 과정</strong>: 숫자나 문자는 변수에 실제 값이 그대로 들어갑니다.
+  하지만 객체나 배열은 크기가 유동적이므로 메모리 어딘가에 저장해 두고 그
+  위치(주소)만 변수에 기록합니다. 따라서 할당 기호(=)로 복사하면 주소만
+  복사되므로, 결국 두 변수가 같은 원본 데이터를 바라보게 됩니다.
 
 ```javascript
 const userA = { name: "Kim" };
@@ -107,9 +122,13 @@ const userC = { ...userA };
 
 <Subtitle level={3}>관련 개념 설명</Subtitle>
 
-- **원시 타입(Primitive Type)**: String, Number, Boolean 등 값 자체가 저장되는 타입입니다.
-- **참조 타입(Reference Type)**: Object, Array, Function 등 메모리 주소가 저장되는 타입입니다.
-- **팁**: 리액트에서는 상태 객체를 직접 수정(userA.name = "Lee")하면 화면이 리렌더링되지 않습니다. 반드시 새로운 객체를 만들어(복사) 교체해 주어야 합니다.
+- <strong>원시 타입(Primitive Type)</strong>: String, Number, Boolean 등 값
+  자체가 저장되는 타입입니다.
+- <strong>참조 타입(Reference Type)</strong>: Object, Array, Function 등 메모리
+  주소가 저장되는 타입입니다.
+- <strong>팁</strong>: 리액트에서는 상태 객체를 직접 수정(userA.name =
+  "Lee")하면 화면이 리렌더링되지 않습니다. 반드시 새로운 객체를 만들어(복사)
+  교체해 주어야 합니다.
 
 ---
 
@@ -133,8 +152,13 @@ const userC = { ...userA };
 
 <Subtitle level={3}>정답 및 풀이</Subtitle>
 
-- **정답**: getElementById는 오직 ID 속성만 찾을 수 있으며 실행 속도가 미세하게 더 빠릅니다. querySelector는 CSS 선택자 문법을 모두 사용할 수 있어 유연성이 훨씬 뛰어납니다.
-- **풀이 과정**: 과거에는 요소를 찾기 위해 getElementById나 getElementsByClassName 등을 목적에 따라 번갈아 사용해야 했습니다. 하지만 최신 자바스크립트에서는 CSS 문법을 그대로 활용해 복잡한 구조의 요소도 한 번에 찾을 수 있는 querySelector 하나로 통일하여 사용하는 추세입니다.
+- <strong>정답</strong>: getElementById는 오직 ID 속성만 찾을 수 있으며 실행
+  속도가 미세하게 더 빠릅니다. querySelector는 CSS 선택자 문법을 모두 사용할 수
+  있어 유연성이 훨씬 뛰어납니다.
+- <strong>풀이 과정</strong>: 과거에는 요소를 찾기 위해 getElementById나
+  getElementsByClassName 등을 목적에 따라 번갈아 사용해야 했습니다. 하지만 최신
+  자바스크립트에서는 CSS 문법을 그대로 활용해 복잡한 구조의 요소도 한 번에 찾을
+  수 있는 querySelector 하나로 통일하여 사용하는 추세입니다.
 
 ```javascript
 // ID로만 검색 가능
@@ -147,7 +171,8 @@ const activeItem = document.querySelector(".list .item.active");
 
 <Subtitle level={3}>관련 개념 설명</Subtitle>
 
-- **DOM (Document Object Model)**: HTML 문서를 자바스크립트가 이해할 수 있는 객체 형태로 트리화한 구조입니다.
+- <strong>DOM (Document Object Model)</strong>: HTML 문서를 자바스크립트가
+  이해할 수 있는 객체 형태로 트리화한 구조입니다.
 
 ---
 
@@ -171,8 +196,14 @@ const activeItem = document.querySelector(".list .item.active");
 
 <Subtitle level={3}>정답 및 풀이</Subtitle>
 
-- **정답**: 모달창 내부 요소에 클릭 이벤트를 달고 이벤트 객체의 stopPropagation() 메서드를 호출하여 부모로의 이벤트 전파를 막습니다. 또는 배경 요소의 이벤트에서 event.target과 event.currentTarget이 일치할 때만 닫히도록 조건문을 추가합니다.
-- **풀이 과정**: HTML의 특정 요소를 클릭하면, 그 요소에만 이벤트가 발생하는 것이 아니라 그 요소를 감싸고 있는 모든 부모 요소들로 클릭 이벤트가 물방울(Bubble)처럼 번져 올라갑니다. 따라서 모달창 안의 버튼을 눌러도 부모인 배경까지 클릭된 것으로 간주되어 창이 닫혀버리는 문제가 발생합니다.
+- <strong>정답</strong>: 모달창 내부 요소에 클릭 이벤트를 달고 이벤트 객체의
+  stopPropagation() 메서드를 호출하여 부모로의 이벤트 전파를 막습니다. 또는 배경
+  요소의 이벤트에서 event.target과 event.currentTarget이 일치할 때만 닫히도록
+  조건문을 추가합니다.
+- <strong>풀이 과정</strong>: HTML의 특정 요소를 클릭하면, 그 요소에만 이벤트가
+  발생하는 것이 아니라 그 요소를 감싸고 있는 모든 부모 요소들로 클릭 이벤트가
+  물방울(Bubble)처럼 번져 올라갑니다. 따라서 모달창 안의 버튼을 눌러도 부모인
+  배경까지 클릭된 것으로 간주되어 창이 닫혀버리는 문제가 발생합니다.
 
 ```javascript
 const modalBg = document.querySelector(".modal-background");
@@ -193,9 +224,11 @@ modalBg.addEventListener("click", function (event) {
 
 <Subtitle level={3}>관련 개념 설명</Subtitle>
 
-- **이벤트 버블링**: 특정 화면 요소에서 이벤트가 발생했을 때, 해당 이벤트가 더 상위의 화면 요소들로 전달되어 가는 특성입니다.
-- **event.target**: 실제 이벤트가 발생한 가장 안쪽의 요소입니다.
-- **event.currentTarget**: 이벤트 리스너가 실제로 바인딩된 요소입니다.
+- <strong>이벤트 버블링</strong>: 특정 화면 요소에서 이벤트가 발생했을 때, 해당
+  이벤트가 더 상위의 화면 요소들로 전달되어 가는 특성입니다.
+- <strong>event.target</strong>: 실제 이벤트가 발생한 가장 안쪽의 요소입니다.
+- <strong>event.currentTarget</strong>: 이벤트 리스너가 실제로 바인딩된
+  요소입니다.
 
 ---
 

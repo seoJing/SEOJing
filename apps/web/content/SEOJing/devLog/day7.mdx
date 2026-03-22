@@ -1,0 +1,37 @@
+---
+title: "Day 7 - Front Matter CMS와 관련 게시물 탐색기"
+date: "2026-03-20"
+tags:
+  - DevLog
+  - SEO Jing
+description: SEO Jing 개발 일곱째 날. Front Matter CMS 설치와 관련 게시물 이동 탐색기 구현.
+---
+
+<Subtitle level={2}>Front Matter CMS</Subtitle>
+
+<Paragraph>
+  VSCode에서 MDX 파일을 관리하기 편하게 Front Matter CMS를 설치했다. frontmatter
+  스키마를 정의해두면 VSCode UI에서 메타데이터를 편집할 수 있고, taxonomy(태그,
+  카테고리) 관리도 해준다. 이전에 직접 구현했던 frontmatter 파서도 좀 더
+  깔끔하게 리팩터링했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>관련 게시물 이동 탐색기</Subtitle>
+
+<Paragraph>
+블로그 포스트 하단에 관련 게시물로 이동할 수 있는 파일 탐색기를 추가했다. 기존 `PostExplorer`를 확장해서, 현재 글이 속한 폴더의 다른 글들을 보여주는 방식.
+
+`FileExplorer` UI 컴포넌트에 `currentFile` 하이라이트 기능을 추가하고, `FileItem`에서 현재 글인 경우 강조 표시가 되게 했다. 포스트 디테일 페이지에서 slug 정보를 넘겨주면 자동으로 같은 폴더의 글 목록이 나타난다.
+
+</Paragraph>
+
+---
+
+<Subtitle level={2}>스터디 자료 대량 작성</Subtitle>
+
+<Paragraph>
+  씨랩 스터디 사전 진단 Level 3, 4, 5까지 작성했다. 그리고 기존 포스트들도
+  내용을 보강했다. 이제 첫 대면 스터디(03.23)에 보여줄 컨텐츠가 좀 쌓인 느낌.
+</Paragraph>

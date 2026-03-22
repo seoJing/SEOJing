@@ -1,0 +1,182 @@
+---
+title: "생각보다 어려웠던 댓글, 완독 로컬스토리지"
+date: "2026-03-15"
+tags:
+  - DevLog
+  - SEO Jing
+  - Insight
+description: localStorage만으로 글 읽기 추적, 스크롤 진행률, 댓글 감지를 구현한 과정을 정리했다.
+---
+
+<Subtitle level={2}>왜 만들었나</Subtitle>
+
+<Paragraph>
+  스터디원에게 과제를 내준다면 어떻게 피드백을 할지가 고민이었다. 내가 이번주
+  과제를 했나? 내가 읽었나? 어디까지 읽었나?를 피드백 해주고 싶었다.
+</Paragraph>
+
+<Paragraph>그래서 네 가지 기능을 한꺼번에 만들기로 했다.</Paragraph>
+
+1. 글을 열면 자동으로 "최근 읽은 글"에 기록
+2. 포스트 목록에서 읽었던 글은 회색으로 표시
+3. 스크롤 진행률을 추적해서 프로그레스 바로 보여주기
+4. 다 읽고 댓글까지 남기면 우표 도장 찍기
+
+---
+
+<Subtitle level={2}>글 읽기 자동 추적</Subtitle>
+
+<Paragraph>
+  프로젝트에는 이미 `markAsRead()` 함수가 있었다. localStorage에 읽은 글 목록을
+  저장하는 함수인데, 문제는{" "}
+  <strong>아무 데서도 호출하지 않고 있었다는 것</strong>.
+</Paragraph>
+
+<Paragraph>
+  블로그 글 페이지(`page.tsx`)는 서버 컴포넌트다. localStorage는
+  클라이언트에서만 접근 가능하니 여기서 직접 호출할 수 없다. 글 하단에 이미
+  `ArticleToolbar`라는 클라이언트 컴포넌트가 있었고, slug 정보도 이미 갖고
+  있었다. 여기에 `title` prop만 추가하고 `useEffect`에서 `markAsRead`를 호출하면
+  끝이었다.
+</Paragraph>
+
+```tsx
+useEffect(() => {
+  markAsRead(`/blog/${slug}`, title);
+}, [slug, title]);
+```
+
+<Paragraph>
+  새 컴포넌트를 만들지 않고 기존 것을 활용한 이유는 단순하다. 불필요한
+  클라이언트 바운더리를 늘리면 SSR 이점이 줄어들고, 이미 적절한 위치에 적절한
+  컴포넌트가 있었으니까.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>포스트 목록에서 읽은 글 회색 처리</Subtitle>
+
+<Paragraph>
+  파일 탐색기 형태의 PostExplorer에서 읽었던 글의 제목을 회색으로 보여주고
+  싶었다. 브라우저가 방문한 링크를 보라색으로 바꾸는 것과 같은 맥락이다.
+</Paragraph>
+
+```tsx
+<span
+  className={cn(
+    "flex-1 text-left font-sans truncate",
+    file.visited
+      ? "text-gray-400 dark:text-gray-500"
+      : "text-gray-800 dark:text-gray-200",
+  )}
+>
+  {file.name}
+</span>
+```
+
+---
+
+<Subtitle level={2}>스크롤 진행률 추적</Subtitle>
+
+<Paragraph>
+  기존 `ReadRecord`에 `progress?: number` 필드 하나만 추가했다. 0~100 사이의
+  정수.
+</Paragraph>
+
+```tsx
+useEffect(() => {
+  const article = toolbarRef.current?.closest("section");
+  if (!article) return;
+
+  let ticking = false;
+  const handleScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const rect = article.getBoundingClientRect();
+      const scrolled = -rect.top;
+      const total = rect.height - window.innerHeight;
+      if (total > 0) {
+        const progress = Math.min(
+          100,
+          Math.max(0, Math.round((scrolled / total) * 100)),
+        );
+        updateReadProgress(href, progress);
+      }
+      ticking = false;
+    });
+  };
+
+  window.addEventListener("scroll", handleScroll, { passive: true });
+  return () => window.removeEventListener("scroll", handleScroll);
+}, [slug]);
+```
+
+<Paragraph>
+  `requestAnimationFrame`으로 throttle하는 이유는 scroll 이벤트가 초당 수십 번
+  발생하기 때문이다. `updateReadProgress`는 `Math.max`로 최대값만 유지한다.
+  스크롤을 올려도 진행률이 줄어들지 않는다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>댓글 추적과 우표 도장</Subtitle>
+
+<Subtitle level={3}>댓글 감지의 어려움</Subtitle>
+
+<Paragraph>
+이 프로젝트는 Giscus를 사용한다. GitHub Discussions 기반의 댓글 시스템인데, iframe으로 동작해서 부모 페이지에서 직접 댓글 작성 여부를 알기 어렵다.
+
+Giscus는 `postMessage` API로 부모와 통신하는데, 처음에는 `emitMetadata="0"`으로 설정되어 있어서 discussion 메타데이터 자체가 넘어오지 않았다. 이걸 `"1"`로 바꿔야 `totalCommentCount` 같은 정보를 받을 수 있었다.
+
+</Paragraph>
+
+<Subtitle level={3}>첫 번째 실수: discussion 로드를 댓글로 오인</Subtitle>
+
+<Paragraph>
+  처음 구현할 때는 `data?.discussion`이 존재하면 `onComment()`를 호출했다.
+  문제는 댓글을 안 달아도 discussion이 처음 로드될 때 이 이벤트가 온다는 것.
+  모든 글을 열기만 해도 "댓글 완료"로 찍히는 버그가 생겼다.
+</Paragraph>
+
+<Subtitle level={3}>해결: 댓글 수 비교</Subtitle>
+
+```tsx
+const prevCommentCountRef = useRef<number | null>(null);
+
+const handleMessage = useCallback(
+  (event: MessageEvent) => {
+    if (event.origin !== "https://giscus.app") return;
+    const data = event.data?.giscus;
+    if (data?.discussion) {
+      const totalCommentCount = data.discussion.totalCommentCount;
+      if (totalCommentCount != null) {
+        if (
+          prevCommentCountRef.current !== null &&
+          totalCommentCount > prevCommentCountRef.current
+        ) {
+          onComment?.();
+        }
+        prevCommentCountRef.current = totalCommentCount;
+      }
+    }
+  },
+  [onComment],
+);
+```
+
+<Paragraph>
+  첫 번째 메시지에서는 `prevCommentCountRef.current`가 `null`이므로 콜백이
+  호출되지 않고, 두 번째부터 비교가 시작된다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>정리</Subtitle>
+
+<Paragraph>
+localStorage만으로 꽤 풍부한 읽기 추적 경험을 만들 수 있었다. 서버 없이, 로그인 없이, 브라우저 안에서 완결되는 기능이라 구현이 가볍고 프라이버시 문제도 없다.
+
+개발하면서 느낀 점은, 기존 코드를 잘 활용하면 새로 만들 게 생각보다 적다는 것. `markAsRead`는 이미 있었고, `ArticleToolbar`도 이미 있었고, Giscus의 `postMessage`도 이미 리스닝하고 있었다. 연결만 해주면 됐다.
+
+</Paragraph>

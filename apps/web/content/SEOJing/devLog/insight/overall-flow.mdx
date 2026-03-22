@@ -1,0 +1,53 @@
+---
+title: "전체적인 플로우"
+date: "2026-03-13"
+tags:
+  - DevLog
+  - SEO Jing
+  - Insight
+description: SEO Jing 프로젝트의 기술 스택 선정과 전체적인 개발 플로우 정리.
+---
+
+<Subtitle level={2}>기술 스택 선정</Subtitle>
+
+<Paragraph>
+처음으로 배포를 본격적으로 해본거라 여러 선택 사항이 많았지만, 키워드는 <strong>최신의 스택으로 만들어보자</strong>.
+
+왜냐하면 AI 어시스턴트가 많은 영향을 미치지 않게 할려면, 자료가 적은 최신의 스택이 좋아보이기에.
+
+</Paragraph>
+
+---
+
+<Subtitle level={2}>선택한 스택</Subtitle>
+
+<Paragraph>
+  - <strong>vinext</strong>: Next와 Vite의 장점을 합친 프레임워크 -{" "}
+  <strong>got/ky</strong>: axios를 대체할 수 있는 HTTP 기반 -{" "}
+  <strong>TanStack Query</strong>: 이건 뭐 대체가 없다
+</Paragraph>
+
+---
+
+<Subtitle level={2}>CSS 고민</Subtitle>
+
+<Paragraph>
+고민 중인건 CSS인데...
+
+1. Tailwind
+2. Vanilla Extract
+3. Panda CSS?
+
+사실 디자인 시스템을 구현하지 않고, 가져다 쓴다면 Tailwind가 정배긴하다.
+
+</Paragraph>
+
+---
+
+<Subtitle level={2}>배포와 백엔드</Subtitle>
+
+<Paragraph>
+  그리고 vinext를 쓰기에, Vercel이 아닌 Cloudflare로 배포하고. 하는 김에
+  Worker로 API DB 쿼리 구축하거나, MDX 파일로 SSR이니깐, 그냥 CRUD도 Giscus로
+  댓글만 구현해보면 될듯?
+</Paragraph>

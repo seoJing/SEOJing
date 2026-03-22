@@ -1,0 +1,125 @@
+---
+title: "결국 Node.js 까지 와버렸다"
+date: "2026-03-14"
+tags:
+  - DevLog
+  - SEO Jing
+  - Insight
+description: MDX 파일 구조를 JSON으로 변환하기 위해 Node.js의 fs 모듈을 배워봤다.
+---
+
+<Subtitle level={2}>왜 Node.js?</Subtitle>
+
+<Paragraph>
+  MDX 파일 구조를 JSON 객체로 바꾸기 위해선 Node.js의 `fs`가 필요하다고 해서
+  Node.js를 짤막하게 배워볼려고 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>Node.js란?</Subtitle>
+
+<Paragraph>
+  <strong>
+    JavaScript를 브라우저 밖에서 실행할 수 있게 해주는 런타임 환경
+  </strong>
+  이다. 원래 JavaScript는 브라우저 안에서만 동작했는데, Node.js가 등장하면서
+  서버, CLI 도구, 스크립트 등을 JavaScript로 작성할 수 있게 되었다.
+</Paragraph>
+
+```
+브라우저 JavaScript → DOM 조작, 화면 렌더링
+Node.js JavaScript → 파일 읽기/쓰기, 서버 실행, OS 접근
+```
+
+---
+
+<Subtitle level={2}>모듈 시스템</Subtitle>
+
+```ts
+// CommonJS (옛날 방식)
+const fs = require("fs");
+
+// ES Modules (현재 방식 - 이 프로젝트에서 사용)
+import fs from "fs";
+```
+
+---
+
+<Subtitle level={2}>내장 모듈</Subtitle>
+
+| 모듈   | 역할                    |
+| :----- | :---------------------- |
+| `fs`   | 파일 시스템 (읽기/쓰기) |
+| `path` | 파일 경로 처리          |
+| `os`   | 운영체제 정보           |
+| `http` | HTTP 서버/클라이언트    |
+
+---
+
+<Subtitle level={2}>fs 모듈</Subtitle>
+
+<Paragraph>
+  `fs`는 <strong>File System</strong>의 약자로, 파일과 디렉토리를 다루는
+  모듈이다.
+</Paragraph>
+
+```ts
+import fs from "fs";
+
+// 파일 읽기
+const content = fs.readFileSync("파일.txt", "utf-8");
+
+// 파일 쓰기
+fs.writeFileSync("파일.txt", "내용");
+
+// 파일 존재 확인
+fs.existsSync("파일.txt"); // true 또는 false
+
+// 디렉토리 내 파일 목록
+fs.readdirSync("./폴더"); // ['a.txt', 'b.txt']
+
+// 파일/폴더 정보
+const stat = fs.statSync("./폴더");
+stat.isDirectory(); // 폴더인지 확인
+stat.isFile(); // 파일인지 확인
+```
+
+---
+
+<Subtitle level={2}>Sync vs Async</Subtitle>
+
+```ts
+// 동기 (Sync) - 완료될 때까지 기다림
+const data = fs.readFileSync("파일.txt", "utf-8");
+console.log(data); // 바로 사용 가능
+
+// 비동기 (Async) - 기다리지 않고 다음 줄 실행
+fs.readFile("파일.txt", "utf-8", (err, data) => {
+  console.log(data); // 콜백에서 사용
+});
+
+// 비동기 + Promise (현대적 방식)
+import fs from "fs/promises";
+const data = await fs.readFile("파일.txt", "utf-8");
+```
+
+---
+
+<Subtitle level={2}>프로젝트에서의 사용</Subtitle>
+
+<Paragraph>`generate-content-tree.ts` 파일에서 `fs`가 쓰이는 부분:</Paragraph>
+
+```ts
+fs.existsSync(CONTENT_DIR)                      // content 폴더가 있는지 확인
+fs.existsSync(outputDir)                         // 출력 폴더가 있는지 확인
+fs.mkdirSync(outputDir, { recursive: true })     // 폴더 생성 (중간 경로 포함)
+fs.writeFileSync(OUTPUT_PATH, ...)               // JSON 파일 쓰기
+```
+
+<Paragraph>흐름을 요약하면:</Paragraph>
+
+1. content 폴더 존재 확인 (없으면 에러)
+2. content 폴더를 스캔해서 트리 구조 생성
+3. 출력 폴더가 없으면 생성
+4. 트리를 JSON 파일로 저장

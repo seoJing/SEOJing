@@ -36,8 +36,8 @@ Next.js의 API 표면(App Router, Pages Router, next/* 모듈)을 Vite 위에서
 <Subtitle level={3}>2. Cloudflare Account ID 확인</Subtitle>
 
 <Paragraph>
-  Cloudflare 대시보드 → Workers & Pages → 우측 사이드바에서 **Account ID**를
-  복사한다.
+  Cloudflare 대시보드 → Workers & Pages → 우측 사이드바에서{" "}
+  <strong>Account ID</strong>를 복사한다.
 </Paragraph>
 
 <Subtitle level={3}>3. GitHub Secrets 등록</Subtitle>
@@ -108,7 +108,7 @@ CLOUDFLARE_API_TOKEN=my-api-token-here
 
 <Paragraph>
 그런데 배포 시 인식을 못했다.
-`.dev.vars`는 wrangler의 **로컬 개발용** 환경변수 파일이다.
+`.dev.vars`는 wrangler의 <strong>로컬 개발용</strong> 환경변수 파일이다.
 배포할 때는 셸 환경변수나 CI의 secrets로 `CLOUDFLARE_API_TOKEN`을 주입해야 한다.
 
 그리고 `.dev.vars`에는 API 토큰이 들어있으므로 반드시 `.gitignore`에 추가해야 한다.
@@ -271,11 +271,11 @@ pnpm exec prettier --write apps/web/wrangler.jsonc
 
 <Paragraph>정리하면, vinext + GitHub Actions 배포의 핵심은 이렇다.</Paragraph>
 
-1. `vinext deploy` 대신 **빌드와 배포를 분리**한다 (`vinext build` → `wrangler deploy`)
-2. `cloudflare/wrangler-action`은 pnpm workspace와 충돌하니 **직접 wrangler를 실행**한다
-3. `vite`, `@cloudflare/vite-plugin`, `wrangler`를 **devDependencies에 명시**한다
-4. Workers 런타임의 **Node.js 호환성 차이**를 주의한다 (`import.meta.dirname` 등)
-5. `.dev.vars`와 `.wrangler/`는 반드시 **gitignore**한다
+1. `vinext deploy` 대신 <strong>빌드와 배포를 분리</strong>한다 (`vinext build` → `wrangler deploy`)
+2. `cloudflare/wrangler-action`은 pnpm workspace와 충돌하니 <strong>직접 wrangler를 실행</strong>한다
+3. `vite`, `@cloudflare/vite-plugin`, `wrangler`를 <strong>devDependencies에 명시</strong>한다
+4. Workers 런타임의 <strong>Node.js 호환성 차이</strong>를 주의한다 (`import.meta.dirname` 등)
+5. `.dev.vars`와 `.wrangler/`는 반드시 <strong>gitignore</strong>한다
 
 <Paragraph>
   vinext는 아직 초기 단계라 CI/CD 관련 공식 문서가 부족한 편이다. 이 글이 같은

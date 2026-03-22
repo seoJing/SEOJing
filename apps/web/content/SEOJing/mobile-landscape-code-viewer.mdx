@@ -18,9 +18,9 @@ description: 모바일 웹에서 코드 블록을 가로로 넓게 보여주고 
 </Paragraph>
 
 <Paragraph>
-  해결하고 싶은 것은 단순하다. **버튼 하나로 코드 블록을 가로 방향으로 넓게
-  보여주기.** 네이티브 앱이라면 화면 회전을 강제하면 끝이지만, 웹에서는 그게
-  쉽지 않다.
+  해결하고 싶은 것은 단순하다.{" "}
+  <strong>버튼 하나로 코드 블록을 가로 방향으로 넓게 보여주기.</strong> 네이티브
+  앱이라면 화면 회전을 강제하면 끝이지만, 웹에서는 그게 쉽지 않다.
 </Paragraph>
 
 ---
@@ -43,16 +43,20 @@ async function forceLandscape() {
 }
 ```
 
-<Paragraph>문제는 **제약이 너무 많다**는 것이다.</Paragraph>
+<Paragraph>
+  문제는 <strong>제약이 너무 많다</strong>는 것이다.
+</Paragraph>
 
-- **iOS Safari**: 완전히 미지원. `screen.orientation.lock`이 존재하지 않는다.
-- **Android Chrome**: 전체화면(`Fullscreen API`) 상태에서만 동작한다.
-- **데스크톱 브라우저**: 대부분 무시한다.
+- <strong>iOS Safari</strong>: 완전히 미지원. `screen.orientation.lock`이
+  존재하지 않는다.
+- <strong>Android Chrome</strong>: 전체화면(`Fullscreen API`) 상태에서만
+  동작한다.
+- <strong>데스크톱 브라우저</strong>: 대부분 무시한다.
 
 <Paragraph>
   즉, 전체화면 진입 → 가로 회전 잠금 → 코드 보기 → 잠금 해제 → 전체화면 해제라는
-  복잡한 흐름이 되고, 그마저도 **iOS 사용자 절반을 버려야 한다**. 현실적이지
-  않다.
+  복잡한 흐름이 되고, 그마저도 <strong>iOS 사용자 절반을 버려야 한다</strong>.
+  현실적이지 않다.
 </Paragraph>
 
 ```js
@@ -79,9 +83,9 @@ async function enterLandscapeFullscreen(element) {
 ```
 
 <Paragraph>
-  이 방법은 **앱으로 설치된 경우에만** 작동한다. 일반 브라우저에서 접속하면
-  manifest의 `orientation`은 완전히 무시된다. 블로그를 PWA로 설치하는 사용자는
-  거의 없으므로, 이 방법도 탈락이다.
+  이 방법은 <strong>앱으로 설치된 경우에만</strong> 작동한다. 일반 브라우저에서
+  접속하면 manifest의 `orientation`은 완전히 무시된다. 블로그를 PWA로 설치하는
+  사용자는 거의 없으므로, 이 방법도 탈락이다.
 </Paragraph>
 
 <Subtitle level={2}>방법 3: 회전 유도 UI</Subtitle>
@@ -106,9 +110,9 @@ async function enterLandscapeFullscreen(element) {
 ```
 
 <Paragraph>
-  구현은 간단하지만, **사용자 경험이 나쁘다**. 코드 블록 하나를 보기 위해
-  물리적으로 폰을 돌려야 한다. 회전 잠금을 걸어둔 사용자는 설정까지 바꿔야 한다.
-  "버튼 하나로 넓게 보기"라는 원래 목표와 거리가 멀다.
+  구현은 간단하지만, <strong>사용자 경험이 나쁘다</strong>. 코드 블록 하나를
+  보기 위해 물리적으로 폰을 돌려야 한다. 회전 잠금을 걸어둔 사용자는 설정까지
+  바꿔야 한다. "버튼 하나로 넓게 보기"라는 원래 목표와 거리가 멀다.
 </Paragraph>
 
 <Subtitle level={2}>방법 4: CSS writing-mode</Subtitle>
@@ -126,7 +130,7 @@ async function enterLandscapeFullscreen(element) {
 ```
 
 <Paragraph>
-  코드 블록에는 **완전히 부적합**하다. 코드는 가로로 읽어야 하는데,
+  코드 블록에는 <strong>완전히 부적합</strong>하다. 코드는 가로로 읽어야 하는데,
   `writing-mode`는 글자 하나하나의 배치 방향을 바꾸기 때문에 코드의 들여쓰기와
   정렬이 전부 깨진다. 표(table)나 세로 텍스트 레이아웃에서는 유용하지만, 코드
   뷰어에 쓸 수 있는 방법은 아니다.
@@ -135,7 +139,8 @@ async function enterLandscapeFullscreen(element) {
 <Subtitle level={2}>방법 5: CSS transform rotate — 가짜 가로 모드</Subtitle>
 
 <Paragraph>
-  남은 방법은 하나다. **화면은 세로 그대로 두고, UI만 90도 돌리는 것.**
+  남은 방법은 하나다.{" "}
+  <strong>화면은 세로 그대로 두고, UI만 90도 돌리는 것.</strong>
   `transform: rotate(90deg)`로 시각적 회전을 만들고, viewport 단위(`100vh`,
   `100vw`)로 너비와 높이를 교체한다.
 </Paragraph>
@@ -157,9 +162,9 @@ async function enterLandscapeFullscreen(element) {
 ```
 
 <Paragraph>
-  이 방법은 **모든 브라우저에서 동작한다.** iOS Safari, Android Chrome, 데스크톱
-  브라우저 어디서든 CSS transform은 지원된다. Screen Orientation API와 달리
-  브라우저 제약이 없다.
+  이 방법은 <strong>모든 브라우저에서 동작한다.</strong> iOS Safari, Android
+  Chrome, 데스크톱 브라우저 어디서든 CSS transform은 지원된다. Screen
+  Orientation API와 달리 브라우저 제약이 없다.
 </Paragraph>
 
 <Paragraph>원리는 단순하다.</Paragraph>
@@ -181,8 +186,8 @@ async function enterLandscapeFullscreen(element) {
 
 <Paragraph>
   처음에는 `flex items-center justify-center`로 회전 컨테이너를 화면 중앙에
-  놓았다. 그런데 이렇게 하면 **코드가 화면 한가운데서 시작**된다. 가로로 돌려서
-  넓이를 확보한 의미가 없어진다.
+  놓았다. 그런데 이렇게 하면 <strong>코드가 화면 한가운데서 시작</strong>된다.
+  가로로 돌려서 넓이를 확보한 의미가 없어진다.
 </Paragraph>
 
 <Paragraph>
@@ -191,11 +196,11 @@ async function enterLandscapeFullscreen(element) {
 </Paragraph>
 
 <Paragraph>
-  `items-center justify-center`는 **flex 컨테이너가 자식의 위치를 결정**한다.
-  컨테이너 안의 모든 자식이 수직·수평 모두 중앙으로 밀린다. 그래서 코드 블록도
-  화면 중앙에 놓이고, 스크롤 시작점도 가운데가 된다. `flex-1`을 줘도 자식이 남는
-  공간을 채우긴 하지만, 남는 공간 자체가 양쪽으로 균등하게 분배되기 때문에
-  결과는 같다.
+  `items-center justify-center`는{" "}
+  <strong>flex 컨테이너가 자식의 위치를 결정</strong>한다. 컨테이너 안의 모든
+  자식이 수직·수평 모두 중앙으로 밀린다. 그래서 코드 블록도 화면 중앙에 놓이고,
+  스크롤 시작점도 가운데가 된다. `flex-1`을 줘도 자식이 남는 공간을 채우긴
+  하지만, 남는 공간 자체가 양쪽으로 균등하게 분배되기 때문에 결과는 같다.
 </Paragraph>
 
 ```css
@@ -212,10 +217,11 @@ async function enterLandscapeFullscreen(element) {
 ```
 
 <Paragraph>
-  반면 `translate(-50%, -50%)`는 **요소 자체의 렌더링 위치만 이동**한다. `top:
-  50%; left: 50%`로 요소의 좌측 상단 꼭짓점을 화면 중앙에 놓고, `translate(-50%,
-  -50%)`로 자기 크기의 절반만큼 되돌려서 시각적 중앙에 배치한다. 중요한 것은, 이
-  과정에서 **요소 내부의 레이아웃에는 개입하지 않는다**는 점이다. 내부에서
+  반면 `translate(-50%, -50%)`는 <strong>요소 자체의 렌더링 위치만 이동</strong>
+  한다. `top: 50%; left: 50%`로 요소의 좌측 상단 꼭짓점을 화면 중앙에 놓고,
+  `translate(-50%, -50%)`로 자기 크기의 절반만큼 되돌려서 시각적 중앙에
+  배치한다. 중요한 것은, 이 과정에서{" "}
+  <strong>요소 내부의 레이아웃에는 개입하지 않는다</strong>는 점이다. 내부에서
   `flex-col`과 `flex-1`을 쓰면 코드 영역이 자연스럽게 상단부터 채워진다.
 </Paragraph>
 
@@ -237,18 +243,19 @@ async function enterLandscapeFullscreen(element) {
 
 <Paragraph>정리하면 이렇다.</Paragraph>
 
-| 방식                          | 중앙 정렬 대상         | 내부 콘텐츠 시작점 | `flex-1` 효과           |
-| ----------------------------- | ---------------------- | ------------------ | ----------------------- |
-| `items-center justify-center` | 자식 요소의 **콘텐츠** | 화면 중앙          | 공간 분배가 중앙 기준   |
-| `translate(-50%, -50%)`       | 요소의 **렌더링 위치** | 요소 내부 상단     | 남는 공간을 아래로 채움 |
+| 방식                          | 중앙 정렬 대상                      | 내부 콘텐츠 시작점 | `flex-1` 효과           |
+| ----------------------------- | ----------------------------------- | ------------------ | ----------------------- |
+| `items-center justify-center` | 자식 요소의 <strong>콘텐츠</strong> | 화면 중앙          | 공간 분배가 중앙 기준   |
+| `translate(-50%, -50%)`       | 요소의 <strong>렌더링 위치</strong> | 요소 내부 상단     | 남는 공간을 아래로 채움 |
 
 <Subtitle level={3}>서브픽셀 렌더링 주의점</Subtitle>
 
 <Paragraph>
   `translate(-50%, -50%)`에는 한 가지 함정이 있다. 요소의 너비나 높이가 홀수
-  픽셀일 때 `-50%`가 **0.5px 단위**로 계산되면서, 텍스트나 border가 흐릿하게
-  보이는 **서브픽셀 렌더링** 문제가 발생할 수 있다. 브라우저가 0.5px 오프셋에
-  있는 요소를 두 물리 픽셀에 걸쳐 안티앨리어싱하기 때문이다.
+  픽셀일 때 `-50%`가 <strong>0.5px 단위</strong>로 계산되면서, 텍스트나 border가
+  흐릿하게 보이는 <strong>서브픽셀 렌더링</strong> 문제가 발생할 수 있다.
+  브라우저가 0.5px 오프셋에 있는 요소를 두 물리 픽셀에 걸쳐 안티앨리어싱하기
+  때문이다.
 </Paragraph>
 
 <Paragraph>
@@ -256,9 +263,14 @@ async function enterLandscapeFullscreen(element) {
   겪은 적이 있다. 해결 방법은 몇 가지가 있다.
 </Paragraph>
 
-- **`will-change: transform`** 또는 **`transform: translateZ(0)`** — GPU 레이어를 강제하면 서브픽셀 계산이 더 정확해진다.
-- **짝수 크기 보장** — 컨테이너의 `width`와 `height`를 뷰포트 단위로 지정하면 보통 정수가 아니므로, `round()` 같은 CSS 함수로 보정하거나 받아들이는 선택을 한다.
-- **`flex` 정렬로 대체** — 서브픽셀 문제가 심한 경우, 부모를 `flex`로 만들고 `margin: auto`로 자식을 중앙에 놓는 방식이 더 안전하다.
+- <strong>`will-change: transform`</strong> 또는
+  <strong>`transform: translateZ(0)`</strong> — GPU 레이어를 강제하면 서브픽셀
+  계산이 더 정확해진다.
+- <strong>짝수 크기 보장</strong> — 컨테이너의 `width`와 `height`를 뷰포트
+  단위로 지정하면 보통 정수가 아니므로, `round()` 같은 CSS 함수로 보정하거나
+  받아들이는 선택을 한다.
+- <strong>`flex` 정렬로 대체</strong> — 서브픽셀 문제가 심한 경우, 부모를
+  `flex`로 만들고 `margin: auto`로 자식을 중앙에 놓는 방식이 더 안전하다.
 
 <Paragraph>
   이번 코드 뷰어에서는 `width: 100vh`, `height: 100vw`로 뷰포트 크기를 그대로
@@ -271,20 +283,21 @@ async function enterLandscapeFullscreen(element) {
 
 <Paragraph>
   처음에는 일반적인 모달처럼 닫기 버튼(X)을 우상단에 배치했다. 회전된 상태에서
-  이 위치는 **실제 폰의 우측 상단**이 된다. 한 손으로 폰을 잡고 엄지로 닿기
-  어려운 곳이다.
+  이 위치는 <strong>실제 폰의 우측 상단</strong>이 된다. 한 손으로 폰을 잡고
+  엄지로 닿기 어려운 곳이다.
 </Paragraph>
 
 <Paragraph>
   그래서 바를 하단으로 옮겼다. 회전된 화면의 하단은 실제 폰의 좌측 끝이다.
-  하지만 이것도 **오른손잡이에게만 편한 위치**였다. 결국 닫기 버튼을 어디에
-  놓든, 사람마다 폰을 쥐는 손이 다르기 때문에 누군가는 불편하다.
+  하지만 이것도 <strong>오른손잡이에게만 편한 위치</strong>였다. 결국 닫기
+  버튼을 어디에 놓든, 사람마다 폰을 쥐는 손이 다르기 때문에 누군가는 불편하다.
 </Paragraph>
 
 <Paragraph>
-  해결책은 **닫기 버튼 자체를 없애는 것**이었다. 대신 **화면 아무 곳이나 1.5초간
-  길게 누르면 종료**되도록 했다. 왼손이든 오른손이든, 엄지가 화면의 어디에 있든
-  동작한다. 하단 바에는 "화면을 1.5초간 누르면 종료"라는 안내 문구만 넣었다.
+  해결책은 <strong>닫기 버튼 자체를 없애는 것</strong>이었다. 대신{" "}
+  <strong>화면 아무 곳이나 1.5초간 길게 누르면 종료</strong>되도록 했다.
+  왼손이든 오른손이든, 엄지가 화면의 어디에 있든 동작한다. 하단 바에는 "화면을
+  1.5초간 누르면 종료"라는 안내 문구만 넣었다.
 </Paragraph>
 
 ```tsx
@@ -325,42 +338,44 @@ function FullscreenView({ onClose, children }) {
 ```
 
 <Paragraph>
-  롱프레스의 장점은 **실수로 닫히지 않는다**는 것이다. 코드를 스크롤하다가
-  손가락이 미끄러져도 탭이지 길게 누르기가 아니므로 전체보기가 유지된다.
-  의도적으로 "이제 나가야지"라고 생각하고 꾹 누를 때만 종료된다.
+  롱프레스의 장점은 <strong>실수로 닫히지 않는다</strong>는 것이다. 코드를
+  스크롤하다가 손가락이 미끄러져도 탭이지 길게 누르기가 아니므로 전체보기가
+  유지된다. 의도적으로 "이제 나가야지"라고 생각하고 꾹 누를 때만 종료된다.
 </Paragraph>
 
 ---
 
 <Subtitle level={2}>방법별 비교 정리</Subtitle>
 
-| 방법                     |  iOS Safari  | Android Chrome | 전체화면 필요 | 사용자 행동 필요 |
-| ------------------------ | :----------: | :------------: | :-----------: | :--------------: |
-| Screen Orientation API   |    미지원    | 전체화면에서만 |     필요      |      불필요      |
-| PWA manifest             | 앱 설치 시만 |  앱 설치 시만  |       -       |     앱 설치      |
-| 회전 유도 UI             |     지원     |      지원      |    불필요     |   폰 물리 회전   |
-| CSS writing-mode         |     지원     |      지원      |    불필요     |      불필요      |
-| **CSS transform rotate** |   **지원**   |    **지원**    |  **불필요**   |    **불필요**    |
+| 방법                                  |      iOS Safari       |    Android Chrome     |      전체화면 필요      |    사용자 행동 필요     |
+| ------------------------------------- | :-------------------: | :-------------------: | :---------------------: | :---------------------: |
+| Screen Orientation API                |        미지원         |    전체화면에서만     |          필요           |         불필요          |
+| PWA manifest                          |     앱 설치 시만      |     앱 설치 시만      |            -            |         앱 설치         |
+| 회전 유도 UI                          |         지원          |         지원          |         불필요          |      폰 물리 회전       |
+| CSS writing-mode                      |         지원          |         지원          |         불필요          |         불필요          |
+| <strong>CSS transform rotate</strong> | <strong>지원</strong> | <strong>지원</strong> | <strong>불필요</strong> | <strong>불필요</strong> |
 
 <Paragraph>
-  `CSS transform rotate`만이 **모든 브라우저에서 동작**하면서 **사용자에게 추가
-  행동을 요구하지 않는** 유일한 방법이다. 네이티브 회전이 아니라 시각적
-  트릭이라는 한계가 있지만, 코드 블록 전체보기라는 용도에는 충분하다.
+  `CSS transform rotate`만이 <strong>모든 브라우저에서 동작</strong>하면서{" "}
+  <strong>사용자에게 추가 행동을 요구하지 않는</strong> 유일한 방법이다.
+  네이티브 회전이 아니라 시각적 트릭이라는 한계가 있지만, 코드 블록 전체보기라는
+  용도에는 충분하다.
 </Paragraph>
 
 <Subtitle level={2}>핵심 교훈</Subtitle>
 
 <Paragraph>
   웹에서 "당연히 될 것 같은" 기능이 플랫폼 제약에 막히면, API 수준에서
-  해결하려고 하기보다 **CSS로 시각적으로 우회**하는 게 더 현실적인 경우가 있다.
-  `screen.orientation.lock()`은 스펙이 명확하지만 브라우저 지원이 엉망이고, CSS
-  transform은 해킹에 가깝지만 어디서든 동작한다.
+  해결하려고 하기보다 <strong>CSS로 시각적으로 우회</strong>하는 게 더 현실적인
+  경우가 있다. `screen.orientation.lock()`은 스펙이 명확하지만 브라우저 지원이
+  엉망이고, CSS transform은 해킹에 가깝지만 어디서든 동작한다.
 </Paragraph>
 
 <Paragraph>
-  그리고 기능 구현이 끝난 뒤에도 **물리적 맥락**을 생각해야 한다. 화면을 돌리면
-  닫기 버튼의 위치도 함께 돌아간다. "엄지가 닿는가?"라는 질문은 코드를 작성할
-  때는 떠오르지 않고, 실제로 폰을 들고 써봐야 보이는 문제다. 결국 닫기 버튼의
-  위치를 고민하다가 버튼 자체를 없애고 롱프레스로 바꿨는데, 때로는 **UI 요소를
-  더 잘 배치하는 것보다 아예 없애는 게** 더 나은 답이다.
+  그리고 기능 구현이 끝난 뒤에도 <strong>물리적 맥락</strong>을 생각해야 한다.
+  화면을 돌리면 닫기 버튼의 위치도 함께 돌아간다. "엄지가 닿는가?"라는 질문은
+  코드를 작성할 때는 떠오르지 않고, 실제로 폰을 들고 써봐야 보이는 문제다. 결국
+  닫기 버튼의 위치를 고민하다가 버튼 자체를 없애고 롱프레스로 바꿨는데, 때로는{" "}
+  <strong>UI 요소를 더 잘 배치하는 것보다 아예 없애는 게</strong> 더 나은
+  답이다.
 </Paragraph>

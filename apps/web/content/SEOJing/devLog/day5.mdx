@@ -1,0 +1,100 @@
+---
+title: "Day 5 - shiki 제거, MDX 모듈화, 그리고 대량 포스팅"
+date: "2026-03-17"
+tags:
+  - DevLog
+  - SEO Jing
+description: SEO Jing 개발 다섯째 날. shiki를 rehype-prism-plus로 교체하고, gray-matter 직접 구현, MDX 모듈화, 페이지 내 검색, 테이블 디자인시스템까지.
+---
+
+<Subtitle level={2}>shiki 제거</Subtitle>
+
+<Paragraph>
+  코드 블럭에 shiki를 쓰고 있었는데, 이게 내부적으로 WASM을 로딩하고 `eval` 같은
+  위험 요소가 있었다. 그래서 `rehype-prism-plus`로 교체했다. CSS 기반
+  하이라이팅이라 빌드 타임에 처리되고, 런타임 부담도 없다.
+</Paragraph>
+
+<Anchor external="/blog/SEOJing/wasm-shiki-rsc-issue">
+  WASM shiki RSC 이슈
+</Anchor>
+
+---
+
+<Subtitle level={2}>gray-matter 직접 구현 & MDX 모듈화</Subtitle>
+
+<Paragraph>
+`gray-matter` 라이브러리를 직접 구현해서 제거했다. YAML frontmatter 파싱 정도는 직접 해도 충분하고, 의존성 하나 줄이는 게 번들에도 좋으니까.
+
+그리고 `next-mdx-remote`의 `eval` 위험을 해소하기 위해 MDX를 JS 모듈로 빌드타임에 컴파일하는 방식으로 변경했다. 빌드 스크립트(`generate-content-tree.ts`)가 대폭 수정됐고, content-types도 새로 정의했다. reading-time 유틸도 추가.
+
+</Paragraph>
+
+---
+
+<Subtitle level={2}>하이드레이션 에러와 무한 루프</Subtitle>
+
+<Paragraph>
+  리팩터링 후에 하이드레이션 에러가 터졌다. 마운트 시기를 조절해서 해결했는데,
+  그 직후 무한 루프 문제가 또 발생. `useEffect` 의존성 배열을 잘못 넣어서 생긴
+  문제였다. 커밋 로그를 보면 `refactor → fix → fix`가 연달아 있는데, 전형적인
+  리팩터링 후폭풍.
+</Paragraph>
+
+<Anchor external="/blog/SEOJing/use-sync-external-store-hydration">
+  useSyncExternalStore 하이드레이션 이슈
+</Anchor>
+
+---
+
+<Subtitle level={2}>페이지 내 검색 기능</Subtitle>
+
+<Paragraph>
+  포스트 디테일 페이지에서 `Ctrl+F` 같은 페이지 내 검색 기능을 추가했다. 헤더에
+  검색 버튼을 넣어서 트리거하는 방식.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>테이블 디자인시스템</Subtitle>
+
+<Paragraph>
+  MDX에서 테이블을 쓸 일이 많을 것 같아서 `ArticleTable` 디자인시스템 컴포넌트를
+  구현했다. `MdxRenderer`에도 매핑해서 마크다운 테이블 문법을 쓰면 자동으로
+  스타일이 적용되게 했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>대량 포스팅</Subtitle>
+
+<Paragraph>
+그리고 드디어 노션에 정리해둔 글들을 MDX로 변환해서 포스팅했다.
+
+- <Anchor external="/blog/SEOJing/vinext-github-actions-deploy">
+    vinext GitHub Actions 배포
+  </Anchor>
+- <Anchor external="/blog/SEOJing/cloudflare-workers-fs-issue">
+    Cloudflare Workers fs 이슈
+  </Anchor>
+- <Anchor external="/blog/SEOJing/wasm-shiki-rsc-issue">
+    WASM shiki RSC 이슈
+  </Anchor>
+- <Anchor external="/blog/SEOJing/use-sync-external-store-hydration">
+    useSyncExternalStore 하이드레이션
+  </Anchor>
+- devLog reason 포스트
+
+CLI한테 노션 MCP로 변환 시키고 검수하는 방식으로 진행했는데, 생각보다 괜찮았다.
+
+</Paragraph>
+
+---
+
+<Subtitle level={2}>UI 디테일 정리</Subtitle>
+
+<Paragraph>
+  최근 읽은 글 디자인을 정리하고, 앵커 디자인도 수정했다. README도
+  업데이트하면서 블로그 링크를 넣었는데, GitHub 마크다운 링크 포맷팅이 자꾸
+  깨져서 5번이나 수정함. 이건 진짜 부끄러운 커밋 히스토리다.
+</Paragraph>

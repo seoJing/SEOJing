@@ -1,0 +1,131 @@
+---
+title: "MDX DOM 트리 파싱하기"
+date: "2026-03-14"
+tags:
+  - DevLog
+  - SEO Jing
+  - Insight
+description: MDX 파일의 경로 탐색 로직과 콘텐츠 트리 생성 과정을 정리했다.
+---
+
+<Subtitle level={2}>전체 흐름</Subtitle>
+
+```
+content/*.mdx → [gray-matter로 파싱] → [fs로 스캔] → content-tree.json → [페이지에서 import] → FileExplorer
+```
+
+---
+
+<Subtitle level={2}>gray-matter</Subtitle>
+
+<Paragraph>
+  `packages/utils`에 설치했고, MDX 파일 상단의 <strong>frontmatter</strong>(YAML
+  메타데이터)를 파싱하는 데 사용한다.
+</Paragraph>
+
+```yaml
+---
+title: React 시작하기
+date: "2025-03-05"
+tags: [react, frontend]
+description: React의 기본...
+---
+```
+
+<Paragraph>
+  - MDX/마크다운 frontmatter 파싱의 사실상 표준 (Next.js 공식 예제에서도 사용)
+  - 파일 내용 전체를 읽어서 `{ data, content }`로 분리해줌
+  - YAML/TOML/JSON frontmatter 모두 지원
+  - 의존성이 가볍고, 빌드 타임에만 사용
+</Paragraph>
+
+---
+
+<Subtitle level={2}>scanContentDir()</Subtitle>
+
+<Paragraph>
+  `content/` 디렉토리를 재귀 스캔해서 트리 구조 JSON을 만드는 함수다.
+</Paragraph>
+
+<Paragraph>동작 과정:</Paragraph>
+
+1. `fs.readdirSync()`로 현재 디렉토리의 엔트리(파일/폴더)를 읽음
+2. 각 엔트리를 순회하면서:
+   - <strong>폴더면</strong> → 자기 자신을 재귀 호출해서 `children`을 채움
+   - <strong>파일이면</strong> → 확장자 추출 후, `.mdx`/`.md`면 `matter(raw)`로
+     frontmatter 파싱
+3. 정렬: 폴더가 먼저, 파일이 나중 (한국어 정렬 `localeCompare("ko")`)
+
+```ts
+const raw = fs.readFileSync(fullPath, "utf-8"); // MDX 파일 전체 읽기
+const { data } = matter(raw); // frontmatter → JS 객체
+// data = { title: "React 시작하기", date: "2025-03-05", tags: [...], ... }
+```
+
+---
+
+<Subtitle level={2}>getItemsForPath()</Subtitle>
+
+<Paragraph>생성된 트리에서 특정 경로의 아이템만 꺼내는 함수다.</Paragraph>
+
+```
+targetPath = "/frontend/hooks"
+  → segments = ["frontend", "hooks"]
+  → tree에서 name === "frontend"인 폴더 찾기 → 그 children으로 이동
+  → children에서 name === "hooks"인 폴더 찾기 → 그 children 반환
+```
+
+<Paragraph>
+  루트(`/`)면 tree 자체를 반환하고, 경로가 존재하지 않으면 빈 배열 `[]` 반환.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>빌드 스크립트</Subtitle>
+
+<Paragraph>
+  `tsx`(TypeScript executor)로 실행되는 빌드 스크립트로, `pnpm dev` 또는 `pnpm
+  build` 전에 자동 실행된다.
+</Paragraph>
+
+```json
+"generate:content": "tsx scripts/generate-content-tree.ts",
+"dev": "pnpm run generate:content && vinext dev",
+"build": "pnpm run generate:content && vinext build"
+```
+
+<Paragraph>
+  1. `content/` 디렉토리에 `scanContentDir()` 호출 2. 결과를
+  `src/generated/content-tree.json`에 JSON으로 저장 3. 이 JSON은 `.gitignore`에
+  포함되어 커밋되지 않음 (매번 빌드 시 생성)
+</Paragraph>
+
+---
+
+<Subtitle level={2}>페이지에서 사용</Subtitle>
+
+```tsx
+import contentTree from "../../generated/content-tree.json"; // 정적 import
+
+// 쿼리스트링에서 현재 경로 추출
+const currentPath =
+  new URLSearchParams(window.location.search).get("path") || "/";
+
+// 해당 경로의 아이템 가져오기
+const nodes = getItemsForPath(contentTree, currentPath);
+
+// ContentNode[] → ExplorerItem[] 변환 후 FileExplorer에 전달
+const items = toExplorerItems(nodes);
+```
+
+---
+
+<Subtitle level={2}>요약</Subtitle>
+
+| 구성 요소                  | 위치                         | 역할                                                   |
+| :------------------------- | :--------------------------- | :----------------------------------------------------- |
+| `gray-matter`              | `packages/utils` 의존성      | MDX frontmatter → JS 객체 파싱                         |
+| `scanContentDir()`         | content.ts                   | fs로 디렉토리 재귀 스캔 + frontmatter 파싱 → 트리 생성 |
+| `getItemsForPath()`        | content.ts                   | 트리에서 특정 경로의 아이템만 추출                     |
+| `generate-content-tree.ts` | scripts/                     | 빌드 타임에 JSON 생성                                  |
+| `content-tree.json`        | `src/generated/` (자동 생성) | 정적 JSON, 페이지에서 import                           |

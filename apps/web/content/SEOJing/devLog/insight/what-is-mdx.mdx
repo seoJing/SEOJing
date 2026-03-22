@@ -1,0 +1,121 @@
+---
+title: "MDX가 뭘까?"
+date: "2026-03-13"
+tags:
+  - DevLog
+  - SEO Jing
+  - Insight
+description: MDX의 개념과 블로그에서 활용하는 이유를 정리했다.
+---
+
+<Subtitle level={2}>MDX란?</Subtitle>
+
+<Paragraph>
+  한 줄로 요약하면{" "}
+  <strong>Markdown + React 컴포넌트를 같이 쓸 수 있는 파일 형식</strong>이다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>Markdown부터 먼저</Subtitle>
+
+<Paragraph>아마 README.md 써보셨죠? 그게 Markdown이다.</Paragraph>
+
+```markdown
+# 제목
+
+**굵게**, _기울임_
+
+- 리스트
+- 리스트
+```
+
+<Paragraph>이걸 HTML로 자동 변환해줘서 글 쓰기 편한 형식이다.</Paragraph>
+
+---
+
+<Subtitle level={2}>MDX = Markdown + JSX</Subtitle>
+
+<Paragraph>
+  Markdown의 불편한 점이 <strong>정적</strong>이라는 거다. 근데 MDX는 안에 React
+  컴포넌트를 그냥 넣을 수 있다.
+</Paragraph>
+
+```jsx
+# 리액트 훅 정리
+
+일반 마크다운 텍스트는 그냥 이렇게 씁니다.
+
+{/* React 컴포넌트를 바로 삽입 */}
+<CodeBlock language="tsx">
+  const [count, setCount] = useState(0)
+</CodeBlock>
+
+## 직접 눌러보세요
+
+<InteractiveCounter />  {/* 실제로 동작하는 컴포넌트! */}
+```
+
+---
+
+<Subtitle level={2}>실제로 뭐가 가능하냐면</Subtitle>
+
+<Subtitle level={3}>1. 코드 하이라이팅 컴포넌트</Subtitle>
+
+<Paragraph>
+  파일명, 하이라이트 줄 번호 같은 props를 넘겨서 커스텀 코드 블럭을 만들 수
+  있다.
+</Paragraph>
+
+<Subtitle level={3}>2. 경고/팁 박스</Subtitle>
+
+<Paragraph>
+  `Callout` 같은 컴포넌트로 경고, 팁, 정보 박스를 자유롭게 넣을 수 있다.
+</Paragraph>
+
+<Subtitle level={3}>3. 탭 UI</Subtitle>
+
+<Paragraph>npm, yarn, pnpm 같은 설치 방법을 탭으로 구분할 수 있다.</Paragraph>
+
+<Subtitle level={3}>4. 글 상단 메타데이터 (frontmatter)</Subtitle>
+
+```yaml
+---
+title: TanStack Query 완벽 정리
+date: 2024-03-14
+tags: [react, query]
+thumbnail: /images/tanstack.png
+---
+```
+
+<Paragraph>
+  이 `---` 안에 있는 데이터를 코드에서 읽어서 목록 페이지, SEO 태그 등에
+  활용한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>일반 블로그 플랫폼이랑 비교</Subtitle>
+
+|         | 티스토리/벨로그 | MDX 블로그                  |
+| :------ | :-------------- | :-------------------------- |
+| 글 작성 | 에디터에서 작성 | VSCode에서 .mdx 파일 작성   |
+| 저장    | 서버 DB         | GitHub 레포                 |
+| 커스텀  | 제한적          | 무제한 (내 컴포넌트 삽입)   |
+| 디자인  | 테마 선택       | 직접 구현                   |
+| 이식성  | 플랫폼 종속     | 파일이라 어디서든 이동 가능 |
+
+---
+
+<Subtitle level={2}>결론</Subtitle>
+
+<Paragraph>
+개발 블로그에 MDX가 좋은 이유는:
+
+- 글 = 코드 파일이라 <strong>git으로 버전 관리</strong>가 됨
+- 코드 하이라이팅, 인터랙티브 데모 같은 <strong>개발자 특화 기능</strong> 만들기 쉬움
+- 직접 만든 컴포넌트를 글 안에 자유롭게 넣을 수 있음
+
+요즘 개발자 블로그 (Josh Comeau, Kent C. Dodds 등) 대부분 MDX 기반이다!
+
+</Paragraph>

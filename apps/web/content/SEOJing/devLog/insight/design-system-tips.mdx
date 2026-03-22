@@ -1,0 +1,128 @@
+---
+title: "디자인 시스템을 구축할 때 주의할 점"
+date: "2026-03-14"
+tags:
+  - DevLog
+  - SEO Jing
+  - Insight
+description: 디자인 시스템 구현 시 파일 구조, 디자인 토큰, 유의 사항을 정리했다.
+---
+
+<Subtitle level={2}>디자인 시스템이란</Subtitle>
+
+<Paragraph>
+  컴포넌트, 디자인 토큰(색상·간격·타이포그래피), 규칙을{" "}
+  <strong>하나의 패키지로 통일</strong>해서 여러 앱에서 일관된 UI를 만드는
+  체계다. 이 프로젝트에서는 `packages/ui`가 그 역할을 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>파일 구조 — 컴포넌트 단위로 폴더 분리</Subtitle>
+
+```
+packages/ui/src/
+├── paper/
+│   ├── paper.tsx          ← 컴포넌트 본체
+│   ├── paper.types.ts     ← 타입 정의
+│   ├── paper.constants.ts ← 디자인 토큰 매핑
+│   ├── paper-error.tsx    ← 에러 바운더리
+│   ├── paper.stories.tsx  ← Storybook 스토리
+│   └── index.ts           ← 배럴 export
+└── index.ts               ← 패키지 진입점
+```
+
+<Paragraph>
+  이렇게 하면: - 컴포넌트끼리 의존성이 명확 - 타입·상수·스토리가 함께 있어서
+  찾기 쉬움 - `index.ts` 배럴로 외부에서 `import {Paper} from "@app/ui"` 가능
+</Paragraph>
+
+---
+
+<Subtitle level={2}>디자인 토큰 — CSS 변수로 관리</Subtitle>
+
+<Paragraph>
+  `globals.css`의 `@theme` 블록에 색상·간격·폰트·애니메이션을 정의하고,
+  컴포넌트에서는 Tailwind 유틸리티로 참조한다. 하드코딩된 값 대신 토큰을 쓰면
+  테마 변경이 한 곳에서 가능.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>컴포넌트 API 설계 — props를 제한된 프리셋으로</Subtitle>
+
+```ts
+export const PAPER_PADDINGS: Record<string, string> = {
+  none: "p-0",
+  sm: "p-3",
+  md: "p-6",
+  lg: "p-8",
+  xl: "p-12",
+};
+```
+
+<Paragraph>
+  사용자가 임의 값을 넣는 게 아니라 `padding="md"` 같은 프리셋을 선택하게 한다.
+  일관성이 보장되고, 타입 자동완성도 된다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>유의할 점</Subtitle>
+
+<Subtitle level={3}>서버 컴포넌트 vs 클라이언트 컴포넌트</Subtitle>
+
+<Paragraph>
+  Next.js(vinext) 환경에서 `"use client"`를 붙이면 해당 컴포넌트와 그 하위
+  트리가 클라이언트 번들에 포함된다. 디자인 시스템에서는:
+</Paragraph>
+- `useState`, `useEffect` 등 훅이 필요한 컴포넌트만 `"use client"` - 순수 렌더링
+컴포넌트(`ArticleHeader`, `Subtitle`, `Paragraph` 등)는 서버 컴포넌트로 유지
+
+<Subtitle level={3}>CSS 애니메이션에서 transform 충돌</Subtitle>
+
+<Paragraph>
+  같은 요소에 두 개의 애니메이션을 걸면 둘 다 `transform`을 건드릴 때 마지막
+  것만 적용된다. 해결법: - 별도 DOM 레이어로 분리 (바깥 div에 이동, 안쪽 div에
+  회전) - 또는 하나의 키프레임에 모든 transform을 합침
+</Paragraph>
+
+<Subtitle level={3}>Tailwind v4 @theme 토큰과 클래스 매핑</Subtitle>
+
+<Paragraph>
+  `-animate-elliptic-in: ...`으로 등록하면 `animate-elliptic-in` 클래스가 자동
+  생성된다. 키프레임 이름과 토큰 이름이 일치하지 않아도 되지만, 토큰 값 안에서
+  참조하는 키프레임 이름은 `@keyframes` 정의와 정확히 일치해야 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>Skeleton 구조</Subtitle>
+
+```tsx
+function PaperSkeleton() {
+  return (
+    <div className="mx-2 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800">
+      <div className="aspect-[1/1.414] w-full" />
+    </div>
+  );
+}
+```
+
+<Paragraph>
+  실제 콘텐츠가 로딩되기 전에 보여주는 <strong>뼈대(placeholder) UI</strong>다.
+  콘텐츠와 비슷한 형태를 가진 회색 박스에 `animate-pulse`를 적용한다.
+</Paragraph>
+
+| 로딩 방식        | 사용자 경험                                      |
+| :--------------- | :----------------------------------------------- |
+| 아무것도 안 보임 | "고장났나?"                                      |
+| 스피너           | "로딩 중이구나"                                  |
+| Skeleton         | "곧 콘텐츠가 채워지겠구나" — 체감 로딩 시간 감소 |
+
+<Paragraph>
+  Skeleton은 최종 레이아웃과 같은 공간을 미리 차지하므로{" "}
+  <strong>레이아웃 시프트(CLS)가 없다</strong>. React Suspense의 `fallback`으로
+  연결하면 콘텐츠 로딩 중에는 스켈레톤이 보이다가, 로딩 완료 시 실제 컴포넌트로
+  교체된다.
+</Paragraph>
