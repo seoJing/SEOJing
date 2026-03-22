@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "web",
-  "compatibility_date": "2026-03-16",
+  "name": "seojing",
+  "compatibility_date": "2026-03-22",
   "compatibility_flags": ["nodejs_compat"],
   "main": "./worker/index.ts",
   "assets": {
