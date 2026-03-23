@@ -122,21 +122,36 @@ describe("extractSlides with height-based pagination", () => {
     Element.prototype.getBoundingClientRect = originalGetBCR;
   });
 
-  function mockElementHeights(heightMap: Record<string, number>) {
+  function mockElementHeights(
+    heightMap: Record<string, number>,
+    attrMap?: Record<string, number>,
+  ) {
     Element.prototype.getBoundingClientRect = function () {
+      // 속성 기반 매칭 우선
+      if (attrMap) {
+        for (const [attr, h] of Object.entries(attrMap)) {
+          if (this.hasAttribute?.(attr)) {
+            return makeDOMRect(h);
+          }
+        }
+      }
       const tag = this.tagName?.toLowerCase();
       const height = heightMap[tag] ?? 0;
-      return {
-        x: 0,
-        y: 0,
-        width: 800,
-        height,
-        top: 0,
-        right: 800,
-        bottom: height,
-        left: 0,
-        toJSON: () => ({}),
-      };
+      return makeDOMRect(height);
+    };
+  }
+
+  function makeDOMRect(height: number): DOMRect {
+    return {
+      x: 0,
+      y: 0,
+      width: 800,
+      height,
+      top: 0,
+      right: 800,
+      bottom: height,
+      left: 0,
+      toJSON: () => ({}),
     };
   }
 
@@ -233,5 +248,471 @@ describe("extractSlides with height-based pagination", () => {
     // All items fit in one slide since li height (100) * 3 < 500
     expect(slides).toHaveLength(1);
     expect(slides[0]!.querySelectorAll("li")).toHaveLength(3);
+  });
+});
+
+describe("extractSlides — quiz replacement", () => {
+  let originalGetBCR: typeof Element.prototype.getBoundingClientRect;
+
+  beforeEach(() => {
+    originalGetBCR = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = function () {
+      return {
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 100,
+        top: 0,
+        right: 800,
+        bottom: 100,
+        left: 0,
+        toJSON: () => ({}),
+      };
+    };
+  });
+
+  afterEach(() => {
+    Element.prototype.getBoundingClientRect = originalGetBCR;
+  });
+
+  function makeArticle(html: string): HTMLElement {
+    const article = document.createElement("article");
+    article.innerHTML = html;
+    return article;
+  }
+
+  it("replaces quiz elements with unsupported message", () => {
+    const article = makeArticle(`
+      <p>Before quiz</p>
+      <div data-article-quiz><div>Quiz content here</div></div>
+      <p>After quiz</p>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    const allText = slides.map((s) => s.textContent).join(" ");
+    expect(allText).toContain(
+      "프레젠테이션 모드에서는 퀴즈를 지원하지 않습니다",
+    );
+    expect(allText).not.toContain("Quiz content here");
+  });
+
+  it("clears quiz className and replaces innerHTML", () => {
+    const article = makeArticle(`
+      <div data-article-quiz class="my-8 fancy-class"><span>Old content</span></div>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    const quizEl = slides[0]!.querySelector("[data-article-quiz]")!;
+    expect(quizEl.className).toBe("");
+    expect(quizEl.querySelector("span")).toBeNull();
+    expect(quizEl.querySelector("div")).not.toBeNull();
+  });
+});
+
+describe("extractSlides — code block handling", () => {
+  let originalGetBCR: typeof Element.prototype.getBoundingClientRect;
+
+  beforeEach(() => {
+    originalGetBCR = Element.prototype.getBoundingClientRect;
+  });
+
+  afterEach(() => {
+    Element.prototype.getBoundingClientRect = originalGetBCR;
+  });
+
+  function makeArticle(html: string): HTMLElement {
+    const article = document.createElement("article");
+    article.innerHTML = html;
+    return article;
+  }
+
+  it("forces code block to a new slide even when space remains", () => {
+    // p = 100px, code block = 200px, available = 500px
+    // 기존이라면 p(100) + codeblock(200) = 300 < 500 이므로 같은 슬라이드
+    // 하지만 코드블록은 항상 새 페이지
+    Element.prototype.getBoundingClientRect = function () {
+      if (this.hasAttribute?.("data-code-block")) {
+        return {
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 200,
+          top: 0,
+          right: 800,
+          bottom: 200,
+          left: 0,
+          toJSON: () => ({}),
+        };
+      }
+      return {
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 100,
+        top: 0,
+        right: 800,
+        bottom: 100,
+        left: 0,
+        toJSON: () => ({}),
+      };
+    };
+
+    const article = makeArticle(`
+      <p>Text before</p>
+      <div data-code-block><pre><code>const x = 1;</code></pre></div>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    expect(slides.length).toBe(2);
+    expect(slides[0]!.textContent).toContain("Text before");
+    expect(slides[1]!.querySelector("[data-code-block]")).not.toBeNull();
+  });
+
+  it("shows code block normally when it fits in a full slide", () => {
+    Element.prototype.getBoundingClientRect = function () {
+      if (this.hasAttribute?.("data-code-block")) {
+        return {
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 400,
+          top: 0,
+          right: 800,
+          bottom: 400,
+          left: 0,
+          toJSON: () => ({}),
+        };
+      }
+      return {
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 100,
+        top: 0,
+        right: 800,
+        bottom: 100,
+        left: 0,
+        toJSON: () => ({}),
+      };
+    };
+
+    const article = makeArticle(`
+      <div data-code-block><pre><code>const x = 1;</code></pre></div>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    expect(slides).toHaveLength(1);
+    // 원본 코드가 그대로 보존
+    expect(slides[0]!.querySelector("pre")).not.toBeNull();
+    expect(slides[0]!.querySelector("code")!.textContent).toBe("const x = 1;");
+  });
+
+  it("replaces overflowing code block with fullscreen button", () => {
+    Element.prototype.getBoundingClientRect = function () {
+      // 전체보기 버튼으로 교체된 후에는 button 태그로 재측정됨
+      if (this.hasAttribute?.("data-presentation-code-fullscreen")) {
+        return {
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 50,
+          top: 0,
+          right: 800,
+          bottom: 50,
+          left: 0,
+          toJSON: () => ({}),
+        };
+      }
+      if (this.hasAttribute?.("data-code-block")) {
+        return {
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 800,
+          top: 0,
+          right: 800,
+          bottom: 800,
+          left: 0,
+          toJSON: () => ({}),
+        };
+      }
+      return {
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 100,
+        top: 0,
+        right: 800,
+        bottom: 100,
+        left: 0,
+        toJSON: () => ({}),
+      };
+    };
+
+    const article = makeArticle(`
+      <div data-code-block>
+        <div class="uppercase">typescript</div>
+        <pre><code>const longCode = "very long";</code></pre>
+      </div>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    expect(slides).toHaveLength(1);
+
+    const btn = slides[0]!.querySelector("[data-presentation-code-fullscreen]");
+    expect(btn).not.toBeNull();
+    expect(btn!.textContent).toBe("코드 전체 보기");
+    expect(btn!.getAttribute("data-code-html")).toContain("longCode");
+    expect(btn!.getAttribute("data-code-language")).toBe("typescript");
+  });
+
+  it("does not contain original pre/code after replacement", () => {
+    Element.prototype.getBoundingClientRect = function () {
+      if (this.hasAttribute?.("data-presentation-code-fullscreen")) {
+        return {
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 50,
+          top: 0,
+          right: 800,
+          bottom: 50,
+          left: 0,
+          toJSON: () => ({}),
+        };
+      }
+      if (this.hasAttribute?.("data-code-block")) {
+        return {
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 800,
+          top: 0,
+          right: 800,
+          bottom: 800,
+          left: 0,
+          toJSON: () => ({}),
+        };
+      }
+      return {
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 100,
+        top: 0,
+        right: 800,
+        bottom: 100,
+        left: 0,
+        toJSON: () => ({}),
+      };
+    };
+
+    const article = makeArticle(`
+      <div data-code-block><pre><code>removed code</code></pre></div>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    expect(slides[0]!.querySelector("pre")).toBeNull();
+    expect(slides[0]!.querySelector("code")).toBeNull();
+  });
+});
+
+describe("extractSlides — image handling", () => {
+  let originalGetBCR: typeof Element.prototype.getBoundingClientRect;
+
+  beforeEach(() => {
+    originalGetBCR = Element.prototype.getBoundingClientRect;
+  });
+
+  afterEach(() => {
+    Element.prototype.getBoundingClientRect = originalGetBCR;
+  });
+
+  function makeArticle(html: string): HTMLElement {
+    const article = document.createElement("article");
+    article.innerHTML = html;
+    return article;
+  }
+
+  it("forces image to a new slide even when space remains", () => {
+    Element.prototype.getBoundingClientRect = function () {
+      const tag = this.tagName?.toLowerCase();
+      if (tag === "figure")
+        return {
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 200,
+          top: 0,
+          right: 800,
+          bottom: 200,
+          left: 0,
+          toJSON: () => ({}),
+        };
+      return {
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 100,
+        top: 0,
+        right: 800,
+        bottom: 100,
+        left: 0,
+        toJSON: () => ({}),
+      };
+    };
+
+    const article = makeArticle(`
+      <p>Text before image</p>
+      <figure><img src="test.png" alt="test" /></figure>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    expect(slides.length).toBe(2);
+    expect(slides[0]!.textContent).toContain("Text before image");
+    expect(slides[1]!.querySelector("img")).not.toBeNull();
+  });
+
+  it("sets max-height on img to fit available height", () => {
+    Element.prototype.getBoundingClientRect = function () {
+      const tag = this.tagName?.toLowerCase();
+      if (tag === "figure")
+        return {
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 600,
+          top: 0,
+          right: 800,
+          bottom: 600,
+          left: 0,
+          toJSON: () => ({}),
+        };
+      if (tag === "figcaption")
+        return {
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 30,
+          top: 0,
+          right: 800,
+          bottom: 30,
+          left: 0,
+          toJSON: () => ({}),
+        };
+      return {
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 100,
+        top: 0,
+        right: 800,
+        bottom: 100,
+        left: 0,
+        toJSON: () => ({}),
+      };
+    };
+
+    const article = makeArticle(`
+      <figure><img src="big.png" alt="big" /><figcaption>Caption</figcaption></figure>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    const img = slides[0]!.querySelector("img")!;
+    // maxImgH = 500 - (30 + 12) = 458
+    expect(img.style.maxHeight).toBe("458px");
+    expect(img.style.width).toBe("auto");
+    expect(img.style.objectFit).toBe("contain");
+  });
+
+  it("sets max-height without caption deduction when no figcaption", () => {
+    Element.prototype.getBoundingClientRect = function () {
+      const tag = this.tagName?.toLowerCase();
+      if (tag === "figure")
+        return {
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 600,
+          top: 0,
+          right: 800,
+          bottom: 600,
+          left: 0,
+          toJSON: () => ({}),
+        };
+      return {
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 100,
+        top: 0,
+        right: 800,
+        bottom: 100,
+        left: 0,
+        toJSON: () => ({}),
+      };
+    };
+
+    const article = makeArticle(`
+      <figure><img src="nocap.png" alt="no caption" /></figure>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    const img = slides[0]!.querySelector("img")!;
+    expect(img.style.maxHeight).toBe("500px");
+  });
+
+  it("does not split two images onto the same slide", () => {
+    Element.prototype.getBoundingClientRect = function () {
+      const tag = this.tagName?.toLowerCase();
+      if (tag === "figure")
+        return {
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 200,
+          top: 0,
+          right: 800,
+          bottom: 200,
+          left: 0,
+          toJSON: () => ({}),
+        };
+      return {
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 100,
+        top: 0,
+        right: 800,
+        bottom: 100,
+        left: 0,
+        toJSON: () => ({}),
+      };
+    };
+
+    const article = makeArticle(`
+      <figure><img src="a.png" alt="a" /></figure>
+      <figure><img src="b.png" alt="b" /></figure>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    // 각 이미지가 새 페이지로 분기되므로 최소 2 슬라이드
+    expect(slides.length).toBe(2);
+    expect(slides[0]!.querySelectorAll("img")).toHaveLength(1);
+    expect(slides[1]!.querySelectorAll("img")).toHaveLength(1);
+  });
+
+  it("does not treat figure without img as image (no forced new page)", () => {
+    Element.prototype.getBoundingClientRect = function () {
+      return {
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 100,
+        top: 0,
+        right: 800,
+        bottom: 100,
+        left: 0,
+        toJSON: () => ({}),
+      };
+    };
+
+    const article = makeArticle(`
+      <p>Text</p>
+      <figure><blockquote>Quote</blockquote></figure>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    // figure without img은 일반 요소처럼 취급 → 같은 슬라이드
+    expect(slides).toHaveLength(1);
   });
 });
