@@ -11,4 +11,5 @@ export const blogNavItems: DropdownItem[] = [
 export const portfolioNavItems: DropdownItem[] = [
   { label: "이력서", href: "/" },
   { label: "포트폴리오", href: "/portfolio" },
+  { label: "스킬", href: "/skills" },
 ];

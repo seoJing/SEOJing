@@ -51,11 +51,16 @@ export function PresentationView({
 
   useEffect(() => {
     if (!articleRef.current) return;
-    const viewH = isMobile ? window.innerWidth : window.innerHeight;
+    // 모바일: 회전 레이아웃이므로 물리적 width가 슬라이드 높이가 됨
+    // visualViewport을 우선 사용해 브라우저 UI(주소창·하단바)를 제외한 실제 영역 반영
+    const vv = window.visualViewport;
+    const viewH = isMobile
+      ? (vv?.width ?? window.innerWidth)
+      : (vv?.height ?? window.innerHeight);
     const padding = isMobile ? SLIDE_PADDING_Y_MOBILE : SLIDE_PADDING_Y;
     const available = (viewH - padding - bottomBarHeight) * getFillRatio(viewH);
     const slideW = isMobile
-      ? window.innerHeight - 64
+      ? (vv?.height ?? window.innerHeight) - 64
       : Math.min(window.innerWidth - 64, 896);
     setSlides(extractSlides(articleRef.current, available, slideW));
   }, [articleRef, isMobile, bottomBarHeight]);
@@ -188,8 +193,8 @@ export function PresentationView({
 
   const containerStyle = isMobile
     ? {
-        width: "100vh" as const,
-        height: "100vw" as const,
+        width: "100dvh" as const,
+        height: "100dvw" as const,
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%) rotate(90deg)",
@@ -201,8 +206,8 @@ export function PresentationView({
 
   const fullscreenContainerStyle = isMobile
     ? {
-        width: "100vh" as const,
-        height: "100vw" as const,
+        width: "100dvh" as const,
+        height: "100dvw" as const,
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%) rotate(90deg)",
@@ -213,7 +218,10 @@ export function PresentationView({
       };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 bg-white dark:bg-gray-950">
+    <div
+      className="fixed inset-0 z-50 bg-white dark:bg-gray-950"
+      style={{ height: "100dvh" }}
+    >
       <div className="absolute flex flex-col" style={containerStyle}>
         {/* 슬라이드 콘텐츠 */}
         <div
