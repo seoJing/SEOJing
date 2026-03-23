@@ -2,10 +2,10 @@ const SPLITTABLE_LIST_TAGS = new Set(["UL", "OL"]);
 
 /** 화면 높이에 따라 채움 비율을 반환 — 큰 화면일수록 보수적으로 채움 */
 export function getFillRatio(viewH: number): number {
-  if (viewH <= 600) return 0.92;
-  if (viewH <= 900) return 0.62;
-  if (viewH <= 1200) return 0.72;
-  return 0.65;
+  if (viewH <= 600) return 0.82;
+  if (viewH <= 900) return 0.55;
+  if (viewH <= 1200) return 0.6;
+  return 0.55;
 }
 
 export function extractSlides(
@@ -144,10 +144,13 @@ export function extractSlides(
       }
 
       if (
-        elementHeight > availableHeight &&
-        SPLITTABLE_LIST_TAGS.has(element.tagName)
+        SPLITTABLE_LIST_TAGS.has(element.tagName) &&
+        currentHeight + elementHeight > availableHeight
       ) {
-        if (currentSlide.children.length > 0) {
+        if (
+          currentSlide.children.length > 0 &&
+          elementHeight > availableHeight * 0.5
+        ) {
           [currentSlide, currentHeight] = flush(currentSlide);
         }
 

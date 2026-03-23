@@ -4,7 +4,7 @@ date: "2026-03-23"
 tags:
   - DevLog
   - SEO Jing
-description: SEO Jing 개발 열째 날. 프레젠테이션 모드의 모바일 UX 문제들을 전면 수정. 퀴즈·코드블록·이미지·포스트목록 처리 개선, 롱프레스 UX 및 하단 바 레이아웃 안정화.
+description: SEO Jing 개발 열째 날. 프레젠테이션 모드의 모바일 UX 문제들을 전면 수정. 퀴즈·코드블록·이미지·포스트목록 처리 개선, 롱프레스 UX 및 하단 바 레이아웃 안정화. 모바일 뷰포트·리스트 분할 문제 수정, 채움 비율 보수적으로 조정, 포스트 탐색기 자연 정렬 적용.
 ---
 
 <Subtitle level={2}>프레젠테이션 모드, 문제투성이</Subtitle>
@@ -103,4 +103,72 @@ description: SEO Jing 개발 열째 날. 프레젠테이션 모드의 모바일 
   하단 바도 손봤다. 페이지 카운터를 `absolute left-1/2 -translate-x-1/2`로
   고정해서 좌측 텍스트 길이와 무관하게 항상 중앙에 위치하도록 했고, 모바일 하단
   바 높이를 48px에서 36px로 축소해서 콘텐츠 영역을 넓혔다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>모바일 뷰포트 문제</Subtitle>
+
+<Paragraph>
+  모바일 브라우저에서 프레젠테이션 모드를 열면 주소창과 하단 네비게이션 바 뒤로
+  콘텐츠가 가려지는 문제가 있었다. 원인은 두 가지였다.
+</Paragraph>
+
+<Paragraph>
+  첫째, 컨테이너 크기에 `100vh`/`100vw`를 사용하고 있었는데, 모바일 브라우저에서
+  `100vh`는 브라우저 UI를 포함한 전체 뷰포트 높이다. 실제로 보이는 영역보다
+  크다. `100dvh`/`100dvw`(dynamic viewport height)로 교체해서 브라우저 UI가
+  차지하는 영역을 제외한 실제 보이는 높이만 사용하도록 수정했다.
+</Paragraph>
+
+<Paragraph>
+  둘째, 슬라이드 높이 계산에서 `window.innerWidth`를 쓰고 있었는데, 이것도
+  브라우저 UI를 고려하지 않는다. `window.visualViewport`을 우선 참조하도록
+  변경해서 실제 가용 영역을 정확하게 반영하도록 했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>채움 비율 조정</Subtitle>
+
+<Paragraph>
+  뷰포트 문제를 수정한 뒤에도 콘텐츠가 하단 바에 너무 붙어 보이는 문제가 있었다.
+  `getFillRatio()`의 비율을 전체적으로 낮춰서 여유 공간을 확보했다.
+</Paragraph>
+
+| 화면 높이             | 이전 | 변경 |
+| :-------------------- | :--- | :--- |
+| 600px 이하 (모바일)   | 0.92 | 0.82 |
+| 601~900px (노트북)    | 0.62 | 0.55 |
+| 901~1200px (데스크탑) | 0.72 | 0.60 |
+| 1200px 초과 (대형)    | 0.65 | 0.55 |
+
+---
+
+<Subtitle level={2}>리스트 분할 조건 완화</Subtitle>
+
+<Paragraph>
+  스터디 자료처럼 `Paragraph`와 `ul`이 번갈아 나오는 구조에서 슬라이드가 넘치는
+  문제가 있었다. 기존에는 리스트 전체 높이가 `availableHeight`를 초과할 때만
+  `li` 단위 분할이 동작했는데, 앞에 다른 콘텐츠가 있어서 합산 높이가 넘치는
+  경우에는 리스트를 통째로 넣어버렸다.
+</Paragraph>
+
+<Paragraph>
+  분할 조건을 `currentHeight + elementHeight > availableHeight`로 완화해서,
+  현재 슬라이드에 넣으면 넘치는 경우에도 `li` 단위로 분할되도록 수정했다.
+  리스트가 가용 높이의 50% 이상일 때만 기존 슬라이드를 먼저 flush하는 가드도
+  추가했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>포스트 탐색기 자연 정렬</Subtitle>
+
+<Paragraph>
+  포스트 탐색기에서 "Day 10"이 "Day 1" 바로 뒤에 정렬되는 문제가 있었다.
+  `localeCompare`가 문자열 사전순 정렬을 하기 때문에 "1" 다음에 "10"이 오고 그
+  다음 "2"가 오는 순서였다. `localeCompare`에 `numeric: true` 옵션을 추가해서
+  숫자 부분을 수치 기준으로 비교하도록 수정했다. Day 1, Day 2, ..., Day 9, Day
+  10 순서로 정렬된다.
 </Paragraph>

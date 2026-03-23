@@ -89,7 +89,7 @@ export function scanContentDir(
   // 폴더 먼저, 파일 나중 (이름순)
   nodes.sort((a, b) => {
     if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
-    return a.name.localeCompare(b.name, "ko");
+    return a.name.localeCompare(b.name, "ko", { numeric: true });
   });
 
   return nodes;
