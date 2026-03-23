@@ -76,7 +76,72 @@ export function extractSlides(
 
     for (const element of chapter) {
       const cloned = element.cloneNode(true) as HTMLElement;
-      const elementHeight = measure(cloned);
+
+      // 퀴즈 → 미지원 안내 메시지로 교체
+      if (cloned.hasAttribute("data-article-quiz")) {
+        cloned.innerHTML = "";
+        cloned.className = "";
+        const msg = document.createElement("div");
+        msg.className =
+          "flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400";
+        msg.textContent =
+          "프레젠테이션 모드에서는 퀴즈를 지원하지 않습니다. 프레젠테이션 모드를 종료 후 이용해 주세요.";
+        cloned.appendChild(msg);
+      }
+
+      let elementHeight = measure(cloned);
+
+      // 이미지(figure): 항상 새 페이지로 넘기고, 비율 유지하며 max-height 제한
+      if (cloned.tagName === "FIGURE" && cloned.querySelector("img")) {
+        if (currentSlide.children.length > 0) {
+          [currentSlide, currentHeight] = flush(currentSlide);
+        }
+
+        const img = cloned.querySelector("img")!;
+        const captionEl = cloned.querySelector("figcaption");
+        const captionHeight = captionEl ? measure(captionEl) + 12 : 0;
+        const maxImgH = availableHeight - captionHeight;
+        img.style.maxHeight = `${maxImgH}px`;
+        img.style.width = "auto";
+        img.style.objectFit = "contain";
+        elementHeight = measure(cloned);
+
+        currentSlide.appendChild(cloned);
+        currentHeight += elementHeight;
+        continue;
+      }
+
+      // 코드블록: 항상 새 페이지로 넘기고, 빈 페이지에서도 안 들어가면 전체보기 버튼
+      if (cloned.hasAttribute("data-code-block")) {
+        if (currentSlide.children.length > 0) {
+          [currentSlide, currentHeight] = flush(currentSlide);
+        }
+
+        if (elementHeight > availableHeight) {
+          const preEl = cloned.querySelector("pre");
+          const codeEl = preEl?.querySelector("code");
+          const codeHtml = codeEl?.innerHTML ?? preEl?.innerHTML ?? "";
+          const langEl = cloned.querySelector(".uppercase");
+          const language = langEl?.textContent ?? "";
+
+          cloned.innerHTML = "";
+          cloned.className = "my-8 flex items-center justify-center";
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className =
+            "inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-gray-100 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700";
+          btn.textContent = "코드 전체 보기";
+          btn.setAttribute("data-presentation-code-fullscreen", "");
+          btn.setAttribute("data-code-html", codeHtml);
+          btn.setAttribute("data-code-language", language);
+          cloned.appendChild(btn);
+          elementHeight = measure(cloned);
+        }
+
+        currentSlide.appendChild(cloned);
+        currentHeight += elementHeight;
+        continue;
+      }
 
       if (
         elementHeight > availableHeight &&

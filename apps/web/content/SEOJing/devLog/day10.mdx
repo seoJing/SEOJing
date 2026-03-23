@@ -1,0 +1,106 @@
+---
+title: "Day 10 - 프레젠테이션 모드 안정화"
+date: "2026-03-23"
+tags:
+  - DevLog
+  - SEO Jing
+description: SEO Jing 개발 열째 날. 프레젠테이션 모드의 모바일 UX 문제들을 전면 수정. 퀴즈·코드블록·이미지·포스트목록 처리 개선, 롱프레스 UX 및 하단 바 레이아웃 안정화.
+---
+
+<Subtitle level={2}>프레젠테이션 모드, 문제투성이</Subtitle>
+
+<Paragraph>
+  어제 만든 프레젠테이션 모드를 모바일에서 실제로 써보니 문제가 한두 개가
+  아니었다. 퀴즈, 코드블록, 이미지 같은 인터랙티브 요소들이 슬라이드 높이를
+  제대로 계산하지 못해서 잘리거나 겹쳤고, 롱프레스 UX도 어색했다. 하나씩
+  잡아나갔다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>퀴즈 → 미지원 안내 메시지</Subtitle>
+
+<Paragraph>
+  퀴즈 컴포넌트는 React 상태 기반이라 DOM 클로닝 방식의 프레젠테이션 모드에서는
+  동작할 수가 없다. `ArticleQuiz`에 `data-article-quiz` 속성을 추가하고,
+  `extractSlides()`에서 감지하면 안내 메시지로 교체하도록 했다.
+</Paragraph>
+
+<Paragraph>
+  "프레젠테이션 모드에서는 퀴즈를 지원하지 않습니다. 프레젠테이션 모드를 종료 후
+  이용해 주세요." 라는 플레이스홀더가 표시된다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>코드블록 → 조건부 전체보기 버튼</Subtitle>
+
+<Paragraph>
+  코드블록도 높이 계산이 안 돼서 슬라이드를 넘쳐버리는 문제가 있었다. 코드블록을
+  만나면 무조건 새 페이지로 분기하고, 빈 페이지에서도 높이가 넘치면 "코드 전체
+  보기" 버튼으로 교체하는 방식으로 해결했다.
+</Paragraph>
+
+<Paragraph>
+  버튼을 누르면 기존의 `FullscreenView`와 동일한 전체화면 코드 뷰어가 열린다.
+  DOM 클로닝 환경이라 React 이벤트를 쓸 수 없어서, `data-code-html`과
+  `data-code-language` 속성에 원본 코드를 저장해두고, 슬라이드 렌더 후
+  `addEventListener`로 클릭 리스너를 직접 부착하는 방식을 사용했다.
+</Paragraph>
+
+<Paragraph>
+  네비게이션 오버레이가 버튼 클릭을 가로채는 문제도 있었다. 부모에
+  `pointer-events-none`을 걸고 양쪽 1/4 영역만 `pointer-events-auto`로 설정해서,
+  가운데 영역의 버튼이 클릭되도록 수정했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>이미지 비율 유지 축소</Subtitle>
+
+<Paragraph>
+  이미지도 코드블록과 같은 문제가 있었다. 두 이미지가 한 슬라이드에 겹쳐 나오는
+  문제. 이미지(`figure` 요소)를 만나면 무조건 새 페이지로 분기하고,
+  `max-height`를 슬라이드 가용 높이에서 캡션 높이를 뺀 값으로 제한해서 비율을
+  유지하며 축소되도록 했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>포스트 목록 제거 및 마지막 페이지 종료</Subtitle>
+
+<Paragraph>
+  글 하단의 `PostExplorer` 컴포넌트가 프레젠테이션 슬라이드에 포함되면서
+  모바일에서 잘리는 문제가 있었다. 프레젠테이션에서 보여줄 필요가 없는 요소라
+  `data-presentation-skip` 속성을 추가해서 슬라이드 추출 시 제외시켰다.
+</Paragraph>
+
+<Paragraph>
+  마지막 슬라이드에서 오른쪽을 누르면 바로 프레젠테이션이 종료되도록
+  `goToNext`에 종료 로직을 추가했다. 이 과정에서 두 가지 버그를 잡았다.
+</Paragraph>
+
+<Paragraph>
+  - `setCurrentSlide` updater 안에서 `onClose()`를 호출하면 렌더 중 부모
+  컴포넌트의 setState가 트리거되는 React 경고가 발생한다. updater 밖에서
+  `currentSlide` 값을 직접 비교하는 방식으로 수정. - 프레젠테이션이 닫히면서
+  포탈이 제거되면, 같은 이벤트 사이클에서 아래 DOM의 링크나 버튼이 눌려버리는
+  버블링 문제. `requestAnimationFrame`으로 다음 프레임에서 종료하도록 지연시켜
+  해결.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>롱프레스 UX 개선</Subtitle>
+
+<Paragraph>
+  모바일에서 화면을 탭할 때마다 "놓지 마세요..."가 잠깐 깜빡이는 문제가 있었다.
+  롱프레스 판단 전에 최소 300ms의 threshold를 두어, 빠른 탭에서는 메시지가 아예
+  표시되지 않도록 수정했다.
+</Paragraph>
+
+<Paragraph>
+  하단 바도 손봤다. 페이지 카운터를 `absolute left-1/2 -translate-x-1/2`로
+  고정해서 좌측 텍스트 길이와 무관하게 항상 중앙에 위치하도록 했고, 모바일 하단
+  바 높이를 48px에서 36px로 축소해서 콘텐츠 영역을 넓혔다.
+</Paragraph>

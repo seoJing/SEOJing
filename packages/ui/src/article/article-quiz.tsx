@@ -31,7 +31,7 @@ export function ArticleQuiz({
   if (totalSteps === 0) return null;
 
   return (
-    <div className={cn("my-8", className)} {...props}>
+    <div className={cn("my-8", className)} data-article-quiz {...props}>
       <div className="flex items-center justify-between rounded-t-lg bg-gray-800 px-4 py-2 dark:bg-gray-900">
         <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
           Quiz

@@ -43,7 +43,7 @@ export function PostExplorer({
   const items = toExplorerItems(nodes, visitedHref);
 
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex flex-col gap-4" data-presentation-skip>
       <Subtitle>포스트 목록</Subtitle>
       <FileExplorer
         items={items}

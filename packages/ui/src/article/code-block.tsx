@@ -280,7 +280,7 @@ export function CodeBlock({
   };
 
   return (
-    <div className="my-8">
+    <div className="my-8" data-code-block>
       {language && (
         <div className="flex items-center rounded-t-lg bg-gray-800 px-4 py-2 dark:bg-gray-900">
           <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
