@@ -1,0 +1,210 @@
+---
+title: "프론트엔드 스터디 대면 4주차: 박스 모델 실전, Position과 Flexbox"
+date: 2026-04-10
+tags:
+  - 프론트엔드
+  - 스터디
+  - CSS
+  - 박스모델
+  - Position
+  - Flexbox
+description: 3주차 박스 모델과 스타일링 복습, 과제 풀이, 4주차 Position과 Flexbox 레이아웃까지 다룬 대면 스터디 정리입니다. 면접에서 자주 나오는 마진 겹침, box-sizing, Flexbox 관련 질문도 함께 준비합니다.
+---
+
+<Subtitle level={2}>1. 저번 주 복습</Subtitle>
+
+<Paragraph>
+  지난주에는 CSS의 본격적인 스타일링에 들어갔습니다. 글꼴과 색상을 제어하고,
+  인라인과 블록 요소의 차이, 그리고 프론트엔드 초심자가 가장 먼저 부딪히는 벽인
+  <strong>박스 모델</strong>을 배웠습니다. 핵심만 빠르게 짚어보겠습니다.
+</Paragraph>
+
+<Subtitle level={3}>폰트와 색상</Subtitle>
+
+- <strong>`font-family`</strong>: 쉼표로 여러 폰트를 나열하면 앞에서부터
+  순서대로 사용 가능한 폰트를 적용합니다. 마지막에 `sans-serif` 같은 일반
+  패밀리를 넣는 것이 관례입니다.
+- <strong>색상 표기법</strong>: 키워드(`red`), Hex(`#FF5733`), RGB(`rgb(255, 87,
+  51)`), HSL(`hsl(11, 100%, 60%)`) 등 다양한 방식으로 표현합니다.
+
+<Subtitle level={3}>인라인 vs 블록 vs 인라인 블록</Subtitle>
+
+- <strong>인라인(Inline)</strong>: 콘텐츠 크기만큼만 차지, width/height 무시,
+  상하 margin 무시
+- <strong>블록(Block)</strong>: 한 줄 전체를 차지, width/height/margin 모두 적용
+- <strong>인라인 블록(Inline-block)</strong>: 나란히 배치되면서
+  width/height/margin 모두 적용
+
+<Subtitle level={3}>박스 모델</Subtitle>
+
+- 안쪽부터: <strong>Content → Padding → Border → Margin</strong>
+- <strong>`box-sizing: content-box`</strong>(기본값): width는 콘텐츠 영역만
+  의미, padding과 border가 추가로 더해짐
+- <strong>`box-sizing: border-box`</strong>: width 안에 padding과 border까지
+  포함, 현대 CSS의 필수 설정
+
+<Subtitle level={3}>학습 자료에서 다룬 추가 개념</Subtitle>
+
+- <strong>px, em, rem 단위</strong>: `px`은 고정, `em`은 부모 기준, `rem`은 루트
+  기준입니다. 실무에서는 `rem`을 기본으로 사용합니다.
+- <strong>마진 겹침(Margin Collapsing)</strong>: 수직으로 인접한 마진은 합쳐지지
+  않고 둘 중 큰 값만 적용됩니다.
+- <strong>CSS 리셋과 Normalize</strong>: 브라우저마다 다른 기본 스타일을
+  통일시키기 위해 프로젝트 초반에 기본 스타일을 정리합니다.
+- <strong>가상 요소 (::before, ::after)</strong>: HTML 없이 장식용 콘텐츠를
+  삽입합니다. `content` 속성이 필수입니다.
+- <strong>BFC (Block Formatting Context)</strong>: 독립된 레이아웃 영역을 만들어
+  마진 겹침을 방지합니다. `display: flow-root`가 가장 명확한 방법입니다.
+
+---
+
+<Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
+
+<Subtitle level={3}>학습 자료 3주차 과제</Subtitle>
+
+<Paragraph>
+  <strong>
+    Q. `box-sizing: content-box`(기본값) 상태에서 `width: 300px`, `padding:
+    20px`, `border: 10px solid black`을 준 요소의 실제 화면 너비는 몇 px일까요?
+    또한, 이 요소에 `box-sizing: border-box`를 적용하면 실제 화면 너비와 콘텐츠
+    영역 너비는 각각 어떻게 변할까요? 직접 계산해보세요.
+  </strong>
+</Paragraph>
+
+<Subtitle level={4}>content-box일 때</Subtitle>
+
+<Paragraph>
+  `content-box`에서는 `width`가 콘텐츠 영역만을 의미합니다. padding과 border가
+  바깥쪽으로 추가됩니다.
+</Paragraph>
+
+- 콘텐츠 영역: 300px
+- 좌우 패딩: 20px × 2 = 40px
+- 좌우 보더: 10px × 2 = 20px
+- <strong>실제 화면 너비: 300 + 40 + 20 = 360px</strong>
+
+<Subtitle level={4}>border-box일 때</Subtitle>
+
+<Paragraph>
+  `border-box`에서는 `width: 300px` 안에 padding과 border가 포함됩니다.
+</Paragraph>
+
+- 실제 화면 너비: <strong>300px</strong> (그대로)
+- 좌우 패딩: 20px × 2 = 40px
+- 좌우 보더: 10px × 2 = 20px
+- <strong>콘텐츠 영역: 300 - 40 - 20 = 240px</strong>
+
+<Paragraph>
+  이것이 `border-box`가 편리한 이유입니다. "내가 300px이라고 썼으니 화면에서도
+  300px"이라는 직관적인 결과를 얻을 수 있습니다. `content-box`에서는 padding이나
+  border를 변경할 때마다 전체 크기가 바뀌어 레이아웃이 깨지기 쉽습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. 면접 질문</Subtitle>
+
+<Paragraph>
+  이번 주 범위와 관련된 실제 면접 질문들을 함께 생각해봅시다. 정답을
+  외우기보다는 자신만의 말로 설명하는 연습을 해보세요.
+</Paragraph>
+
+<Subtitle level={3}>
+  Q1. 마진 겹침(Margin Collapsing) 현상을 설명해주세요.
+</Subtitle>
+
+<Paragraph>
+  수직 방향으로 인접한 두 요소의 마진이 만나면, 합산되지 않고{" "}
+  <strong>둘 중 큰 값만 적용</strong>되는 CSS의 의도적인 동작입니다.
+</Paragraph>
+
+- <strong>인접 형제</strong>: 위 요소의 `margin-bottom`과 아래 요소의
+  `margin-top`이 겹침
+- <strong>부모와 자식</strong>: 부모에 padding이나 border가 없으면, 자식의
+  margin이 부모 밖으로 새어 나감
+- <strong>해결법</strong>: 부모에 `padding`, `border`, 또는 `overflow: hidden`을
+  적용하면 겹침을 방지할 수 있습니다.
+
+<Paragraph>
+  면접 팁: "왜 이런 동작이 존재하느냐"는 질문이 이어질 수 있습니다. 문단(p)
+  태그의 상하 마진이 겹침 없이 합산되면 간격이 두 배로 벌어지기 때문에,
+  자연스러운 여백을 유지하기 위한 설계라고 답하면 됩니다.
+</Paragraph>
+
+<Subtitle level={3}>
+  Q2. `position: absolute`와 `position: fixed`의 차이를 설명해주세요.
+</Subtitle>
+
+<Paragraph>
+  둘 다 문서의 정상 흐름에서 빠진다는 공통점이 있지만, <strong>기준점</strong>이
+  다릅니다.
+</Paragraph>
+
+- <strong>`absolute`</strong>: 가장 가까운 `position`이 `static`이 아닌 조상
+  요소를 기준으로 배치됩니다. 그런 조상이 없으면 뷰포트가 기준이 됩니다.
+  스크롤하면 함께 움직입니다.
+- <strong>`fixed`</strong>: 항상 뷰포트(브라우저 화면)를 기준으로 배치됩니다.
+  스크롤해도 화면의 같은 위치에 고정됩니다. 고정 헤더, 플로팅 버튼 등에
+  사용합니다.
+
+<Paragraph>
+  `absolute`를 쓸 때 가장 흔한 실수는 부모에 `position: relative`를 빼먹는
+  것입니다. 기준이 될 조상 요소에 `position: relative`를 줘야 합니다.
+</Paragraph>
+
+<Subtitle level={3}>
+  Q3. Flexbox의 `justify-content`와 `align-items`의 차이를 설명해주세요.
+</Subtitle>
+
+<Paragraph>
+  둘 다 Flex 컨테이너 안에서 자식 요소들을 정렬하는 속성이지만,{" "}
+  <strong>정렬하는 축</strong>이 다릅니다.
+</Paragraph>
+
+- <strong>`justify-content`</strong>: <strong>주축(Main Axis)</strong> 방향으로
+  정렬합니다. `flex-direction: row`일 때는 가로 정렬, `column`일 때는 세로
+  정렬이 됩니다.
+- <strong>`align-items`</strong>: <strong>교차축(Cross Axis)</strong> 방향으로
+  정렬합니다. `flex-direction: row`일 때는 세로 정렬, `column`일 때는 가로
+  정렬이 됩니다.
+
+<Paragraph>
+  "주축은 justify, 교차축은 align"이라는 규칙만 외우면, `flex-direction`이
+  바뀌어도 헷갈리지 않습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. 관련 포스팅</Subtitle>
+
+- <Anchor href="/blog/study/clab-26-1/week3">
+    프론트엔드 스터디 3주차 학습 자료: 프론트엔드의 첫 번째 벽, 박스 모델과
+    스타일링
+  </Anchor>
+- <Anchor href="/blog/study/clab-26-1/week4">
+    프론트엔드 스터디 4주차 학습 자료: 자유자재 레이아웃 (포지션과 플렉스박스)
+  </Anchor>
+
+---
+
+<Subtitle level={2}>5. 다음 주 안내</Subtitle>
+
+<Paragraph>
+  다음 주에는 4주차 학습 자료에서 다룬 <strong>반응형 웹 디자인</strong>,{" "}
+  <strong>미디어 쿼리</strong>, <strong>CSS Grid</strong>를 복습하고, CSS 파트를
+  마무리합니다. HTML/CSS 전체를 아우르는 면접 질문도 함께 준비합니다.
+</Paragraph>
+
+<Subtitle level={3}>사전 과제</Subtitle>
+
+<Paragraph>
+  아래 영상의 <strong>4주차 진도 구간(04:28:10 ~ 05:28:02)</strong>을
+  시청해주세요. 배경 이미지 제어부터 Flexbox 레이아웃까지의 내용입니다.
+</Paragraph>
+
+- <strong>영상</strong>: 제대로 파는 HTML & CSS
+- <strong>구간</strong>: 04:28:10 ~ 05:28:02 (약 1시간)
+- <strong>링크</strong>:
+  <Anchor external="https://youtu.be/TrC2x4N0XqY?t=16090">
+    제대로 파는 HTML & CSS - 4주차 진도 시청하기
+  </Anchor>

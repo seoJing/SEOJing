@@ -1,0 +1,217 @@
+---
+title: "프론트엔드 스터디 대면 2주차: HTML 마크업과 폼, 그리고 CSS의 시작"
+date: 2026-03-27
+tags:
+  - 프론트엔드
+  - 스터디
+  - HTML
+  - CSS
+  - Form
+  - 웹접근성
+description: 1주차 HTML 핵심 복습과 과제 풀이, 2주차 폼(Form)과 CSS 선택자까지 다룬 대면 스터디 정리입니다. 면접에서 자주 나오는 시맨틱 HTML, img alt 속성 관련 질문도 함께 준비합니다.
+---
+
+<Subtitle level={2}>1. 저번 주 복습</Subtitle>
+
+<Paragraph>
+  지난주에는 HTML의 기본 구조와 자주 쓰이는 태그들을 배웠습니다. 핵심만 빠르게
+  짚어보겠습니다.
+</Paragraph>
+
+<Subtitle level={3}>HTML 기본 태그</Subtitle>
+
+- <strong>제목 태그 (`h1` ~ `h6`)</strong>: 문서의 계층 구조를 나타냅니다.
+  `h1`은 페이지당 하나만 사용하는 것이 SEO와 접근성 측면에서 권장됩니다.
+- <strong>문단 태그 (`p`)</strong>: 텍스트 문단을 구성합니다.
+- <strong>목록 태그 (`ul`, `ol`, `dl`)</strong>: 순서 없는 목록, 순서 있는 목록,
+  설명 목록을 각각 나타냅니다.
+- <strong>이미지 태그 (`img`)</strong>: `src`로 이미지 경로를, `alt`로 대체
+  텍스트를 지정합니다.
+- <strong>링크 태그 (`a`)</strong>: `href`로 이동할 URL을, `target="_blank"`로
+  새 탭에서 열기를 지정합니다.
+- <strong>표 태그 (`table`)</strong>: `thead`, `tbody`, `tfoot`으로 구조를
+  나누고, `colspan`, `rowspan`으로 셀을 병합합니다.
+
+<Subtitle level={3}>학습 자료에서 다룬 추가 개념</Subtitle>
+
+- <strong>Open Graph (og 태그)</strong>: 카카오톡, 슬랙 등에서 링크 공유 시
+  보이는 썸네일 정보를 제어하는 메타 태그입니다.
+- <strong>반응형 이미지 (`srcset`, `picture`)</strong>: 기기 화면 크기에 맞춰
+  브라우저가 최적의 이미지를 자동 선택합니다.
+- <strong>`article` vs `section`</strong>: `article`은 독립적으로 의미가 통하는
+  콘텐츠, `section`은 주제별 그룹화에 사용합니다.
+- <strong>ARIA 속성</strong>: 시각적으로 보이지 않지만 스크린 리더가 읽을 수
+  있는 정보를 추가합니다. 단, 올바른 시맨틱 태그 사용이 우선입니다.
+
+---
+
+<Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
+
+<Subtitle level={3}>대면 1주차 질문</Subtitle>
+
+<Paragraph>
+  <strong>
+    Q. 웹 페이지에서 시각적으로 완전히 똑같이 굵게 보이는 두 단어가 있습니다.
+    하나는 CSS로 굵기만 준 것이고, 다른 하나는 HTML의 `&lt;strong&gt;` 태그를
+    사용한 것입니다. 눈에는 똑같이 보이는데, 왜 실무에서는 `&lt;strong&gt;` 같은
+    시맨틱 태그를 써야 한다고 할까요?
+  </strong>
+</Paragraph>
+
+<Paragraph>
+  CSS의 `font-weight: bold`는 순수하게 <strong>시각적인 스타일</strong>만
+  변경합니다. 브라우저, 검색 엔진, 스크린 리더 모두 "이 텍스트가 중요하다"는
+  사실을 알 수 없습니다. 반면 `&lt;strong&gt;` 태그는{" "}
+  <strong>의미론적(Semantic)</strong>으로 "이 텍스트가 내용상 중요하다"는 정보를
+  전달합니다.
+</Paragraph>
+
+- <strong>검색 엔진(SEO)</strong>: 구글 같은 검색 엔진은 `&lt;strong&gt;` 안의
+  텍스트에 약간의 가중치를 부여합니다. CSS로 굵게 한 텍스트는 그냥 지나칩니다.
+- <strong>스크린 리더(접근성)</strong>: 스크린 리더는 `&lt;strong&gt;` 태그를
+  만나면 강조된 어조로 읽어줍니다. CSS 굵기는 시각적 변화일 뿐, 음성으로
+  전달되지 않습니다.
+- <strong>유지보수</strong>: 나중에 디자인이 바뀌어서 굵기 대신 색상으로
+  강조하게 되더라도, 시맨틱 태그의 의미는 그대로 유지됩니다.
+
+<Paragraph>
+  핵심은 <strong>"보이는 것"과 "의미하는 것"은 다르다</strong>는 점입니다.
+  실무에서는 항상 의미를 먼저 생각하고, 스타일은 CSS로 분리하는 것이 좋습니다.
+</Paragraph>
+
+<Subtitle level={3}>학습 자료 1주차 과제</Subtitle>
+
+<Paragraph>
+  <strong>
+    Q. 웹 접근성과 검색 엔진 최적화(SEO)를 고려할 때, `&lt;img&gt;` 태그에 `alt`
+    속성을 아예 생략하면 어떤 치명적인 문제가 발생할까요? 또한, 단순히 화면의
+    여백을 채우기 위한 '장식용 이미지'일 경우에는 이 속성을 어떻게 처리해야
+    할까요?
+  </strong>
+</Paragraph>
+
+<Paragraph>`alt` 속성을 생략하면 두 가지 큰 문제가 생깁니다.</Paragraph>
+
+- <strong>스크린 리더 문제</strong>: `alt`가 없으면 스크린 리더는 이미지
+  파일명을 그대로 읽어줍니다. `IMG_20260315_142307.jpg` 같은 파일명이 그대로
+  읽히면 사용자에게 전혀 유용하지 않은 정보가 전달됩니다.
+- <strong>SEO 문제</strong>: 검색 엔진은 이미지를 직접 "보지" 못합니다. `alt`
+  텍스트를 통해 이미지의 내용을 이해하고 검색 결과에 반영하는데, 이것이 없으면
+  이미지가 검색에 노출될 기회를 잃습니다.
+
+<Paragraph>
+  그렇다면 장식용 이미지는 어떻게 할까요?{" "}
+  <strong>빈 alt 속성(`alt=""`)을 명시적으로 작성</strong>합니다.
+</Paragraph>
+
+```html
+<!-- 콘텐츠 이미지: 의미 있는 alt 작성 -->
+<img src="team-photo.jpg" alt="2026년 봄 스터디 팀원 단체 사진" />
+
+<!-- 장식용 이미지: 빈 alt를 명시 -->
+<img src="decorative-line.png" alt="" />
+```
+
+<Paragraph>
+  `alt=""`를 작성하면 스크린 리더는 이 이미지를{" "}
+  <strong>의도적으로 건너뜁니다</strong>. 반면 `alt` 속성 자체를 생략하면 스크린
+  리더가 이미지를 무시해야 할지 판단할 수 없어서 파일명을 읽어버립니다. "빈 값을
+  넣는 것"과 "속성을 빼는 것"은 완전히 다른 결과를 만듭니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. 면접 질문</Subtitle>
+
+<Paragraph>
+  이번 주 범위와 관련된 실제 면접 질문들을 함께 생각해봅시다. 정답을
+  외우기보다는 자신만의 말로 설명하는 연습을 해보세요.
+</Paragraph>
+
+<Subtitle level={3}>Q1. 시맨틱 HTML이 무엇이고, 왜 중요한가요?</Subtitle>
+
+<Paragraph>
+  시맨틱(Semantic) HTML은 태그 자체가 콘텐츠의 <strong>의미와 역할</strong>을
+  나타내는 마크업 방식입니다. 예를 들어 `&lt;nav&gt;`는 네비게이션,
+  `&lt;article&gt;`은 독립적인 콘텐츠, `&lt;header&gt;`는 머리말 영역이라는 뜻을
+  담고 있습니다.
+</Paragraph>
+
+<Paragraph>
+  모든 것을 `&lt;div&gt;`로 작성해도 화면에 보이는 결과는 동일할 수 있습니다.
+  하지만 시맨틱 태그를 사용하면 세 가지 이점이 있습니다.
+</Paragraph>
+
+- <strong>접근성</strong>: 스크린 리더가 페이지 구조를 파악해서 "네비게이션
+  영역으로 이동", "본문 영역으로 이동" 같은 단축 탐색을 제공할 수 있습니다.
+- <strong>SEO</strong>: 검색 엔진이 페이지의 주제와 구조를 더 정확하게
+  이해합니다.
+- <strong>유지보수</strong>: `div.container > div.wrapper > div.inner` 보다
+`header > nav > ul`이 코드를 읽는 사람에게 훨씬 명확합니다.
+
+<Subtitle level={3}>Q2. `div`와 `span`의 차이는 무엇인가요?</Subtitle>
+
+<Paragraph>
+  둘 다 의미 없는 범용 컨테이너이지만, <strong>표시 방식(display)</strong>이
+  다릅니다.
+</Paragraph>
+
+- <strong>`div`</strong>: 블록(block) 요소입니다. 한 줄 전체를 차지하며,
+  위아래로 쌓입니다.
+- <strong>`span`</strong>: 인라인(inline) 요소입니다. 콘텐츠의 흐름 안에서
+  필요한 부분만 감싸며, 줄바꿈이 일어나지 않습니다.
+
+```html
+<div>이 문장은 한 줄 전체를 차지합니다.</div>
+<p>이 문장에서 <span style="color: red;">이 부분만</span> 빨간색입니다.</p>
+```
+
+<Subtitle level={3}>Q3. `id`와 `class`의 차이는 무엇인가요?</Subtitle>
+
+- <strong>`id`</strong>: 페이지 내에서 <strong>유일</strong>해야 합니다. 하나의
+  요소에만 부여할 수 있고, CSS 우선순위가 클래스보다 높습니다.
+- <strong>`class`</strong>: 여러 요소에 <strong>중복</strong>해서 사용할 수
+  있습니다. 재사용 가능한 스타일을 적용할 때 사용합니다.
+
+<Paragraph>
+  실무에서는 스타일링에 `id`를 사용하는 것을 지양합니다. 우선순위가 너무 높아서
+  나중에 스타일을 덮어쓰기 어렵기 때문입니다. `id`는 주로 JavaScript에서 특정
+  요소를 잡거나, `&lt;label&gt;`의 `for` 속성 연결 용도로 사용합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. 관련 포스팅</Subtitle>
+
+- <Anchor href="/blog/study/clab-26-1/week1">
+    프론트엔드 스터디 1주차 학습 자료: 마크업 그 이상, 실무를 위한 중급 HTML
+    가이드
+  </Anchor>
+- <Anchor href="/blog/study/clab-26-1/week2">
+    프론트엔드 스터디 2주차 학습 자료: 사용자와 소통하는 폼 & CSS의 시작
+  </Anchor>
+
+---
+
+<Subtitle level={2}>5. 다음 주 안내</Subtitle>
+
+<Paragraph>
+  다음 주에는 CSS의 핵심인 <strong>박스 모델(Box Model)</strong>과{" "}
+  <strong>레이아웃 기초</strong>를 배웁니다. 모든 HTML 요소가 사각형 상자로
+  이루어져 있다는 개념을 이해하고, margin, padding, border의 차이를 익히는 것이
+  목표입니다.
+</Paragraph>
+
+<Subtitle level={3}>사전 과제</Subtitle>
+
+<Paragraph>
+  아래 영상의 <strong>2주차 진도 구간(01:36:21 ~ 02:59:19)</strong>을
+  시청해주세요. 사용자 입력(Form)부터 CSS 선택자 규칙까지의 내용입니다.
+</Paragraph>
+
+- <strong>영상</strong>: 제대로 파는 HTML & CSS
+- <strong>구간</strong>: 01:36:21 ~ 02:59:19 (약 1시간 23분)
+- <strong>링크</strong>:
+  <Anchor external="https://youtu.be/TrC2x4N0XqY?t=5781">
+    제대로 파는 HTML & CSS - 2주차 진도 시청하기
+  </Anchor>

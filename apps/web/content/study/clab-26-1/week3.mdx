@@ -365,6 +365,105 @@ body {
   중요합니다.
 </Paragraph>
 
+<Subtitle level={2}>
+  6\. 가상 요소 (::before, ::after) — HTML 없이 장식 추가하기
+</Subtitle>
+
+<Paragraph>
+  CSS에는 실제 HTML 태그를 추가하지 않고도 요소의 앞이나 뒤에 콘텐츠를 삽입할 수
+  있는 <strong>가상 요소(Pseudo-element)</strong>가 있습니다. `::before`는
+  요소의 내용 앞에, `::after`는 뒤에 가상의 요소를 만들어줍니다.
+</Paragraph>
+
+```css
+/* 필수 항목 옆에 빨간 별표 추가 */
+.required::after {
+  content: " *";
+  color: red;
+}
+
+/* 링크 앞에 아이콘 추가 */
+.external-link::before {
+  content: "🔗 ";
+}
+
+/* 장식용 밑줄 */
+.title::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 3px;
+  background-color: #3b82f6;
+  margin-top: 8px;
+}
+```
+
+<Paragraph>
+  가상 요소를 사용할 때 반드시 기억해야 할 규칙이 하나 있습니다.{" "}
+  <strong>`content` 속성이 필수</strong>입니다. 텍스트가 필요 없더라도 빈
+  문자열(`content: ""`)을 반드시 넣어야 가상 요소가 화면에 나타납니다.
+  `content`를 빼먹으면 아무것도 렌더링되지 않습니다.
+</Paragraph>
+
+<Paragraph>
+  실무에서는 HTML에 의미 없는 장식용 태그를 추가하는 대신 `::before`/`::after`로
+  처리하는 것이 깔끔합니다. 단, 가상 요소는 스크린 리더가 읽을 수도 읽지 않을
+  수도 있으므로, <strong>중요한 콘텐츠는 반드시 HTML에 작성</strong>하고 가상
+  요소는 장식 용도로만 사용하세요. Tailwind CSS에서는 `before:content-['*']`,
+  `after:block` 같은 유틸리티로 가상 요소를 다룰 수 있어서, 직접 CSS를 작성하는
+  빈도는 줄어들지만 내부 동작 원리는 동일합니다.
+</Paragraph>
+
+<Subtitle level={2}>
+  7\. BFC (Block Formatting Context) — 마진 겹침이 풀리는 원리
+</Subtitle>
+
+<Paragraph>
+  3번 섹션에서 마진 겹침을 방지하기 위해 `overflow: hidden`을 사용했습니다. "왜
+  overflow가 마진 겹침을 해결하는 거지?" 라는 의문이 들었을 수 있습니다. 그 답이
+  바로 <strong>BFC(Block Formatting Context)</strong>입니다.
+</Paragraph>
+
+<Paragraph>
+  BFC는 쉽게 말하면 <strong>"독립된 레이아웃 영역"</strong>입니다. BFC가 생성된
+  요소의 내부 레이아웃은 외부에 영향을 주지 않고, 외부 레이아웃도 내부에 영향을
+  주지 않습니다. 마진 겹침은 같은 BFC 안에서만 발생하기 때문에, 새로운 BFC를
+  만들면 겹침이 차단됩니다.
+</Paragraph>
+
+<Paragraph>BFC를 생성하는 대표적인 방법들입니다.</Paragraph>
+
+- <strong>`overflow: hidden`</strong> (또는 `auto`, `scroll`)
+- <strong>`display: flex`</strong> 또는 `display: grid`
+- <strong>`display: flow-root`</strong> — BFC 생성만을 위해 만들어진 속성
+- <strong>`position: absolute`</strong> 또는 `fixed`
+
+```css
+/* 마진 겹침 방지: 가장 명확한 방법 */
+.parent {
+  display: flow-root; /* BFC 생성, 부작용 없음 */
+}
+
+/* 또는 이미 사용 중인 방법 */
+.parent {
+  overflow: hidden; /* BFC 생성, 넘치는 콘텐츠가 잘릴 수 있음 */
+}
+```
+
+<Paragraph>
+  `display: flow-root`는 BFC 생성만을 목적으로 하기 때문에 가장 부작용이
+  적습니다. `overflow: hidden`은 콘텐츠가 넘칠 때 잘리는 부작용이 있을 수
+  있으므로, 상황에 맞게 선택하면 됩니다.
+</Paragraph>
+
+<Paragraph>
+  참고로 Tailwind CSS를 사용하면 `flex`, `grid`, `gap`, `space-y` 등의
+  유틸리티를 쓰는 과정에서 BFC가 자동으로 생성되고 마진 겹침도 자연스럽게
+  회피되기 때문에, 실무에서 BFC를 직접 다룰 일은 많지 않습니다. 다만 순수 CSS를
+  작성하거나 디버깅할 때 "마진이 이상하게 동작하면 BFC를 의심해봐야 한다"는 것은
+  기억해두세요.
+</Paragraph>
+
 ---
 
 <Subtitle level={2}>📝 3주차 스터디 인증 미션</Subtitle>

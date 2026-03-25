@@ -1,0 +1,481 @@
+---
+title: "vinext 오픈소스 기여기: 한국어 slug가 RSC에서 이슈를 일으킨 이유"
+date: 2026-03-25
+tags:
+  - 오픈소스
+  - vinext
+  - 트러블슈팅
+  - 테스팅
+  - DevLog
+description: 한국어 MDX 블로그를 만들다 vinext 프레임워크의 ByteString 버그를 발견하고, 이슈를 작성하고, PR을 올리기까지의 과정
+---
+
+<Subtitle level={2}>발단: 블로그 목록이 이슈를 쏟아냄</Subtitle>
+
+<Paragraph>
+  블로그 디테일 페이지를 만들고 `/blog`에 접속했다. 그런데 콘솔에 빨간 에러가
+  쏟아졌다. 모든 한국어 slug를 가진 포스트의 `.rsc` 요청이{" "}
+  <strong>500 Internal Server Error</strong>를 반환하고 있었다.
+</Paragraph>
+
+```
+TypeError: Cannot convert argument to a ByteString because the character at
+index 38 has a value of 50756 which is greater than 255.
+    at webidl.converters.ByteString (node:internal/deps/undici/undici:3889:17)
+```
+
+<Paragraph>
+  이상한 건 <strong>직접 URL을 입력해서 접속하면 정상</strong>이라는 점이었다.
+  `/blog/frontend/hooks/useState-완전정복`을 브라우저 주소창에 직접 치면 잘
+  뜨는데, 블로그 목록에서 링크를 클릭하면 터진다. 직접 접속은 SSR(서버 사이드
+  렌더링)이고, 링크 클릭은 RSC(React Server Component) 스트리밍
+  요청(`.rsc`)이다. 즉 <strong>RSC 경로에서만 문제가 발생</strong>하고 있었다.
+</Paragraph>
+
+<Subtitle level={2}>원인 추적: Next.js에 같은 문제가 있었을까?</Subtitle>
+
+<Paragraph>
+  vinext는 Vite 위에 Next.js API를 재구현한 프레임워크다. Cloudflare가 AI를
+  활용해서 빠르게 만든 프로젝트인데, 그래서 한 가지 가설이 떠올랐다.
+  <strong>Next.js에서 이미 해결된 문제를 vinext가 빠뜨렸을 수 있다.</strong>
+</Paragraph>
+
+<Paragraph>
+  "next.js non-ascii header params"로 검색해보니 역시나 있었다.
+  <Anchor external="https://github.com/vercel/next.js/pull/27003">
+    vercel/next.js#27003
+  </Anchor>
+  에서 동일한 문제를 `encodeURIComponent`로 해결한 기록이 있었다. HTTP 헤더에
+  비ASCII 문자를 넣으면 ByteString 제약을 위반하는 문제였고, 해결 방법도 퍼센트
+  인코딩이었다.
+</Paragraph>
+
+<Paragraph>
+  그러면 vinext에서도 같은 패턴이 있는지 확인해보자. vinext의 소스 코드에서
+  `X-Vinext-Params`를 검색했다.
+</Paragraph>
+
+```ts
+// vinext/src/server/app-page-response.ts (line 57)
+if (options.params && Object.keys(options.params).length > 0)
+  headers.set("X-Vinext-Params", JSON.stringify(options.params));
+```
+
+<Paragraph>
+  <strong>역시나 같은 문제였다.</strong> `JSON.stringify()`가 비ASCII 문자를
+  그대로 보존하기 때문에, 한국어가 포함된 params를 직렬화하면 ByteString 제약을
+  위반하게 된다. Next.js는 이미 고쳤지만, vinext는 이 부분을 놓친 것이다.
+</Paragraph>
+
+<Subtitle level={3}>ByteString이란?</Subtitle>
+
+<Paragraph>
+  <Anchor external="https://fetch.spec.whatwg.org/#concept-header-value">
+    Fetch 명세
+  </Anchor>
+  에 따르면 `Headers.set()`의 값은 <strong>ByteString</strong>이어야 한다.
+  ByteString은 모든 문자의 코드 포인트가 255 이하인 문자열이다. 한국어 `완`은
+  U+C644(= 50756)이니 당연히 255를 초과한다.
+</Paragraph>
+
+<Subtitle level={3}>에러 메시지 검증</Subtitle>
+
+<Paragraph>에러 메시지에서 "index 38"이라고 했다. 실제로 확인해보자.</Paragraph>
+
+```js
+const json = JSON.stringify({
+  slug: ["frontend", "hooks", "useState-완전정복"],
+});
+// json = '{"slug":["frontend","hooks","useState-완전정복"]}'
+//         0123456789...                              ^38번째
+
+console.log(json[38]); // "완"
+console.log(json.charCodeAt(38)); // 50756 (= U+C644)
+```
+
+<Paragraph>
+  정확히 일치한다. 에러 메시지의 index 38, value 50756은 `완` 문자를 가리키고
+  있었다.
+</Paragraph>
+
+<Subtitle level={3}>왜 SSR에서는 문제없는가?</Subtitle>
+
+<Paragraph>
+  같은 파일의 `buildAppPageHtmlResponse()` 함수를 보면 `X-Vinext-Params` 헤더를
+  설정하지 않는다. SSR은 HTML을 통째로 내려보내기 때문에 params를 헤더에 실을
+  필요가 없는 것이다. 반면 RSC 스트리밍은 클라이언트가 서버 응답의 헤더에서
+  params를 읽어야 하므로 이 헤더가 필요하다.
+</Paragraph>
+
+| 시나리오                                   | 결과                                            |
+| :----------------------------------------- | :---------------------------------------------- |
+| 비ASCII slug, 직접 URL 접속 (SSR)          | 정상 — `buildAppPageHtmlResponse`는 헤더 미설정 |
+| 비ASCII slug, 클라이언트 내비게이션 (.rsc) | 500 에러 — `buildAppPageRscResponse`에서 크래시 |
+| ASCII 전용 slug                            | 모든 경우 정상                                  |
+
+<Subtitle level={3}>해결 방법</Subtitle>
+
+<Paragraph>
+  Next.js와 동일하게 `encodeURIComponent`로 퍼센트 인코딩하면 모든 문자가 ASCII
+  범위에 들어온다.
+</Paragraph>
+
+```ts
+// Before
+headers.set("X-Vinext-Params", JSON.stringify(options.params));
+
+// After
+headers.set(
+  "X-Vinext-Params",
+  encodeURIComponent(JSON.stringify(options.params)),
+);
+```
+
+<Paragraph>
+  클라이언트에서 읽을 때는 `decodeURIComponent()`로 복원하면 된다.
+</Paragraph>
+
+<Subtitle level={2}>오픈소스 기여 과정</Subtitle>
+
+<Paragraph>
+  버그의 원인과 수정 방법이 명확했으니, vinext 저장소에 직접 기여해보기로 했다.
+</Paragraph>
+
+<Subtitle level={3}>1단계: 이슈 작성</Subtitle>
+
+<Paragraph>
+  먼저 GitHub Issues에 버그 리포트를 올렸다. 좋은 이슈를 쓰는 법은
+  <Anchor external="https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-an-issue">
+    GitHub 공식 문서
+  </Anchor>
+  와
+  <Anchor external="https://www.chiark.greenend.org.uk/~sgtatham/bugs.html">
+    Simon Tatham의 "How to Report Bugs Effectively"
+  </Anchor>
+  를 참고했다. 좋은 이슈에는 다음이 포함되어야 한다.
+</Paragraph>
+
+- <strong>재현 방법</strong> — 다른 사람이 따라하면 같은 에러를 볼 수 있어야
+  한다
+- <strong>최소 재현 코드</strong> — 핵심만 추린 코드 조각
+- <strong>원인 분석</strong> — 어떤 코드에서, 왜 문제가 생기는지
+- <strong>수정 제안</strong> — 구체적인 코드 변경 제안
+- <strong>환경 정보</strong> — 버전, OS, 브라우저 등
+
+```js
+// 최소 재현 코드 — 이것만으로 에러를 확인할 수 있다
+const headers = new Headers();
+headers.set("X-Vinext-Params", JSON.stringify({ slug: ["useState-완전정복"] }));
+// TypeError: Cannot convert argument to a ByteString...
+```
+
+<Paragraph>
+  특히 수정 제안에는 Next.js의 선례 (
+  <Anchor external="https://github.com/vercel/next.js/pull/27003">
+    vercel/next.js#27003
+  </Anchor>
+  )를 함께 첨부했다. 이미 검증된 해결 방법이라는 근거를 제시하면 메인테이너가 더
+  빠르게 판단할 수 있다.
+</Paragraph>
+
+<Subtitle level={3}>2단계: 포크 및 브랜치 생성</Subtitle>
+
+<Paragraph>
+  vinext 저장소를 포크하고, 수정 작업을 위한 브랜치를 만들었다.
+</Paragraph>
+
+```bash
+# 포크한 저장소 클론
+git clone https://github.com/seoJing/vinext.git
+cd vinext
+
+# 수정 브랜치 생성
+git checkout -b fix/non-ascii-params-bytestring-676
+
+# 의존성 설치
+pnpm install
+```
+
+<Subtitle level={3}>3단계: 코드 수정 및 테스트</Subtitle>
+
+<Paragraph>
+  수정 자체는 간단했다. `encodeURIComponent` 한 줄 추가와, 클라이언트 사이드에서
+  `decodeURIComponent` 추가. 하지만 오픈소스 기여에서 중요한 건
+  <strong>테스트</strong>다.
+</Paragraph>
+
+<Paragraph>
+  vinext의
+  <Anchor external="https://github.com/cloudflare/vinext/blob/main/CONTRIBUTING.md">
+    CONTRIBUTING.md
+  </Anchor>
+  에는 이렇게 적혀있다.
+</Paragraph>
+
+> **Run the test suite.** `pnpm test` runs Vitest. `pnpm run test:e2e` runs Playwright.
+
+> **Add tests for new functionality.** Unit tests go in `tests/*.test.ts`. Browser-level tests go in `tests/e2e/`.
+
+<Paragraph>
+  테스트의 종류가 세 가지나 언급된다. 유닛 테스트, E2E 테스트, 그리고 정적 체크.
+  이게 각각 뭔지, 이번 기여에서 어떻게 적용되는지 정리해보았다.
+</Paragraph>
+
+<Subtitle level={2}>테스팅의 세 가지 수준</Subtitle>
+
+<Subtitle level={3}>유닛 테스트 (Unit Test)</Subtitle>
+
+<Paragraph>
+  <strong>함수 하나</strong>를 격리해서 테스트한다. 외부 의존성 없이, 입력을
+  넣으면 기대한 출력이 나오는지만 확인한다. 가장 빠르고 가장 많이 작성한다.
+</Paragraph>
+
+```ts
+import { describe, expect, it } from "vite-plus/test";
+
+describe("buildAppPageRscResponse", () => {
+  it("percent-encodes non-ASCII params in X-Vinext-Params header", () => {
+    const response = buildAppPageRscResponse(new ReadableStream(), {
+      params: { slug: ["useState-완전정복"] },
+      policy: {},
+      middlewareContext: { headers: null },
+    });
+
+    const raw = response.headers.get("X-Vinext-Params");
+    // 헤더 값이 ASCII만 포함하는지 확인
+    expect(raw).toBe(
+      encodeURIComponent(JSON.stringify({ slug: ["useState-완전정복"] })),
+    );
+    // 디코딩하면 원본이 복원되는지 확인
+    expect(JSON.parse(decodeURIComponent(raw!))).toEqual({
+      slug: ["useState-완전정복"],
+    });
+  });
+});
+```
+
+<Paragraph>
+  vinext는 <strong>Vitest</strong>를 테스트 러너로 사용한다.
+  `vite-plus/test`에서 `describe`, `expect`, `it`을 import하는 것이 프로젝트의
+  컨벤션이다. `pnpm test`로 실행한다.
+</Paragraph>
+
+<Subtitle level={3}>통합 테스트 (Integration Test)</Subtitle>
+
+<Paragraph>
+  여러 모듈이 <strong>함께 동작</strong>하는 것을 테스트한다. 유닛 테스트가 함수
+  하나를 보는 거라면, 통합 테스트는 함수들이 조합됐을 때 의도대로 동작하는지
+  확인한다.
+</Paragraph>
+
+<Paragraph>
+  예를 들어 유닛 테스트에서는 `encodeURIComponent`가 잘 적용되는지만 보지만,
+  통합 테스트에서는 실제 Vite 개발 서버를 띄우고 HTTP 요청을 보내서 응답 헤더에
+  인코딩된 값이 제대로 들어있는지까지 확인한다.
+</Paragraph>
+
+```ts
+// 통합 테스트 예시 — 실제 서버에 요청
+const server = await startFixtureServer("app-router");
+const response = await fetch(`${server.url}/blog/useState-완전정복.rsc`);
+const params = response.headers.get("X-Vinext-Params");
+expect(JSON.parse(decodeURIComponent(params!))).toEqual({
+  slug: ["useState-완전정복"],
+});
+```
+
+<Paragraph>
+  vinext에서는 통합 테스트도 `pnpm test`로 실행되지만, 유닛 테스트와 분리되어
+  <strong>순차 실행</strong>된다. Vite 개발 서버를 여러 개 동시에 띄우면 캐시
+  충돌이 발생하기 때문이다.
+</Paragraph>
+
+<Subtitle level={3}>E2E 테스트 (End-to-End Test)</Subtitle>
+
+<Paragraph>
+  <strong>실제 브라우저</strong>를 띄워서 사용자가 하는 것과 동일하게
+  테스트한다. "진짜 Chrome 브라우저에서 링크를 클릭하면 페이지가 정상
+  로드되는가?"를 확인한다.
+</Paragraph>
+
+```ts
+// E2E 테스트 예시 — Playwright
+import { test, expect } from "@playwright/test";
+
+test("non-ASCII slug navigation works", async ({ page }) => {
+  // 실제 브라우저에서 블로그 목록 접속
+  await page.goto("/blog");
+
+  // 한국어 slug 링크 클릭
+  await page.click('a[href="/blog/useState-완전정복"]');
+
+  // 페이지가 정상 로드되는지 확인
+  await expect(page.locator("h1")).toHaveText("useState 완전정복");
+});
+```
+
+<Paragraph>
+  vinext는 <strong>Playwright</strong>로 E2E 테스트를 실행한다. `pnpm run
+  test:e2e`로 실행하며, 실제 Chromium 브라우저를 헤드리스 모드로 띄운다. 가장
+  느리지만 가장 현실적인 테스트다. CONTRIBUTING.md에서도 브라우저 수준 디버깅의
+  중요성을 강조한다.
+</Paragraph>
+
+> For browser-level debugging (verifying rendered output, client-side navigation, hydration behavior), we recommend agent-browser. Unit tests miss a lot of subtle browser issues.
+
+<Subtitle level={3}>테스트 피라미드</Subtitle>
+
+<Paragraph>세 가지 테스트는 피라미드 구조로 생각하면 된다.</Paragraph>
+
+```
+        /\
+       /  \        E2E — 적게, 핵심 시나리오만
+      /    \       (실제 브라우저, 느림, 비쌈)
+     /------\
+    /        \     통합 — 중간
+   /          \    (서버 + 모듈 조합, 보통)
+  /------------\
+ /              \  유닛 — 많이
+/________________\ (함수 단위, 빠름, 저렴)
+```
+
+<Paragraph>
+  아래로 갈수록 많이 작성하고, 위로 갈수록 적게 작성한다. 유닛 테스트는 빠르고
+  저렴하니 가능한 많이, E2E 테스트는 느리고 비싸니 핵심 시나리오만 작성하는 것이
+  일반적이다.
+</Paragraph>
+
+<Subtitle level={3}>이번 버그에 필요한 테스트</Subtitle>
+
+<Paragraph>
+  이 ByteString 버그의 경우, <strong>유닛 테스트 하나로 충분</strong>했다.
+  `buildAppPageRscResponse` 함수에 비ASCII params를 넣었을 때 헤더가 정상적으로
+  인코딩되는지만 확인하면 된다. 통합 테스트나 E2E 테스트는 있으면 좋지만 필수는
+  아니다.
+</Paragraph>
+
+<Subtitle level={2}>기여 결과</Subtitle>
+
+<Paragraph>
+  이슈(
+  <Anchor external="https://github.com/cloudflare/vinext/issues/676">
+    #676
+  </Anchor>
+  )를 올린 뒤 PR(
+  <Anchor external="https://github.com/cloudflare/vinext/pull/678">#678</Anchor>
+  )을 준비했다. 하지만 메인테이너(southpolesteve)가 이슈를 보고 빠르게{" "}
+  <Anchor external="https://github.com/cloudflare/vinext/pull/677">
+    직접 수정
+  </Anchor>
+  해서 머지해버렸다. 그래서 코멘트를 달고 내 PR은 close했다.
+</Paragraph>
+
+<Paragraph>
+  직접 기여로 남고 싶어 아쉽지만, CONTRIBUTING.md에 이런 문구가 있다.
+</Paragraph>
+
+> At a maintainer's discretion, we may push BigBonk's recommended changes directly into your PR and merge it, or we may create a new PR based on your work. When we do this, we always try to preserve the original author credit.
+
+<Paragraph>
+  코드 머지만이 기여가 아니다.{" "}
+  <strong>상세한 이슈 리포트 자체가 유의미한 기여</strong>다. 메인테이너가
+  빠르게 수정할 수 있었던 건 이슈에 원인 분석, 최소 재현 코드, 수정 제안까지 다
+  적어뒀기 때문이다.
+</Paragraph>
+
+<Paragraph>
+  무엇보다도 메인테이터가 나를 공동 작업자로 넣어줘서, 기여를 확인할 수 있게
+  해줬다!
+</Paragraph>
+
+<Subtitle level={2}>오픈소스 기여 가이드: vinext 기준</Subtitle>
+
+<Paragraph>
+  마지막으로 vinext에 기여하는 전체 워크플로를 정리한다.
+  <Anchor external="https://github.com/cloudflare/vinext/blob/main/CONTRIBUTING.md">
+    CONTRIBUTING.md
+  </Anchor>
+  를 기반으로 정리했으며, 대부분의 오픈소스 프로젝트가 비슷한 흐름을 따른다.
+</Paragraph>
+
+<Subtitle level={3}>환경 세팅</Subtitle>
+
+```bash
+# 1. 포크 후 클론
+git clone https://github.com/<your-username>/vinext.git
+cd vinext
+
+# 2. 의존성 설치
+pnpm install
+
+# 3. 빌드 (monorepo 내부 패키지 빌드)
+pnpm run build
+```
+
+<Subtitle level={3}>수정 및 검증</Subtitle>
+
+<Paragraph>
+  CONTRIBUTING.md에서 PR을 열기 전 요구하는 세 가지 검증이다.
+</Paragraph>
+
+```bash
+# 4. 브랜치 생성
+git checkout -b fix/descriptive-branch-name
+
+# 5. 코드 수정 후 테스트
+pnpm test           # 유닛 + 통합 테스트 (Vitest)
+pnpm run test:e2e   # E2E 테스트 (Playwright)
+pnpm run check      # 포맷팅 + 린팅 + 타입 체크 (Vite+)
+```
+
+<Subtitle level={3}>PR 제출</Subtitle>
+
+```bash
+# 6. 커밋
+git commit -m "fix: description of the fix (#issue-number)"
+
+# 7. 푸시 및 PR 생성
+git push origin fix/descriptive-branch-name
+gh pr create --title "fix: ..." --body "Closes #issue-number"
+```
+
+<Paragraph>
+  커밋 메시지는 <strong>Conventional Commits</strong> 형식을 따른다. `fix:`,
+  `feat:`, `docs:`, `test:` 등의 접두사를 사용한다. PR 본문에 `Closes
+  #이슈번호`를 넣으면 머지 시 이슈가 자동으로 닫힌다.
+</Paragraph>
+
+<Paragraph>
+  vinext의 독특한 점은 AI 코드 리뷰다. PR을 올리면 <strong>BigBonk</strong>라는
+  Claude Opus 4.6 기반 AI 리뷰어가 코드를 검토한다. CONTRIBUTING.md는 이렇게
+  말한다.
+</Paragraph>
+
+> Every PR goes through AI code review. When you open a PR, a contributor with write access will request a review from BigBonk (Claude Opus 4.6, max thinking mode).
+
+> Our bias is towards merging. This is a new project with known gaps, and we're trying to fill them as fast as possible.
+
+<Subtitle level={2}>배운 것</Subtitle>
+
+<Paragraph>
+  한국어 MDX 블로그를 만들다가 프레임워크 버그를 발견하고, 분석하고, 이슈를
+  올리고, PR까지 시도한 경험이었다. 정리하면 이렇다.
+</Paragraph>
+
+- <strong>Next.js 기반 프로젝트의 버그는 Next.js 이슈를 먼저 찾아보자</strong> —
+  이미 해결된 문제를 빠뜨린 경우가 많다
+- <strong>HTTP 헤더는 ByteString만 허용한다</strong> — 비ASCII 문자를 헤더에
+  넣으려면 퍼센트 인코딩이 필요하다
+- <strong>SSR과 RSC는 다른 경로를 탄다</strong> — 같은 페이지라도 접근 방식에
+  따라 다른 함수가 실행된다
+- <strong>좋은 이슈 리포트 = 좋은 기여</strong> — 재현 방법, 원인 분석, 수정
+  제안을 갖추면 메인테이너가 빠르게 대응할 수 있다
+- <strong>테스트는 유닛 → 통합 → E2E 순으로 작성한다</strong> — 대부분의 버그는
+  유닛 테스트로 검증 가능하다
+- <strong>이슈와 PR은 동시에 올려라</strong> — 늦으면 메인테이너가 먼저 고친다
+
+<Paragraph>
+  이 과정에서 vinext의 내부 구조(RSC 스트리밍, 헤더 직렬화), Fetch
+  명세(ByteString 제약), 그리고 오픈소스 기여 워크플로(포크 → 브랜치 → 테스트 →
+  PR)를 실전으로 익힐 수 있었다.
+</Paragraph>
