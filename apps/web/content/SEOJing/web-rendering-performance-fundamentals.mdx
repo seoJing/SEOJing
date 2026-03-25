@@ -1,0 +1,556 @@
+---
+title: vinext는 왜 빠를까? — SSR, Vite, Edge, 그리고 Web Vitals까지
+date: 2026-03-25
+tags:
+  - Web
+  - Performance
+  - SSR
+  - Next.js
+  - Vite
+description: vinext가 빠른 이유를 이해하기 위해, SSR부터 Hydration, 빌드 도구, Edge Runtime, Web Vitals, RSC, CDN 캐싱, ISR, PPR까지 웹 렌더링 성능의 전체 그림을 정리한다
+---
+
+<Subtitle level={2}>시작점: vinext는 왜 빠르다고 할까?</Subtitle>
+
+<Paragraph>
+  vinext는 Cloudflare가 만든 Vite 기반 Next.js 대체 프레임워크다. 빌드 속도
+  4.4배, 번들 크기 57% 감소를 자랑하고, `vinext deploy` 한 줄이면 Cloudflare
+  Workers에 배포된다.
+</Paragraph>
+
+<Paragraph>
+  그런데 "빠르다"라고만 알고, <strong>왜 빠르고 어떻게 빠른지</strong>에 대한
+  이해가 없었다. Next.js가 빠른 이유가 SSR 때문이라면, SSR은 왜 빠르고 어떻게
+  빠른 건지. 이 글은 그 질문에서 출발해서 웹 렌더링 성능의 전체 그림을 처음부터
+  정리한 기록이다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>CSR vs SSR: 왜 SSR이 빠른가</Subtitle>
+
+<Subtitle level={3}>CSR (Client-Side Rendering)</Subtitle>
+
+<Paragraph>
+  브라우저가 빈 HTML을 받고, JS를 다운로드하고, 실행해서 DOM을 만든다. JS가
+  실행될 때까지 사용자는 빈 화면을 본다.
+</Paragraph>
+
+```
+서버 → 빈 HTML 전송 → JS 다운로드 → JS 실행 → DOM 생성 → 화면 표시
+```
+
+<Subtitle level={3}>SSR (Server-Side Rendering)</Subtitle>
+
+<Paragraph>
+  서버가 미리 HTML을 완성해서 보낸다. 사용자는 JS가 로드되기 전에 이미 콘텐츠를
+  볼 수 있다.
+</Paragraph>
+
+```
+서버에서 HTML 완성 → 완성된 HTML 전송 → 화면 즉시 표시 → JS 다운로드 → Hydration
+```
+
+| 지표                         | CSR               | SSR                   |
+| :--------------------------- | :---------------- | :-------------------- |
+| FCP (First Contentful Paint) | 느림 (JS 실행 후) | 빠름 (HTML 도착 즉시) |
+| TTI (Time to Interactive)    | JS 실행 후        | Hydration 완료 후     |
+| SEO                          | 불리 (빈 HTML)    | 유리 (완성된 HTML)    |
+
+<Paragraph>
+  SSR이 "빠르다"는 건 정확히는{" "}
+  <strong>사용자가 콘텐츠를 처음 보는 시점(FCP)이 빠르다</strong>는 뜻이다.
+  인터랙션 가능 시점(TTI)은 Hydration이 끝나야 하므로 CSR과 비슷하거나 오히려
+  느릴 수도 있다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>Hydration: 정적 HTML에 생명 불어넣기</Subtitle>
+
+<Paragraph>
+  서버가 보낸 정적 HTML에 JS 이벤트 핸들러를 붙여서 인터랙티브하게 만드는
+  과정이다.
+</Paragraph>
+
+```
+정적 HTML (클릭해도 반응 없음)
+        ↓ Hydration
+동적 HTML (클릭, 입력 등 가능)
+```
+
+<Paragraph>
+  핵심은 서버가 만든 HTML과 클라이언트 JS가 <strong>1:1로 매칭</strong>되어야
+  한다는 것이다. 서버에서 `안녕`을 보냈는데 클라이언트 JS가 `반가워`를 기대하면
+  불일치가 생겨서 Hydration Error가 발생한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>Next.js의 렌더링 전략들</Subtitle>
+
+<Paragraph>
+  Next.js는 SSR만 하는 게 아니라 여러 렌더링 전략을 페이지별로 조합한다.
+</Paragraph>
+
+- <strong>SSG (Static Site Generation)</strong>: 빌드 시점에 HTML 생성. CDN에서
+  바로 서빙하므로 가장 빠르다.
+- <strong>SSR</strong>: 요청마다 서버에서 HTML 생성.
+- <strong>ISR (Incremental Static Regeneration)</strong>: SSG인데 일정 시간마다
+  재생성.
+- <strong>Streaming SSR</strong>: HTML을 한번에 보내지 않고 준비된 부분부터
+  스트리밍.
+
+---
+
+<Subtitle level={2}>빌드 도구: webpack이 느린 이유, Vite가 빠른 이유</Subtitle>
+
+<Subtitle level={3}>webpack (Next.js 기본)</Subtitle>
+
+<Paragraph>
+  webpack은 모든 모듈을 하나의 의존성 그래프로 묶어서 처리한다. 프로젝트가
+  커지면 이 그래프가 거대해지고, 빌드 시간이 급격히 늘어난다. 개발 서버도 시작할
+  때 전체 앱을 번들링하기 때문에 느리다.
+</Paragraph>
+
+```
+모든 파일 읽기 → 의존성 그래프 구축 → 변환 → 번들링 → 최적화 → 출력
+```
+
+<Subtitle level={3}>Vite가 빠른 이유 3가지</Subtitle>
+
+<Paragraph>
+  <strong>1. 개발 시 번들링을 안 한다.</strong>
+  브라우저의 네이티브 ES Modules를 활용한다. `import`문을 브라우저가 직접
+  해석하므로, 요청이 온 파일만 그때그때 변환한다.
+</Paragraph>
+
+```
+[webpack] 모든 모듈 → 번들링 → 하나의 파일 → 브라우저
+[Vite]    브라우저가 import 요청 → 해당 파일만 변환 → 브라우저로 전송
+```
+
+<Paragraph>
+  <strong>2. esbuild로 사전 번들링.</strong>
+  `node_modules`의 라이브러리만 esbuild(Go로 작성, JS 대비 10-100배 빠름)로 미리
+  번들링해둔다.
+</Paragraph>
+
+<Paragraph>
+  <strong>3. 프로덕션 빌드에 Rollup 사용.</strong>
+  Rollup은 ES Modules 기반으로 설계되어 tree-shaking(사용하지 않는 코드 제거)이
+  webpack보다 효율적이다.
+</Paragraph>
+
+|                      | webpack (Next.js)  | Vite                          |
+| :------------------- | :----------------- | :---------------------------- |
+| Dev 서버 시작        | 전체 번들링 (느림) | 번들링 없음 (빠름)            |
+| HMR (코드 수정 반영) | 모듈 체인 재빌드   | 수정된 파일만 변환            |
+| 사전 번들링 도구     | JS 기반            | esbuild (Go, 10-100x)         |
+| 프로덕션 번들        | webpack            | Rollup (더 나은 tree-shaking) |
+
+---
+
+<Subtitle level={2}>Node.js Runtime vs Edge Runtime</Subtitle>
+
+<Subtitle level={3}>Node.js (일반 서버)</Subtitle>
+
+<Paragraph>
+  서버가 특정 지역(예: 미국 동부)에 있다. 전 세계 어디서든 접근은 가능하지만,
+  물리적 거리만큼 네트워크 지연이 생긴다.
+</Paragraph>
+
+```
+한국 사용자   → 미국 서버 (왕복 ~200ms) → 응답 느림
+미국 사용자   → 미국 서버 (왕복 ~20ms)  → 응답 빠름
+```
+
+<Subtitle level={3}>Edge Runtime</Subtitle>
+
+<Paragraph>
+  전 세계 CDN 엣지 노드(수백 개 지점)에서 코드가 실행된다. 사용자와 가까운
+  곳에서 실행하니까 네트워크 지연이 줄어든다.
+</Paragraph>
+
+```
+한국 사용자   → 한국 엣지 노드   (~20ms) → 빠름
+미국 사용자   → 미국 엣지 노드   (~20ms) → 빠름
+브라질 사용자 → 브라질 엣지 노드 (~20ms) → 빠름
+```
+
+<Paragraph>
+  엣지 노드는 개인 PC가 아니라, Cloudflare나 AWS 같은 기업이 전 세계에 설치해둔{" "}
+  <strong>데이터센터(서버)</strong>다. Cloudflare는 300개 이상 도시에
+  데이터센터를 두고 있다.
+</Paragraph>
+
+<Subtitle level={3}>무겁다 vs 가볍다</Subtitle>
+
+<Paragraph>
+  Edge에서는 가벼운 V8 Isolate 런타임을 쓴다. V8 엔진만 있어서 JS/WASM만 실행
+  가능하고, 시작 시간이 약 5ms다. Node.js는 V8 위에 파일시스템, 네트워크 등 OS
+  기능을 붙인 것이라 무겁지만, 뭐든 할 수 있다.
+</Paragraph>
+
+|              | Node.js                | Edge (V8 Isolate)      |
+| :----------- | :--------------------- | :--------------------- |
+| 기능         | 전부 가능 (fs, net 등) | JS/WASM만              |
+| DB 직접 연결 | 가능                   | 불가 (HTTP API로 우회) |
+| 시작 속도    | ~200ms+                | ~5ms                   |
+| 배포 위치    | 특정 리전              | 전 세계 엣지           |
+
+<Paragraph>
+  Vercel은 두 런타임을 모두 제공하고, 페이지별로 선택할 수 있다.
+</Paragraph>
+
+```ts
+export const runtime = "nodejs"; // 기본값
+export const runtime = "edge"; // Edge Runtime
+```
+
+---
+
+<Subtitle level={2}>vinext가 빠른 이유 정리</Subtitle>
+
+<Paragraph>지금까지의 내용을 합치면 vinext의 구조가 보인다.</Paragraph>
+
+```
+Next.js:  Next.js API  →  webpack/Turbopack  →  Node.js 서버 (특정 리전)
+vinext:   Next.js API  →  Vite (esbuild+Rollup)  →  Cloudflare Workers (전 세계 Edge)
+```
+
+1. <strong>빌드 도구</strong>: webpack 대신 Vite를 쓰므로 빌드가 4.4배 빠르다.
+2. <strong>번들 크기</strong>: Rollup의 tree-shaking이 더 공격적이어서 번들이
+   57% 감소한다.
+3. <strong>런타임</strong>: Node.js 서버 대신 Edge에서 실행하므로 사용자와
+   가까운 곳에서 응답한다.
+
+---
+
+<Subtitle level={2}>Web Vitals: "빠르다"를 숫자로 말하기</Subtitle>
+
+<Paragraph>
+  Google이 정한 사용자 체감 성능의 3가지 핵심 지표다. 실제로 검색 순위(SEO)에도
+  영향을 준다.
+</Paragraph>
+
+<Subtitle level={3}>LCP (Largest Contentful Paint)</Subtitle>
+
+<Paragraph>
+  <strong>가장 큰 콘텐츠가 화면에 나타나는 시간.</strong>
+  메인 이미지, 큰 텍스트 블록, 비디오 썸네일 등이 해당한다.
+</Paragraph>
+
+```
+페이지 요청
+  │  0.5s  헤더, 네비게이션 표시
+  │  1.2s  메인 이미지 표시 ← 이게 LCP
+  │  1.8s  나머지 로딩
+
+좋음: ≤ 2.5s / 나쁨: > 4s
+```
+
+<Paragraph>
+  각 렌더링 방식의 LCP 영향: CSR은 JS 실행 후에야 표시되므로 느리고, SSG는 미리
+  만든 HTML을 CDN에서 서빙하므로 가장 빠르다.
+</Paragraph>
+
+<Subtitle level={3}>INP (Interaction to Next Paint)</Subtitle>
+
+<Paragraph>
+  <strong>사용자가 클릭/탭/키 입력 후 화면이 반응하기까지의 시간.</strong>
+  FID를 대체하여 2024년 3월부터 Core Web Vitals 지표가 됐다.
+</Paragraph>
+
+```
+사용자가 버튼 클릭
+  │  JS 이벤트 핸들러 실행
+  │  상태 업데이트
+  │  DOM 변경
+  │  화면 다시 그림 ← 여기까지가 INP
+
+좋음: ≤ 200ms / 나쁨: > 500ms
+```
+
+<Paragraph>
+  SSR/CSR보다 <strong>클라이언트 JS 코드의 효율성</strong>과 관련이 크다.
+  Hydration이 무거우면 JS 메인 스레드가 막혀서 INP가 나빠진다.
+</Paragraph>
+
+<Subtitle level={3}>CLS (Cumulative Layout Shift)</Subtitle>
+
+<Paragraph>
+  <strong>페이지 로딩 중 레이아웃이 얼마나 흔들리는가.</strong>
+  광고가 갑자기 끼어들어서 읽던 텍스트가 밀리는 경험이 대표적이다.
+</Paragraph>
+
+```
+좋음: ≤ 0.1 / 나쁨: > 0.25
+```
+
+<Paragraph>
+  흔한 원인: 이미지 크기 미지정, 폰트 로딩 후 글자 크기 변경, 동적 콘텐츠 삽입.
+  해결: `width`/`height` 명시, `font-display: swap` + 비슷한 크기의 fallback
+  폰트, Skeleton으로 공간 미리 확보.
+</Paragraph>
+
+| 지표 | 측정하는 것        | 좋음 기준 | 개선하는 기술                           |
+| :--- | :----------------- | :-------- | :-------------------------------------- |
+| LCP  | 콘텐츠 표시 속도   | ≤ 2.5s    | SSR, SSG, Streaming, CDN                |
+| INP  | 인터랙션 반응 속도 | ≤ 200ms   | RSC, 코드 스플리팅, 가벼운 Hydration    |
+| CLS  | 레이아웃 안정성    | ≤ 0.1     | 이미지 크기 지정, Skeleton, 폰트 최적화 |
+
+---
+
+<Subtitle level={2}>RSC (React Server Components)</Subtitle>
+
+<Paragraph>
+  핵심 질문: <strong>이 컴포넌트가 꼭 브라우저에서 실행돼야 하는가?</strong>
+  대부분의 컴포넌트는 데이터를 받아서 UI를 그리기만 한다. 클릭 이벤트도 없고
+  상태도 없다. 이런 걸 굳이 브라우저에 JS로 보낼 필요가 없다.
+</Paragraph>
+
+```tsx
+// Server Component (기본값, 'use client' 없음)
+// 서버에서만 실행됨. 브라우저로 JS가 안 감.
+async function PostList() {
+  const posts = await db.query("SELECT * FROM posts");
+  return (
+    <ul>
+      {posts.map((p) => (
+        <li key={p.id}>{p.title}</li>
+      ))}
+    </ul>
+  );
+}
+
+// Client Component ('use client' 선언)
+// 브라우저에서 실행됨. JS 번들에 포함됨.
+("use client");
+function LikeButton() {
+  const [liked, setLiked] = useState(false);
+  return <button onClick={() => setLiked(true)}>좋아요</button>;
+}
+```
+
+<Paragraph>
+  Server Component는 JS 번들에 포함되지 않고, Hydration도 필요 없다. 페이지에
+  컴포넌트가 20개 있을 때 상태/이벤트가 필요한 3개만 Client Component로 두면,
+  나머지 17개는 JS 번들에서 빠진다.
+</Paragraph>
+
+- <strong>번들 크기 감소</strong> → LCP 개선
+- <strong>Hydration 대상 감소</strong> → INP 개선
+
+<Subtitle level={3}>SSR과 RSC의 차이</Subtitle>
+
+<Paragraph>
+  SSR은 "HTML을 어디서 만드는가"이고, RSC는 "컴포넌트가 어디서 실행되는가"이다.
+  SSR은 서버에서 HTML을 만들어 보내지만, JS 번들은 전부 보내고 Hydration도 전부
+  한다. RSC는 Server Component를 JS 번들에서 아예 제외하고, Hydration 자체가
+  필요 없다. 둘은 경쟁이 아니라 같이 쓰이는 관계다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>Streaming SSR: 준비된 것부터 보내기</Subtitle>
+
+<Paragraph>
+  일반 SSR은 페이지 전체가 렌더링될 때까지 기다린 후 한번에 보낸다. DB 조회가
+  3초 걸리면, 사용자는 3초 동안 아무것도 못 본다.
+</Paragraph>
+
+<Paragraph>
+  Streaming SSR은 준비된 부분부터 쪼개서 보낸다. 느린 부분을 기다리지 않고 빠른
+  부분부터 보여줄 수 있다.
+</Paragraph>
+
+```tsx
+<Layout>
+  {" "}
+  {/* 즉시 전송 */}
+  <Header /> {/* 즉시 전송 */}
+  <Suspense fallback={<CommentSkeleton />}>
+    <Comments /> {/* DB 조회 끝나면 전송. 그 전엔 Skeleton 표시 */}
+  </Suspense>
+</Layout>
+```
+
+<Paragraph>
+  `Suspense`는 React에서 "아직 준비 안 됐으면 대신 이걸 보여줘"를 선언하는
+  컴포넌트다. `Comments`가 데이터를 가져오는 동안 `fallback`에 넣은 Skeleton을
+  보여주고, 준비되면 자동으로 교체한다.
+</Paragraph>
+
+<Paragraph>
+  Skeleton은 로딩 중일 때 보여주는 <strong>빈 뼈대 UI</strong>다. 실제 콘텐츠와
+  비슷한 모양의 회색 박스를 보여줘서 "콘텐츠가 곧 나오겠구나"라고 예측할 수 있게
+  한다. 빈 화면이나 스피너보다 체감 로딩이 빠르게 느껴지고, 공간을 미리
+  잡아놓으므로 CLS도 줄어든다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>CDN과 캐싱</Subtitle>
+
+<Subtitle level={3}>CDN (Content Delivery Network)</Subtitle>
+
+<Paragraph>
+  전 세계에 서버(엣지 노드)를 두고 콘텐츠를 복사해놓는 것이다. Edge Runtime이
+  "코드를 엣지에서 실행"하는 거라면, CDN은 "이미 만들어진 파일을 캐싱해서
+  전달"하는 거다.
+</Paragraph>
+
+```
+1. 첫 요청: 한국 사용자 → 한국 엣지 노드 (없음) → 미국 원본 서버 → 응답 + 엣지에 복사본 저장
+2. 다음 요청: 한국 사용자 → 한국 엣지 노드 (있음!) → 바로 응답 (20ms)
+```
+
+<Subtitle level={3}>Cache-Control 헤더</Subtitle>
+
+<Paragraph>
+  서버가 "이 응답을 얼마나 캐싱해도 되는지" 브라우저와 CDN에게 알려주는
+  방법이다. Next.js 같은 프레임워크가 렌더링 방식에 맞게 알아서 설정해주므로,
+  대부분은 커스텀 헤더를 쓸 필요가 없다.
+</Paragraph>
+
+```
+# 정적 파일 (JS, CSS, 이미지) - 파일명에 해시가 있어서 변경 시 URL이 바뀜
+Cache-Control: public, max-age=31536000, immutable  → 1년간 캐싱
+
+# HTML 페이지 - 항상 최신인지 확인
+Cache-Control: public, max-age=0, must-revalidate  → 매번 확인
+
+# 개인 데이터 (마이페이지 등)
+Cache-Control: private, no-store  → CDN 캐싱 금지
+```
+
+<Subtitle level={3}>stale-while-revalidate</Subtitle>
+
+<Paragraph>
+  가장 중요한 캐싱 패턴이다. 캐시가 좀 오래됐어도 일단 보여주고, 뒤에서 조용히
+  업데이트한다. 사용자는 항상 즉시 응답을 받는다.
+</Paragraph>
+
+```
+Cache-Control: public, max-age=60, stale-while-revalidate=3600
+
+0~60초:      캐시 그대로 반환 (신선함)
+60~3660초:   캐시 그대로 반환 + 백그라운드에서 새 버전 가져옴
+3660초 후:   캐시 만료, 새로 요청
+```
+
+---
+
+<Subtitle level={2}>ISR (Incremental Static Regeneration)</Subtitle>
+
+<Paragraph>
+  SSG는 빌드 시점에 HTML을 만들어 CDN에 올리므로 가장 빠르다. 하지만 데이터가
+  바뀌면 전체를 다시 빌드해야 한다. 페이지가 1000개면 1000개 전부.
+</Paragraph>
+
+<Paragraph>
+  ISR은 이 문제를 해결한다. stale-while-revalidate 패턴을 렌더링에 적용한
+  것이다.
+</Paragraph>
+
+```tsx
+// Next.js에서 ISR 설정
+export const revalidate = 60; // 60초
+```
+
+```
+빌드: HTML 생성 → CDN에 올림
+
+0~60초:  CDN 캐시 그대로 반환 (SSG처럼 빠름)
+60초 후: 다음 요청이 오면
+         1. 일단 기존 캐시 반환 (사용자는 기다림 없음)
+         2. 원본 서버가 해당 페이지 HTML만 새로 생성
+         3. 새 HTML로 CDN 캐시 교체
+         4. 다음 요청부터 새 HTML 서빙
+```
+
+<Paragraph>
+  핵심은 1000페이지 전부가 아니라 <strong>요청이 온 그 페이지 1개만</strong>{" "}
+  재생성한다는 것이다. 요청이 안 오면 재생성도 안 한다. 그래서
+  "Incremental(점진적)"이다.
+</Paragraph>
+
+<Paragraph>
+  "옛날 걸" 받는 사람은 재생성을 트리거한 딱 한 명이고, 그 사람도 정상적인
+  페이지를 본다. 데이터가 60초 전 버전일 뿐이다. 블로그 글이나 상품 설명처럼
+  실시간성이 필요 없는 콘텐츠에 적합하다.
+</Paragraph>
+
+|     | 속도       | 데이터 신선함  | 서버 부하         |
+| :-- | :--------- | :------------- | :---------------- |
+| SSG | 가장 빠름  | 빌드 시점 고정 | 없음              |
+| SSR | 느림       | 항상 최신      | 매 요청마다       |
+| ISR | SSG와 동일 | 약간의 지연    | revalidate 시에만 |
+
+---
+
+<Subtitle level={2}>PPR (Partial Prerendering)</Subtitle>
+
+<Paragraph>
+  ISR의 한계: 페이지 전체를 정적 또는 동적으로 취급한다. 상품 페이지에서
+  이름/설명/이미지는 거의 안 바뀌지만, 가격/재고는 실시간으로 바뀐다. ISR로는
+  페이지 전체를 60초마다 재생성해야 한다.
+</Paragraph>
+
+<Paragraph>
+  PPR은 한 페이지 안에서 <strong>정적/동적을 컴포넌트 단위로 분리</strong>한다.
+</Paragraph>
+
+```tsx
+export default function ProductPage() {
+  return (
+    <div>
+      {/* 정적: 빌드 시 생성, CDN 캐싱 */}
+      <ProductName />
+      <ProductImage />
+      <Description />
+
+      {/* 동적: 요청 시 Streaming SSR */}
+      <Suspense fallback={<PriceSkeleton />}>
+        <Price />
+      </Suspense>
+      <Suspense fallback={<StockSkeleton />}>
+        <StockCount />
+      </Suspense>
+    </div>
+  );
+}
+```
+
+```
+사용자 요청 시:
+1. CDN에서 정적 부분 + Skeleton 즉시 전송
+2. 서버에서 동적 부분 준비되면 Streaming으로 전송
+3. Skeleton이 실제 데이터로 교체
+```
+
+<Paragraph>
+  Web Vitals 관점에서: 정적 부분이 CDN에서 바로 오니까{" "}
+  <strong>LCP가 SSG급</strong>이고, RSC로 Hydration 대상이 줄어서{" "}
+  <strong>INP가 가벼워</strong>지고, Skeleton으로 공간을 확보해놨으니{" "}
+  <strong>CLS도 안정적</strong>이다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>전체 진화 흐름</Subtitle>
+
+```
+CSR (느림)
+ → SSR (LCP 개선, 서버 부하)
+   → SSG (빠름, 데이터 고정)
+     → ISR (빠름 + 데이터 갱신)
+       → PPR (컴포넌트별로 정적/동적 분리) ← 현재 최신
+```
+
+<Paragraph>
+  vinext는 이 흐름 위에서, 빌드 도구를 Vite로 바꾸고 런타임을 Edge로 올린
+  것이다. 렌더링 전략의 진화(SSR → SSG → ISR → PPR)와 빌드/런타임의 진화(webpack
+  → Vite, Node.js → Edge)는 별개의 축이고, vinext는 후자를 개선한 프레임워크다.
+</Paragraph>
