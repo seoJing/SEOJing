@@ -7,21 +7,21 @@ describe("getFillRatio", () => {
     expect(getFillRatio(600)).toBe(0.82);
   });
 
-  it("returns 0.55 for notebook screens (601-900)", () => {
-    expect(getFillRatio(601)).toBe(0.55);
-    expect(getFillRatio(768)).toBe(0.55);
-    expect(getFillRatio(900)).toBe(0.55);
+  it("returns 0.65 for notebook screens (601-900)", () => {
+    expect(getFillRatio(601)).toBe(0.65);
+    expect(getFillRatio(768)).toBe(0.65);
+    expect(getFillRatio(900)).toBe(0.65);
   });
 
-  it("returns 0.6 for desktop screens (901-1200)", () => {
-    expect(getFillRatio(901)).toBe(0.6);
-    expect(getFillRatio(1080)).toBe(0.6);
-    expect(getFillRatio(1200)).toBe(0.6);
+  it("returns 0.7 for desktop screens (901-1200)", () => {
+    expect(getFillRatio(901)).toBe(0.7);
+    expect(getFillRatio(1080)).toBe(0.7);
+    expect(getFillRatio(1200)).toBe(0.7);
   });
 
-  it("returns 0.55 for large monitors (>1200)", () => {
-    expect(getFillRatio(1201)).toBe(0.55);
-    expect(getFillRatio(2160)).toBe(0.55);
+  it("returns 0.7 for large monitors (>1200)", () => {
+    expect(getFillRatio(1201)).toBe(0.7);
+    expect(getFillRatio(2160)).toBe(0.7);
   });
 });
 

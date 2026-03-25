@@ -74,6 +74,7 @@ export {
   Subtitle,
   Paragraph,
   CodeBlock,
+  FullscreenView,
   ArticleImage,
   ArticleTable,
   ArticleQuiz,

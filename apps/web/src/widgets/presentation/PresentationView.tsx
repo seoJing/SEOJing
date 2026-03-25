@@ -8,7 +8,8 @@ import {
   type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
-import { IoCloseOutline } from "react-icons/io5";
+import { IoCloseOutline, IoAddOutline, IoRemoveOutline } from "react-icons/io5";
+import { FullscreenView } from "@app/ui";
 import { extractSlides, getFillRatio } from "./presentation.utils";
 
 const LONG_PRESS_MS = 1500;
@@ -16,6 +17,10 @@ const LONG_PRESS_THRESHOLD_MS = 300; // 롱프레스 판단 최소 시간
 const SLIDE_PADDING_Y = 96; // PC 상하 패딩 (px)
 const SLIDE_PADDING_Y_MOBILE = 96; // 모바일 상하 패딩 (py-12 = 48*2)
 const BOTTOM_BAR_HEIGHT_PC = 48;
+const DEFAULT_pcScale = 2;
+const MIN_SCALE = 1;
+const MAX_SCALE = 3;
+const SCALE_STEP = 0.2;
 const BOTTOM_BAR_HEIGHT_MOBILE = 36;
 
 interface PresentationViewProps {
@@ -37,10 +42,19 @@ export function PresentationView({
     html: string;
     language: string;
   } | null>(null);
+  const [pcScale, setPcScale] = useState(DEFAULT_pcScale);
 
   const [isMobile] = useState(() => {
     if (typeof window === "undefined") return false;
-    return window.matchMedia("(max-width: 768px)").matches;
+    // 물리적 짧은 변이 768px 이하면 모바일로 판단 (orientation 무관)
+    const short = Math.min(window.innerWidth, window.innerHeight);
+    return short <= 768;
+  });
+
+  // portrait(세로) 상태에서만 회전 필요. 이미 landscape면 그대로 사용
+  const [needsRotation] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return isMobile && window.innerHeight > window.innerWidth;
   });
 
   const bottomBarHeight = isMobile
@@ -54,16 +68,21 @@ export function PresentationView({
     // 모바일: 회전 레이아웃이므로 물리적 width가 슬라이드 높이가 됨
     // visualViewport을 우선 사용해 브라우저 UI(주소창·하단바)를 제외한 실제 영역 반영
     const vv = window.visualViewport;
-    const viewH = isMobile
+    // needsRotation: 축이 뒤집힘 (물리적 width→높이, height→폭)
+    const viewH = needsRotation
       ? (vv?.width ?? window.innerWidth)
       : (vv?.height ?? window.innerHeight);
     const padding = isMobile ? SLIDE_PADDING_Y_MOBILE : SLIDE_PADDING_Y;
     const available = (viewH - padding - bottomBarHeight) * getFillRatio(viewH);
-    const slideW = isMobile
+    const scale = isMobile ? 1 : pcScale;
+    const slideW = needsRotation
       ? (vv?.height ?? window.innerHeight) - 64
-      : Math.min(window.innerWidth - 64, 896);
-    setSlides(extractSlides(articleRef.current, available, slideW));
-  }, [articleRef, isMobile, bottomBarHeight]);
+      : Math.min(window.innerWidth - 128, 1024);
+    // scale 적용 시 콘텐츠는 원래 크기로 측정되므로, 가용 공간을 scale로 나눠서 전달
+    setSlides(
+      extractSlides(articleRef.current, available / scale, slideW / scale),
+    );
+  }, [articleRef, isMobile, needsRotation, bottomBarHeight, pcScale]);
 
   const totalSlides = slides.length;
   const closingRef = useRef(false);
@@ -191,20 +210,7 @@ export function PresentationView({
 
   if (totalSlides === 0) return null;
 
-  const containerStyle = isMobile
-    ? {
-        width: "100dvh" as const,
-        height: "100dvw" as const,
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%) rotate(90deg)",
-      }
-    : {
-        width: "100%",
-        height: "100%",
-      };
-
-  const fullscreenContainerStyle = isMobile
+  const containerStyle = needsRotation
     ? {
         width: "100dvh" as const,
         height: "100dvw" as const,
@@ -225,11 +231,12 @@ export function PresentationView({
       <div className="absolute flex flex-col" style={containerStyle}>
         {/* 슬라이드 콘텐츠 */}
         <div
-          className={`flex flex-1 items-center justify-center overflow-hidden py-12 ${isMobile ? "px-5" : "px-8"}`}
+          className={`flex flex-1 items-center justify-center overflow-hidden py-12 ${isMobile ? "px-5" : "px-16"}`}
         >
           <div
             ref={slideContentRef}
-            className="w-full max-w-4xl overflow-hidden"
+            className="mx-auto w-full max-w-5xl overflow-hidden"
+            style={isMobile ? undefined : { zoom: pcScale }}
           />
         </div>
 
@@ -276,51 +283,74 @@ export function PresentationView({
             {currentSlide + 1} / {totalSlides}
           </span>
 
-          <div className="ml-auto">
-            {!isMobile ? (
-              <button
-                type="button"
-                className="flex size-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-                onClick={onClose}
-                aria-label="프레젠테이션 종료"
-              >
-                <IoCloseOutline className="size-5" />
-              </button>
-            ) : (
-              <span className="w-7" />
+          <div className="ml-auto flex items-center gap-1">
+            {!isMobile && (
+              <>
+                <button
+                  type="button"
+                  className="flex size-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:opacity-30 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                  onClick={() => {
+                    setPcScale(
+                      (s) =>
+                        Math.round(Math.max(MIN_SCALE, s - SCALE_STEP) * 10) /
+                        10,
+                    );
+                    setCurrentSlide(0);
+                  }}
+                  disabled={pcScale <= MIN_SCALE}
+                  aria-label="축소"
+                >
+                  <IoRemoveOutline className="size-4" />
+                </button>
+                <span className="min-w-[3ch] text-center text-xs tabular-nums text-gray-500">
+                  {pcScale.toFixed(1)}
+                </span>
+                <button
+                  type="button"
+                  className="flex size-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:opacity-30 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                  onClick={() => {
+                    setPcScale(
+                      (s) =>
+                        Math.round(Math.min(MAX_SCALE, s + SCALE_STEP) * 10) /
+                        10,
+                    );
+                    setCurrentSlide(0);
+                  }}
+                  disabled={pcScale >= MAX_SCALE}
+                  aria-label="확대"
+                >
+                  <IoAddOutline className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  className="ml-1 flex size-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                  onClick={onClose}
+                  aria-label="프레젠테이션 종료"
+                >
+                  <IoCloseOutline className="size-5" />
+                </button>
+              </>
             )}
+            {isMobile && <span className="w-7" />}
           </div>
         </div>
       </div>
 
       {/* 전체화면 코드 뷰어 */}
-      {fullscreenCode && (
-        <div className="fixed inset-0 z-60 bg-gray-900">
-          <div
-            className="absolute flex flex-col"
-            style={fullscreenContainerStyle}
+      {fullscreenCode &&
+        createPortal(
+          <FullscreenView
+            language={fullscreenCode.language}
+            onClose={() => setFullscreenCode(null)}
+            rotate={false}
           >
-            <pre className="flex-1 overflow-auto bg-gray-900 p-4 text-sm leading-6 text-gray-100">
-              <code
-                className="font-mono"
-                dangerouslySetInnerHTML={{ __html: fullscreenCode.html }}
-              />
-            </pre>
-            <div className="flex shrink-0 items-center justify-between bg-gray-800 px-4 py-2">
-              <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
-                {fullscreenCode.language}
-              </span>
-              <button
-                type="button"
-                className="text-xs text-gray-400 transition-colors hover:text-gray-200"
-                onClick={() => setFullscreenCode(null)}
-              >
-                닫기 (ESC)
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            <code
+              className="font-mono"
+              dangerouslySetInnerHTML={{ __html: fullscreenCode.html }}
+            />
+          </FullscreenView>,
+          document.body,
+        )}
     </div>,
     document.body,
   );

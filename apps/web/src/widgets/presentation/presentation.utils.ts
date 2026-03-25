@@ -3,15 +3,16 @@ const SPLITTABLE_LIST_TAGS = new Set(["UL", "OL"]);
 /** 화면 높이에 따라 채움 비율을 반환 — 큰 화면일수록 보수적으로 채움 */
 export function getFillRatio(viewH: number): number {
   if (viewH <= 600) return 0.82;
-  if (viewH <= 900) return 0.55;
-  if (viewH <= 1200) return 0.6;
-  return 0.55;
+  if (viewH <= 900) return 0.65;
+  if (viewH <= 1200) return 0.7;
+  return 0.7;
 }
 
 export function extractSlides(
   article: HTMLElement,
   availableHeight: number,
   slideWidth: number,
+  options?: { fontSize?: string },
 ): HTMLDivElement[] {
   const allChildren = Array.from(article.children);
 
@@ -51,11 +52,13 @@ export function extractSlides(
 
   const slides: HTMLDivElement[] = [];
 
+  const fontSize = options?.fontSize;
   const measurer = document.createElement("div");
   measurer.style.cssText = `
     position: fixed; top: -9999px; left: -9999px;
     width: ${slideWidth}px;
     visibility: hidden; pointer-events: none;
+    ${fontSize ? `font-size: ${fontSize};` : ""}
   `;
   document.body.appendChild(measurer);
 

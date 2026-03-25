@@ -75,17 +75,26 @@ function processHiddenSections(html: string): CodeSegment[] {
 
 const LONG_PRESS_MS = 1500;
 
-function FullscreenView({
+export function FullscreenView({
   language,
   onClose,
   children,
+  rotate,
 }: {
   language?: string;
   onClose: () => void;
   children: ReactNode;
+  rotate?: boolean;
 }) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pressing, setPressing] = useState(false);
+
+  const [shouldRotate] = useState(() => {
+    if (rotate != null) return rotate;
+    if (typeof window === "undefined") return false;
+    const short = Math.min(window.innerWidth, window.innerHeight);
+    return short <= 768 && window.innerHeight > window.innerWidth;
+  });
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -118,6 +127,16 @@ function FullscreenView({
     }
   }, []);
 
+  const rotateStyle = shouldRotate
+    ? ({
+        width: "100dvh",
+        height: "100dvw",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%) rotate(90deg)",
+      } as const)
+    : undefined;
+
   return (
     <div
       className="fixed inset-0 z-50 bg-gray-900"
@@ -129,28 +148,33 @@ function FullscreenView({
       onMouseLeave={handlePressEnd}
     >
       <div
-        className="absolute flex flex-col"
-        style={{
-          width: "100vh",
-          height: "100vw",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%) rotate(90deg)",
-        }}
+        className={`flex flex-col ${shouldRotate ? "absolute" : "h-full"}`}
+        style={rotateStyle}
       >
-        <pre className="flex-1 overflow-auto bg-gray-900 p-4 text-sm leading-6 text-gray-100">
+        <pre className="flex-1 flex flex-col overflow-auto bg-gray-900 p-6 text-base leading-7 text-gray-100 md:py-32 md:px-[25dvw] md:text-2xl md:leading-8 [&>code]:my-auto [&>code]:mx-auto">
           {children}
         </pre>
 
         <div className="flex shrink-0 items-center justify-between bg-gray-800 px-4 py-2">
-          <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+          <span className="text-xs md:text-lg font-medium tracking-wide text-gray-400 uppercase">
             {language}
           </span>
-          <span className="text-xs text-gray-500">
-            {pressing
-              ? "놓지 마세요..."
-              : `화면을 ${LONG_PRESS_MS / 1000}초간 누르면 종료`}
-          </span>
+          <div className="flex gap-4 shrink-0 items-center justify-between bg-gray-800 px-4 py-2">
+            <span className="text-xs text-gray-500 md:text-lg">
+              {pressing
+                ? "놓지 마세요..."
+                : `화면을 ${LONG_PRESS_MS / 1000}초간 누르면 종료`}
+            </span>
+            <button
+              type="button"
+              className="text-xs md:text-lg text-gray-400 transition-colors hover:text-gray-200"
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              onClick={onClose}
+            >
+              닫기 (ESC)
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -291,7 +315,7 @@ export function CodeBlock({
             <IconButton
               variant="ghost"
               size="sm"
-              className="text-gray-400 hover:bg-gray-700 hover:text-gray-200 md:hidden"
+              className="text-gray-400 hover:bg-gray-700 hover:text-gray-200"
               aria-label="전체보기"
               onClick={() => setFullscreenOpen(true)}
             >
