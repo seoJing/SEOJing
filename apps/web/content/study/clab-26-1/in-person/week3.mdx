@@ -43,14 +43,26 @@ description: 2주차 폼과 CSS 선택자 복습, 과제 풀이, 3주차 박스 
 
 <Subtitle level={3}>학습 자료에서 다룬 추가 개념</Subtitle>
 
-- <strong>GET vs POST</strong>: GET은 URL에 데이터가 노출되어 검색·필터링에
-  적합하고, POST는 본문에 담겨 로그인·결제 등 민감한 정보에 적합합니다.
-- <strong>`fieldset`과 `legend`</strong>: 폼 입력 필드를 의미적으로 그룹화하며,
-  스크린 리더 접근성에 도움이 됩니다.
-- <strong>CSS 적용 세 가지 방법</strong>: 인라인 스타일, 내부 스타일 시트, 외부
-  스타일 시트 중 외부 스타일 시트가 실무에서 권장됩니다.
-- <strong>script defer</strong>: HTML 파싱을 방해하지 않고 자바스크립트를
-  로드하여 초기 로딩 속도를 높입니다.
+<Paragraph>
+  2주차 학습 자료에서 강의 외 추가 개념들을 다뤘습니다. 다시 한번
+  짚어보겠습니다.
+</Paragraph>
+
+- <strong>GET vs POST</strong>: 둘 다 데이터를 서버로 보내지만, GET은 URL
+  쿼리 스트링(`?q=검색어`)에 붙어 노출되고, POST는 요청 본문에 숨겨집니다.
+  "주소창에 보여도 괜찮으면 GET, 아니면 POST"가 판단 기준입니다. GET은
+  URL 공유·북마크·캐싱이 가능하다는 고유한 장점이 있어서 검색·필터에
+  적합합니다.
+- <strong>`fieldset`과 `legend`</strong>: 회원가입처럼 입력 필드가 많을 때
+  "기본 정보", "보안 설정"처럼 관련 항목을 그룹화합니다. 스크린 리더가
+  `legend`를 먼저 읽어주기 때문에 접근성에도 도움이 됩니다.
+- <strong>CSS 적용 세 가지 방법</strong>: 인라인 스타일(`style=""`), 내부 스타일
+  시트(`<style>`), 외부 스타일 시트(`<link>`) 중 외부 스타일 시트가 유지보수와
+  재사용성 면에서 가장 권장됩니다. 인라인 스타일은 우선순위가 너무 높아
+  디버깅이 어려워지므로 가급적 피합니다.
+- <strong>CSS 선택자 우선순위</strong>: 인라인 스타일 > 아이디(#) > 클래스(.) >
+  태그 순서입니다. "CSS를 썼는데 왜 안 먹히지?" 싶으면 우선순위 충돌을
+  의심해보세요.
 
 ---
 
@@ -240,6 +252,23 @@ import Script from "next/script";
   Position으로 요소를 원하는 위치에 배치하고, <strong>Flexbox</strong>로 유연한
   가로·세로 레이아웃을 구성하는 것이 목표입니다.
 </Paragraph>
+
+<Subtitle level={3}>다음 주 영상 예습</Subtitle>
+
+<Paragraph>
+  다음 주 영상(4주차 진도: 04:28:10 ~ 05:28:02)에서는 CSS의 꽃인 레이아웃에
+  들어갑니다. 영상을 보기 전에 아래 내용을 가볍게 훑어두면 이해가 빠릅니다.
+</Paragraph>
+
+- <strong>배경 이미지</strong>: `background-image`로 요소에 이미지를 넣고,
+  `background-size`, `background-repeat` 등으로 크기와 반복을 제어하는 법을
+  배웁니다.
+- <strong>Position</strong>: 요소를 문서 흐름에서 꺼내서 원하는 위치에 배치하는
+  속성입니다. `static`, `relative`, `absolute`, `fixed` 네 가지가 나오는데,
+  각각 <strong>"기준점이 어디인가"</strong>가 다릅니다.
+- <strong>Flexbox</strong>: 이번 주 가장 중요한 개념입니다. 자식 요소들을
+  가로 또는 세로로 유연하게 정렬하는 레이아웃 시스템입니다. 내비게이션 바,
+  카드 배치, 정중앙 정렬 등 거의 모든 레이아웃에 쓰입니다.
 
 <Subtitle level={3}>사전 과제</Subtitle>
 

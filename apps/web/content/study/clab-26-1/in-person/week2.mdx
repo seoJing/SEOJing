@@ -34,14 +34,26 @@ description: 1주차 HTML 핵심 복습과 과제 풀이, 2주차 폼(Form)과 C
 
 <Subtitle level={3}>학습 자료에서 다룬 추가 개념</Subtitle>
 
+<Paragraph>
+  1주차 학습 자료에서는 강의 영상에서 다루지 않은 실무 개념들을 추가로
+  다뤘습니다. 글로만 읽으셨을 테니 핵심만 다시 짚어보겠습니다.
+</Paragraph>
+
 - <strong>Open Graph (og 태그)</strong>: 카카오톡, 슬랙 등에서 링크 공유 시
-  보이는 썸네일 정보를 제어하는 메타 태그입니다.
-- <strong>반응형 이미지 (`srcset`, `picture`)</strong>: 기기 화면 크기에 맞춰
-  브라우저가 최적의 이미지를 자동 선택합니다.
-- <strong>`article` vs `section`</strong>: `article`은 독립적으로 의미가 통하는
-  콘텐츠, `section`은 주제별 그룹화에 사용합니다.
-- <strong>ARIA 속성</strong>: 시각적으로 보이지 않지만 스크린 리더가 읽을 수
-  있는 정보를 추가합니다. 단, 올바른 시맨틱 태그 사용이 우선입니다.
+  보이는 썸네일·제목·설명을 제어하는 메타 태그입니다. `og:title`, `og:image`,
+  `og:description` 등을 `<head>` 안에 작성합니다. og 태그가 없으면 플랫폼이
+  페이지 내용을 추측하므로 의도치 않은 이미지나 텍스트가 표시될 수 있습니다.
+- <strong>반응형 이미지 (`srcset`, `picture`)</strong>: 모바일에서 4K 이미지를
+  불러오면 데이터 낭비입니다. `srcset`을 사용하면 브라우저가 화면 크기에 맞는
+  최적의 이미지를 자동 선택합니다. `<picture>` 태그는 조건별로 다른 이미지를
+  지정할 때 씁니다.
+- <strong>`article` vs `section`</strong>: `article`은 떼어내서 다른 곳에 붙여도
+  독립적으로 의미가 통하는 콘텐츠(블로그 글, 댓글)에, `section`은 한 페이지
+  안에서 주제별 그룹화("소개", "특징", "가격표")에 사용합니다.
+- <strong>ARIA 속성</strong>: 아이콘만 있는 버튼처럼 시각적으로는 의미가 통하지만
+  스크린 리더가 읽을 정보가 없을 때 `aria-label="검색"` 같은 속성을 추가합니다.
+  단, `<div>`에 ARIA를 붙이기보다 `<button>` 같은 시맨틱 태그를 먼저 사용하는
+  것이 우선입니다.
 
 ---
 
@@ -201,6 +213,23 @@ description: 1주차 HTML 핵심 복습과 과제 풀이, 2주차 폼(Form)과 C
   이루어져 있다는 개념을 이해하고, margin, padding, border의 차이를 익히는 것이
   목표입니다.
 </Paragraph>
+
+<Subtitle level={3}>다음 주 영상 예습</Subtitle>
+
+<Paragraph>
+  다음 주 영상(3주차 진도: 02:59:19 ~ 04:28:10)에서는 CSS 스타일링을 본격적으로
+  시작합니다. 영상을 보기 전에 아래 내용을 가볍게 훑어두면 이해가 빠릅니다.
+</Paragraph>
+
+- <strong>폰트와 색상</strong>: `font-family`로 글꼴을 지정하는 법, 색상을
+  Hex(`#FF5733`), RGB, HSL 등으로 표현하는 법을 다룹니다.
+- <strong>인라인 vs 블록</strong>: HTML 요소마다 화면에서 공간을 차지하는 방식이
+  다릅니다. `<div>`는 한 줄 전체를, `<span>`은 콘텐츠 크기만큼만 차지합니다.
+- <strong>박스 모델</strong>: 이번 주 가장 중요한 개념입니다. 모든 HTML 요소가
+  Content → Padding → Border → Margin으로 이루어진 사각형 상자라는 것을
+  배웁니다.
+- <strong>`box-sizing`</strong>: `width: 200px`을 줬는데 실제로는 250px이 되는
+  상황이 생깁니다. 왜 그런지, 어떻게 해결하는지를 다룹니다.
 
 <Subtitle level={3}>사전 과제</Subtitle>
 
