@@ -62,6 +62,22 @@ description: 2주차 폼과 CSS 선택자 복습, 과제 풀이, 3주차 박스 
 - <strong>CSS 선택자 우선순위</strong>: 인라인 스타일 > 아이디(#) > 클래스(.) >
 태그 순서입니다. "CSS를 썼는데 왜 안 먹히지?" 싶으면 우선순위 충돌을
 의심해보세요.
+- <strong>벤더 프리픽스</strong>: `-webkit-`, `-moz-` 같은 접두사는 브라우저가
+  실험적 CSS 기능을 제공할 때 붙입니다. 현재는 Autoprefixer가 빌드 시 자동으로
+  처리해주므로 직접 작성할 일은 거의 없고, Can I Use 사이트로 브라우저 지원
+  현황을 확인할 수 있습니다.
+- <strong>CSS 변수 (Custom Properties)</strong>: `--color-primary: #3b82f6`처럼
+  `--`로 시작하는 변수를 `:root`에 정의하고, `var(--color-primary)`로
+  참조합니다. 한 곳에서 값을 바꾸면 사용하는 모든 곳에 반영되어 유지보수가
+  편합니다. 다크 모드 구현에도 활용됩니다.
+- <strong>의사 클래스 (`:hover`, `:focus`, `:nth-child`)</strong>: 요소의 특정
+  상태를 선택하는 선택자입니다. 마우스를 올렸을 때(`:hover`), 키보드 포커스가
+  갔을 때(`:focus`), n번째 자식(`:nth-child`) 등 상태 기반 스타일링에
+  사용합니다. Tailwind에서는 `hover:`, `focus:` 접두사로 적용합니다.
+- <strong>폼 유효성 검증 속성</strong>: `required`(필수 입력), `pattern`(정규
+표현식), `minlength`/`maxlength`(글자 수 제한) 등 HTML 속성만으로 기본적인 폼
+검증이 가능합니다. `<datalist>` 태그를 사용하면 검색창처럼 자동완성 드롭다운도
+만들 수 있습니다.
 
 ---
 
