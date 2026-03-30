@@ -1,0 +1,186 @@
+---
+title: "프론트엔드 스터디 대면 7주차: 객체, 함수, 스코프"
+date: 2026-05-02
+tags:
+  - 프론트엔드
+  - 스터디
+  - JavaScript
+  - 객체
+  - 함수
+  - 스코프
+  - 호이스팅
+description: 6주차 JS 기초 복습과 과제 풀이, 그리고 이번 주 핵심인 호이스팅, 일급 객체로서의 함수, 렉시컬 스코프 관련 면접 질문을 다룹니다.
+---
+
+<Subtitle level={2}>1. 저번 주 복습</Subtitle>
+
+<Paragraph>
+  지난주에는 JavaScript를 시작하며 타입 시스템, var/let/const, 암묵적 타입 변환, 단축 평가를
+  배웠습니다. 핵심만 빠르게 짚어보겠습니다.
+</Paragraph>
+
+<Subtitle level={3}>타입 시스템</Subtitle>
+
+- <strong>동적 타입 언어</strong>: 변수에 어떤 타입이든 넣을 수 있고, 런타임에 타입이 결정
+- <strong>원시 타입 7가지</strong>: number, string, boolean, undefined, null, symbol, bigint
+- <strong>`typeof null === 'object'`</strong>: JS 초기 설계 버그, 하위 호환을 위해 유지
+- <strong>`NaN === NaN`은 `false`</strong>: NaN 확인은 `Number.isNaN()` 사용
+
+<Subtitle level={3}>var / let / const</Subtitle>
+
+- <strong>`var`</strong>: 함수 스코프, 재선언 가능, 호이스팅 시 `undefined` — 사용 지양
+- <strong>`let`</strong>: 블록 스코프, 재선언 불가, TDZ로 선언 전 접근 시 ReferenceError
+- <strong>`const`</strong>: 블록 스코프, 재선언·재할당 불가. 단, 객체 내부 변경은 가능
+- <strong>실무 원칙</strong>: 기본 const, 재할당 필요 시 let, var는 쓰지 않음
+
+<Subtitle level={3}>암묵적 타입 변환 & 단축 평가</Subtitle>
+
+- <strong>`'5' + 1 = '51'`</strong>: `+`는 문자열 우선, `'5' - 1 = 4`: `-`는 숫자 변환 시도
+- <strong>`===` 사용</strong>: `==`는 타입 변환 후 비교하므로 예측 불가 — 항상 `===`
+- <strong>`||`</strong>: 왼쪽이 falsy면 오른쪽 반환 (기본값 패턴)
+- <strong>`&&`</strong>: 왼쪽이 truthy면 오른쪽 반환 (조건부 실행 패턴)
+
+---
+
+<Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
+
+<Subtitle level={3}>학습 자료 6주차 과제</Subtitle>
+
+<Paragraph>
+  <strong>Q1. JavaScript에서 호이스팅이란 무엇인가요?</strong>
+</Paragraph>
+
+<Paragraph>
+  호이스팅이란 JS 엔진이 코드를 실행하기 전 <strong>변수와 함수 선언을 스코프 최상단으로
+  끌어올리는 동작</strong>입니다. 단, 선언만 올라가고 값 할당은 원래 위치에서 실행됩니다.
+</Paragraph>
+
+- <strong>`var` 변수</strong>: 선언이 호이스팅되어 선언 전 참조 시 `undefined` 반환
+- <strong>`let` / `const`</strong>: 호이스팅은 일어나지만 TDZ(Temporal Dead Zone)로 인해 선언 전 접근 시 `ReferenceError`
+- <strong>함수 선언식</strong>: 함수 전체가 호이스팅되어 선언 전에도 호출 가능
+- <strong>함수 표현식</strong>: 변수만 호이스팅(var면 `undefined`, const면 TDZ), 선언 전 호출 불가
+
+<Paragraph>
+  <strong>Q2. 익명 함수의 일반적인 사용 사례는 무엇인가요?</strong>
+</Paragraph>
+
+<Paragraph>
+  익명 함수는 이름 없이 정의된 함수입니다. 주요 사용 사례는 세 가지입니다.
+</Paragraph>
+
+- <strong>콜백 함수</strong>: 배열 메서드(`map`, `filter`, `forEach`)나 이벤트 핸들러에 인자로 전달할 때
+- <strong>함수 표현식</strong>: `const fn = function() {}`처럼 변수에 할당할 때
+- <strong>즉시 실행 함수(IIFE)</strong>: `(function() {})()`처럼 선언과 동시에 실행해 전역 스코프를 오염시키지 않을 때
+
+---
+
+<Subtitle level={2}>3. 면접 질문</Subtitle>
+
+<Paragraph>
+  이번 주 범위와 관련된 실제 면접 질문들입니다. 정답을 외우기보다는 자신만의 말로
+  설명하는 연습을 해보세요.
+</Paragraph>
+
+<Subtitle level={3}>Q1. 스코프 체인(Scope Chain)이란 무엇인가요?</Subtitle>
+
+<Paragraph>
+  변수를 참조할 때 현재 스코프에서 먼저 탐색하고, 없으면 <strong>상위 스코프로 순서대로
+  올라가며 탐색하는 구조</strong>입니다. 전역 스코프까지 탐색해도 없으면 ReferenceError가
+  발생합니다.
+</Paragraph>
+
+```js
+const a = "전역";
+
+function outer() {
+  const b = "outer";
+
+  function inner() {
+    const c = "inner";
+    console.log(c); // "inner" — 자신의 스코프
+    console.log(b); // "outer" — 상위 스코프
+    console.log(a); // "전역" — 전역 스코프
+  }
+
+  inner();
+  console.log(c); // ReferenceError — 하위 스코프는 접근 불가
+}
+```
+
+<Paragraph>
+  면접 팁: "스코프 체인은 안에서 밖으로만 탐색합니다. 바깥에서 안쪽은 접근할 수 없습니다.
+  이 구조가 렉시컬 스코프, 나아가 클로저의 기반이 됩니다"라고 정리하면 좋습니다.
+</Paragraph>
+
+<Subtitle level={3}>Q2. JavaScript에서 함수는 왜 일급 객체(First-Class Object)라고 하나요?</Subtitle>
+
+<Paragraph>
+  일급 객체란 <strong>값처럼 다룰 수 있는 대상</strong>을 뜻합니다. JS의 함수는 아래 세 가지가
+  모두 가능하기 때문에 일급 객체입니다.
+</Paragraph>
+
+- <strong>변수에 할당 가능</strong>: `const fn = function() {}`
+- <strong>함수의 인자로 전달 가능</strong>: `arr.map(fn)`
+- <strong>함수의 반환값으로 사용 가능</strong>: `return function() {}`
+
+<Paragraph>
+  이 특성이 콜백 함수, 고차 함수, 클로저의 근거가 됩니다. React에서 컴포넌트를 props로
+  넘기거나, 이벤트 핸들러를 전달하는 것도 모두 이 특성 덕분입니다.
+</Paragraph>
+
+<Subtitle level={3}>Q3. 렉시컬 스코프(Lexical Scope)란 무엇인가요?</Subtitle>
+
+<Paragraph>
+  함수의 상위 스코프를 <strong>함수가 선언된 위치</strong>를 기준으로 결정하는 방식입니다.
+  함수가 어디서 호출되느냐와는 무관합니다.
+</Paragraph>
+
+```js
+const x = "전역";
+
+function foo() {
+  console.log(x);
+}
+
+function bar() {
+  const x = "bar 내부";
+  foo(); // foo를 bar 안에서 호출해도
+}
+
+bar(); // "전역" 출력 — foo는 전역에서 선언됐으므로 전역의 x를 참조
+```
+
+<Paragraph>
+  면접 팁: "렉시컬 스코프는 클로저가 동작하는 근거입니다. 함수가 선언된 환경(스코프)을
+  기억하기 때문에, 외부 함수가 종료된 후에도 내부 함수가 외부 변수를 참조할 수 있습니다"
+  라고 연결해서 답하면 좋습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. 관련 포스팅</Subtitle>
+
+- <Anchor href="/blog/study/clab-26-1/week6">
+    프론트엔드 스터디 6주차 학습 자료: JavaScript 시작 — 타입, 변수, 그리고 JS가 이상한 이유
+  </Anchor>
+- <Anchor href="/blog/study/clab-26-1/week7">
+    프론트엔드 스터디 7주차 학습 자료: 객체, 함수, 그리고 스코프
+  </Anchor>
+
+---
+
+<Subtitle level={2}>5. 다음 주 안내</Subtitle>
+
+<Paragraph>
+  다음 주에는 JS에서 가장 어렵다고 꼽히는 개념들을 다룹니다.{" "}
+  <strong>let/const</strong>의 세부 동작, <strong>프로토타입(Prototype)</strong>과 상속,
+  그리고 <strong>일급 객체로서의 함수 심화</strong>입니다. 특히 프로토타입은 다른 언어의
+  클래스 상속과 다른 JS만의 방식이라 처음엔 낯설 수 있습니다. 미리 읽어오면 대면 때
+  훨씬 이해가 빠릅니다.
+</Paragraph>
+
+<Subtitle level={3}>다음 주 예습</Subtitle>
+
+- <Anchor external="https://poiemaweb.com/js-immutability">객체와 변경불가성(Immutability)</Anchor>
+- <Anchor external="https://poiemaweb.com/js-prototype">프로토타입</Anchor>
+- <Anchor external="https://poiemaweb.com/js-type-check">타입 체크</Anchor>

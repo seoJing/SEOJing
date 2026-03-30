@@ -1,0 +1,420 @@
+---
+title: "프론트엔드 스터디 9주차: 클로저, Promise, async/await"
+date: 2026-05-18
+tags:
+  - 프론트엔드
+  - 스터디
+  - JavaScript
+  - 클로저
+  - Promise
+  - 비동기
+description: JS 비동기 처리의 흐름을 배웁니다. 클로저가 왜 중요한지, 콜백 지옥을 해결한 Promise, 그리고 현대 JS의 표준인 async/await까지 이어지는 흐름을 이해합니다.
+---
+
+<Subtitle level={2}>9주차 학습 자료</Subtitle>
+
+- <strong>학습 챕터:</strong> poiemaweb — 클로저 / Promise / 제너레이터와 async/await
+- <strong>자료 바로가기:</strong>
+  <Anchor external="https://poiemaweb.com/js-closure">1. 클로저(Closure)</Anchor>{" "}
+  <Anchor external="https://poiemaweb.com/es6-promise">2. Promise</Anchor>{" "}
+  <Anchor external="https://poiemaweb.com/es6-generator">3. 제너레이터와 async/await</Anchor>
+- <strong>딥다이브 요약본 (보충용):</strong>
+  <Anchor external="https://github.com/youngminss/Docs-modernJS__deepDive/tree/master/24-Closure">
+    딥다이브 요약 GitHub
+  </Anchor>
+
+<Paragraph>
+  안녕하세요. 9주차입니다. 이번 주는 두 가지 큰 주제를 다룹니다. <strong>클로저</strong>는
+  지난 주에 배운 렉시컬 스코프에서 자연스럽게 이어지는 개념으로, React의 useState 같은 훅이
+  어떻게 동작하는지를 이해하는 기반입니다. <strong>비동기 처리</strong>는 서버에서 데이터를
+  가져오거나 파일을 읽는 등 시간이 걸리는 작업을 처리하는 JS의 핵심 방법입니다. 콜백에서
+  Promise, async/await으로 이어지는 발전 흐름을 이해하는 것이 목표입니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>스킵 진단 문제</Subtitle>
+
+<Paragraph>
+  아래 10문제를 막힘없이 풀 수 있다면,{" "}
+  <strong>
+    이번 주 학습 자료를 생략하거나, 모르는 부분만 선택적으로 읽으셔도 좋습니다.
+  </strong>{" "}
+  바로 하단의 더 알면 좋을 것들을 확인해보세요.
+</Paragraph>
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="클로저(Closure)란 무엇인가요?"
+    choices={[
+      "함수가 실행될 때마다 새로운 스코프를 생성하는 것",
+      "함수가 선언된 렉시컬 환경을 기억하여, 외부 함수가 종료된 후에도 외부 변수에 접근할 수 있는 것",
+      "함수를 즉시 실행하여 전역 스코프를 오염시키지 않는 패턴",
+      "중첩 함수에서 this 바인딩을 고정하는 것",
+    ]}
+    answer={1}
+    explanation="클로저는 함수가 자신이 선언된 렉시컬 환경(outer 변수들)을 기억하는 것입니다. 외부 함수가 이미 종료되었더라도 내부 함수는 외부 함수의 변수에 접근할 수 있습니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="클로저를 활용한 대표적인 패턴은 무엇인가요?"
+    choices={[
+      "IIFE — 즉시 실행으로 전역 오염 방지",
+      "데이터 은닉 — 외부에서 직접 접근할 수 없는 private 변수를 만드는 것",
+      "메모이제이션 — 이전 계산 결과를 캐싱하는 것",
+      "위 모두",
+    ]}
+    answer={3}
+    explanation="클로저는 데이터 은닉(private 변수), 메모이제이션(캐싱), IIFE 등 다양한 패턴에 활용됩니다. React의 useState도 클로저를 기반으로 동작합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="Promise의 상태(state)가 아닌 것은 무엇인가요?"
+    choices={["pending", "fulfilled", "rejected", "waiting"]}
+    answer={3}
+    explanation="Promise는 pending(대기), fulfilled(이행), rejected(거부) 세 가지 상태를 가집니다. 'waiting'은 존재하지 않는 상태입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="Promise.then()과 Promise.catch()에 대한 설명으로 옳은 것은 무엇인가요?"
+    choices={[
+      ".then()은 성공만, .catch()는 실패만 처리한다",
+      ".then(onFulfilled, onRejected)처럼 then에 두 번째 인자를 줘도 실패를 처리할 수 있다",
+      ".catch()는 .then(null, onRejected)와 동일하다",
+      "위 모두",
+    ]}
+    answer={3}
+    explanation=".then()은 성공 콜백 외에 두 번째 인자로 실패 콜백을 받을 수 있습니다. .catch(fn)은 .then(null, fn)의 축약 문법입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="async 함수의 반환값은 무엇인가요?"
+    choices={[
+      "반환값 그대로",
+      "항상 Promise로 래핑된 값",
+      "undefined",
+      "반환값이 Promise면 그대로, 아니면 undefined",
+    ]}
+    answer={1}
+    explanation="async 함수는 항상 Promise를 반환합니다. 내부에서 return 42를 하면 Promise.resolve(42)와 동일하게 동작합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="await 키워드는 어디서 사용할 수 있나요?"
+    choices={[
+      "어디서든 사용 가능",
+      "async 함수 내부에서만 사용 가능",
+      "Promise를 반환하는 함수 앞에서만 사용 가능",
+      "모듈 최상위 레벨에서만 사용 가능",
+    ]}
+    answer={1}
+    explanation="await는 async 함수 내부에서만 사용할 수 있습니다. (ES2022 이후 모듈 최상위에서도 가능하지만, 일반적으로는 async 함수 내부에서 사용합니다.)"
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="async/await에서 에러를 처리하는 방법으로 올바른 것은 무엇인가요?"
+    choices={[
+      ".catch() 메서드 체이닝만 가능",
+      "try/catch 블록으로 처리 가능",
+      "에러 처리가 불가능하다",
+      "오직 onRejected 콜백으로만 처리 가능",
+    ]}
+    answer={1}
+    explanation="async/await에서는 동기 코드처럼 try/catch 블록으로 에러를 처리할 수 있습니다. await가 reject된 Promise를 만나면 catch 블록으로 제어가 이동합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="여러 비동기 작업을 동시에 실행하고 모두 완료되길 기다리는 메서드는 무엇인가요?"
+    choices={[
+      "Promise.race()",
+      "Promise.any()",
+      "Promise.all()",
+      "Promise.allSettled()",
+    ]}
+    answer={2}
+    explanation="Promise.all()은 배열의 모든 Promise가 fulfilled될 때까지 기다리고 결과 배열을 반환합니다. 하나라도 rejected되면 전체가 rejected됩니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="콜백 지옥(Callback Hell)이 생기는 이유와 Promise가 해결하는 방법은 무엇인가요?"
+    choices={[
+      "비동기 작업을 동기로 바꿔서 해결",
+      "중첩 콜백 대신 .then() 체이닝으로 가독성 높은 순차 처리 가능",
+      "콜백을 사용하지 않아서 해결",
+      "멀티스레드로 전환하여 해결",
+    ]}
+    answer={1}
+    explanation="콜백 지옥은 비동기 작업을 순차적으로 처리할 때 콜백이 중첩되어 가독성이 떨어지는 문제입니다. Promise의 .then() 체이닝으로 수평적으로 나열하여 해결합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="JavaScript가 단일 스레드임에도 비동기 처리가 가능한 이유는 무엇인가요?"
+    choices={[
+      "JS 엔진이 내부적으로 멀티스레딩을 사용하기 때문",
+      "이벤트 루프(Event Loop)와 Web API가 비동기 작업을 처리하고 콜백 큐에 등록하기 때문",
+      "async 키워드를 쓰면 별도 스레드가 생성되기 때문",
+      "Promise가 스레드를 생성하기 때문",
+    ]}
+    answer={1}
+    explanation="JS는 단일 스레드지만 setTimeout, fetch 등 시간이 걸리는 작업은 Web API(브라우저)나 Node.js가 처리합니다. 작업 완료 후 콜백이 큐에 등록되고, 이벤트 루프가 콜 스택이 비면 큐에서 꺼내 실행합니다."
+  />
+</ArticleQuiz>
+
+---
+
+<Subtitle level={2}>1. 클로저(Closure) — 렉시컬 환경을 기억하는 함수</Subtitle>
+
+<Paragraph>
+  클로저는 <strong>함수가 선언될 때의 렉시컬 환경을 기억</strong>하여, 그 환경의 변수에
+  계속 접근할 수 있는 특성입니다. 렉시컬 스코프의 자연스러운 결과물입니다.
+</Paragraph>
+
+```js
+function makeCounter() {
+  let count = 0; // 외부 함수의 변수
+
+  return function () { // 내부 함수 — 클로저
+    count++;
+    return count;
+  };
+}
+
+const counter = makeCounter();
+// makeCounter()는 이미 종료됐지만
+console.log(counter()); // 1
+console.log(counter()); // 2
+console.log(counter()); // 3
+// count 변수가 여전히 살아있음
+```
+
+<Subtitle level={3}>데이터 은닉</Subtitle>
+
+<Paragraph>
+  클로저를 활용하면 외부에서 직접 접근할 수 없는 <strong>private 변수</strong>를 만들 수
+  있습니다.
+</Paragraph>
+
+```js
+function createAccount(initialBalance) {
+  let balance = initialBalance; // 외부에서 직접 접근 불가
+
+  return {
+    deposit(amount) { balance += amount; },
+    withdraw(amount) {
+      if (amount > balance) return "잔액 부족";
+      balance -= amount;
+    },
+    getBalance() { return balance; },
+  };
+}
+
+const account = createAccount(1000);
+account.deposit(500);
+console.log(account.getBalance()); // 1500
+console.log(account.balance);      // undefined — 직접 접근 불가
+```
+
+<Subtitle level={3}>React와 클로저</Subtitle>
+
+<Paragraph>
+  React의 <strong>`useState`</strong> 훅이 클로저를 기반으로 동작합니다. 컴포넌트가 리렌더링될 때마다
+  이벤트 핸들러 내부의 `count`, `setState` 등이 클로저로 기억됩니다. `useEffect`의
+  의존성 배열을 빠뜨리면 오래된 클로저(stale closure)를 참조하는 버그가 생기는 이유도
+  클로저 때문입니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. Promise — 콜백 지옥 탈출</Subtitle>
+
+<Paragraph>
+  서버에서 데이터를 가져오는 `fetch`, 타이머 `setTimeout` 등은 결과가 나중에 옵니다.
+  과거에는 콜백으로 처리했고, 중첩이 깊어지면 <strong>콜백 지옥</strong>이 생겼습니다.
+  Promise는 비동기 작업의 결과를 <strong>값(객체)</strong>으로 표현하여 이를 해결합니다.
+</Paragraph>
+
+```js
+// 콜백 지옥
+fetch("/user", function (user) {
+  fetch("/posts?userId=" + user.id, function (posts) {
+    fetch("/comments?postId=" + posts[0].id, function (comments) {
+      // 점점 깊어짐...
+    });
+  });
+});
+
+// Promise 체이닝 — 수평으로 나열
+fetch("/user")
+  .then((user) => fetch("/posts?userId=" + user.id))
+  .then((posts) => fetch("/comments?postId=" + posts[0].id))
+  .then((comments) => console.log(comments))
+  .catch((err) => console.error(err));
+```
+
+<Subtitle level={3}>Promise 상태</Subtitle>
+
+- <strong>`pending`</strong>: 비동기 작업 진행 중 (초기 상태)
+- <strong>`fulfilled`</strong>: 작업 성공 — `.then()` 콜백 실행
+- <strong>`rejected`</strong>: 작업 실패 — `.catch()` 콜백 실행
+- 한 번 fulfilled/rejected 상태가 되면 변경 불가
+
+<Subtitle level={3}>여러 Promise 동시 처리</Subtitle>
+
+```js
+// 순차 실행 — 느림 (앞이 끝나야 다음 시작)
+const a = await fetchA();
+const b = await fetchB();
+
+// 병렬 실행 — 동시에 시작하고 모두 완료 기다림
+const [a, b] = await Promise.all([fetchA(), fetchB()]);
+
+// 가장 먼저 완료된 것만 사용
+const fastest = await Promise.race([fetchA(), fetchB()]);
+```
+
+---
+
+<Subtitle level={2}>3. async/await — Promise를 동기처럼</Subtitle>
+
+<Paragraph>
+  `async/await`은 Promise를 기반으로 한 <strong>문법적 설탕(syntactic sugar)</strong>입니다.
+  비동기 코드를 마치 동기 코드처럼 읽기 쉽게 작성할 수 있게 해줍니다.
+</Paragraph>
+
+```js
+// Promise 체이닝
+function getUser(id) {
+  return fetch(`/users/${id}`)
+    .then((res) => res.json())
+    .then((user) => user)
+    .catch((err) => { throw err; });
+}
+
+// async/await — 같은 동작, 더 직관적
+async function getUser(id) {
+  try {
+    const res = await fetch(`/users/${id}`);
+    const user = await res.json();
+    return user;
+  } catch (err) {
+    throw err;
+  }
+}
+```
+
+<Subtitle level={3}>주의: await 병렬 실행</Subtitle>
+
+```js
+// 잘못된 예 — 순차 실행 (불필요하게 느림)
+async function bad() {
+  const a = await fetchA(); // fetchA 완료 대기
+  const b = await fetchB(); // 그 다음에야 fetchB 시작
+}
+
+// 올바른 예 — 병렬 실행
+async function good() {
+  const [a, b] = await Promise.all([fetchA(), fetchB()]);
+}
+```
+
+<Paragraph>
+  실무에서는 React 컴포넌트에서 데이터를 가져올 때 `useEffect` 안에서 async 함수를 정의하고
+  호출하는 패턴을 주로 사용합니다.
+</Paragraph>
+
+```js
+useEffect(() => {
+  async function fetchData() {
+    try {
+      const res = await fetch("/api/data");
+      const data = await res.json();
+      setData(data);
+    } catch (err) {
+      setError(err);
+    }
+  }
+
+  fetchData();
+}, []);
+```
+
+---
+
+<Subtitle level={2}>📝 학습 이해 퀴즈</Subtitle>
+
+<Paragraph>
+  아래 코드를 <strong>브라우저 콘솔에서 직접 실행</strong>해보고 결과를 입력해보세요.
+</Paragraph>
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="description"
+    question="아래 코드의 출력 결과를 순서대로 입력하세요."
+    code={`function makeAdder(x) {
+  return function (y) {
+    return x + y;
+  };
+}
+
+const add5 = makeAdder(5);
+const add10 = makeAdder(10);
+
+console.log(add5(3));
+console.log(add10(3));
+console.log(add5(add10(1)));`}
+    answer="8, 13, 16"
+    explanation="add5는 x=5를 기억하는 클로저, add10은 x=10을 기억하는 클로저입니다. add5(3)=8, add10(3)=13, add10(1)=11이므로 add5(11)=16입니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="아래 코드의 출력 순서와 결과를 입력하세요. (예: A, B, C 순서로 출력)"
+    code={`console.log("A");
+
+setTimeout(() => {
+  console.log("B");
+}, 0);
+
+Promise.resolve().then(() => {
+  console.log("C");
+});
+
+console.log("D");`}
+    answer="A, D, C, B"
+    explanation="동기 코드(A, D)가 먼저 실행됩니다. 그 다음 마이크로태스크 큐(Promise .then → C)가 매크로태스크 큐(setTimeout → B)보다 먼저 처리됩니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="아래 코드에서 result의 값은 무엇인가요?"
+    code={`async function fetchData() {
+  return 42;
+}
+
+const result = fetchData();
+console.log(result instanceof Promise);`}
+    answer="true"
+    explanation="async 함수는 항상 Promise를 반환합니다. return 42를 해도 Promise.resolve(42)로 래핑됩니다. 따라서 result는 Promise 인스턴스이고 instanceof Promise는 true입니다."
+  />
+</ArticleQuiz>
+
+---
+
+<Subtitle level={2}>📝 9주차 스터디 인증 미션</Subtitle>
+
+<Paragraph>
+  다가오는 스터디 모임 전, 아래 질문에 대해 본인만의 말로 설명한 뒤 댓글로 남겨주세요.
+</Paragraph>
+
+> **Q1. 클로저(Closure)란 무엇인가요? 실제 활용 사례를 하나 들어 설명해주세요.**
+>
+> <br />
+>
+> **Q2. async/await와 Promise의 관계를 설명해주세요. async 함수의 반환값은 어떤 타입인가요?**
+
+---
+
+<Subtitle level={2}>관련 포스팅</Subtitle>
+
+- <Anchor href="/blog/study/clab-26-1/week8">
+    프론트엔드 스터디 8주차 학습 자료: 불변성, 프로토타입, 타입 체크
+  </Anchor>

@@ -1,0 +1,493 @@
+---
+title: "프론트엔드 스터디 7주차: 객체, 함수, 그리고 스코프"
+date: 2026-05-05
+tags:
+  - 프론트엔드
+  - 스터디
+  - JavaScript
+  - 객체
+  - 함수
+  - 스코프
+description: JavaScript에서 거의 모든 것은 객체입니다. 함수가 일급 객체라는 의미, var와 let의 스코프 차이, 그리고 렉시컬 스코프까지 다룹니다.
+---
+
+<Subtitle level={2}>7주차 학습 자료</Subtitle>
+
+- <strong>학습 챕터:</strong> poiemaweb — 객체 / 함수 / 스코프
+- <strong>자료 바로가기:</strong>
+  <Anchor external="https://poiemaweb.com/js-object">1. 객체</Anchor>
+  <Anchor external="https://poiemaweb.com/js-function">2. 함수</Anchor>
+  <Anchor external="https://poiemaweb.com/js-scope">3. 스코프</Anchor>
+- <strong>딥다이브 요약본 (보충용):</strong>
+  <Anchor external="https://github.com/youngminss/Docs-modernJS__deepDive/tree/master/07-Object%20Literal">
+    딥다이브 요약 GitHub
+  </Anchor>
+
+<Paragraph>
+  안녕하세요. 7주차입니다. 이번 주는 JavaScript를 이해하는 데 가장 중요한 세
+  가지 개념을 다룹니다. <strong>객체</strong>는 JS에서 데이터를 구조화하는 기본
+  방식이고, <strong>함수</strong>는 단순한 코드 묶음이 아니라 값처럼 다룰 수
+  있는 일급 객체입니다. 그리고 <strong>스코프</strong>는 변수가 어디서 접근
+  가능한지를 결정하는 규칙입니다. 특히 var의 함수 스코프와 렉시컬 스코프는 다른
+  언어 경험자도 처음엔 헷갈리는 부분입니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>스킵 진단 문제</Subtitle>
+
+<Paragraph>
+  아래 10문제를 막힘없이 풀 수 있다면,{" "}
+  <strong>
+    이번 주 학습 자료를 생략하거나, 모르는 부분만 선택적으로 읽으셔도 좋습니다.
+  </strong>{" "}
+  바로 하단의 더 알면 좋을 것들을 확인해보세요.
+</Paragraph>
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="JavaScript에서 객체의 프로퍼티에 접근하는 두 가지 방법 중, 프로퍼티 키가 변수에 담겨 있거나 공백을 포함할 때 반드시 사용해야 하는 방식은 무엇일까요?"
+    choices={[
+      "점 표기법 (dot notation): obj.key",
+      "대괄호 표기법 (bracket notation): obj[key]",
+      "둘 다 동일하게 사용 가능",
+      "콜론 표기법: obj:key",
+    ]}
+    answer={1}
+    explanation="점 표기법은 식별자 규칙을 따르는 키에만 사용할 수 있습니다. 공백이 있는 키('first name')나 변수에 담긴 키는 반드시 대괄호 표기법(obj['first name'], obj[variable])을 사용해야 합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="다음 중 함수 선언식(Function Declaration)과 함수 표현식(Function Expression)의 가장 큰 차이는 무엇일까요?"
+    choices={[
+      "함수 선언식은 파라미터를 가질 수 없다",
+      "함수 표현식은 이름을 가질 수 없다",
+      "함수 선언식은 호이스팅으로 선언 전에 호출 가능하지만, 함수 표현식은 불가능하다",
+      "함수 표현식은 return을 사용할 수 없다",
+    ]}
+    answer={2}
+    explanation="함수 선언식(function foo() {})은 코드 실행 전에 전체가 호이스팅되어 선언보다 앞에서 호출할 수 있습니다. 반면 함수 표현식(const foo = function() {})은 변수 선언만 호이스팅되고 함수 할당은 되지 않아, 선언 전 호출 시 TypeError가 발생합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="JavaScript에서 '함수는 일급 객체(First-Class Object)다'라는 말의 의미로 올바른 것은 무엇일까요?"
+    choices={[
+      "함수는 다른 객체보다 우선순위가 높다",
+      "함수를 변수에 할당하거나, 다른 함수의 인자로 전달하거나, 반환값으로 사용할 수 있다",
+      "함수는 객체를 상속받아 만들어진다",
+      "함수 내부에서만 객체를 생성할 수 있다",
+    ]}
+    answer={1}
+    explanation="일급 객체란 값처럼 다룰 수 있는 대상을 뜻합니다. JS의 함수는 변수에 할당, 다른 함수의 인자로 전달, 함수의 반환값으로 사용하는 것이 모두 가능합니다. 이 특성이 콜백 함수, 고차 함수, 클로저 등의 기반이 됩니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="var로 선언한 변수의 스코프는 무엇일까요?"
+    choices={[
+      "블록 스코프 — {} 안에서만 유효",
+      "전역 스코프 — 항상 전역에서 접근 가능",
+      "함수 스코프 — 함수 안에서만 유효, if/for 블록은 무시",
+      "모듈 스코프 — 같은 파일 안에서만 유효",
+    ]}
+    answer={2}
+    explanation="var는 함수 스코프를 가집니다. if문, for문 등의 블록 안에서 var로 선언해도 블록 밖에서 접근할 수 있습니다. let/const는 블록 스코프로 {} 안에서만 유효합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="렉시컬 스코프(Lexical Scope)란 무엇인가요?"
+    choices={[
+      "함수가 호출된 위치를 기준으로 스코프를 결정하는 방식",
+      "함수가 선언된 위치를 기준으로 스코프를 결정하는 방식",
+      "변수가 마지막으로 할당된 위치를 기준으로 스코프를 결정하는 방식",
+      "전역 변수만 참조할 수 있는 스코프 방식",
+    ]}
+    answer={1}
+    explanation="렉시컬 스코프(정적 스코프)는 함수가 '선언된 위치'를 기준으로 상위 스코프를 결정합니다. 함수가 어디서 호출되든 상관없이, 코드를 작성한 시점의 위치가 기준이 됩니다. 클로저가 동작하는 근거가 바로 렉시컬 스코프입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="객체를 변수에 할당하면 어떤 일이 일어날까요?"
+    choices={[
+      "객체의 복사본이 변수에 저장된다",
+      "객체가 저장된 메모리 주소(참조)가 변수에 저장된다",
+      "객체의 각 프로퍼티가 개별 변수에 분리 저장된다",
+      "객체가 문자열로 변환되어 저장된다",
+    ]}
+    answer={1}
+    explanation="원시값(숫자, 문자열 등)은 값 자체가 복사되지만, 객체는 참조(메모리 주소)가 복사됩니다. 따라서 여러 변수가 같은 객체를 가리킬 수 있고, 한 변수로 수정하면 다른 변수로 접근해도 수정된 값이 보입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="IIFE(즉시 실행 함수 표현식)를 사용하는 주된 이유는 무엇일까요?"
+    choices={[
+      "함수 실행 속도를 높이기 위해",
+      "전역 스코프를 오염시키지 않고 코드를 실행하기 위해",
+      "함수를 여러 번 재사용하기 위해",
+      "비동기 코드를 처리하기 위해",
+    ]}
+    answer={1}
+    explanation="IIFE((function() {})())는 함수를 정의하자마자 실행하고 내부 변수를 전역 스코프에 노출시키지 않습니다. 모듈 시스템이 없던 시절 전역 오염을 방지하는 핵심 패턴이었고, 지금도 즉시 실행이 필요한 초기화 코드 등에 사용됩니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="다음 코드에서 inner 함수가 참조하는 x는 어느 스코프의 x일까요?"
+    code={`function outer() { 
+      var x = 10; 
+      function inner() { 
+        console.log(x); 
+      } 
+      inner(); 
+    }`}
+    choices={[
+      "전역 스코프의 x",
+      "inner 함수 자체 스코프의 x",
+      "outer 함수 스코프의 x",
+      "존재하지 않아 ReferenceError 발생",
+    ]}
+    answer={2}
+    explanation="inner 함수는 자신의 스코프에 x가 없으면 스코프 체인을 따라 상위 스코프인 outer 함수 스코프에서 x를 찾습니다. 렉시컬 스코프에 의해 inner가 선언된 위치(outer 내부)를 기준으로 스코프 체인이 형성됩니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="객체의 메서드(method)란 무엇인가요?"
+    choices={[
+      "객체 외부에서 객체에 접근하는 함수",
+      "객체의 프로퍼티 값이 함수인 경우",
+      "객체를 생성하는 특별한 문법",
+      "객체 간 상속을 연결하는 속성",
+    ]}
+    answer={1}
+    explanation="객체의 프로퍼티 값이 함수일 때, 그 프로퍼티를 메서드라고 합니다. 일반 프로퍼티와 구분하는 용어이며, 메서드 내부에서 this 키워드를 통해 자신이 속한 객체를 참조할 수 있습니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="다음 중 스코프 체인(Scope Chain)에 대한 설명으로 옳은 것은?"
+    choices={[
+      "현재 스코프에 변수가 없으면 안쪽(자식) 스코프를 탐색한다",
+      "현재 스코프에 변수가 없으면 바깥(부모) 스코프를 순서대로 탐색한다",
+      "스코프 체인은 전역 스코프에서만 작동한다",
+      "스코프 체인은 함수 선언식에만 적용된다",
+    ]}
+    answer={1}
+    explanation="변수를 참조할 때 현재 스코프에서 먼저 찾고, 없으면 상위 스코프로 올라가며 탐색합니다. 이 연결 구조를 스코프 체인이라 합니다. 전역 스코프까지 탐색해도 없으면 ReferenceError가 발생합니다."
+  />
+</ArticleQuiz>
+
+---
+
+<Subtitle level={2}>1. 객체 — JS에서 데이터를 담는 기본 그릇</Subtitle>
+
+<Paragraph>
+  다른 언어에서 객체는 클래스를 먼저 정의해야 만들 수 있습니다. JS는 다릅니다.
+  클래스 없이 <strong>객체 리터럴</strong>로 바로 만들 수 있고, 만든 후에도
+  프로퍼티를 자유롭게 추가·삭제할 수 있습니다.
+</Paragraph>
+
+```js
+// 클래스 정의 없이 바로 생성
+const person = {
+  name: "김철수",
+  age: 25,
+  greet: function () {
+    console.log(`안녕하세요, ${this.name}입니다.`);
+  },
+};
+
+// 만든 후에도 프로퍼티 추가/삭제 가능
+person.email = "kim@example.com"; // 추가
+delete person.age; // 삭제
+```
+
+<Subtitle level={3}>프로퍼티 접근: 점 vs 대괄호</Subtitle>
+
+```js
+const obj = { name: "철수", "first name": "철" };
+
+// 점 표기법: 식별자 규칙을 따르는 키에만 사용 가능
+console.log(obj.name); // "철수"
+
+// 대괄호 표기법: 문자열이나 변수로 접근할 때
+console.log(obj["first name"]); // "철" — 공백 있는 키는 대괄호만 가능
+const key = "name";
+console.log(obj[key]); // "철수" — 변수를 키로 사용할 때
+```
+
+<Subtitle level={3}>원시값 vs 객체: 값 복사 vs 참조 복사</Subtitle>
+
+<Paragraph>
+  JS에서 가장 많이 실수하는 부분 중 하나입니다. 원시값(숫자, 문자열 등)은 값
+  자체가 복사되지만, 객체는 <strong>참조(메모리 주소)</strong>가 복사됩니다.
+</Paragraph>
+
+```js
+// 원시값: 값 복사
+let a = 1;
+let b = a;
+b = 2;
+console.log(a); // 1 — a는 영향 없음
+
+// 객체: 참조 복사
+const obj1 = { x: 1 };
+const obj2 = obj1; // 같은 객체를 가리킴
+obj2.x = 99;
+console.log(obj1.x); // 99 — obj1도 바뀜!
+```
+
+<Paragraph>
+  이 때문에 객체를 복사할 때는 얕은 복사(<strong>spread 문법</strong>)나 깊은
+  복사를 명시적으로 해야 합니다.
+</Paragraph>
+
+```js
+// 얕은 복사 (1단계 깊이만 복사)
+const copy = { ...obj1 };
+copy.x = 999;
+console.log(obj1.x); // 99 — 이제 영향 없음
+```
+
+---
+
+<Subtitle level={2}>2. 함수 — 일급 객체로서의 함수</Subtitle>
+
+<Paragraph>
+  Java에서 함수(메서드)는 클래스에 종속됩니다. Python이나 JS에서 함수는{" "}
+  <strong>일급 객체(First-Class Object)</strong>입니다. 값처럼 다룰 수 있다는
+  뜻입니다.
+</Paragraph>
+
+```js
+// 변수에 할당
+const add = function (a, b) {
+  return a + b;
+};
+
+// 다른 함수의 인자로 전달
+function execute(fn, a, b) {
+  return fn(a, b);
+}
+console.log(execute(add, 3, 4)); // 7
+
+// 함수의 반환값으로 사용
+function makeMultiplier(factor) {
+  return function (num) {
+    return num * factor;
+  };
+}
+const double = makeMultiplier(2);
+console.log(double(5)); // 10
+```
+
+<Subtitle level={3}>함수 선언식 vs 함수 표현식 — 호이스팅 차이</Subtitle>
+
+```js
+// 함수 선언식: 선언 전에도 호출 가능 (전체 호이스팅)
+sayHello(); // "Hello!" — 에러 없음
+function sayHello() {
+  console.log("Hello!");
+}
+
+// 함수 표현식: 선언 전 호출 불가 (변수만 호이스팅)
+sayBye(); // TypeError: sayBye is not a function
+const sayBye = function () {
+  console.log("Bye!");
+};
+```
+
+<Paragraph>
+  실무에서는 예측 가능성을 위해 <strong>함수 표현식 + const</strong>를 선호하는
+  경향이 있습니다. 특히 React 컴포넌트나 화살표 함수를 사용할 때 이 방식이
+  기본입니다.
+</Paragraph>
+
+<Subtitle level={3}>화살표 함수 (Arrow Function)</Subtitle>
+
+<Paragraph>
+  ES6에서 추가된 간결한 함수 문법입니다. 단순히 짧은 문법이 아니라,{" "}
+  <strong>this 바인딩 방식이 다릅니다</strong> (다음 주 this에서 자세히
+  다룹니다).
+</Paragraph>
+
+```js
+// 일반 함수
+const add1 = function (a, b) {
+  return a + b;
+};
+
+// 화살표 함수
+const add2 = (a, b) => a + b; // 한 줄이면 return 생략 가능
+
+// 파라미터가 하나면 괄호 생략 가능
+const double = (n) => n * 2;
+
+// 본문이 여러 줄이면 {} 와 return 명시
+const greet = (name) => {
+  const msg = `안녕하세요, ${name}님`;
+  return msg;
+};
+```
+
+<Subtitle level={3}>콜백 함수 — JS에서 가장 흔한 패턴</Subtitle>
+
+<Paragraph>
+  함수를 인자로 넘기는 패턴을 <strong>콜백 함수</strong>라고 합니다. 배열
+  메서드, 이벤트 처리, 비동기 처리 등 JS 전반에서 등장합니다.
+</Paragraph>
+
+```js
+const numbers = [1, 2, 3, 4, 5];
+
+// 배열 고차 함수에 콜백 전달
+const doubled = numbers.map((n) => n * 2); // [2, 4, 6, 8, 10]
+const evens = numbers.filter((n) => n % 2 === 0); // [2, 4]
+const sum = numbers.reduce((acc, n) => acc + n, 0); // 15
+```
+
+---
+
+<Subtitle level={2}>3. 스코프 — 변수가 살아있는 범위</Subtitle>
+
+<Paragraph>
+  스코프는 변수가 어디서 접근 가능한지를 결정하는 규칙입니다. 다른 언어에서 온
+  개발자가 JS를 처음 배울 때 가장 많이 혼란을 겪는 부분 중 하나입니다.
+</Paragraph>
+
+<Subtitle level={3}>var의 함수 스코프 — 블록을 무시한다</Subtitle>
+
+```js
+// Java나 Python이라면 블록 밖에서 x에 접근할 수 없음
+// JS var는 다릅니다
+function example() {
+  if (true) {
+    var x = 10; // var는 함수 스코프
+    let y = 20; // let은 블록 스코프
+  }
+  console.log(x); // 10 — 블록 밖에서 접근 가능
+  console.log(y); // ReferenceError — 블록 밖에서 접근 불가
+}
+```
+
+<Subtitle level={3}>스코프 체인 — 안에서 밖으로 탐색</Subtitle>
+
+```js
+const globalVar = "전역";
+
+function outer() {
+  const outerVar = "외부";
+
+  function inner() {
+    const innerVar = "내부";
+    // 자신의 스코프 → outer 스코프 → 전역 스코프 순으로 탐색
+    console.log(innerVar); // "내부" (자신의 스코프)
+    console.log(outerVar); // "외부" (outer 스코프)
+    console.log(globalVar); // "전역" (전역 스코프)
+  }
+
+  inner();
+  console.log(innerVar); // ReferenceError — outer는 inner 스코프 접근 불가
+}
+```
+
+<Subtitle level={3}>렉시컬 스코프 — 호출 위치가 아닌 선언 위치 기준</Subtitle>
+
+<Paragraph>
+  JS는 <strong>렉시컬 스코프(정적 스코프)</strong>를 사용합니다. 함수가 어디서
+  호출되느냐가 아니라, <strong>어디서 선언됐느냐</strong>를 기준으로 상위
+  스코프가 결정됩니다.
+</Paragraph>
+
+```js
+const x = "전역";
+
+function foo() {
+  console.log(x); // 어느 x를 참조할까?
+}
+
+function bar() {
+  const x = "bar 내부";
+  foo(); // foo를 bar 안에서 호출
+}
+
+bar(); // "전역" 출력
+
+// foo는 전역에서 선언됐으므로, 상위 스코프는 전역 스코프
+// bar 안에서 호출해도 bar의 x를 참조하지 않음
+```
+
+<Paragraph>
+  이 개념이 다음 주에 배울 <strong>클로저(Closure)</strong>의 핵심 원리입니다.
+  함수가 선언된 환경을 기억하기 때문에 클로저가 동작합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>📝 학습 이해 퀴즈</Subtitle>
+
+<Paragraph>
+  아래 코드를 <strong>브라우저 콘솔에서 직접 실행</strong>해보고 결과를
+  입력해보세요.
+</Paragraph>
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="description"
+    question="아래 코드에서 console.log(obj.x)의 출력 결과는?"
+    code={`const obj = { x: 1 };
+const copy = obj;
+copy.x = 99;
+console.log(obj.x);`}
+    answer="99"
+    explanation="객체를 변수에 할당하면 참조(메모리 주소)가 복사됩니다. copy와 obj는 같은 객체를 가리키므로, copy.x를 수정하면 obj.x도 함께 바뀝니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="아래 코드 실행 시 foo()와 bar() 중 정상 실행되는 것과 에러가 나는 것을 입력하세요. (예: foo 정상, bar 에러)"
+    code={`foo();
+bar();
+
+function foo() {
+console.log("foo");
+}
+
+const bar = function () {
+console.log("bar");
+};`}
+answer="foo 정상, bar 에러"
+explanation="함수 선언식(foo)은 전체가 호이스팅되어 선언 전 호출이 가능합니다. 함수 표현식(bar)은 const 변수만 호이스팅되고 함수 할당은 안 되므로, bar()를 선언 전에 호출하면 TypeError가 발생합니다."
+/>
+
+  <ArticleQuizItem
+    mode="description"
+    question="fn()을 실행했을 때 출력 결과는?"
+    code={`const x = 1;
+
+function outer() {
+const x = 2;
+function inner() {
+console.log(x);
+}
+return inner;
+}
+
+const fn = outer();
+fn();`}
+answer="2"
+explanation="렉시컬 스코프에 의해 inner는 선언된 위치(outer 내부)의 스코프를 기억합니다. outer()가 실행을 마친 후에도 inner는 outer의 x(=2)를 참조합니다. 이것이 바로 클로저입니다."
+/>
+
+</ArticleQuiz>
+
+---
+
+<Subtitle level={2}>📝 7주차 스터디 인증 미션</Subtitle>
+
+<Paragraph>
+  다가오는 스터디 모임 전, 아래 질문에 대해 본인만의 말로 설명한 뒤 댓글로
+  남겨주세요.
+</Paragraph>
+
+> **Q1. JavaScript에서 호이스팅(Hoisting)이란 무엇인가요? `var`로 선언한 변수와 함수 선언식이 각각 어떻게 호이스팅되는지 설명해주세요.**
+>
+> <br />
+>
+> **Q2. 익명 함수(Anonymous Function)의 일반적인 사용 사례는 무엇인가요?**

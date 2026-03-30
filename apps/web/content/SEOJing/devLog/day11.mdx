@@ -1,0 +1,126 @@
+---
+title: "Day 11 - 프레젠테이션 확대 기능, FullscreenView 개선"
+date: "2026-03-25"
+tags:
+  - DevLog
+  - SEO Jing
+description: SEO Jing 개발 열한째 날. PC 프레젠테이션 확대/축소 컨트롤 추가, 모바일 orientation 판단 로직 개선, FullscreenView를 독립 컴포넌트로 분리 및 PC 대응.
+---
+
+<Subtitle level={2}>PC에서 글자가 너무 작다</Subtitle>
+
+<Paragraph>
+  10일차에 모바일 프레젠테이션을 안정화했는데, PC로 보니 또 다른 문제가 눈에
+  들어왔다. 화면이 넓어서 슬라이드가 가로로 꽉 찬 대신, 폰트가 원본 아티클 크기
+  그대로라 글자가 작아보였다. 발표 자료로 쓰기엔 적합하지 않은 상태였다.
+</Paragraph>
+
+<Paragraph>
+  해결책은 간단하다. CSS의 <strong>zoom</strong> 속성으로 슬라이드 콘텐츠 전체를
+  확대하고, 확대 배율에 맞춰 슬라이드 분할 계산도 재조정하면 된다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>확대/축소 컨트롤 추가</Subtitle>
+
+<Paragraph>
+  하단 바 오른쪽에 <strong>−</strong>, 배율 표시, <strong>+</strong> 버튼 세
+  개를 추가했다. 기본값은 2×, 범위는 1× ~ 3×, 단계는 0.2씩이다.
+</Paragraph>
+
+<Paragraph>
+  배율이 바뀌면 슬라이드를 처음부터 다시 계산해야 하므로 `setCurrentSlide(0)`을
+  함께 호출한다. 분할 계산 시 가용 높이와 너비를 `scale`로 나눠서 넘기면,
+  zoom으로 확대된 공간에서 정확하게 분할이 이루어진다.
+</Paragraph>
+
+```ts
+const scale = isMobile ? 1 : pcScale;
+setSlides(extractSlides(articleRef.current, available / scale, slideW / scale));
+```
+
+<Paragraph>
+  슬라이드 콘텐츠 div에는 `style={{ zoom: pcScale }}`을 적용해서 렌더된 결과가
+  실제로 확대되어 보이도록 했다. 모바일에서는 zoom을 적용하지 않는다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>모바일 orientation 판단 로직 개선</Subtitle>
+
+<Paragraph>
+  기존 로직은 `window.matchMedia("(max-width: 768px)")`으로 모바일 여부를
+  판단했다. 그런데 이 방식은 화면이 이미 가로 방향일 때 너비가 768px를
+  넘어버려서 모바일로 인식을 못 하는 문제가 있었다.
+</Paragraph>
+
+<Paragraph>
+  <strong>물리적 짧은 변</strong>을 기준으로 바꿨다. `Math.min(width, height)`이
+  768px 이하면 모바일이고, 그 중 세로 상태(`height > width`)일 때만 90도 회전이
+  필요하다는 `needsRotation` 플래그를 분리했다.
+</Paragraph>
+
+```ts
+const short = Math.min(window.innerWidth, window.innerHeight);
+const isMobile = short <= 768;
+const needsRotation = isMobile && window.innerHeight > window.innerWidth;
+```
+
+<Paragraph>
+  이후 슬라이드 높이 계산, 컨테이너 transform, 코드 뷰어 회전 모두 `isMobile`이
+  아닌 `needsRotation`을 기준으로 분기하도록 수정했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>FullscreenView 컴포넌트 분리</Subtitle>
+
+<Paragraph>
+  전체화면 코드 뷰어(`FullscreenView`)가 `code-block.tsx` 안에 비공개 함수로
+  있었다. 프레젠테이션 뷰에서 "코드 전체 보기" 버튼을 눌렀을 때도 같은 뷰어를
+  재사용하고 싶었는데, 외부에서 접근할 수가 없는 상태였다.
+</Paragraph>
+
+<Paragraph>
+  `FullscreenView`에 `export`를 붙이고 `packages/ui/src/index.ts`에서
+  재내보냈다. 프레젠테이션 뷰에서는 기존에 직접 만들어 쓰던 전체화면 코드
+  렌더러를 제거하고, `FullscreenView`로 교체했다.
+</Paragraph>
+
+<Paragraph>
+  이 과정에서 PC에서는 회전이 필요 없는데 항상 회전 스타일이 적용되던 버그도
+  잡았다. `rotate` prop을 추가해서 명시적으로 제어할 수 있게 했고, prop이 없으면
+  기존처럼 내부에서 자동 판단한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>FullscreenView PC 스타일 개선</Subtitle>
+
+<Paragraph>
+  코드 뷰어를 PC에서 열어보니 모바일 전용으로 설계되어 있어서 가독성이 낮았다.
+  wide 화면에서 줄이 너무 길어지고, 폰트도 작은 편이었다.
+</Paragraph>
+
+<Paragraph>
+  `pre` 태그에 반응형 스타일을 추가했다. 모바일에서는 기존 그대로이고, md
+  이상에서는 좌우 패딩을 `25dvw`로 넓히고 폰트를 `text-2xl`로 키웠다. 코드가
+  화면 좌우 여백 안쪽에 자리잡아서 읽기 편해졌다.
+</Paragraph>
+
+<Paragraph>
+  닫기 버튼도 개선했다. 이전에는 하단 바에 텍스트만 있었는데, 명시적인 버튼
+  요소로 바꾸고 `onMouseDown`/`onTouchStart`에 `stopPropagation`을 추가해서
+  롱프레스 로직이 닫기 버튼에서 트리거되지 않도록 했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>코드블록 전체보기 버튼 노출 범위 확대</Subtitle>
+
+<Paragraph>
+  코드블록의 "전체보기" 아이콘 버튼이 `md:hidden`으로 모바일에서만 표시되고
+  있었다. PC에서도 프레젠테이션 모드 진입 전에 코드 뷰어를 열고 싶은 경우가
+  있어서 `md:hidden`을 제거해 항상 노출되도록 변경했다.
+</Paragraph>

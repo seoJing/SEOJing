@@ -1,0 +1,179 @@
+---
+title: "프론트엔드 스터디 대면 10주차: 배열 고차함수와 ES6+ 문법"
+date: 2026-05-23
+tags:
+  - 프론트엔드
+  - 스터디
+  - JavaScript
+  - 배열
+  - ES6
+  - 구조분해할당
+description: 9주차 JS 복습과 과제 풀이, 그리고 이번 주 핵심인 배열 고차함수, 구조 분해, 스프레드, 옵셔널 체이닝 관련 면접 질문을 다룹니다.
+---
+
+<Subtitle level={2}>1. 저번 주 복습</Subtitle>
+
+<Paragraph>
+  지난주에는 클로저, Promise, async/await를 배웠습니다.
+  핵심만 빠르게 짚어보겠습니다.
+</Paragraph>
+
+<Subtitle level={3}>클로저(Closure)</Subtitle>
+
+- <strong>정의</strong>: 함수가 선언될 때의 렉시컬 환경을 기억하여, 외부 함수 종료 후에도 외부 변수에 접근할 수 있는 것
+- <strong>활용</strong>: 데이터 은닉(private 변수), 메모이제이션, 함수 팩토리
+- <strong>React 연결</strong>: `useState`, 이벤트 핸들러가 클로저로 상태를 기억. stale closure 버그의 원인
+
+<Subtitle level={3}>비동기 처리 흐름</Subtitle>
+
+- <strong>콜백 → Promise → async/await</strong>: 같은 비동기 처리를 가독성 순서로 발전
+- <strong>Promise 상태</strong>: `pending` → `fulfilled` / `rejected` (한 번 결정되면 변경 불가)
+- <strong>async 함수</strong>: 항상 Promise를 반환. `return 42` → `Promise.resolve(42)`
+- <strong>에러 처리</strong>: `async/await`에서는 `try/catch`로 처리
+
+<Subtitle level={3}>이벤트 루프</Subtitle>
+
+- <strong>단일 스레드 + 이벤트 루프</strong>: 콜 스택이 비면 마이크로태스크(Promise) → 매크로태스크(setTimeout) 순서로 실행
+- <strong>병렬 처리</strong>: `Promise.all()`로 여러 비동기 작업을 동시에 실행
+
+---
+
+<Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
+
+<Subtitle level={3}>학습 자료 9주차 과제</Subtitle>
+
+<Paragraph>
+  <strong>Q1. 클로저(Closure)란 무엇인가요? 실제 활용 사례를 하나 들어 설명해주세요.</strong>
+</Paragraph>
+
+<Paragraph>
+  클로저는 <strong>함수가 선언된 렉시컬 환경을 기억하여, 외부 함수가 종료된 후에도 외부
+  변수에 접근할 수 있는 특성</strong>입니다. 활용 사례로는 데이터 은닉이 있습니다.
+  `makeCounter()` 함수 내부의 `count` 변수는 외부에서 직접 접근할 수 없지만, 반환된
+  클로저 함수를 통해서만 조작할 수 있습니다.
+</Paragraph>
+
+<Paragraph>
+  <strong>Q2. async/await와 Promise의 관계를 설명해주세요. async 함수의 반환값은 어떤 타입인가요?</strong>
+</Paragraph>
+
+<Paragraph>
+  `async/await`은 Promise를 기반으로 한 <strong>문법적 설탕(syntactic sugar)</strong>입니다.
+  내부적으로는 Promise를 사용하며, 비동기 코드를 동기 코드처럼 읽기 쉽게 작성할 수 있게
+  해줍니다. `async` 함수는 항상 <strong>Promise를 반환</strong>합니다. `return 42`를 해도
+  `Promise.resolve(42)`와 동일하게 동작합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. 면접 질문</Subtitle>
+
+<Paragraph>
+  이번 주 범위와 관련된 실제 면접 질문들입니다. 정답을 외우기보다는 자신만의 말로
+  설명하는 연습을 해보세요.
+</Paragraph>
+
+<Subtitle level={3}>Q1. map, filter, reduce의 차이를 설명해주세요.</Subtitle>
+
+<Paragraph>
+  세 메서드 모두 원본 배열을 변경하지 않는 순수 함수입니다.
+</Paragraph>
+
+- <strong>`map`</strong>: 각 요소를 변환하여 <strong>같은 길이의 새 배열</strong>을 반환. 변환이 목적
+- <strong>`filter`</strong>: 조건에 맞는 요소만 모아 <strong>더 짧거나 같은 길이의 새 배열</strong>을 반환. 필터링이 목적
+- <strong>`reduce`</strong>: 배열을 순회하며 <strong>하나의 값으로 누적</strong>. 합계, 객체 변환, 그룹핑 등에 사용
+
+```js
+const numbers = [1, 2, 3, 4, 5];
+
+numbers.map((n) => n * 2);          // [2, 4, 6, 8, 10]
+numbers.filter((n) => n % 2 === 0); // [2, 4]
+numbers.reduce((acc, n) => acc + n, 0); // 15
+```
+
+<Paragraph>
+  면접 팁: "React에서 map은 리스트 렌더링, filter는 조건부 렌더링이나 상태 필터링, reduce는
+  복잡한 상태 계산에 자주 사용합니다"라고 연결하면 좋습니다.
+</Paragraph>
+
+<Subtitle level={3}>Q2. 구조 분해 할당이란 무엇이고, 실무에서 어떻게 활용하나요?</Subtitle>
+
+<Paragraph>
+  구조 분해 할당은 <strong>배열이나 객체의 값을 개별 변수로 한 번에 추출</strong>하는 문법입니다.
+</Paragraph>
+
+```js
+// 객체 구조 분해 — props 수신
+function UserCard({ name, age, role = "user" }) {
+  return <div>{name} ({age}) — {role}</div>;
+}
+
+// 배열 구조 분해 — useState
+const [count, setCount] = useState(0);
+
+// API 응답에서 필요한 값만 추출
+const { data: { users }, status } = await fetchUsers();
+```
+
+<Paragraph>
+  면접 팁: "기본값 지정, 이름 변경, 중첩 구조 분해까지 알고 있으면 코드가 훨씬 간결해집니다.
+  Rest 파라미터와 조합하면 특정 프로퍼티를 제외한 나머지를 모으는 패턴도 자주 씁니다"라고
+  답하면 좋습니다.
+</Paragraph>
+
+<Subtitle level={3}>Q3. 옵셔널 체이닝(?.)과 null 병합 연산자(??)를 설명해주세요. ||와 ??의 차이는?</Subtitle>
+
+<Paragraph>
+  <strong>옵셔널 체이닝(`?.`)</strong>: 앞의 값이 `null`이나 `undefined`이면 에러 없이
+  `undefined`를 반환합니다. 중첩 객체에 안전하게 접근할 때 사용합니다.
+</Paragraph>
+
+<Paragraph>
+  <strong>null 병합 연산자(`??`)</strong>: 왼쪽이 `null` 또는 `undefined`일 때만 오른쪽 값을
+  반환합니다.
+</Paragraph>
+
+```js
+const user = null;
+
+// 옵셔널 체이닝
+user?.address?.city; // undefined (TypeError 없음)
+
+// ?? vs ||
+const count = 0;
+count || "기본값"; // "기본값" — 0은 falsy라서
+count ?? "기본값"; // 0 — null/undefined만 해당하므로
+```
+
+<Paragraph>
+  면접 팁: "`||`는 0, 빈 문자열, false도 falsy로 처리해서 기본값이 적용됩니다. 수량이나
+  금액 같은 값에 기본값을 설정할 때는 `??`를 써야 0이 의도치 않게 바뀌지 않습니다"라고
+  설명하면 실무 감각이 있다는 인상을 줍니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. 관련 포스팅</Subtitle>
+
+- <Anchor href="/blog/study/clab-26-1/week9">
+    프론트엔드 스터디 9주차 학습 자료: 클로저, Promise, async/await
+  </Anchor>
+- <Anchor href="/blog/study/clab-26-1/week10">
+    프론트엔드 스터디 10주차 학습 자료: 배열 고차함수와 ES6+ 문법
+  </Anchor>
+
+---
+
+<Subtitle level={2}>5. 다음 주 안내</Subtitle>
+
+<Paragraph>
+  다음 주부터는 드디어 <strong>React</strong>로 넘어갑니다. 지금까지 배운 JS 개념들이
+  어떻게 React에서 활용되는지 바로 체감할 수 있을 것입니다. 첫 번째로{" "}
+  <strong>React 소개와 JSX, 컴포넌트</strong> 기초를 다룹니다. 공식 문서가 잘 되어 있어
+  포이마 외에도 React 공식 문서(react.dev)를 함께 보면 좋습니다.
+</Paragraph>
+
+<Subtitle level={3}>다음 주 예습</Subtitle>
+
+- <Anchor external="https://poiemaweb.com/react-jsx">React와 JSX</Anchor>
+- <Anchor external="https://react.dev/learn">React 공식 문서 — 빠른 시작</Anchor>
