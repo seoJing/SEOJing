@@ -30,9 +30,11 @@ export function extractSlides(
       continue;
     }
 
-    if (tag === "h2" && currentChapter.length > 0) {
-      chapters.push(currentChapter);
+    if (tag === "h2") {
+      if (currentChapter.length > 0) chapters.push(currentChapter);
+      chapters.push([child]);
       currentChapter = [];
+      continue;
     }
 
     if (tag === "hr") {
