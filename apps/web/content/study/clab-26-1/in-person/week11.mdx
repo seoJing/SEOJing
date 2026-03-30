@@ -14,14 +14,15 @@ description: 10주차 JS 복습과 과제 풀이, 그리고 이번 주 핵심인
 <Subtitle level={2}>1. 저번 주 복습</Subtitle>
 
 <Paragraph>
-  지난주에는 배열 고차함수와 ES6+ 핵심 문법을 배웠습니다.
-  핵심만 빠르게 짚어보겠습니다.
+  지난주에는 배열 고차함수와 ES6+ 핵심 문법을 배웠습니다. 핵심만 빠르게
+  짚어보겠습니다.
 </Paragraph>
 
 <Subtitle level={3}>배열 고차함수</Subtitle>
 
 - <strong>`map`</strong>: 각 요소를 변환 → 같은 길이의 새 배열 반환
-- <strong>`filter`</strong>: 조건 충족 요소만 → 더 짧거나 같은 길이의 새 배열 반환
+- <strong>`filter`</strong>: 조건 충족 요소만 → 더 짧거나 같은 길이의 새 배열
+  반환
 - <strong>`reduce`</strong>: 배열을 하나의 값으로 누적. 합계·그룹핑·변환 등 범용
 - <strong>체이닝</strong>: `.filter(...).map(...)` 조합으로 선언적 데이터 처리
 
@@ -30,7 +31,8 @@ description: 10주차 JS 복습과 과제 풀이, 그리고 이번 주 핵심인
 - <strong>구조 분해</strong>: `const { name, age } = user`, `const [a, b] = arr` — React props/useState에서 매일 사용
 - <strong>스프레드</strong>: `{ ...obj, age: 26 }` — 불변 패턴으로 새 객체 생성
 - <strong>Rest</strong>: `const { name, ...others } = user` — 특정 프로퍼티를 제외한 나머지 모으기
-- <strong>`?.` / `??`</strong>: 안전한 중첩 접근 / null·undefined 기본값 (`||`와 달리 0·''는 통과)
+- <strong>`?.` / `??`</strong>: 안전한 중첩 접근 / null·undefined 기본값 (`||`와
+  달리 0·''는 통과)
 
 ---
 
@@ -39,28 +41,40 @@ description: 10주차 JS 복습과 과제 풀이, 그리고 이번 주 핵심인
 <Subtitle level={3}>학습 자료 10주차 과제</Subtitle>
 
 <Paragraph>
-  <strong>Q1. map, filter, reduce의 차이를 각각 설명하고, 어떤 상황에서 어떤 메서드를 선택하나요?</strong>
+  <strong>
+    Q1. map, filter, reduce의 차이를 각각 설명하고, 어떤 상황에서 어떤 메서드를
+    선택하나요?
+  </strong>
 </Paragraph>
 
-- <strong>`map`</strong>: 배열의 각 요소를 <strong>변환</strong>할 때. 항상 원본과 같은 길이의 배열을 반환
-- <strong>`filter`</strong>: 조건에 맞는 요소만 <strong>걸러낼</strong> 때. 원본보다 짧거나 같은 길이의 배열을 반환
-- <strong>`reduce`</strong>: 배열을 <strong>하나의 값으로 줄일</strong> 때. 합계, 카운팅, 그룹핑 등 범용적으로 사용
+- <strong>`map`</strong>: 배열의 각 요소를 <strong>변환</strong>할 때. 항상
+  원본과 같은 길이의 배열을 반환
+- <strong>`filter`</strong>: 조건에 맞는 요소만 <strong>걸러낼</strong> 때.
+  원본보다 짧거나 같은 길이의 배열을 반환
+- <strong>`reduce`</strong>: 배열을 <strong>하나의 값으로 줄일</strong> 때.
+  합계, 카운팅, 그룹핑 등 범용적으로 사용
 
 <Paragraph>
-  <strong>Q2. 옵셔널 체이닝(?.)과 null 병합 연산자(??)를 설명하고, `||`와 `??`의 차이를 예시와 함께 설명해주세요.</strong>
+  <strong>
+    Q2. 옵셔널 체이닝(?.)과 null 병합 연산자(??)를 설명하고, `||`와 `??`의
+    차이를 예시와 함께 설명해주세요.
+  </strong>
 </Paragraph>
 
-- <strong>`?.`</strong>: null/undefined이면 에러 없이 undefined 반환. 중첩 접근 안전하게 처리
+- <strong>`?.`</strong>: null/undefined이면 에러 없이 undefined 반환. 중첩 접근
+  안전하게 처리
 - <strong>`??`</strong>: null/undefined일 때만 오른쪽 반환
-- <strong>`||` vs `??`</strong>: `0 || "기본"` → `"기본"` (0은 falsy). `0 ?? "기본"` → `0` (0은 null/undefined 아님). 수량·금액처럼 0이 유효한 값일 때 `??`를 써야 함
+- <strong>`||` vs `??`</strong>: `0 || "기본"` → `"기본"` (0은 falsy). `0 ??
+  "기본"` → `0` (0은 null/undefined 아님). 수량·금액처럼 0이 유효한 값일 때
+  `??`를 써야 함
 
 ---
 
 <Subtitle level={2}>3. 면접 질문</Subtitle>
 
 <Paragraph>
-  이번 주 범위와 관련된 실제 면접 질문들입니다. 정답을 외우기보다는 자신만의 말로
-  설명하는 연습을 해보세요.
+  이번 주 범위와 관련된 실제 면접 질문들입니다. 정답을 외우기보다는 자신만의
+  말로 설명하는 연습을 해보세요.
 </Paragraph>
 
 <Subtitle level={3}>Q1. JavaScript에서 this는 어떻게 결정되나요?</Subtitle>
@@ -71,47 +85,55 @@ description: 10주차 JS 복습과 과제 풀이, 그리고 이번 주 핵심인
 
 - <strong>일반 함수 호출</strong>: 전역 객체 (strict mode에서는 `undefined`)
 - <strong>메서드 호출</strong>: 호출한 객체 (`obj.method()`에서 `this`는 `obj`)
-- <strong>생성자 호출</strong>: 새로 생성되는 인스턴스 (`new Fn()`에서 `this`는 새 객체)
+- <strong>생성자 호출</strong>: 새로 생성되는 인스턴스 (`new Fn()`에서 `this`는
+  새 객체)
 - <strong>명시적 바인딩</strong>: `call`, `apply`, `bind`로 직접 지정
 
 ```js
 const obj = {
   name: "철수",
-  greet() { console.log(this.name); },
+  greet() {
+    console.log(this.name);
+  },
 };
 
 const fn = obj.greet;
 obj.greet(); // "철수" — 메서드 호출
-fn();        // undefined — 일반 함수 호출 (this = 전역)
+fn(); // undefined — 일반 함수 호출 (this = 전역)
 ```
 
 <Paragraph>
-  면접 팁: "화살표 함수는 자체 this를 가지지 않고 선언 시점의 상위 스코프 this를 사용합니다(렉시컬 this).
-  React에서 이벤트 핸들러를 화살표 함수로 쓰는 이유가 바로 여기 있습니다"라고 연결하면 좋습니다.
+  면접 팁: "화살표 함수는 자체 this를 가지지 않고 선언 시점의 상위 스코프 this를
+  사용합니다(렉시컬 this). React에서 이벤트 핸들러를 화살표 함수로 쓰는 이유가
+  바로 여기 있습니다"라고 연결하면 좋습니다.
 </Paragraph>
 
-<Subtitle level={3}>Q2. 실행 컨텍스트(Execution Context)란 무엇인가요?</Subtitle>
+<Subtitle level={3}>
+  Q2. 실행 컨텍스트(Execution Context)란 무엇인가요?
+</Subtitle>
 
 <Paragraph>
-  코드가 실행될 때 JS 엔진이 생성하는 <strong>환경 정보 묶음</strong>입니다. 변수 정보, 스코프
-  체인, this 바인딩을 담고 있으며 콜 스택에 쌓입니다.
-</Paragraph>
-
-<Paragraph>
-  함수가 호출될 때마다 새 실행 컨텍스트가 생성되어 스택에 쌓이고, 함수가 종료되면
-  제거됩니다. 이것이 스코프 체인과 클로저의 실제 구현 방식입니다.
+  코드가 실행될 때 JS 엔진이 생성하는 <strong>환경 정보 묶음</strong>입니다.
+  변수 정보, 스코프 체인, this 바인딩을 담고 있으며 콜 스택에 쌓입니다.
 </Paragraph>
 
 <Paragraph>
-  면접 팁: "호이스팅은 실행 컨텍스트 생성 단계에서 변수와 함수 선언을 먼저 등록하기
-  때문에 발생합니다. 실행 컨텍스트를 이해하면 스코프·호이스팅·클로저가 하나의 흐름으로
-  연결됩니다"라고 답하면 깊이 있는 인상을 줍니다.
+  함수가 호출될 때마다 새 실행 컨텍스트가 생성되어 스택에 쌓이고, 함수가
+  종료되면 제거됩니다. 이것이 스코프 체인과 클로저의 실제 구현 방식입니다.
+</Paragraph>
+
+<Paragraph>
+  면접 팁: "호이스팅은 실행 컨텍스트 생성 단계에서 변수와 함수 선언을 먼저
+  등록하기 때문에 발생합니다. 실행 컨텍스트를 이해하면 스코프·호이스팅·클로저가
+  하나의 흐름으로 연결됩니다"라고 답하면 깊이 있는 인상을 줍니다.
 </Paragraph>
 
 <Subtitle level={3}>Q3. Set과 Map은 언제 사용하나요?</Subtitle>
 
-- <strong>Set</strong>: 중복 없는 값의 집합이 필요할 때. 배열 중복 제거 `[...new Set(arr)]`, 집합 연산(합집합·교집합)
-- <strong>Map</strong>: 다양한 타입의 키를 써야 할 때, 삽입 순서 보장이 필요할 때, `size`로 크기를 바로 알고 싶을 때
+- <strong>Set</strong>: 중복 없는 값의 집합이 필요할 때. 배열 중복 제거 `[...new
+  Set(arr)]`, 집합 연산(합집합·교집합)
+- <strong>Map</strong>: 다양한 타입의 키를 써야 할 때, 삽입 순서 보장이 필요할
+  때, `size`로 크기를 바로 알고 싶을 때
 
 ```js
 // 중복 제거 — Set
@@ -125,9 +147,9 @@ map.get(keyObj); // "값"
 ```
 
 <Paragraph>
-  면접 팁: "일반 객체는 for...in 순회 시 프로토타입 체인의 프로퍼티까지 나올 수 있고,
-  키가 문자열/심볼로 제한됩니다. 순수 데이터 저장소로는 Map이 더 적합한 경우가 있습니다"
-  라고 답하면 좋습니다.
+  면접 팁: "일반 객체는 for...in 순회 시 프로토타입 체인의 프로퍼티까지 나올 수
+  있고, 키가 문자열/심볼로 제한됩니다. 순수 데이터 저장소로는 Map이 더 적합한
+  경우가 있습니다" 라고 답하면 좋습니다.
 </Paragraph>
 
 ---
@@ -146,9 +168,10 @@ map.get(keyObj); // "값"
 <Subtitle level={2}>5. 다음 주 안내</Subtitle>
 
 <Paragraph>
-  다음 주는 <strong>1학기 JS 스터디의 마지막 주차</strong>입니다. 에러 처리와 정규 표현식을
-  다루고, 지금까지 배운 JS 개념 전체를 면접 관점에서 한 번 정리합니다.{" "}
-  지금까지 작성한 인증 미션 댓글을 포트폴리오에 활용할 수 있도록 정리해두세요.
+  다음 주는 <strong>1학기 JS 스터디의 마지막 주차</strong>입니다. 에러 처리와
+  정규 표현식을 다루고, 지금까지 배운 JS 개념 전체를 면접 관점에서 한 번
+  정리합니다. 지금까지 작성한 인증 미션 댓글을 포트폴리오에 활용할 수 있도록
+  정리해두세요.
 </Paragraph>
 
 <Subtitle level={3}>다음 주 예습</Subtitle>

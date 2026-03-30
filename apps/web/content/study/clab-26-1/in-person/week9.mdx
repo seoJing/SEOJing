@@ -14,27 +14,34 @@ description: 8주차 JS 복습과 과제 풀이, 그리고 이번 주 핵심인 
 <Subtitle level={2}>1. 저번 주 복습</Subtitle>
 
 <Paragraph>
-  지난주에는 const와 불변성의 차이, 프로토타입 기반 상속, 런타임 타입 체크를 배웠습니다.
-  핵심만 빠르게 짚어보겠습니다.
+  지난주에는 const와 불변성의 차이, 프로토타입 기반 상속, 런타임 타입 체크를
+  배웠습니다. 핵심만 빠르게 짚어보겠습니다.
 </Paragraph>
 
 <Subtitle level={3}>불변성(Immutability)</Subtitle>
 
-- <strong>`const`</strong>: 변수 바인딩(참조)만 고정 — 객체 내부 변경은 자유롭게 가능
-- <strong>`Object.freeze()`</strong>: 최상위 프로퍼티만 동결 (중첩 객체는 여전히 변경 가능)
-- <strong>불변 패턴</strong>: 상태를 직접 변경하지 않고 새 객체를 반환 — React `useState`의 방식
+- <strong>`const`</strong>: 변수 바인딩(참조)만 고정 — 객체 내부 변경은 자유롭게
+  가능
+- <strong>`Object.freeze()`</strong>: 최상위 프로퍼티만 동결 (중첩 객체는 여전히
+  변경 가능)
+- <strong>불변 패턴</strong>: 상태를 직접 변경하지 않고 새 객체를 반환 — React
+  `useState`의 방식
 
 <Subtitle level={3}>프로토타입</Subtitle>
 
-- <strong>프로토타입 체인</strong>: 프로퍼티 탐색 시 자신 → `[[Prototype]]` → `Object.prototype` 순서
-- <strong>`prototype` vs `[[Prototype]]`</strong>: 함수만 `prototype` 프로퍼티를 가짐. `new`로 만든 인스턴스의 `[[Prototype]]`이 됨
-- <strong>메서드 공유</strong>: `Person.prototype.greet`처럼 prototype에 추가하면 모든 인스턴스가 공유 (복사 아님)
+- <strong>프로토타입 체인</strong>: 프로퍼티 탐색 시 자신 → `[[Prototype]]` →
+  `Object.prototype` 순서
+- <strong>`prototype` vs `[[Prototype]]`</strong>: 함수만 `prototype` 프로퍼티를
+  가짐. `new`로 만든 인스턴스의 `[[Prototype]]`이 됨
+- <strong>메서드 공유</strong>: `Person.prototype.greet`처럼 prototype에
+  추가하면 모든 인스턴스가 공유 (복사 아님)
 
 <Subtitle level={3}>타입 체크</Subtitle>
 
 - <strong>`typeof`의 한계</strong>: `null`, 배열, Date 등 모두 `'object'` 반환
 - <strong>배열 확인</strong>: `Array.isArray()` 사용
-- <strong>정밀 확인</strong>: `Object.prototype.toString.call(value)` — `'[object Array]'` 등 반환
+- <strong>정밀 확인</strong>: `Object.prototype.toString.call(value)` —
+  `'[object Array]'` 등 반환
 
 ---
 
@@ -43,38 +50,53 @@ description: 8주차 JS 복습과 과제 풀이, 그리고 이번 주 핵심인 
 <Subtitle level={3}>학습 자료 8주차 과제</Subtitle>
 
 <Paragraph>
-  <strong>Q1. JavaScript에서 프로토타입 기반 상속이란 무엇인가요? Java의 클래스 기반 상속과 어떻게 다른지 설명해주세요.</strong>
+  <strong>
+    Q1. JavaScript에서 프로토타입 기반 상속이란 무엇인가요? Java의 클래스 기반
+    상속과 어떻게 다른지 설명해주세요.
+  </strong>
 </Paragraph>
 
 <Paragraph>
-  JS의 프로토타입 기반 상속은 <strong>객체가 다른 객체를 직접 상속</strong>하는 방식입니다.
-  클래스를 먼저 정의하고 인스턴스를 만드는 Java와 달리, JS는 객체가 `[[Prototype]]`을 통해
-  다른 객체의 프로퍼티를 위임합니다. ES6의 `class` 문법도 내부적으로는 동일한 프로토타입
-  메커니즘을 사용하는 문법적 설탕(syntactic sugar)입니다.
+  JS의 프로토타입 기반 상속은 <strong>객체가 다른 객체를 직접 상속</strong>하는
+  방식입니다. 클래스를 먼저 정의하고 인스턴스를 만드는 Java와 달리, JS는 객체가
+  `[[Prototype]]`을 통해 다른 객체의 프로퍼티를 위임합니다. ES6의 `class` 문법도
+  내부적으로는 동일한 프로토타입 메커니즘을 사용하는 문법적 설탕(syntactic
+  sugar)입니다.
 </Paragraph>
 
 <Paragraph>
-  <strong>Q2. `var`, `let`, `const`의 차이를 설명해주세요. `const`가 왜 완전한 불변을 보장하지 않는지도 포함해주세요.</strong>
+  <strong>
+    Q2. `var`, `let`, `const`의 차이를 설명해주세요. `const`가 왜 완전한 불변을
+    보장하지 않는지도 포함해주세요.
+  </strong>
 </Paragraph>
 
-- <strong>`var`</strong>: 함수 스코프, 재선언 가능, 호이스팅 시 `undefined` — 사용 지양
+- <strong>`var`</strong>: 함수 스코프, 재선언 가능, 호이스팅 시 `undefined` —
+  사용 지양
 - <strong>`let`</strong>: 블록 스코프, 재선언 불가, TDZ
-- <strong>`const`</strong>: 블록 스코프, 재선언·재할당 불가. 단, 객체의 참조를 고정할 뿐이라 내부 프로퍼티 변경은 가능
+- <strong>`const`</strong>: 블록 스코프, 재선언·재할당 불가. 단, 객체의 참조를
+  고정할 뿐이라 내부 프로퍼티 변경은 가능
 
 ---
 
 <Subtitle level={2}>3. 면접 질문</Subtitle>
 
 <Paragraph>
-  이번 주 범위와 관련된 실제 면접 질문들입니다. 정답을 외우기보다는 자신만의 말로
-  설명하는 연습을 해보세요.
+  이번 주 범위와 관련된 실제 면접 질문들입니다. 정답을 외우기보다는 자신만의
+  말로 설명하는 연습을 해보세요.
 </Paragraph>
 
-<Subtitle level={3}>Q1. 클로저(Closure)란 무엇인가요? 어떤 경우에 활용하나요?</Subtitle>
+<Subtitle level={3}>
+  Q1. 클로저(Closure)란 무엇인가요? 어떤 경우에 활용하나요?
+</Subtitle>
 
 <Paragraph>
-  클로저는 <strong>함수가 선언된 렉시컬 환경을 기억하여, 외부 함수가 종료된 후에도 그
-  환경의 변수에 접근할 수 있는 것</strong>입니다. 렉시컬 스코프의 자연스러운 결과물입니다.
+  클로저는{" "}
+  <strong>
+    함수가 선언된 렉시컬 환경을 기억하여, 외부 함수가 종료된 후에도 그 환경의
+    변수에 접근할 수 있는 것
+  </strong>
+  입니다. 렉시컬 스코프의 자연스러운 결과물입니다.
 </Paragraph>
 
 ```js
@@ -91,58 +113,63 @@ counter(); // 2
 counter(); // 3
 ```
 
-<Paragraph>
-  주요 활용 사례는 세 가지입니다.
-</Paragraph>
+<Paragraph>주요 활용 사례는 세 가지입니다.</Paragraph>
 
 - <strong>데이터 은닉</strong>: 외부에서 직접 접근 불가능한 private 변수 구현
 - <strong>메모이제이션</strong>: 이전 계산 결과를 캐싱
 - <strong>함수 팩토리</strong>: 설정값을 기억하는 함수 생성 (`makeAdder(5)` 등)
 
 <Paragraph>
-  면접 팁: "React의 useState와 useEffect도 클로저를 기반으로 동작합니다. useEffect 의존성
-  배열을 빠뜨리면 오래된 클로저(stale closure)를 참조하는 버그가 생기는데, 이것도 클로저의
-  특성 때문입니다"라고 연결하면 좋습니다.
+  면접 팁: "React의 useState와 useEffect도 클로저를 기반으로 동작합니다.
+  useEffect 의존성 배열을 빠뜨리면 오래된 클로저(stale closure)를 참조하는
+  버그가 생기는데, 이것도 클로저의 특성 때문입니다"라고 연결하면 좋습니다.
 </Paragraph>
 
-<Subtitle level={3}>Q2. 콜백 지옥이란 무엇이고, Promise는 어떻게 해결하나요?</Subtitle>
+<Subtitle level={3}>
+  Q2. 콜백 지옥이란 무엇이고, Promise는 어떻게 해결하나요?
+</Subtitle>
 
 <Paragraph>
-  콜백 지옥은 비동기 작업을 순차적으로 처리할 때 <strong>콜백이 중첩되어 코드가 오른쪽으로
-  계속 깊어지는 현상</strong>입니다. 가독성이 떨어지고 에러 처리도 어렵습니다.
-</Paragraph>
-
-<Paragraph>
-  Promise는 비동기 작업의 결과를 값(객체)으로 표현하여 `.then()` 체이닝으로 수평적으로
-  나열할 수 있게 합니다. `async/await`은 Promise를 기반으로 동기 코드처럼 읽히도록 한
-  문법적 설탕입니다.
+  콜백 지옥은 비동기 작업을 순차적으로 처리할 때{" "}
+  <strong>콜백이 중첩되어 코드가 오른쪽으로 계속 깊어지는 현상</strong>입니다.
+  가독성이 떨어지고 에러 처리도 어렵습니다.
 </Paragraph>
 
 <Paragraph>
-  면접 팁: "async/await을 쓴다고 Promise를 몰라도 되는 것은 아닙니다. `Promise.all()`로
-  병렬 처리를 하거나, 에러 처리를 정확히 하려면 Promise 동작 원리를 이해해야 합니다"라고
-  답하면 깊이 있는 인상을 줄 수 있습니다.
+  Promise는 비동기 작업의 결과를 값(객체)으로 표현하여 `.then()` 체이닝으로
+  수평적으로 나열할 수 있게 합니다. `async/await`은 Promise를 기반으로 동기
+  코드처럼 읽히도록 한 문법적 설탕입니다.
+</Paragraph>
+
+<Paragraph>
+  면접 팁: "async/await을 쓴다고 Promise를 몰라도 되는 것은 아닙니다.
+  `Promise.all()`로 병렬 처리를 하거나, 에러 처리를 정확히 하려면 Promise 동작
+  원리를 이해해야 합니다"라고 답하면 깊이 있는 인상을 줄 수 있습니다.
 </Paragraph>
 
 <Subtitle level={3}>Q3. 이벤트 루프(Event Loop)란 무엇인가요?</Subtitle>
 
 <Paragraph>
-  JS는 <strong>단일 스레드</strong>로 한 번에 하나의 작업만 실행합니다. 그럼에도 비동기 처리가
-  가능한 이유는 <strong>이벤트 루프</strong> 덕분입니다.
+  JS는 <strong>단일 스레드</strong>로 한 번에 하나의 작업만 실행합니다. 그럼에도
+  비동기 처리가 가능한 이유는 <strong>이벤트 루프</strong> 덕분입니다.
 </Paragraph>
 
 - <strong>콜 스택(Call Stack)</strong>: 현재 실행 중인 함수들의 스택
-- <strong>Web API</strong>: `setTimeout`, `fetch` 등 브라우저가 처리하는 비동기 작업
+- <strong>Web API</strong>: `setTimeout`, `fetch` 등 브라우저가 처리하는 비동기
+  작업
 - <strong>태스크 큐(Macro)</strong>: `setTimeout`, `setInterval` 콜백이 대기
-- <strong>마이크로태스크 큐(Micro)</strong>: `Promise .then`, `queueMicrotask` — 항상 태스크 큐보다 먼저 실행
+- <strong>마이크로태스크 큐(Micro)</strong>: `Promise .then`, `queueMicrotask` —
+  항상 태스크 큐보다 먼저 실행
 
 <Paragraph>
-  이벤트 루프는 콜 스택이 비면 마이크로태스크 큐 → 태스크 큐 순서로 꺼내 실행합니다.
+  이벤트 루프는 콜 스택이 비면 마이크로태스크 큐 → 태스크 큐 순서로 꺼내
+  실행합니다.
 </Paragraph>
 
 <Paragraph>
-  면접 팁: "Promise.resolve().then()은 setTimeout(fn, 0)보다 먼저 실행됩니다. 마이크로태스크
-  큐가 태스크 큐보다 우선순위가 높기 때문입니다"라고 예시를 들면 좋습니다.
+  면접 팁: "Promise.resolve().then()은 setTimeout(fn, 0)보다 먼저 실행됩니다.
+  마이크로태스크 큐가 태스크 큐보다 우선순위가 높기 때문입니다"라고 예시를 들면
+  좋습니다.
 </Paragraph>
 
 ---
@@ -162,14 +189,21 @@ counter(); // 3
 
 <Paragraph>
   다음 주에는 실무에서 가장 많이 쓰는 JS 문법들을 집중적으로 다룹니다.{" "}
-  <strong>배열 고차함수</strong>(`map`, `filter`, `reduce`)와 <strong>ES6+ 문법</strong>
-  (구조 분해 할당, 스프레드, 옵셔널 체이닝, 모듈)입니다. React 코드를 읽고 쓸 때 거의
-  매 줄 등장하는 문법들이라 실무 체감이 가장 빠른 주차입니다.
+  <strong>배열 고차함수</strong>(`map`, `filter`, `reduce`)와{" "}
+  <strong>ES6+ 문법</strong>
+  (구조 분해 할당, 스프레드, 옵셔널 체이닝, 모듈)입니다. React 코드를 읽고 쓸 때
+  거의 매 줄 등장하는 문법들이라 실무 체감이 가장 빠른 주차입니다.
 </Paragraph>
 
 <Subtitle level={3}>다음 주 예습</Subtitle>
 
-- <Anchor external="https://poiemaweb.com/js-array-higher-order-function">배열 고차 함수</Anchor>
-- <Anchor external="https://poiemaweb.com/es6-destructuring">구조 분해 할당(Destructuring)</Anchor>
-- <Anchor external="https://poiemaweb.com/es6-extended-parameter-handling">스프레드 문법과 Rest 파라미터</Anchor>
+- <Anchor external="https://poiemaweb.com/js-array-higher-order-function">
+    배열 고차 함수
+  </Anchor>
+- <Anchor external="https://poiemaweb.com/es6-destructuring">
+    구조 분해 할당(Destructuring)
+  </Anchor>
+- <Anchor external="https://poiemaweb.com/es6-extended-parameter-handling">
+    스프레드 문법과 Rest 파라미터
+  </Anchor>
 - <Anchor external="https://poiemaweb.com/es6-module">모듈(Module)</Anchor>

@@ -14,11 +14,18 @@ description: React 코드에서 매일 쓰는 JS 문법들을 정리합니다. m
 
 <Subtitle level={2}>10주차 학습 자료</Subtitle>
 
-- <strong>학습 챕터:</strong> poiemaweb — 배열 고차 함수 / 구조 분해 할당 / 스프레드 & Rest 파라미터 / 모듈
+- <strong>학습 챕터:</strong> poiemaweb — 배열 고차 함수 / 구조 분해 할당 /
+  스프레드 & Rest 파라미터 / 모듈
 - <strong>자료 바로가기:</strong>
-  <Anchor external="https://poiemaweb.com/js-array-higher-order-function">1. 배열 고차 함수</Anchor>{" "}
-  <Anchor external="https://poiemaweb.com/es6-destructuring">2. 구조 분해 할당</Anchor>{" "}
-  <Anchor external="https://poiemaweb.com/es6-extended-parameter-handling">3. 스프레드와 Rest 파라미터</Anchor>{" "}
+  <Anchor external="https://poiemaweb.com/js-array-higher-order-function">
+    1. 배열 고차 함수
+  </Anchor>
+  <Anchor external="https://poiemaweb.com/es6-destructuring">
+    2. 구조 분해 할당
+  </Anchor>
+  <Anchor external="https://poiemaweb.com/es6-extended-parameter-handling">
+    3. 스프레드와 Rest 파라미터
+  </Anchor>
   <Anchor external="https://poiemaweb.com/es6-module">4. 모듈</Anchor>
 - <strong>딥다이브 요약본 (보충용):</strong>
   <Anchor external="https://github.com/youngminss/Docs-modernJS__deepDive/tree/master/27-Array">
@@ -26,9 +33,10 @@ description: React 코드에서 매일 쓰는 JS 문법들을 정리합니다. m
   </Anchor>
 
 <Paragraph>
-  안녕하세요. 10주차입니다. 이번 주는 <strong>실무 체감이 가장 빠른 주차</strong>입니다.
-  React 코드를 열면 거의 모든 줄에서 `map`, `filter`, 구조 분해, 스프레드를 볼 수 있습니다.
-  개념보다는 <strong>언제 왜 쓰는지</strong>에 집중하며 읽어보세요.
+  안녕하세요. 10주차입니다. 이번 주는{" "}
+  <strong>실무 체감이 가장 빠른 주차</strong>입니다. React 코드를 열면 거의 모든
+  줄에서 `map`, `filter`, 구조 분해, 스프레드를 볼 수 있습니다. 개념보다는{" "}
+  <strong>언제 왜 쓰는지</strong>에 집중하며 읽어보세요.
 </Paragraph>
 
 ---
@@ -161,8 +169,9 @@ description: React 코드에서 매일 쓰는 JS 문법들을 정리합니다. m
 <Subtitle level={2}>1. 배열 고차함수 — map, filter, reduce</Subtitle>
 
 <Paragraph>
-  고차함수(Higher-Order Function)는 <strong>함수를 인자로 받거나 반환하는 함수</strong>입니다.
-  배열 메서드 중 가장 중요한 세 가지를 살펴봅니다.
+  고차함수(Higher-Order Function)는{" "}
+  <strong>함수를 인자로 받거나 반환하는 함수</strong>입니다. 배열 메서드 중 가장
+  중요한 세 가지를 살펴봅니다.
 </Paragraph>
 
 <Subtitle level={3}>map — 변환</Subtitle>
@@ -176,9 +185,7 @@ const doubled = numbers.map((n) => n * 2);
 
 // React에서 리스트 렌더링
 const items = ["사과", "배", "포도"];
-const listItems = items.map((item, index) => (
-  <li key={index}>{item}</li>
-));
+const listItems = items.map((item, index) => <li key={index}>{item}</li>);
 ```
 
 <Subtitle level={3}>filter — 필터링</Subtitle>
@@ -222,7 +229,7 @@ const scores = [85, 42, 93, 67, 55, 78, 91];
 
 // 70점 이상인 점수들의 평균
 const avg = scores
-  .filter((s) => s >= 70)               // [85, 93, 67, 78, 91]
+  .filter((s) => s >= 70) // [85, 93, 67, 78, 91]
   .reduce((sum, s, _, arr) => sum + s / arr.length, 0);
 // 82.8
 ```
@@ -232,13 +239,13 @@ const avg = scores
 ```js
 const arr = [1, 2, 3, 4, 5];
 
-arr.find((n) => n > 3);          // 4 — 첫 번째 일치 요소
-arr.findIndex((n) => n > 3);     // 3 — 첫 번째 일치 인덱스
-arr.some((n) => n > 4);          // true — 하나라도 조건 충족
-arr.every((n) => n > 0);         // true — 모두 조건 충족
-arr.includes(3);                  // true — 포함 여부
-arr.flat();                       // 중첩 배열 1단계 펼치기
-arr.flatMap((n) => [n, n * 2]);  // map + flat 1단계
+arr.find((n) => n > 3); // 4 — 첫 번째 일치 요소
+arr.findIndex((n) => n > 3); // 3 — 첫 번째 일치 인덱스
+arr.some((n) => n > 4); // true — 하나라도 조건 충족
+arr.every((n) => n > 0); // true — 모두 조건 충족
+arr.includes(3); // true — 포함 여부
+arr.flat(); // 중첩 배열 1단계 펼치기
+arr.flatMap((n) => [n, n * 2]); // map + flat 1단계
 ```
 
 ---
@@ -246,8 +253,8 @@ arr.flatMap((n) => [n, n * 2]);  // map + flat 1단계
 <Subtitle level={2}>2. 구조 분해 할당 — Destructuring</Subtitle>
 
 <Paragraph>
-  배열이나 객체에서 원하는 값을 변수로 한 번에 꺼내는 문법입니다.
-  React에서 props, useState, API 응답 처리 등 어디서나 사용합니다.
+  배열이나 객체에서 원하는 값을 변수로 한 번에 꺼내는 문법입니다. React에서
+  props, useState, API 응답 처리 등 어디서나 사용합니다.
 </Paragraph>
 
 <Subtitle level={3}>배열 구조 분해</Subtitle>
@@ -285,12 +292,18 @@ const { role = "user" } = {};
 // role="user"
 
 // 중첩 구조 분해
-const { address: { city } } = { address: { city: "서울" } };
+const {
+  address: { city },
+} = { address: { city: "서울" } };
 // city="서울"
 
 // React props
 function Button({ label, onClick, disabled = false }) {
-  return <button onClick={onClick} disabled={disabled}>{label}</button>;
+  return (
+    <button onClick={onClick} disabled={disabled}>
+      {label}
+    </button>
+  );
 }
 ```
 
@@ -354,7 +367,7 @@ user?.greet?.();
 const name = user?.name ?? "익명";
 
 // || 와의 차이
-const count = 0 || "기본값";  // "기본값" — 0은 falsy
+const count = 0 || "기본값"; // "기본값" — 0은 falsy
 const count2 = 0 ?? "기본값"; // 0 — null/undefined만 처리
 ```
 
@@ -363,8 +376,8 @@ const count2 = 0 ?? "기본값"; // 0 — null/undefined만 처리
 <Subtitle level={2}>5. ES6 모듈(Module)</Subtitle>
 
 <Paragraph>
-  모듈은 파일 단위로 코드를 분리하고, 필요한 것만 `import/export`하는 시스템입니다.
-  React 프로젝트는 전부 모듈 기반으로 작성됩니다.
+  모듈은 파일 단위로 코드를 분리하고, 필요한 것만 `import/export`하는
+  시스템입니다. React 프로젝트는 전부 모듈 기반으로 작성됩니다.
 </Paragraph>
 
 ```js
@@ -396,7 +409,8 @@ math.add(1, 2); // 3
 <Subtitle level={2}>📝 학습 이해 퀴즈</Subtitle>
 
 <Paragraph>
-  아래 코드를 <strong>브라우저 콘솔에서 직접 실행</strong>해보고 결과를 입력해보세요.
+  아래 코드를 <strong>브라우저 콘솔에서 직접 실행</strong>해보고 결과를
+  입력해보세요.
 </Paragraph>
 
 <ArticleQuiz>
@@ -406,13 +420,14 @@ math.add(1, 2); // 3
     code={`const numbers = [1, 2, 3, 4, 5];
 
 const result = numbers
-  .filter((n) => n % 2 !== 0)
-  .map((n) => n * n);
+.filter((n) => n % 2 !== 0)
+.map((n) => n \* n);
 
 console.log(result);`}
-    answer="[1, 9, 25]"
-    explanation="먼저 filter로 홀수만 걸러내면 [1, 3, 5]가 됩니다. 그 다음 map으로 각 요소를 제곱하면 [1, 9, 25]가 됩니다."
-  />
+answer="[1, 9, 25]"
+explanation="먼저 filter로 홀수만 걸러내면 [1, 3, 5]가 됩니다. 그 다음 map으로 각 요소를 제곱하면 [1, 9, 25]가 됩니다."
+/>
+
   <ArticleQuizItem
     mode="description"
     question="아래 코드에서 a, b, rest의 값을 순서대로 입력하세요."
@@ -439,7 +454,8 @@ console.log(name);`}
 <Subtitle level={2}>📝 10주차 스터디 인증 미션</Subtitle>
 
 <Paragraph>
-  다가오는 스터디 모임 전, 아래 질문에 대해 본인만의 말로 설명한 뒤 댓글로 남겨주세요.
+  다가오는 스터디 모임 전, 아래 질문에 대해 본인만의 말로 설명한 뒤 댓글로
+  남겨주세요.
 </Paragraph>
 
 > **Q1. map, filter, reduce의 차이를 각각 설명하고, 어떤 상황에서 어떤 메서드를 선택하는지 설명해주세요.**

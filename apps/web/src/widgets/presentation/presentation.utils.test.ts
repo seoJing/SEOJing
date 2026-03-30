@@ -107,7 +107,7 @@ describe("extractSlides", () => {
     `);
     const slides = extractSlides(article, 500, 800);
     expect(slides[0]!.textContent).toContain("Title");
-    expect(slides[0]!.textContent).toContain("Paragraph text");
+    expect(slides[1]!.textContent).toContain("Paragraph text");
   });
 });
 

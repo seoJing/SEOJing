@@ -13,22 +13,28 @@ description: JS 비동기 처리의 흐름을 배웁니다. 클로저가 왜 중
 
 <Subtitle level={2}>9주차 학습 자료</Subtitle>
 
-- <strong>학습 챕터:</strong> poiemaweb — 클로저 / Promise / 제너레이터와 async/await
+- <strong>학습 챕터:</strong> poiemaweb — 클로저 / Promise / 제너레이터와
+  async/await
 - <strong>자료 바로가기:</strong>
-  <Anchor external="https://poiemaweb.com/js-closure">1. 클로저(Closure)</Anchor>{" "}
-  <Anchor external="https://poiemaweb.com/es6-promise">2. Promise</Anchor>{" "}
-  <Anchor external="https://poiemaweb.com/es6-generator">3. 제너레이터와 async/await</Anchor>
+  <Anchor external="https://poiemaweb.com/js-closure">
+    1. 클로저(Closure)
+  </Anchor>
+  <Anchor external="https://poiemaweb.com/es6-promise">2. Promise</Anchor>
+  <Anchor external="https://poiemaweb.com/es6-generator">
+    3. 제너레이터와 async/await
+  </Anchor>
 - <strong>딥다이브 요약본 (보충용):</strong>
   <Anchor external="https://github.com/youngminss/Docs-modernJS__deepDive/tree/master/24-Closure">
     딥다이브 요약 GitHub
   </Anchor>
 
 <Paragraph>
-  안녕하세요. 9주차입니다. 이번 주는 두 가지 큰 주제를 다룹니다. <strong>클로저</strong>는
-  지난 주에 배운 렉시컬 스코프에서 자연스럽게 이어지는 개념으로, React의 useState 같은 훅이
-  어떻게 동작하는지를 이해하는 기반입니다. <strong>비동기 처리</strong>는 서버에서 데이터를
-  가져오거나 파일을 읽는 등 시간이 걸리는 작업을 처리하는 JS의 핵심 방법입니다. 콜백에서
-  Promise, async/await으로 이어지는 발전 흐름을 이해하는 것이 목표입니다.
+  안녕하세요. 9주차입니다. 이번 주는 두 가지 큰 주제를 다룹니다.{" "}
+  <strong>클로저</strong>는 지난 주에 배운 렉시컬 스코프에서 자연스럽게 이어지는
+  개념으로, React의 useState 같은 훅이 어떻게 동작하는지를 이해하는 기반입니다.{" "}
+  <strong>비동기 처리</strong>는 서버에서 데이터를 가져오거나 파일을 읽는 등
+  시간이 걸리는 작업을 처리하는 JS의 핵심 방법입니다. 콜백에서 Promise,
+  async/await으로 이어지는 발전 흐름을 이해하는 것이 목표입니다.
 </Paragraph>
 
 ---
@@ -166,15 +172,17 @@ description: JS 비동기 처리의 흐름을 배웁니다. 클로저가 왜 중
 <Subtitle level={2}>1. 클로저(Closure) — 렉시컬 환경을 기억하는 함수</Subtitle>
 
 <Paragraph>
-  클로저는 <strong>함수가 선언될 때의 렉시컬 환경을 기억</strong>하여, 그 환경의 변수에
-  계속 접근할 수 있는 특성입니다. 렉시컬 스코프의 자연스러운 결과물입니다.
+  클로저는 <strong>함수가 선언될 때의 렉시컬 환경을 기억</strong>하여, 그 환경의
+  변수에 계속 접근할 수 있는 특성입니다. 렉시컬 스코프의 자연스러운
+  결과물입니다.
 </Paragraph>
 
 ```js
 function makeCounter() {
   let count = 0; // 외부 함수의 변수
 
-  return function () { // 내부 함수 — 클로저
+  return function () {
+    // 내부 함수 — 클로저
     count++;
     return count;
   };
@@ -191,8 +199,8 @@ console.log(counter()); // 3
 <Subtitle level={3}>데이터 은닉</Subtitle>
 
 <Paragraph>
-  클로저를 활용하면 외부에서 직접 접근할 수 없는 <strong>private 변수</strong>를 만들 수
-  있습니다.
+  클로저를 활용하면 외부에서 직접 접근할 수 없는 <strong>private 변수</strong>를
+  만들 수 있습니다.
 </Paragraph>
 
 ```js
@@ -200,28 +208,32 @@ function createAccount(initialBalance) {
   let balance = initialBalance; // 외부에서 직접 접근 불가
 
   return {
-    deposit(amount) { balance += amount; },
+    deposit(amount) {
+      balance += amount;
+    },
     withdraw(amount) {
       if (amount > balance) return "잔액 부족";
       balance -= amount;
     },
-    getBalance() { return balance; },
+    getBalance() {
+      return balance;
+    },
   };
 }
 
 const account = createAccount(1000);
 account.deposit(500);
 console.log(account.getBalance()); // 1500
-console.log(account.balance);      // undefined — 직접 접근 불가
+console.log(account.balance); // undefined — 직접 접근 불가
 ```
 
 <Subtitle level={3}>React와 클로저</Subtitle>
 
 <Paragraph>
-  React의 <strong>`useState`</strong> 훅이 클로저를 기반으로 동작합니다. 컴포넌트가 리렌더링될 때마다
-  이벤트 핸들러 내부의 `count`, `setState` 등이 클로저로 기억됩니다. `useEffect`의
-  의존성 배열을 빠뜨리면 오래된 클로저(stale closure)를 참조하는 버그가 생기는 이유도
-  클로저 때문입니다.
+  React의 <strong>`useState`</strong> 훅이 클로저를 기반으로 동작합니다.
+  컴포넌트가 리렌더링될 때마다 이벤트 핸들러 내부의 `count`, `setState` 등이
+  클로저로 기억됩니다. `useEffect`의 의존성 배열을 빠뜨리면 오래된 클로저(stale
+  closure)를 참조하는 버그가 생기는 이유도 클로저 때문입니다.
 </Paragraph>
 
 ---
@@ -229,9 +241,10 @@ console.log(account.balance);      // undefined — 직접 접근 불가
 <Subtitle level={2}>2. Promise — 콜백 지옥 탈출</Subtitle>
 
 <Paragraph>
-  서버에서 데이터를 가져오는 `fetch`, 타이머 `setTimeout` 등은 결과가 나중에 옵니다.
-  과거에는 콜백으로 처리했고, 중첩이 깊어지면 <strong>콜백 지옥</strong>이 생겼습니다.
-  Promise는 비동기 작업의 결과를 <strong>값(객체)</strong>으로 표현하여 이를 해결합니다.
+  서버에서 데이터를 가져오는 `fetch`, 타이머 `setTimeout` 등은 결과가 나중에
+  옵니다. 과거에는 콜백으로 처리했고, 중첩이 깊어지면 <strong>콜백 지옥</strong>
+  이 생겼습니다. Promise는 비동기 작업의 결과를 <strong>값(객체)</strong>으로
+  표현하여 이를 해결합니다.
 </Paragraph>
 
 ```js
@@ -278,8 +291,9 @@ const fastest = await Promise.race([fetchA(), fetchB()]);
 <Subtitle level={2}>3. async/await — Promise를 동기처럼</Subtitle>
 
 <Paragraph>
-  `async/await`은 Promise를 기반으로 한 <strong>문법적 설탕(syntactic sugar)</strong>입니다.
-  비동기 코드를 마치 동기 코드처럼 읽기 쉽게 작성할 수 있게 해줍니다.
+  `async/await`은 Promise를 기반으로 한{" "}
+  <strong>문법적 설탕(syntactic sugar)</strong>입니다. 비동기 코드를 마치 동기
+  코드처럼 읽기 쉽게 작성할 수 있게 해줍니다.
 </Paragraph>
 
 ```js
@@ -288,7 +302,9 @@ function getUser(id) {
   return fetch(`/users/${id}`)
     .then((res) => res.json())
     .then((user) => user)
-    .catch((err) => { throw err; });
+    .catch((err) => {
+      throw err;
+    });
 }
 
 // async/await — 같은 동작, 더 직관적
@@ -319,8 +335,8 @@ async function good() {
 ```
 
 <Paragraph>
-  실무에서는 React 컴포넌트에서 데이터를 가져올 때 `useEffect` 안에서 async 함수를 정의하고
-  호출하는 패턴을 주로 사용합니다.
+  실무에서는 React 컴포넌트에서 데이터를 가져올 때 `useEffect` 안에서 async
+  함수를 정의하고 호출하는 패턴을 주로 사용합니다.
 </Paragraph>
 
 ```js
@@ -344,7 +360,8 @@ useEffect(() => {
 <Subtitle level={2}>📝 학습 이해 퀴즈</Subtitle>
 
 <Paragraph>
-  아래 코드를 <strong>브라우저 콘솔에서 직접 실행</strong>해보고 결과를 입력해보세요.
+  아래 코드를 <strong>브라우저 콘솔에서 직접 실행</strong>해보고 결과를
+  입력해보세요.
 </Paragraph>
 
 <ArticleQuiz>
@@ -363,26 +380,28 @@ const add10 = makeAdder(10);
 console.log(add5(3));
 console.log(add10(3));
 console.log(add5(add10(1)));`}
-    answer="8, 13, 16"
-    explanation="add5는 x=5를 기억하는 클로저, add10은 x=10을 기억하는 클로저입니다. add5(3)=8, add10(3)=13, add10(1)=11이므로 add5(11)=16입니다."
-  />
+answer="8, 13, 16"
+explanation="add5는 x=5를 기억하는 클로저, add10은 x=10을 기억하는 클로저입니다. add5(3)=8, add10(3)=13, add10(1)=11이므로 add5(11)=16입니다."
+/>
+
   <ArticleQuizItem
     mode="description"
     question="아래 코드의 출력 순서와 결과를 입력하세요. (예: A, B, C 순서로 출력)"
     code={`console.log("A");
 
 setTimeout(() => {
-  console.log("B");
+console.log("B");
 }, 0);
 
 Promise.resolve().then(() => {
-  console.log("C");
+console.log("C");
 });
 
 console.log("D");`}
-    answer="A, D, C, B"
-    explanation="동기 코드(A, D)가 먼저 실행됩니다. 그 다음 마이크로태스크 큐(Promise .then → C)가 매크로태스크 큐(setTimeout → B)보다 먼저 처리됩니다."
-  />
+answer="A, D, C, B"
+explanation="동기 코드(A, D)가 먼저 실행됩니다. 그 다음 마이크로태스크 큐(Promise .then → C)가 매크로태스크 큐(setTimeout → B)보다 먼저 처리됩니다."
+/>
+
   <ArticleQuizItem
     mode="description"
     question="아래 코드에서 result의 값은 무엇인가요?"
@@ -392,9 +411,10 @@ console.log("D");`}
 
 const result = fetchData();
 console.log(result instanceof Promise);`}
-    answer="true"
-    explanation="async 함수는 항상 Promise를 반환합니다. return 42를 해도 Promise.resolve(42)로 래핑됩니다. 따라서 result는 Promise 인스턴스이고 instanceof Promise는 true입니다."
-  />
+answer="true"
+explanation="async 함수는 항상 Promise를 반환합니다. return 42를 해도 Promise.resolve(42)로 래핑됩니다. 따라서 result는 Promise 인스턴스이고 instanceof Promise는 true입니다."
+/>
+
 </ArticleQuiz>
 
 ---
@@ -402,7 +422,8 @@ console.log(result instanceof Promise);`}
 <Subtitle level={2}>📝 9주차 스터디 인증 미션</Subtitle>
 
 <Paragraph>
-  다가오는 스터디 모임 전, 아래 질문에 대해 본인만의 말로 설명한 뒤 댓글로 남겨주세요.
+  다가오는 스터디 모임 전, 아래 질문에 대해 본인만의 말로 설명한 뒤 댓글로
+  남겨주세요.
 </Paragraph>
 
 > **Q1. 클로저(Closure)란 무엇인가요? 실제 활용 사례를 하나 들어 설명해주세요.**

@@ -15,20 +15,26 @@ description: JS에서 가장 헷갈리는 개념 중 하나인 this 바인딩을
 
 - <strong>학습 챕터:</strong> poiemaweb — this / 실행 컨텍스트 / 이터러블
 - <strong>자료 바로가기:</strong>
-  <Anchor external="https://poiemaweb.com/js-this">1. this</Anchor>{" "}
-  <Anchor external="https://poiemaweb.com/js-execution-context">2. 실행 컨텍스트</Anchor>{" "}
-  <Anchor external="https://poiemaweb.com/es6-iteration-for-of">3. 이터러블과 for...of</Anchor>
+  <Anchor external="https://poiemaweb.com/js-this">1. this</Anchor>
+  <Anchor external="https://poiemaweb.com/js-execution-context">
+    2. 실행 컨텍스트
+  </Anchor>
+  <Anchor external="https://poiemaweb.com/es6-iteration-for-of">
+    3. 이터러블과 for...of
+  </Anchor>
 - <strong>딥다이브 요약본 (보충용):</strong>
   <Anchor external="https://github.com/youngminss/Docs-modernJS__deepDive/tree/master/22-This">
     딥다이브 요약 GitHub
   </Anchor>
 
 <Paragraph>
-  안녕하세요. 11주차입니다. 이번 주는 JS를 깊게 이해하는 데 핵심이 되는 개념들을 다룹니다.
-  <strong>this</strong>는 다른 언어와 다르게 동작해서 처음에는 혼란스럽지만, 규칙만 알면
-  명확합니다. <strong>실행 컨텍스트</strong>는 지금까지 배운 스코프, 호이스팅, 클로저의
-  동작 원리를 하나로 연결하는 개념입니다. <strong>이터러블</strong>은 `for...of`, 스프레드,
-  구조 분해가 내부적으로 어떻게 동작하는지를 이해하는 열쇠입니다.
+  안녕하세요. 11주차입니다. 이번 주는 JS를 깊게 이해하는 데 핵심이 되는 개념들을
+  다룹니다.
+  <strong>this</strong>는 다른 언어와 다르게 동작해서 처음에는 혼란스럽지만,
+  규칙만 알면 명확합니다. <strong>실행 컨텍스트</strong>는 지금까지 배운 스코프,
+  호이스팅, 클로저의 동작 원리를 하나로 연결하는 개념입니다.{" "}
+  <strong>이터러블</strong>은 `for...of`, 스프레드, 구조 분해가 내부적으로
+  어떻게 동작하는지를 이해하는 열쇠입니다.
 </Paragraph>
 
 ---
@@ -171,7 +177,8 @@ description: JS에서 가장 헷갈리는 개념 중 하나인 this 바인딩을
 <Subtitle level={2}>1. this — 상황에 따라 달라지는 참조</Subtitle>
 
 <Paragraph>
-  JS의 `this`는 <strong>함수가 호출될 때 동적으로 결정</strong>됩니다. 선언 위치가 아니라
+  JS의 `this`는 <strong>함수가 호출될 때 동적으로 결정</strong>됩니다. 선언
+  위치가 아니라
   <strong>호출 방식</strong>에 따라 다릅니다. (화살표 함수만 예외)
 </Paragraph>
 
@@ -230,9 +237,9 @@ timer.start();
 ```
 
 <Paragraph>
-  React에서 이벤트 핸들러를 화살표 함수로 쓰는 이유도 이 때문입니다. 클래스 컴포넌트에서
-  `this.handleClick = this.handleClick.bind(this)`처럼 bind를 쓰는 것도 같은 문제를 해결하는
-  방법입니다.
+  React에서 이벤트 핸들러를 화살표 함수로 쓰는 이유도 이 때문입니다. 클래스
+  컴포넌트에서 `this.handleClick = this.handleClick.bind(this)`처럼 bind를 쓰는
+  것도 같은 문제를 해결하는 방법입니다.
 </Paragraph>
 
 ---
@@ -240,8 +247,9 @@ timer.start();
 <Subtitle level={2}>2. 실행 컨텍스트 — 코드가 실행되는 환경</Subtitle>
 
 <Paragraph>
-  실행 컨텍스트는 코드가 실행될 때 JS 엔진이 생성하는 <strong>환경 정보 묶음</strong>입니다.
-  스코프, 호이스팅, 클로저, this가 모두 실행 컨텍스트 안에서 관리됩니다.
+  실행 컨텍스트는 코드가 실행될 때 JS 엔진이 생성하는{" "}
+  <strong>환경 정보 묶음</strong>입니다. 스코프, 호이스팅, 클로저, this가 모두
+  실행 컨텍스트 안에서 관리됩니다.
 </Paragraph>
 
 ```js
@@ -269,8 +277,8 @@ outer();
 ```
 
 <Paragraph>
-  각 실행 컨텍스트는 <strong>외부 렉시컬 환경에 대한 참조</strong>를 가지며, 이것이 스코프
-  체인과 클로저의 실제 구현 방식입니다.
+  각 실행 컨텍스트는 <strong>외부 렉시컬 환경에 대한 참조</strong>를 가지며,
+  이것이 스코프 체인과 클로저의 실제 구현 방식입니다.
 </Paragraph>
 
 ---
@@ -280,8 +288,8 @@ outer();
 <Subtitle level={3}>이터러블이란</Subtitle>
 
 <Paragraph>
-  `Symbol.iterator` 메서드를 가진 객체는 이터러블입니다. `for...of`, 스프레드(`...`), 구조
-  분해 할당이 내부적으로 이터러블 프로토콜을 사용합니다.
+  `Symbol.iterator` 메서드를 가진 객체는 이터러블입니다. `for...of`,
+  스프레드(`...`), 구조 분해 할당이 내부적으로 이터러블 프로토콜을 사용합니다.
 </Paragraph>
 
 ```js
@@ -304,14 +312,14 @@ const unique = [...new Set(arr)]; // [1, 2, 3, 4]
 // 기본 사용
 const set = new Set([1, 2, 3]);
 set.add(4);
-set.has(2);    // true
+set.has(2); // true
 set.delete(1);
-set.size;      // 3
+set.size; // 3
 
 // 집합 연산
 const a = new Set([1, 2, 3]);
 const b = new Set([2, 3, 4]);
-const union = new Set([...a, ...b]);        // {1, 2, 3, 4}
+const union = new Set([...a, ...b]); // {1, 2, 3, 4}
 const intersection = new Set([...a].filter((x) => b.has(x))); // {2, 3}
 ```
 
@@ -326,7 +334,7 @@ map.set({ id: 1 }, "객체 키");
 
 map.get("name"); // "철수"
 map.has("name"); // true
-map.size;        // 3
+map.size; // 3
 
 // 이터러블이라 for...of 가능
 for (const [key, value] of map) {
@@ -343,7 +351,8 @@ const mapFromObj = new Map(Object.entries(obj));
 <Subtitle level={2}>📝 학습 이해 퀴즈</Subtitle>
 
 <Paragraph>
-  아래 코드를 <strong>브라우저 콘솔에서 직접 실행</strong>해보고 결과를 입력해보세요.
+  아래 코드를 <strong>브라우저 콘솔에서 직접 실행</strong>해보고 결과를
+  입력해보세요.
 </Paragraph>
 
 <ArticleQuiz>
@@ -362,9 +371,10 @@ const mapFromObj = new Map(Object.entries(obj));
 
 console.log(obj.double());
 console.log(obj.doubleArrow());`}
-    answer="20, NaN"
-    explanation="double()은 메서드 호출이므로 this가 obj를 가리켜 10*2=20입니다. doubleArrow는 화살표 함수라 this가 선언 시점의 상위 스코프(전역)를 가리키며, 전역에는 value가 없어 undefined*2 = NaN이 됩니다."
-  />
+answer="20, NaN"
+explanation="double()은 메서드 호출이므로 this가 obj를 가리켜 10*2=20입니다. doubleArrow는 화살표 함수라 this가 선언 시점의 상위 스코프(전역)를 가리키며, 전역에는 value가 없어 undefined*2 = NaN이 됩니다."
+/>
+
   <ArticleQuizItem
     mode="description"
     question="아래 코드의 출력 결과는 무엇인가요?"
@@ -384,11 +394,12 @@ console.log(result);`}
 ]);
 
 for (const [key, value] of map) {
-  if (value > 1) console.log(key);
+if (value > 1) console.log(key);
 }`}
-    answer="b, c"
-    explanation="Map을 for...of로 순회하면 [key, value] 형태로 구조 분해됩니다. value > 1인 항목은 ['b', 2]와 ['c', 3]이므로 b와 c가 순서대로 출력됩니다."
-  />
+answer="b, c"
+explanation="Map을 for...of로 순회하면 [key, value] 형태로 구조 분해됩니다. value > 1인 항목은 ['b', 2]와 ['c', 3]이므로 b와 c가 순서대로 출력됩니다."
+/>
+
 </ArticleQuiz>
 
 ---
@@ -396,7 +407,8 @@ for (const [key, value] of map) {
 <Subtitle level={2}>📝 11주차 스터디 인증 미션</Subtitle>
 
 <Paragraph>
-  다가오는 스터디 모임 전, 아래 질문에 대해 본인만의 말로 설명한 뒤 댓글로 남겨주세요.
+  다가오는 스터디 모임 전, 아래 질문에 대해 본인만의 말로 설명한 뒤 댓글로
+  남겨주세요.
 </Paragraph>
 
 > **Q1. JavaScript에서 this는 어떻게 결정되나요? 화살표 함수의 this가 일반 함수와 다른 이유를 포함해서 설명해주세요.**

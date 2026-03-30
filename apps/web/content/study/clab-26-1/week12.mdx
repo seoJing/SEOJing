@@ -14,7 +14,7 @@ description: 1학기 JS 스터디의 마지막 주차입니다. try/catch 기반
 
 - <strong>학습 챕터:</strong> poiemaweb — 에러 처리 / 정규 표현식
 - <strong>자료 바로가기:</strong>
-  <Anchor external="https://poiemaweb.com/js-error">1. 에러 처리</Anchor>{" "}
+  <Anchor external="https://poiemaweb.com/js-error">1. 에러 처리</Anchor>
   <Anchor external="https://poiemaweb.com/js-regexp">2. 정규 표현식</Anchor>
 - <strong>딥다이브 요약본 (보충용):</strong>
   <Anchor external="https://github.com/youngminss/Docs-modernJS__deepDive/tree/master/47-Error">
@@ -22,11 +22,12 @@ description: 1학기 JS 스터디의 마지막 주차입니다. try/catch 기반
   </Anchor>
 
 <Paragraph>
-  안녕하세요. 드디어 <strong>1학기 스터디 마지막 주차</strong>입니다. 이번 주는 실무에서
-  바로 쓸 수 있는 두 가지를 다룹니다. <strong>에러 처리</strong>는 async/await와 짝을 이루는
-  개념으로, 프로덕션 코드에서 예외 상황을 안전하게 처리하는 방법입니다.
-  <strong>정규 표현식</strong>은 처음 보면 암호처럼 느껴지지만, 자주 쓰는 패턴 몇 가지만
-  익혀두면 실무에서 강력한 도구가 됩니다.
+  안녕하세요. 드디어 <strong>1학기 스터디 마지막 주차</strong>입니다. 이번 주는
+  실무에서 바로 쓸 수 있는 두 가지를 다룹니다. <strong>에러 처리</strong>는
+  async/await와 짝을 이루는 개념으로, 프로덕션 코드에서 예외 상황을 안전하게
+  처리하는 방법입니다.
+  <strong>정규 표현식</strong>은 처음 보면 암호처럼 느껴지지만, 자주 쓰는 패턴
+  몇 가지만 익혀두면 실무에서 강력한 도구가 됩니다.
 </Paragraph>
 
 ---
@@ -176,7 +177,7 @@ try {
   console.log(result);
 } catch (err) {
   console.error(err.message); // "0으로 나눌 수 없습니다"
-  console.error(err.name);    // "Error"
+  console.error(err.name); // "Error"
 } finally {
   console.log("항상 실행"); // 에러 여부 관계없이 실행
 }
@@ -187,8 +188,8 @@ try {
 ```js
 // JS에서 자주 마주치는 에러 타입들
 try {
-  null.property;       // TypeError
-  undeclaredVar;       // ReferenceError
+  null.property; // TypeError
+  undeclaredVar; // ReferenceError
   JSON.parse("{bad}"); // SyntaxError
 } catch (err) {
   if (err instanceof TypeError) {
@@ -265,29 +266,29 @@ async function loadUser() {
 <Subtitle level={2}>2. 정규 표현식 — 패턴으로 문자열 다루기</Subtitle>
 
 <Paragraph>
-  정규 표현식은 처음 보면 어렵지만, 자주 쓰는 패턴 몇 가지를 익혀두면 입력 유효성 검사,
-  문자열 파싱, 포맷 변환 등에서 강력하게 활용할 수 있습니다.
+  정규 표현식은 처음 보면 어렵지만, 자주 쓰는 패턴 몇 가지를 익혀두면 입력
+  유효성 검사, 문자열 파싱, 포맷 변환 등에서 강력하게 활용할 수 있습니다.
 </Paragraph>
 
 <Subtitle level={3}>자주 쓰는 패턴</Subtitle>
 
 ```js
 // 문자 클래스
-const digits = /\d/;       // 숫자 [0-9]
-const words = /\w/;        // 단어 문자 [a-zA-Z0-9_]
-const spaces = /\s/;       // 공백 문자
-const any = /./;           // 줄바꿈 제외 모든 문자
+const digits = /\d/; // 숫자 [0-9]
+const words = /\w/; // 단어 문자 [a-zA-Z0-9_]
+const spaces = /\s/; // 공백 문자
+const any = /./; // 줄바꿈 제외 모든 문자
 
 // 수량자
-const zeroOrMore = /a*/;  // 0번 이상
-const oneOrMore = /a+/;   // 1번 이상
-const optional = /a?/;    // 0번 또는 1번
-const exactly3 = /a{3}/;  // 정확히 3번
+const zeroOrMore = /a*/; // 0번 이상
+const oneOrMore = /a+/; // 1번 이상
+const optional = /a?/; // 0번 또는 1번
+const exactly3 = /a{3}/; // 정확히 3번
 const twoToFour = /a{2,4}/; // 2~4번
 
 // 앵커
-const start = /^hello/;   // hello로 시작
-const end = /world$/;     // world로 끝
+const start = /^hello/; // hello로 시작
+const end = /world$/; // world로 끝
 const exact = /^hello world$/; // 정확히 이 문자열
 ```
 
@@ -297,7 +298,7 @@ const exact = /^hello world$/; // 정확히 이 문자열
 // 이메일 유효성 검사
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 emailRegex.test("user@example.com"); // true
-emailRegex.test("invalid-email");    // false
+emailRegex.test("invalid-email"); // false
 
 // 한국 휴대폰 번호
 const phoneRegex = /^01[016789]-?\d{3,4}-?\d{4}$/;
@@ -340,7 +341,8 @@ str.search(/World/); // 6
 <Subtitle level={2}>📝 학습 이해 퀴즈</Subtitle>
 
 <Paragraph>
-  아래 코드를 <strong>브라우저 콘솔에서 직접 실행</strong>해보고 결과를 입력해보세요.
+  아래 코드를 <strong>브라우저 콘솔에서 직접 실행</strong>해보고 결과를
+  입력해보세요.
 </Paragraph>
 
 <ArticleQuiz>
@@ -352,16 +354,17 @@ str.search(/World/); // 6
 }
 
 try {
-  riskyOperation();
-  console.log("A");
+riskyOperation();
+console.log("A");
 } catch (err) {
-  console.log("B:", err.name);
+console.log("B:", err.name);
 } finally {
-  console.log("C");
+console.log("C");
 }`}
-    answer="B: TypeError, C"
-    explanation="throw로 에러가 발생하면 try 블록의 나머지 코드('A')는 실행되지 않고 즉시 catch로 이동합니다. err.name은 'TypeError'입니다. finally는 항상 실행되어 'C'가 출력됩니다."
-  />
+answer="B: TypeError, C"
+explanation="throw로 에러가 발생하면 try 블록의 나머지 코드('A')는 실행되지 않고 즉시 catch로 이동합니다. err.name은 'TypeError'입니다. finally는 항상 실행되어 'C'가 출력됩니다."
+/>
+
   <ArticleQuizItem
     mode="description"
     question="아래 코드의 출력 결과는 무엇인가요?"
@@ -379,9 +382,10 @@ console.log(result[1]);`}
 console.log(emailRegex.test("user@example.com"));
 console.log(emailRegex.test("user@"));
 console.log(emailRegex.test("user.name@domain.co.kr"));`}
-    answer="true, false, true"
-    explanation="첫 번째는 올바른 이메일 형식이라 true, 두 번째는 @ 이후에 도메인이 없어 false, 세 번째는 서브도메인 포함 올바른 형식이라 true입니다."
-  />
+answer="true, false, true"
+explanation="첫 번째는 올바른 이메일 형식이라 true, 두 번째는 @ 이후에 도메인이 없어 false, 세 번째는 서브도메인 포함 올바른 형식이라 true입니다."
+/>
+
 </ArticleQuiz>
 
 ---
@@ -389,7 +393,8 @@ console.log(emailRegex.test("user.name@domain.co.kr"));`}
 <Subtitle level={2}>📝 12주차 스터디 인증 미션</Subtitle>
 
 <Paragraph>
-  마지막 인증 미션입니다. 아래 질문에 대해 본인만의 말로 설명한 뒤 댓글로 남겨주세요.
+  마지막 인증 미션입니다. 아래 질문에 대해 본인만의 말로 설명한 뒤 댓글로
+  남겨주세요.
 </Paragraph>
 
 > **Q1. try/catch/finally의 각 블록이 실행되는 조건을 설명하고, async/await 환경에서 에러 처리를 어떻게 하는지 설명해주세요.**
