@@ -13,10 +13,13 @@ description: JS에서 가장 낯선 개념 중 하나인 프로토타입 기반 
 
 <Subtitle level={2}>8주차 학습 자료</Subtitle>
 
-- <strong>학습 챕터:</strong> poiemaweb — 객체와 변경불가성 / 프로토타입 / 타입 체크
+- <strong>학습 챕터:</strong> poiemaweb — 객체와 변경불가성 / 프로토타입 / 타입
+  체크
 - <strong>자료 바로가기:</strong>
-  <Anchor external="https://poiemaweb.com/js-immutability">1. 객체와 변경불가성(Immutability)</Anchor>{" "}
-  <Anchor external="https://poiemaweb.com/js-prototype">2. 프로토타입</Anchor>{" "}
+  <Anchor external="https://poiemaweb.com/js-immutability">
+    1. 객체와 변경불가성(Immutability)
+  </Anchor>
+  <Anchor external="https://poiemaweb.com/js-prototype">2. 프로토타입</Anchor>
   <Anchor external="https://poiemaweb.com/js-type-check">3. 타입 체크</Anchor>
 - <strong>딥다이브 요약본 (보충용):</strong>
   <Anchor external="https://github.com/youngminss/Docs-modernJS__deepDive/tree/master/16-Prototype">
@@ -24,10 +27,11 @@ description: JS에서 가장 낯선 개념 중 하나인 프로토타입 기반 
   </Anchor>
 
 <Paragraph>
-  안녕하세요. 8주차입니다. 이번 주는 다른 언어 경험자에게 JS가 가장 낯설게 느껴지는
-  구간입니다. <strong>프로토타입</strong>은 Java나 Python의 클래스 상속과 근본적으로 다른
-  JS만의 상속 방식이고, <strong>불변성</strong>은 `const`를 써도 왜 완전히 불변이 아닌지를
-  이해하는 개념입니다. 타입 체크는 동적 타입 언어에서 런타임 안전성을 확보하는 방법입니다.
+  안녕하세요. 8주차입니다. 이번 주는 다른 언어 경험자에게 JS가 가장 낯설게
+  느껴지는 구간입니다. <strong>프로토타입</strong>은 Java나 Python의 클래스
+  상속과 근본적으로 다른 JS만의 상속 방식이고, <strong>불변성</strong>은
+  `const`를 써도 왜 완전히 불변이 아닌지를 이해하는 개념입니다. 타입 체크는 동적
+  타입 언어에서 런타임 안전성을 확보하는 방법입니다.
 </Paragraph>
 
 ---
@@ -165,26 +169,26 @@ description: JS에서 가장 낯선 개념 중 하나인 프로토타입 기반 
 <Subtitle level={2}>1. 불변성(Immutability) — const는 불변이 아니다</Subtitle>
 
 <Paragraph>
-  많은 분들이 <strong>`const`를 쓰면 값이 변하지 않는다</strong>고 오해합니다. 하지만 const는
-  변수가 가리키는 <strong>참조(주소)를 고정</strong>할 뿐, 그 주소에 있는 객체 내부 변경은
-  막지 않습니다.
+  많은 분들이 <strong>`const`를 쓰면 값이 변하지 않는다</strong>고 오해합니다.
+  하지만 const는 변수가 가리키는 <strong>참조(주소)를 고정</strong>할 뿐, 그
+  주소에 있는 객체 내부 변경은 막지 않습니다.
 </Paragraph>
 
 ```js
 const obj = { x: 1 };
-obj.x = 99;      // 가능 — 내부 프로퍼티 변경
-obj.y = 100;     // 가능 — 프로퍼티 추가
-delete obj.x;    // 가능 — 프로퍼티 삭제
+obj.x = 99; // 가능 — 내부 프로퍼티 변경
+obj.y = 100; // 가능 — 프로퍼티 추가
+delete obj.x; // 가능 — 프로퍼티 삭제
 
-obj = {};        // TypeError — 재할당만 불가
+obj = {}; // TypeError — 재할당만 불가
 ```
 
 <Subtitle level={3}>얕은 복사 vs 깊은 복사</Subtitle>
 
 <Paragraph>
-  객체를 복사할 때도 주의가 필요합니다. spread(`...`)나 `Object.assign()`은 <strong>얕은 복사
-  (shallow copy)</strong>로, 1단계 깊이만 새로운 값으로 복사됩니다. 중첩 객체는 여전히
-  참조를 공유합니다.
+  객체를 복사할 때도 주의가 필요합니다. spread(`...`)나 `Object.assign()`은{" "}
+  <strong>얕은 복사 (shallow copy)</strong>로, 1단계 깊이만 새로운 값으로
+  복사됩니다. 중첩 객체는 여전히 참조를 공유합니다.
 </Paragraph>
 
 ```js
@@ -192,12 +196,12 @@ const original = { a: 1, nested: { b: 2 } };
 
 // 얕은 복사
 const shallow = { ...original };
-shallow.a = 99;           // original.a 영향 없음
-shallow.nested.b = 99;    // original.nested.b도 99로 바뀜!
+shallow.a = 99; // original.a 영향 없음
+shallow.nested.b = 99; // original.nested.b도 99로 바뀜!
 
 // 깊은 복사 (간단한 방법 — 함수/undefined 등은 사라짐)
 const deep = JSON.parse(JSON.stringify(original));
-deep.nested.b = 999;      // original.nested.b 영향 없음
+deep.nested.b = 999; // original.nested.b 영향 없음
 ```
 
 <Subtitle level={3}>Object.freeze() — 진짜 불변 만들기</Subtitle>
@@ -205,8 +209,8 @@ deep.nested.b = 999;      // original.nested.b 영향 없음
 ```js
 const obj = Object.freeze({ x: 1, nested: { y: 2 } });
 
-obj.x = 99;          // 무시됨 (strict mode에서는 TypeError)
-obj.nested.y = 99;   // 가능! — freeze는 최상위만 동결
+obj.x = 99; // 무시됨 (strict mode에서는 TypeError)
+obj.nested.y = 99; // 가능! — freeze는 최상위만 동결
 
 // 완전한 불변이 필요하면 재귀적으로 freeze해야 함
 function deepFreeze(obj) {
@@ -220,8 +224,9 @@ function deepFreeze(obj) {
 ```
 
 <Paragraph>
-  실무에서는 상태를 직접 변경하지 않고 새 객체를 만들어 반환하는 <strong>불변 패턴</strong>을
-  많이 사용합니다. React의 상태 관리(`setState`, `useState`)가 이 방식을 따릅니다.
+  실무에서는 상태를 직접 변경하지 않고 새 객체를 만들어 반환하는{" "}
+  <strong>불변 패턴</strong>을 많이 사용합니다. React의 상태 관리(`setState`,
+  `useState`)가 이 방식을 따릅니다.
 </Paragraph>
 
 ---
@@ -229,17 +234,18 @@ function deepFreeze(obj) {
 <Subtitle level={2}>2. 프로토타입 — JS의 상속 방식</Subtitle>
 
 <Paragraph>
-  Java나 Python은 <strong>클래스 기반 상속</strong>입니다. 클래스를 정의하고 extends로
-  상속합니다. JS는 다릅니다. <strong>프로토타입 기반 상속</strong>으로, 객체가 다른 객체를
-  직접 상속합니다. ES6의 `class` 문법도 내부적으로는 프로토타입을 사용합니다.
+  Java나 Python은 <strong>클래스 기반 상속</strong>입니다. 클래스를 정의하고
+  extends로 상속합니다. JS는 다릅니다. <strong>프로토타입 기반 상속</strong>
+  으로, 객체가 다른 객체를 직접 상속합니다. ES6의 `class` 문법도 내부적으로는
+  프로토타입을 사용합니다.
 </Paragraph>
 
 <Subtitle level={3}>프로토타입 체인</Subtitle>
 
 <Paragraph>
-  모든 JS 객체는 `[[Prototype]]`이라는 내부 슬롯을 가지며, 이 슬롯이 상위 프로토타입 객체를
-  가리킵니다. 프로퍼티를 참조할 때 자신에게 없으면 <strong>프로토타입 체인을 따라 상위로
-  탐색</strong>합니다.
+  모든 JS 객체는 `[[Prototype]]`이라는 내부 슬롯을 가지며, 이 슬롯이 상위
+  프로토타입 객체를 가리킵니다. 프로퍼티를 참조할 때 자신에게 없으면{" "}
+  <strong>프로토타입 체인을 따라 상위로 탐색</strong>합니다.
 </Paragraph>
 
 ```js
@@ -277,8 +283,10 @@ console.log(p1.greet === p2.greet); // true
 
 <Subtitle level={3}>[[Prototype]] vs prototype — 헷갈리는 두 개념</Subtitle>
 
-- <strong>`[[Prototype]]`</strong>: 모든 객체가 가지는 내부 슬롯. 상위 프로토타입을 가리킴. `__proto__`로 접근 가능 (권장 안 함)
-- <strong>`prototype`</strong>: 함수 객체만 가지는 프로퍼티. `new`로 인스턴스를 만들 때 인스턴스의 `[[Prototype]]`이 됨
+- <strong>`[[Prototype]]`</strong>: 모든 객체가 가지는 내부 슬롯. 상위
+  프로토타입을 가리킴. `__proto__`로 접근 가능 (권장 안 함)
+- <strong>`prototype`</strong>: 함수 객체만 가지는 프로퍼티. `new`로 인스턴스를
+  만들 때 인스턴스의 `[[Prototype]]`이 됨
 
 ```js
 function Foo() {}
@@ -293,7 +301,7 @@ console.log(Foo.prototype.constructor === Foo); // true
 
 ```js
 "hello".toUpperCase(); // "HELLO"
-(42).toFixed(2);       // "42.00"
+(42).toFixed(2); // "42.00"
 
 // 원시값은 객체가 아닌데 어떻게 메서드가 있을까?
 // JS 엔진이 메서드 호출 시 임시로 래퍼 객체(String, Number)로 변환
@@ -305,40 +313,42 @@ console.log(Foo.prototype.constructor === Foo); // true
 <Subtitle level={2}>3. 타입 체크 — typeof의 한계와 대안</Subtitle>
 
 <Paragraph>
-  정적 타입 언어(Java, TypeScript)에서는 컴파일 타임에 타입 오류를 잡아줍니다. 순수 JS는
-  런타임에야 타입이 결정되므로, 직접 확인이 필요한 경우가 있습니다.
+  정적 타입 언어(Java, TypeScript)에서는 컴파일 타임에 타입 오류를 잡아줍니다.
+  순수 JS는 런타임에야 타입이 결정되므로, 직접 확인이 필요한 경우가 있습니다.
 </Paragraph>
 
 <Subtitle level={3}>typeof의 한계</Subtitle>
 
 ```js
-typeof 1          // 'number'
-typeof 'hello'    // 'string'
-typeof true       // 'boolean'
-typeof undefined  // 'undefined'
-typeof function(){} // 'function'
+typeof 1; // 'number'
+typeof "hello"; // 'string'
+typeof true; // 'boolean'
+typeof undefined; // 'undefined'
+typeof function () {}; // 'function'
 
 // 한계: 아래는 모두 'object'를 반환
-typeof null       // 'object' ← 버그
-typeof []         // 'object'
-typeof {}         // 'object'
-typeof new Date() // 'object'
+typeof null; // 'object' ← 버그
+typeof []; // 'object'
+typeof {}; // 'object'
+typeof new Date(); // 'object'
 ```
 
-<Subtitle level={3}>정확한 타입 확인: Object.prototype.toString.call()</Subtitle>
+<Subtitle level={3}>
+  정확한 타입 확인: Object.prototype.toString.call()
+</Subtitle>
 
 ```js
 function getType(value) {
   return Object.prototype.toString.call(value).slice(8, -1);
 }
 
-getType(1)           // 'Number'
-getType('hello')     // 'String'
-getType(null)        // 'Null'
-getType([])          // 'Array'
-getType({})          // 'Object'
-getType(new Date())  // 'Date'
-getType(undefined)   // 'Undefined'
+getType(1); // 'Number'
+getType("hello"); // 'String'
+getType(null); // 'Null'
+getType([]); // 'Array'
+getType({}); // 'Object'
+getType(new Date()); // 'Date'
+getType(undefined); // 'Undefined'
 ```
 
 <Subtitle level={3}>실무에서 자주 쓰는 타입 체크 패턴</Subtitle>
@@ -361,8 +371,8 @@ new Date() instanceof Date  // true
 ```
 
 <Paragraph>
-  TypeScript를 사용하면 이런 런타임 타입 체크의 대부분을 컴파일 타임으로 옮길 수 있습니다.
-  React 프로젝트에서 TypeScript가 사실상 표준인 이유 중 하나입니다.
+  TypeScript를 사용하면 이런 런타임 타입 체크의 대부분을 컴파일 타임으로 옮길 수
+  있습니다. React 프로젝트에서 TypeScript가 사실상 표준인 이유 중 하나입니다.
 </Paragraph>
 
 ---
@@ -370,7 +380,8 @@ new Date() instanceof Date  // true
 <Subtitle level={2}>📝 학습 이해 퀴즈</Subtitle>
 
 <Paragraph>
-  아래 코드를 <strong>브라우저 콘솔에서 직접 실행</strong>해보고 결과를 입력해보세요.
+  아래 코드를 <strong>브라우저 콘솔에서 직접 실행</strong>해보고 결과를
+  입력해보세요.
 </Paragraph>
 
 <ArticleQuiz>
@@ -397,9 +408,10 @@ Animal.prototype.speak = function () {
 const a = new Animal("고양이");
 console.log(a.speak());
 console.log(a.hasOwnProperty("speak"));`}
-    answer="고양이 소리를 냅니다., false"
-    explanation="speak는 a 자신의 프로퍼티가 아니라 Animal.prototype에 있습니다. 프로토타입 체인으로 접근할 수 있어 호출은 가능하지만, hasOwnProperty는 자신의 프로퍼티만 true를 반환하므로 false입니다."
-  />
+answer="고양이 소리를 냅니다., false"
+explanation="speak는 a 자신의 프로퍼티가 아니라 Animal.prototype에 있습니다. 프로토타입 체인으로 접근할 수 있어 호출은 가능하지만, hasOwnProperty는 자신의 프로퍼티만 true를 반환하므로 false입니다."
+/>
+
   <ArticleQuizItem
     mode="description"
     question="아래 코드의 세 줄 출력 결과를 순서대로 입력하세요."
@@ -416,7 +428,8 @@ console.log(Array.isArray([]));`}
 <Subtitle level={2}>📝 8주차 스터디 인증 미션</Subtitle>
 
 <Paragraph>
-  다가오는 스터디 모임 전, 아래 질문에 대해 본인만의 말로 설명한 뒤 댓글로 남겨주세요.
+  다가오는 스터디 모임 전, 아래 질문에 대해 본인만의 말로 설명한 뒤 댓글로
+  남겨주세요.
 </Paragraph>
 
 > **Q1. JavaScript에서 프로토타입 기반 상속이란 무엇인가요? Java의 클래스 기반 상속과 어떻게 다른지 설명해주세요.**
