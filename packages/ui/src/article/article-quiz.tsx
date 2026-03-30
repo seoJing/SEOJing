@@ -2,7 +2,56 @@
 
 import React, { useEffect, useState } from "react";
 import { cn } from "@app/utils";
+import { CodeBlock } from "./code-block";
 import type { ArticleQuizItemProps, ArticleQuizProps } from "./article.types";
+
+function playQuizSound(isCorrect: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    const ctx = new AudioContext();
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.18, ctx.currentTime);
+    master.connect(ctx.destination);
+
+    if (isCorrect) {
+      const notes = [1046.5, 1318.5];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const env = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        const t = ctx.currentTime + i * 0.13;
+        env.gain.setValueAtTime(0, t);
+        env.gain.linearRampToValueAtTime(1, t + 0.01);
+        env.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+        osc.connect(env);
+        env.connect(master);
+        osc.start(t);
+        osc.stop(t + 0.25);
+      });
+    } else {
+      const notes = [440, 349.2];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const env = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        const t = ctx.currentTime + i * 0.12;
+        env.gain.setValueAtTime(0, t);
+        env.gain.linearRampToValueAtTime(0.8, t + 0.01);
+        env.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        osc.connect(env);
+        env.connect(master);
+        osc.start(t);
+        osc.stop(t + 0.2);
+      });
+    }
+
+    setTimeout(() => ctx.close(), 1000);
+  } catch {
+    // AudioContext는 옵셔널, 에러 처리 필요 없음
+  }
+}
 
 export function ArticleQuiz({
   children,
@@ -93,6 +142,8 @@ export function ArticleQuiz({
 export function ArticleQuizItem({
   mode,
   question,
+  code,
+  language = "js",
   choices,
   answer,
   explanation,
@@ -130,6 +181,7 @@ export function ArticleQuizItem({
 
     setIsCorrect(correct);
     setIsSubmitted(true);
+    playQuizSound(correct);
     if (onResult) onResult(correct);
   };
 
@@ -142,10 +194,15 @@ export function ArticleQuizItem({
 
   return (
     <div className={cn("flex flex-col gap-4", className)} {...props}>
-      <h4 className="text-base font-medium leading-relaxed text-gray-100">
+      <div className="text-base font-medium leading-relaxed text-gray-100">
         <span className="text-[#569cd6] mr-2 font-mono">Q.</span>
         {question}
-      </h4>
+      </div>
+      {code && (
+        <div className="mt-3 rounded-lg border border-gray-700 overflow-hidden **:data-code-block:my-0!">
+          <CodeBlock language={language}>{code}</CodeBlock>
+        </div>
+      )}
 
       <div className="mt-1">
         {mode === "multiple" && choices ? (

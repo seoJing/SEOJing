@@ -69,7 +69,11 @@ export interface ArticleQuizItemProps extends HTMLAttributes<HTMLDivElement> {
   /** 객관식 / 주관식 모드 */
   mode: ArticleQuizMode;
   /** 질문 텍스트 */
-  question: string;
+  question: React.ReactNode;
+  /** 문제에 첨부할 코드 스니펫 */
+  code?: string;
+  /** 코드 언어 (기본값: "js") */
+  language?: string;
   /** 객관식 보기 (mode가 "multiple"일 때 필수) */
   choices?: string[];
   /** 정답 (객관식은 보기의 index(0부터 시작), 주관식은 텍스트) */
