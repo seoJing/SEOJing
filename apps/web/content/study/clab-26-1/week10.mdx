@@ -1,42 +1,40 @@
 ---
-title: "프론트엔드 스터디 10주차: 배열 고차함수와 ES6+ 문법"
-date: 2026-05-25
+title: "프론트엔드 스터디 10주차: this, 실행 컨텍스트, 이터러블"
+date: 2026-06-01
 tags:
   - 프론트엔드
   - 스터디
   - JavaScript
-  - 배열
-  - ES6
-  - 구조분해할당
-  - 스프레드
-description: React 코드에서 매일 쓰는 JS 문법들을 정리합니다. map/filter/reduce 배열 고차함수부터 구조 분해, 스프레드, 옵셔널 체이닝, 모듈 시스템까지 실무 직결 문법을 다룹니다.
+  - this
+  - 실행컨텍스트
+  - 이터러블
+description: JS에서 가장 헷갈리는 개념 중 하나인 this 바인딩을 정리하고, 실행 컨텍스트의 동작 원리와 이터러블/이터레이터 프로토콜을 배웁니다.
 ---
 
 <Subtitle level={2}>10주차 학습 자료</Subtitle>
 
-- <strong>학습 챕터:</strong> poiemaweb — 배열 고차 함수 / 구조 분해 할당 /
-  스프레드 & Rest 파라미터 / 모듈
+- <strong>학습 챕터:</strong> poiemaweb — this / 실행 컨텍스트 / 이터러블
 - <strong>자료 바로가기:</strong>
-  <Anchor external="https://poiemaweb.com/js-array-higher-order-function">
-    1. 배열 고차 함수
+  <Anchor external="https://poiemaweb.com/js-this">1. this</Anchor>
+  <Anchor external="https://poiemaweb.com/js-execution-context">
+    2. 실행 컨텍스트
   </Anchor>
-  <Anchor external="https://poiemaweb.com/es6-destructuring">
-    2. 구조 분해 할당
+  <Anchor external="https://poiemaweb.com/es6-iteration-for-of">
+    3. 이터러블과 for...of
   </Anchor>
-  <Anchor external="https://poiemaweb.com/es6-extended-parameter-handling">
-    3. 스프레드와 Rest 파라미터
-  </Anchor>
-  <Anchor external="https://poiemaweb.com/es6-module">4. 모듈</Anchor>
 - <strong>딥다이브 요약본 (보충용):</strong>
-  <Anchor external="https://github.com/youngminss/Docs-modernJS__deepDive/tree/master/27-Array">
+  <Anchor external="https://github.com/youngminss/Docs-modernJS__deepDive/tree/master/22-This">
     딥다이브 요약 GitHub
   </Anchor>
 
 <Paragraph>
-  안녕하세요. 10주차입니다. 이번 주는{" "}
-  <strong>실무 체감이 가장 빠른 주차</strong>입니다. React 코드를 열면 거의 모든
-  줄에서 `map`, `filter`, 구조 분해, 스프레드를 볼 수 있습니다. 개념보다는{" "}
-  <strong>언제 왜 쓰는지</strong>에 집중하며 읽어보세요.
+  안녕하세요. 10주차입니다. 이번 주는 JS를 깊게 이해하는 데 핵심이 되는 개념들을
+  다룹니다.
+  <strong>this</strong>는 다른 언어와 다르게 동작해서 처음에는 혼란스럽지만,
+  규칙만 알면 명확합니다. <strong>실행 컨텍스트</strong>는 지금까지 배운 스코프,
+  호이스팅, 클로저의 동작 원리를 하나로 연결하는 개념입니다.{" "}
+  <strong>이터러블</strong>은 `for...of`, 스프레드, 구조 분해가 내부적으로
+  어떻게 동작하는지를 이해하는 열쇠입니다.
 </Paragraph>
 
 ---
@@ -54,354 +52,298 @@ description: React 코드에서 매일 쓰는 JS 문법들을 정리합니다. m
 <ArticleQuiz>
   <ArticleQuizItem
     mode="multiple"
-    question="Array.prototype.map()에 대한 설명으로 옳은 것은 무엇인가요?"
+    question="일반 함수 호출에서 this는 무엇을 가리키나요? (strict mode 아님)"
     choices={[
-      "원본 배열을 변경하고 undefined를 반환한다",
-      "원본 배열을 변경하지 않고, 콜백 반환값으로 이루어진 새 배열을 반환한다",
-      "조건에 맞는 요소만 걸러낸 새 배열을 반환한다",
-      "배열을 하나의 값으로 줄여 반환한다",
+      "함수 자신",
+      "전역 객체 (브라우저에서는 window)",
+      "undefined",
+      "null",
     ]}
     answer={1}
-    explanation="map()은 원본 배열을 변경하지 않고(순수 함수), 각 요소에 콜백을 적용한 결과로 이루어진 같은 길이의 새 배열을 반환합니다."
+    explanation="일반 함수로 호출할 때 this는 전역 객체를 가리킵니다. 브라우저에서는 window, Node.js에서는 global입니다. strict mode에서는 undefined입니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="[1, 2, 3, 4, 5].filter(n => n % 2 === 0)의 결과는 무엇인가요?"
+    question="메서드로 호출할 때 this는 무엇을 가리키나요?"
     choices={[
-      "[1, 3, 5]",
-      "[2, 4]",
-      "[true, false, true, false, true]",
-      "[false, true, false, true, false]",
+      "항상 전역 객체",
+      "메서드를 소유한 객체 (호출한 객체)",
+      "메서드가 선언된 곳의 스코프",
+      "항상 undefined",
     ]}
     answer={1}
-    explanation="filter()는 콜백이 true를 반환하는 요소만 모아 새 배열을 반환합니다. n % 2 === 0은 짝수일 때 true이므로 [2, 4]를 반환합니다."
+    explanation="메서드 호출 시 this는 그 메서드를 호출한 객체를 가리킵니다. obj.method()에서 this는 obj입니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="[1, 2, 3, 4].reduce((acc, cur) => acc + cur, 0)의 결과는 무엇인가요?"
-    choices={["6", "10", "24", "0"]}
-    answer={1}
-    explanation="reduce()는 초기값 0에서 시작하여 각 요소를 누적합니다. 0+1+2+3+4 = 10입니다."
-  />
-  <ArticleQuizItem
-    mode="multiple"
-    question="구조 분해 할당(Destructuring)에 대한 설명으로 옳은 것은 무엇인가요?"
+    question="화살표 함수(arrow function)의 this 동작은 일반 함수와 어떻게 다른가요?"
     choices={[
-      "객체나 배열을 복사하는 문법이다",
-      "객체나 배열의 값을 변수로 추출하는 문법이다",
-      "객체를 배열로 변환하는 문법이다",
-      "중첩 객체를 평탄화하는 문법이다",
+      "화살표 함수는 this를 가지지 않으며, 선언된 위치의 상위 스코프 this를 그대로 사용한다",
+      "화살표 함수에서 this는 항상 전역 객체다",
+      "화살표 함수에서 this는 항상 undefined다",
+      "화살표 함수에서 this는 함수 자신이다",
+    ]}
+    answer={0}
+    explanation="화살표 함수는 자체 this를 가지지 않습니다. 선언 시점의 상위 스코프 this를 캡처하여 사용합니다(렉시컬 this). 그래서 콜백이나 이벤트 핸들러에서 this를 유지해야 할 때 유용합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="call, apply, bind의 공통점은 무엇인가요?"
+    choices={[
+      "함수를 즉시 실행하고 새 함수를 반환한다",
+      "this를 명시적으로 지정할 수 있다",
+      "비동기 함수에서만 사용 가능하다",
+      "화살표 함수에도 적용된다",
     ]}
     answer={1}
-    explanation="구조 분해 할당은 배열이나 객체의 값을 개별 변수로 한 번에 추출하는 문법입니다. React에서 props나 useState의 반환값을 받을 때 자주 사용합니다."
+    explanation="call, apply, bind 모두 this를 명시적으로 바인딩하는 메서드입니다. call과 apply는 함수를 즉시 호출하고(인자 방식 차이), bind는 this가 고정된 새 함수를 반환합니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="const { a, b = 10 } = { a: 1 }에서 b의 값은 무엇인가요?"
-    choices={["undefined", "10", "null", "에러 발생"]}
-    answer={1}
-    explanation="객체 구조 분해에서 기본값을 지정할 수 있습니다. { a: 1 }에 b 프로퍼티가 없으므로 b는 기본값 10을 사용합니다."
-  />
-  <ArticleQuizItem
-    mode="multiple"
-    question="스프레드 연산자(...)로 할 수 없는 것은 무엇인가요?"
+    question="실행 컨텍스트(Execution Context)란 무엇인가요?"
     choices={[
-      "배열 합치기: [...arr1, ...arr2]",
-      "객체 얕은 복사: { ...obj }",
-      "함수 인자 전달: fn(...args)",
-      "객체를 배열로 변환: [...obj]",
+      "JS 파일을 실행하는 Node.js 환경",
+      "코드가 실행되는 환경으로, 변수·스코프·this 등의 정보를 담은 객체",
+      "비동기 코드를 처리하는 특별한 공간",
+      "함수가 선언된 위치",
+    ]}
+    answer={1}
+    explanation="실행 컨텍스트는 코드가 실행될 때 생성되는 환경 정보 묶음입니다. 변수 환경(Variable Environment), 렉시컬 환경(Lexical Environment), this 바인딩 정보를 포함합니다. 콜 스택에 쌓이며 관리됩니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="이터러블(Iterable)이란 무엇인가요?"
+    choices={[
+      "배열과 동일한 자료구조",
+      "Symbol.iterator 메서드를 구현한 객체로, for...of와 스프레드 등을 사용할 수 있는 것",
+      "인덱스로 접근 가능한 모든 객체",
+      "length 프로퍼티를 가진 객체",
+    ]}
+    answer={1}
+    explanation="이터러블은 Symbol.iterator 메서드를 구현한 객체입니다. 배열, 문자열, Map, Set 등이 이터러블이며, for...of, 스프레드(...), 구조 분해 할당 등을 사용할 수 있습니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="Set 자료구조의 특징으로 옳은 것은 무엇인가요?"
+    choices={[
+      "키-값 쌍으로 저장하며 중복 키를 허용하지 않는다",
+      "중복을 허용하지 않는 값의 집합이다",
+      "삽입 순서를 보장하지 않는다",
+      "인덱스로 접근할 수 있다",
+    ]}
+    answer={1}
+    explanation="Set은 중복 없는 값의 집합입니다. 삽입 순서를 보장하고, 이터러블입니다. 중복 제거에 자주 활용됩니다: [...new Set([1, 2, 2, 3])] → [1, 2, 3]"
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="Map과 일반 객체({})의 가장 큰 차이점은 무엇인가요?"
+    choices={[
+      "Map은 문자열 키만 사용할 수 있다",
+      "Map은 어떤 타입이든 키로 사용할 수 있고, 삽입 순서를 보장하며, size로 크기를 알 수 있다",
+      "Map은 이터러블이 아니다",
+      "Map은 프로토타입 체인이 없다",
+    ]}
+    answer={1}
+    explanation="일반 객체는 문자열/심볼만 키로 사용 가능하지만, Map은 객체, 함수, 원시값 등 모든 타입을 키로 사용할 수 있습니다. 삽입 순서를 보장하고, map.size로 크기를 확인할 수 있습니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="new 연산자로 함수를 호출할 때 this는 무엇을 가리키나요?"
+    choices={[
+      "전역 객체",
+      "새로 생성되는 인스턴스 객체",
+      "함수 자신",
+      "undefined",
+    ]}
+    answer={1}
+    explanation="new 연산자로 생성자 함수를 호출하면 새 객체가 생성되고, this가 그 새 객체를 가리킵니다. 생성자 함수 내부에서 this.name = name처럼 인스턴스 프로퍼티를 설정하는 이유입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="콜백 함수 내부에서 this를 잃지 않는 방법이 아닌 것은 무엇인가요?"
+    choices={[
+      "화살표 함수 사용",
+      "bind(this) 사용",
+      "const self = this로 저장 후 사용",
+      "function 키워드를 중첩해서 사용",
     ]}
     answer={3}
-    explanation="일반 객체는 이터러블(iterable)이 아니므로 스프레드로 배열로 변환할 수 없습니다. Object.entries(obj)나 Object.values(obj)를 사용해야 합니다."
-  />
-  <ArticleQuizItem
-    mode="multiple"
-    question="옵셔널 체이닝(?.)의 역할은 무엇인가요?"
-    choices={[
-      "null/undefined인 경우 에러 대신 undefined를 반환한다",
-      "null/undefined인 경우 기본값을 반환한다",
-      "값이 truthy일 때만 다음 표현식을 실행한다",
-      "비동기 작업을 취소하는 연산자다",
-    ]}
-    answer={0}
-    explanation="옵셔널 체이닝(?.)은 앞의 값이 null이나 undefined이면 에러 없이 undefined를 반환합니다. user?.address?.city처럼 깊은 중첩 접근을 안전하게 할 수 있습니다."
-  />
-  <ArticleQuizItem
-    mode="multiple"
-    question="null 병합 연산자(??)의 동작으로 옳은 것은 무엇인가요?"
-    choices={[
-      "왼쪽이 falsy이면 오른쪽을 반환한다",
-      "왼쪽이 null 또는 undefined이면 오른쪽을 반환한다",
-      "왼쪽이 null이면 오른쪽을 반환하고, undefined면 undefined를 반환한다",
-      "왼쪽이 truthy이면 오른쪽을 반환한다",
-    ]}
-    answer={1}
-    explanation="?? 연산자는 null과 undefined일 때만 오른쪽을 반환합니다. ||와 달리 0이나 빈 문자열('')은 falsy지만 오른쪽을 반환하지 않습니다."
-  />
-  <ArticleQuizItem
-    mode="multiple"
-    question="ES6 모듈에서 named export와 default export의 차이는 무엇인가요?"
-    choices={[
-      "named export는 파일당 여러 개 가능, default export는 파일당 한 개만 가능",
-      "default export만 import 시 이름 변경이 가능하다",
-      "named export는 브라우저에서만 사용 가능하다",
-      "차이가 없다 — 문법만 다를 뿐 동작은 같다",
-    ]}
-    answer={0}
-    explanation="named export(export const foo)는 파일에 여러 개 선언 가능하고 import 시 중괄호 사용, default export(export default)는 파일당 하나만 가능하고 import 시 원하는 이름으로 받을 수 있습니다."
-  />
-  <ArticleQuizItem
-    mode="multiple"
-    question="Array.prototype.find()와 Array.prototype.filter()의 차이는 무엇인가요?"
-    choices={[
-      "find()는 조건에 맞는 첫 번째 요소를, filter()는 조건에 맞는 모든 요소를 배열로 반환한다",
-      "find()는 인덱스를, filter()는 값을 반환한다",
-      "find()는 원본 배열을 변경하고, filter()는 변경하지 않는다",
-      "find()는 배열에서만, filter()는 객체에서도 사용 가능하다",
-    ]}
-    answer={0}
-    explanation="find()는 조건을 만족하는 첫 번째 요소(값)를 반환하고 없으면 undefined를 반환합니다. filter()는 조건을 만족하는 모든 요소를 모아 새 배열을 반환합니다."
+    explanation="function 키워드를 중첩해서 사용하면 내부 함수에서 this가 다시 전역 객체로 바뀝니다. 화살표 함수(렉시컬 this), bind, 또는 self = this 패턴이 올바른 해결 방법입니다."
   />
 </ArticleQuiz>
 
 ---
 
-<Subtitle level={2}>1. 배열 고차함수 — map, filter, reduce</Subtitle>
+<Subtitle level={2}>1. this — 상황에 따라 달라지는 참조</Subtitle>
 
 <Paragraph>
-  고차함수(Higher-Order Function)는{" "}
-  <strong>함수를 인자로 받거나 반환하는 함수</strong>입니다. 배열 메서드 중 가장
-  중요한 세 가지를 살펴봅니다.
+  JS의 `this`는 <strong>함수가 호출될 때 동적으로 결정</strong>됩니다. 선언
+  위치가 아니라
+  <strong>호출 방식</strong>에 따라 다릅니다. (화살표 함수만 예외)
 </Paragraph>
 
-<Subtitle level={3}>map — 변환</Subtitle>
+<Subtitle level={3}>네 가지 this 바인딩 규칙</Subtitle>
 
 ```js
-const numbers = [1, 2, 3, 4, 5];
+// 1. 일반 함수 호출 — 전역 객체 (strict mode에서는 undefined)
+function foo() {
+  console.log(this); // window (브라우저)
+}
+foo();
 
-// 각 요소를 2배로
-const doubled = numbers.map((n) => n * 2);
-// [2, 4, 6, 8, 10]
+// 2. 메서드 호출 — 호출한 객체
+const obj = {
+  name: "철수",
+  greet() {
+    console.log(this.name); // "철수"
+  },
+};
+obj.greet();
 
-// React에서 리스트 렌더링
-const items = ["사과", "배", "포도"];
-const listItems = items.map((item, index) => <li key={index}>{item}</li>);
+// 3. 생성자 호출 — 새로 생성되는 인스턴스
+function Person(name) {
+  this.name = name; // 새 인스턴스를 가리킴
+}
+const p = new Person("영희");
+
+// 4. 명시적 바인딩 — call / apply / bind
+function greet() {
+  console.log(this.name);
+}
+greet.call({ name: "민수" }); // "민수"
+greet.apply({ name: "지수" }); // "지수"
+const boundGreet = greet.bind({ name: "하준" });
+boundGreet(); // "하준"
 ```
 
-<Subtitle level={3}>filter — 필터링</Subtitle>
+<Subtitle level={3}>화살표 함수의 this — 렉시컬 this</Subtitle>
 
 ```js
-const products = [
-  { name: "사과", price: 1000 },
-  { name: "한우", price: 50000 },
-  { name: "배", price: 2000 },
-];
+const timer = {
+  name: "타이머",
+  start() {
+    // 일반 함수 — this가 전역으로 바뀜
+    setTimeout(function () {
+      console.log(this.name); // undefined
+    }, 1000);
 
-// 1만원 이하 상품만
-const affordable = products.filter((p) => p.price <= 10000);
-// [{ name: "사과", ... }, { name: "배", ... }]
+    // 화살표 함수 — 상위 스코프(start 메서드)의 this 유지
+    setTimeout(() => {
+      console.log(this.name); // "타이머"
+    }, 1000);
+  },
+};
+timer.start();
 ```
-
-<Subtitle level={3}>reduce — 누적</Subtitle>
-
-```js
-const cart = [
-  { name: "사과", price: 1000, qty: 2 },
-  { name: "배", price: 2000, qty: 1 },
-];
-
-// 총 금액 계산
-const total = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
-// 1000*2 + 2000*1 = 4000
-
-// reduce로 객체 만들기
-const byName = cart.reduce((acc, item) => {
-  acc[item.name] = item.price;
-  return acc;
-}, {});
-// { 사과: 1000, 배: 2000 }
-```
-
-<Subtitle level={3}>체이닝 — 조합해서 사용</Subtitle>
-
-```js
-const scores = [85, 42, 93, 67, 55, 78, 91];
-
-// 70점 이상인 점수들의 평균
-const avg = scores
-  .filter((s) => s >= 70) // [85, 93, 67, 78, 91]
-  .reduce((sum, s, _, arr) => sum + s / arr.length, 0);
-// 82.8
-```
-
-<Subtitle level={3}>그 외 자주 쓰는 배열 메서드</Subtitle>
-
-```js
-const arr = [1, 2, 3, 4, 5];
-
-arr.find((n) => n > 3); // 4 — 첫 번째 일치 요소
-arr.findIndex((n) => n > 3); // 3 — 첫 번째 일치 인덱스
-arr.some((n) => n > 4); // true — 하나라도 조건 충족
-arr.every((n) => n > 0); // true — 모두 조건 충족
-arr.includes(3); // true — 포함 여부
-arr.flat(); // 중첩 배열 1단계 펼치기
-arr.flatMap((n) => [n, n * 2]); // map + flat 1단계
-```
-
----
-
-<Subtitle level={2}>2. 구조 분해 할당 — Destructuring</Subtitle>
 
 <Paragraph>
-  배열이나 객체에서 원하는 값을 변수로 한 번에 꺼내는 문법입니다. React에서
-  props, useState, API 응답 처리 등 어디서나 사용합니다.
+  React에서 이벤트 핸들러를 화살표 함수로 쓰는 이유도 이 때문입니다. 클래스
+  컴포넌트에서 `this.handleClick = this.handleClick.bind(this)`처럼 bind를 쓰는
+  것도 같은 문제를 해결하는 방법입니다.
 </Paragraph>
 
-<Subtitle level={3}>배열 구조 분해</Subtitle>
-
-```js
-const [a, b, c] = [1, 2, 3];
-// a=1, b=2, c=3
-
-// 일부만 추출
-const [first, , third] = [10, 20, 30];
-// first=10, third=30
-
-// 기본값
-const [x = 0, y = 0] = [5];
-// x=5, y=0
-
-// React useState
-const [count, setCount] = useState(0);
-```
-
-<Subtitle level={3}>객체 구조 분해</Subtitle>
-
-```js
-const user = { name: "철수", age: 25, role: "admin" };
-
-const { name, age } = user;
-// name="철수", age=25
-
-// 이름 변경
-const { name: userName } = user;
-// userName="철수"
-
-// 기본값
-const { role = "user" } = {};
-// role="user"
-
-// 중첩 구조 분해
-const {
-  address: { city },
-} = { address: { city: "서울" } };
-// city="서울"
-
-// React props
-function Button({ label, onClick, disabled = false }) {
-  return (
-    <button onClick={onClick} disabled={disabled}>
-      {label}
-    </button>
-  );
-}
-```
-
 ---
 
-<Subtitle level={2}>3. 스프레드 연산자와 Rest 파라미터</Subtitle>
-
-<Subtitle level={3}>스프레드 — 펼치기</Subtitle>
-
-```js
-// 배열 복사 & 합치기
-const arr1 = [1, 2, 3];
-const arr2 = [4, 5, 6];
-const merged = [...arr1, ...arr2]; // [1, 2, 3, 4, 5, 6]
-
-// 객체 복사 & 합치기 (React 상태 업데이트)
-const state = { name: "철수", age: 25 };
-const updated = { ...state, age: 26 };
-// { name: "철수", age: 26 } — age만 변경된 새 객체
-
-// 함수 인자
-Math.max(...[1, 3, 2]); // 3
-```
-
-<Subtitle level={3}>Rest 파라미터 — 나머지 모으기</Subtitle>
-
-```js
-// 함수의 나머지 인자 모으기
-function sum(first, ...rest) {
-  return rest.reduce((acc, n) => acc + n, first);
-}
-sum(1, 2, 3, 4); // 10
-
-// 구조 분해에서 나머지 모으기
-const { name, ...others } = { name: "철수", age: 25, role: "admin" };
-// name="철수", others={ age: 25, role: "admin" }
-
-const [head, ...tail] = [1, 2, 3, 4, 5];
-// head=1, tail=[2, 3, 4, 5]
-```
-
----
-
-<Subtitle level={2}>4. 옵셔널 체이닝(?.)과 null 병합 연산자(??)</Subtitle>
-
-```js
-const user = null;
-
-// 기존 방식 — 장황함
-const city = user && user.address && user.address.city;
-
-// 옵셔널 체이닝 — 간결함
-const city2 = user?.address?.city; // undefined (에러 없음)
-
-// 메서드 호출에도 사용 가능
-user?.greet?.();
-```
-
-```js
-// null 병합 연산자 (??) — null/undefined일 때만 기본값
-const name = user?.name ?? "익명";
-
-// || 와의 차이
-const count = 0 || "기본값"; // "기본값" — 0은 falsy
-const count2 = 0 ?? "기본값"; // 0 — null/undefined만 처리
-```
-
----
-
-<Subtitle level={2}>5. ES6 모듈(Module)</Subtitle>
+<Subtitle level={2}>2. 실행 컨텍스트 — 코드가 실행되는 환경</Subtitle>
 
 <Paragraph>
-  모듈은 파일 단위로 코드를 분리하고, 필요한 것만 `import/export`하는
-  시스템입니다. React 프로젝트는 전부 모듈 기반으로 작성됩니다.
+  실행 컨텍스트는 코드가 실행될 때 JS 엔진이 생성하는{" "}
+  <strong>환경 정보 묶음</strong>입니다. 스코프, 호이스팅, 클로저, this가 모두
+  실행 컨텍스트 안에서 관리됩니다.
 </Paragraph>
 
 ```js
-// math.js — named export
-export const add = (a, b) => a + b;
-export const subtract = (a, b) => a - b;
+const x = "전역";
 
-// Button.jsx — default export
-export default function Button({ label }) {
-  return <button>{label}</button>;
+function outer() {
+  const y = "outer";
+
+  function inner() {
+    const z = "inner";
+    console.log(x, y, z); // 스코프 체인으로 탐색
+  }
+
+  inner();
 }
+
+outer();
+
+// 콜 스택의 변화:
+// 1. 전역 실행 컨텍스트 생성 (x 등록)
+// 2. outer() 호출 → outer 실행 컨텍스트 생성 (y 등록)
+// 3. inner() 호출 → inner 실행 컨텍스트 생성 (z 등록)
+// 4. inner 종료 → inner 컨텍스트 제거
+// 5. outer 종료 → outer 컨텍스트 제거
 ```
 
+<Paragraph>
+  각 실행 컨텍스트는 <strong>외부 렉시컬 환경에 대한 참조</strong>를 가지며,
+  이것이 스코프 체인과 클로저의 실제 구현 방식입니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. 이터러블과 Set / Map</Subtitle>
+
+<Subtitle level={3}>이터러블이란</Subtitle>
+
+<Paragraph>
+  `Symbol.iterator` 메서드를 가진 객체는 이터러블입니다. `for...of`,
+  스프레드(`...`), 구조 분해 할당이 내부적으로 이터러블 프로토콜을 사용합니다.
+</Paragraph>
+
 ```js
-// 다른 파일에서 import
-import { add, subtract } from "./math.js";
-import Button from "./Button.jsx"; // default는 중괄호 없이
+// 배열, 문자열, Map, Set — 모두 이터러블
+for (const char of "hello") {
+  console.log(char); // h, e, l, l, o
+}
 
-// 이름 변경
-import { add as sum } from "./math.js";
+const [a, b, ...rest] = new Set([1, 2, 3, 4]);
+// a=1, b=2, rest=[3, 4]
+```
 
-// 전부 가져오기
-import * as math from "./math.js";
-math.add(1, 2); // 3
+<Subtitle level={3}>Set — 중복 없는 집합</Subtitle>
+
+```js
+// 중복 제거
+const arr = [1, 2, 2, 3, 3, 4];
+const unique = [...new Set(arr)]; // [1, 2, 3, 4]
+
+// 기본 사용
+const set = new Set([1, 2, 3]);
+set.add(4);
+set.has(2); // true
+set.delete(1);
+set.size; // 3
+
+// 집합 연산
+const a = new Set([1, 2, 3]);
+const b = new Set([2, 3, 4]);
+const union = new Set([...a, ...b]); // {1, 2, 3, 4}
+const intersection = new Set([...a].filter((x) => b.has(x))); // {2, 3}
+```
+
+<Subtitle level={3}>Map — 키-값 저장소</Subtitle>
+
+```js
+// 일반 객체와 달리 어떤 타입이든 키로 사용 가능
+const map = new Map();
+map.set("name", "철수");
+map.set(1, "숫자 키");
+map.set({ id: 1 }, "객체 키");
+
+map.get("name"); // "철수"
+map.has("name"); // true
+map.size; // 3
+
+// 이터러블이라 for...of 가능
+for (const [key, value] of map) {
+  console.log(key, value);
+}
+
+// 객체 → Map 변환
+const obj = { a: 1, b: 2 };
+const mapFromObj = new Map(Object.entries(obj));
 ```
 
 ---
@@ -416,37 +358,48 @@ math.add(1, 2); // 3
 <ArticleQuiz>
   <ArticleQuizItem
     mode="description"
-    question="아래 코드의 출력 결과는 무엇인가요?"
-    code={`const numbers = [1, 2, 3, 4, 5];
+    question="아래 코드에서 두 console.log의 출력 결과를 순서대로 입력하세요."
+    code={`const obj = {
+  value: 10,
+  double: function () {
+    return this.value * 2;
+  },
+  doubleArrow: () => {
+    return this.value * 2;
+  },
+};
 
-const result = numbers
-.filter((n) => n % 2 !== 0)
-.map((n) => n \* n);
-
-console.log(result);`}
-answer="[1, 9, 25]"
-explanation="먼저 filter로 홀수만 걸러내면 [1, 3, 5]가 됩니다. 그 다음 map으로 각 요소를 제곱하면 [1, 9, 25]가 됩니다."
+console.log(obj.double());
+console.log(obj.doubleArrow());`}
+answer="20, NaN"
+explanation="double()은 메서드 호출이므로 this가 obj를 가리켜 10*2=20입니다. doubleArrow는 화살표 함수라 this가 선언 시점의 상위 스코프(전역)를 가리키며, 전역에는 value가 없어 undefined*2 = NaN이 됩니다."
 />
 
   <ArticleQuizItem
     mode="description"
-    question="아래 코드에서 a, b, rest의 값을 순서대로 입력하세요."
-    code={`const [a, b, ...rest] = [10, 20, 30, 40, 50];
-console.log(a);
-console.log(b);
-console.log(rest);`}
-    answer="10, 20, [30, 40, 50]"
-    explanation="배열 구조 분해로 a=10, b=20이 할당되고, Rest 파라미터(...)로 나머지 [30, 40, 50]이 rest에 할당됩니다."
+    question="아래 코드의 출력 결과는 무엇인가요?"
+    code={`const nums = [1, 2, 3, 2, 1, 4];
+const result = [...new Set(nums)].length;
+console.log(result);`}
+    answer="4"
+    explanation="Set은 중복을 제거하므로 new Set(nums)는 {1, 2, 3, 4}입니다. 스프레드로 배열로 변환하면 [1, 2, 3, 4]이고 length는 4입니다."
   />
   <ArticleQuizItem
     mode="description"
-    question="아래 코드의 출력 결과는 무엇인가요?"
-    code={`const user = null;
-const name = user?.profile?.name ?? "익명";
-console.log(name);`}
-    answer="익명"
-    explanation="user가 null이므로 user?.profile?.name은 undefined를 반환합니다. undefined ?? '익명'에서 null 병합 연산자는 undefined일 때 오른쪽을 반환하므로 '익명'이 출력됩니다."
-  />
+    question="아래 코드에서 출력되는 값들을 순서대로 입력하세요."
+    code={`const map = new Map([
+  ["a", 1],
+  ["b", 2],
+  ["c", 3],
+]);
+
+for (const [key, value] of map) {
+if (value > 1) console.log(key);
+}`}
+answer="b, c"
+explanation="Map을 for...of로 순회하면 [key, value] 형태로 구조 분해됩니다. value > 1인 항목은 ['b', 2]와 ['c', 3]이므로 b와 c가 순서대로 출력됩니다."
+/>
+
 </ArticleQuiz>
 
 ---
@@ -458,16 +411,16 @@ console.log(name);`}
   남겨주세요.
 </Paragraph>
 
-> **Q1. map, filter, reduce의 차이를 각각 설명하고, 어떤 상황에서 어떤 메서드를 선택하는지 설명해주세요.**
+> **Q1. JavaScript에서 this는 어떻게 결정되나요? 화살표 함수의 this가 일반 함수와 다른 이유를 포함해서 설명해주세요.**
 >
 > <br />
 >
-> **Q2. 옵셔널 체이닝(?.)과 null 병합 연산자(??)를 설명하고, `||` 연산자와 `??`의 차이를 예시와 함께 설명해주세요.**
+> **Q2. 일반 객체({})와 Map의 차이를 설명하고, 어떤 상황에서 Map을 선택하는 게 나은지 예시와 함께 설명해주세요.**
 
 ---
 
 <Subtitle level={2}>관련 포스팅</Subtitle>
 
-- <Anchor href="/blog/study/clab-26-1/week9">
-    프론트엔드 스터디 9주차 학습 자료: 클로저, Promise, async/await
+- <Anchor href="/blog/study/clab-26-1/week10">
+    프론트엔드 스터디 10주차 학습 자료: 배열 고차함수와 ES6+ 문법
   </Anchor>

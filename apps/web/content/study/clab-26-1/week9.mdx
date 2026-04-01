@@ -1,40 +1,42 @@
 ---
-title: "프론트엔드 스터디 9주차: 클로저, Promise, async/await"
-date: 2026-05-18
+title: "프론트엔드 스터디 9주차: 배열 고차함수와 ES6+ 문법"
+date: 2026-05-25
 tags:
   - 프론트엔드
   - 스터디
   - JavaScript
-  - 클로저
-  - Promise
-  - 비동기
-description: JS 비동기 처리의 흐름을 배웁니다. 클로저가 왜 중요한지, 콜백 지옥을 해결한 Promise, 그리고 현대 JS의 표준인 async/await까지 이어지는 흐름을 이해합니다.
+  - 배열
+  - ES6
+  - 구조분해할당
+  - 스프레드
+description: React 코드에서 매일 쓰는 JS 문법들을 정리합니다. map/filter/reduce 배열 고차함수부터 구조 분해, 스프레드, 옵셔널 체이닝, 모듈 시스템까지 실무 직결 문법을 다룹니다.
 ---
 
 <Subtitle level={2}>9주차 학습 자료</Subtitle>
 
-- <strong>학습 챕터:</strong> poiemaweb — 클로저 / Promise / 제너레이터와
-  async/await
+- <strong>학습 챕터:</strong> poiemaweb — 배열 고차 함수 / 구조 분해 할당 /
+  스프레드 & Rest 파라미터 / 모듈
 - <strong>자료 바로가기:</strong>
-  <Anchor external="https://poiemaweb.com/js-closure">
-    1. 클로저(Closure)
+  <Anchor external="https://poiemaweb.com/js-array-higher-order-function">
+    1. 배열 고차 함수
   </Anchor>
-  <Anchor external="https://poiemaweb.com/es6-promise">2. Promise</Anchor>
-  <Anchor external="https://poiemaweb.com/es6-generator">
-    3. 제너레이터와 async/await
+  <Anchor external="https://poiemaweb.com/es6-destructuring">
+    2. 구조 분해 할당
   </Anchor>
+  <Anchor external="https://poiemaweb.com/es6-extended-parameter-handling">
+    3. 스프레드와 Rest 파라미터
+  </Anchor>
+  <Anchor external="https://poiemaweb.com/es6-module">4. 모듈</Anchor>
 - <strong>딥다이브 요약본 (보충용):</strong>
-  <Anchor external="https://github.com/youngminss/Docs-modernJS__deepDive/tree/master/24-Closure">
+  <Anchor external="https://github.com/youngminss/Docs-modernJS__deepDive/tree/master/27-Array">
     딥다이브 요약 GitHub
   </Anchor>
 
 <Paragraph>
-  안녕하세요. 9주차입니다. 이번 주는 두 가지 큰 주제를 다룹니다.{" "}
-  <strong>클로저</strong>는 지난 주에 배운 렉시컬 스코프에서 자연스럽게 이어지는
-  개념으로, React의 useState 같은 훅이 어떻게 동작하는지를 이해하는 기반입니다.{" "}
-  <strong>비동기 처리</strong>는 서버에서 데이터를 가져오거나 파일을 읽는 등
-  시간이 걸리는 작업을 처리하는 JS의 핵심 방법입니다. 콜백에서 Promise,
-  async/await으로 이어지는 발전 흐름을 이해하는 것이 목표입니다.
+  안녕하세요. 9주차입니다. 이번 주는 <strong>실무 체감이 가장 빠른 주차</strong>
+  입니다. React 코드를 열면 거의 모든 줄에서 `map`, `filter`, 구조 분해,
+  스프레드를 볼 수 있습니다. 개념보다는 <strong>언제 왜 쓰는지</strong>에
+  집중하며 읽어보세요.
 </Paragraph>
 
 ---
@@ -52,307 +54,354 @@ description: JS 비동기 처리의 흐름을 배웁니다. 클로저가 왜 중
 <ArticleQuiz>
   <ArticleQuizItem
     mode="multiple"
-    question="클로저(Closure)란 무엇인가요?"
+    question="Array.prototype.map()에 대한 설명으로 옳은 것은 무엇인가요?"
     choices={[
-      "함수가 실행될 때마다 새로운 스코프를 생성하는 것",
-      "함수가 선언된 렉시컬 환경을 기억하여, 외부 함수가 종료된 후에도 외부 변수에 접근할 수 있는 것",
-      "함수를 즉시 실행하여 전역 스코프를 오염시키지 않는 패턴",
-      "중첩 함수에서 this 바인딩을 고정하는 것",
+      "원본 배열을 변경하고 undefined를 반환한다",
+      "원본 배열을 변경하지 않고, 콜백 반환값으로 이루어진 새 배열을 반환한다",
+      "조건에 맞는 요소만 걸러낸 새 배열을 반환한다",
+      "배열을 하나의 값으로 줄여 반환한다",
     ]}
     answer={1}
-    explanation="클로저는 함수가 자신이 선언된 렉시컬 환경(outer 변수들)을 기억하는 것입니다. 외부 함수가 이미 종료되었더라도 내부 함수는 외부 함수의 변수에 접근할 수 있습니다."
+    explanation="map()은 원본 배열을 변경하지 않고(순수 함수), 각 요소에 콜백을 적용한 결과로 이루어진 같은 길이의 새 배열을 반환합니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="클로저를 활용한 대표적인 패턴은 무엇인가요?"
+    question="[1, 2, 3, 4, 5].filter(n => n % 2 === 0)의 결과는 무엇인가요?"
     choices={[
-      "IIFE — 즉시 실행으로 전역 오염 방지",
-      "데이터 은닉 — 외부에서 직접 접근할 수 없는 private 변수를 만드는 것",
-      "메모이제이션 — 이전 계산 결과를 캐싱하는 것",
-      "위 모두",
+      "[1, 3, 5]",
+      "[2, 4]",
+      "[true, false, true, false, true]",
+      "[false, true, false, true, false]",
+    ]}
+    answer={1}
+    explanation="filter()는 콜백이 true를 반환하는 요소만 모아 새 배열을 반환합니다. n % 2 === 0은 짝수일 때 true이므로 [2, 4]를 반환합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="[1, 2, 3, 4].reduce((acc, cur) => acc + cur, 0)의 결과는 무엇인가요?"
+    choices={["6", "10", "24", "0"]}
+    answer={1}
+    explanation="reduce()는 초기값 0에서 시작하여 각 요소를 누적합니다. 0+1+2+3+4 = 10입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="구조 분해 할당(Destructuring)에 대한 설명으로 옳은 것은 무엇인가요?"
+    choices={[
+      "객체나 배열을 복사하는 문법이다",
+      "객체나 배열의 값을 변수로 추출하는 문법이다",
+      "객체를 배열로 변환하는 문법이다",
+      "중첩 객체를 평탄화하는 문법이다",
+    ]}
+    answer={1}
+    explanation="구조 분해 할당은 배열이나 객체의 값을 개별 변수로 한 번에 추출하는 문법입니다. React에서 props나 useState의 반환값을 받을 때 자주 사용합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="const { a, b = 10 } = { a: 1 }에서 b의 값은 무엇인가요?"
+    choices={["undefined", "10", "null", "에러 발생"]}
+    answer={1}
+    explanation="객체 구조 분해에서 기본값을 지정할 수 있습니다. { a: 1 }에 b 프로퍼티가 없으므로 b는 기본값 10을 사용합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="스프레드 연산자(...)로 할 수 없는 것은 무엇인가요?"
+    choices={[
+      "배열 합치기: [...arr1, ...arr2]",
+      "객체 얕은 복사: { ...obj }",
+      "함수 인자 전달: fn(...args)",
+      "객체를 배열로 변환: [...obj]",
     ]}
     answer={3}
-    explanation="클로저는 데이터 은닉(private 변수), 메모이제이션(캐싱), IIFE 등 다양한 패턴에 활용됩니다. React의 useState도 클로저를 기반으로 동작합니다."
+    explanation="일반 객체는 이터러블(iterable)이 아니므로 스프레드로 배열로 변환할 수 없습니다. Object.entries(obj)나 Object.values(obj)를 사용해야 합니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="Promise의 상태(state)가 아닌 것은 무엇인가요?"
-    choices={["pending", "fulfilled", "rejected", "waiting"]}
-    answer={3}
-    explanation="Promise는 pending(대기), fulfilled(이행), rejected(거부) 세 가지 상태를 가집니다. 'waiting'은 존재하지 않는 상태입니다."
-  />
-  <ArticleQuizItem
-    mode="multiple"
-    question="Promise.then()과 Promise.catch()에 대한 설명으로 옳은 것은 무엇인가요?"
+    question="옵셔널 체이닝(?.)의 역할은 무엇인가요?"
     choices={[
-      ".then()은 성공만, .catch()는 실패만 처리한다",
-      ".then(onFulfilled, onRejected)처럼 then에 두 번째 인자를 줘도 실패를 처리할 수 있다",
-      ".catch()는 .then(null, onRejected)와 동일하다",
-      "위 모두",
+      "null/undefined인 경우 에러 대신 undefined를 반환한다",
+      "null/undefined인 경우 기본값을 반환한다",
+      "값이 truthy일 때만 다음 표현식을 실행한다",
+      "비동기 작업을 취소하는 연산자다",
     ]}
-    answer={3}
-    explanation=".then()은 성공 콜백 외에 두 번째 인자로 실패 콜백을 받을 수 있습니다. .catch(fn)은 .then(null, fn)의 축약 문법입니다."
+    answer={0}
+    explanation="옵셔널 체이닝(?.)은 앞의 값이 null이나 undefined이면 에러 없이 undefined를 반환합니다. user?.address?.city처럼 깊은 중첩 접근을 안전하게 할 수 있습니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="async 함수의 반환값은 무엇인가요?"
+    question="null 병합 연산자(??)의 동작으로 옳은 것은 무엇인가요?"
     choices={[
-      "반환값 그대로",
-      "항상 Promise로 래핑된 값",
-      "undefined",
-      "반환값이 Promise면 그대로, 아니면 undefined",
+      "왼쪽이 falsy이면 오른쪽을 반환한다",
+      "왼쪽이 null 또는 undefined이면 오른쪽을 반환한다",
+      "왼쪽이 null이면 오른쪽을 반환하고, undefined면 undefined를 반환한다",
+      "왼쪽이 truthy이면 오른쪽을 반환한다",
     ]}
     answer={1}
-    explanation="async 함수는 항상 Promise를 반환합니다. 내부에서 return 42를 하면 Promise.resolve(42)와 동일하게 동작합니다."
+    explanation="?? 연산자는 null과 undefined일 때만 오른쪽을 반환합니다. ||와 달리 0이나 빈 문자열('')은 falsy지만 오른쪽을 반환하지 않습니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="await 키워드는 어디서 사용할 수 있나요?"
+    question="ES6 모듈에서 named export와 default export의 차이는 무엇인가요?"
     choices={[
-      "어디서든 사용 가능",
-      "async 함수 내부에서만 사용 가능",
-      "Promise를 반환하는 함수 앞에서만 사용 가능",
-      "모듈 최상위 레벨에서만 사용 가능",
+      "named export는 파일당 여러 개 가능, default export는 파일당 한 개만 가능",
+      "default export만 import 시 이름 변경이 가능하다",
+      "named export는 브라우저에서만 사용 가능하다",
+      "차이가 없다 — 문법만 다를 뿐 동작은 같다",
     ]}
-    answer={1}
-    explanation="await는 async 함수 내부에서만 사용할 수 있습니다. (ES2022 이후 모듈 최상위에서도 가능하지만, 일반적으로는 async 함수 내부에서 사용합니다.)"
+    answer={0}
+    explanation="named export(export const foo)는 파일에 여러 개 선언 가능하고 import 시 중괄호 사용, default export(export default)는 파일당 하나만 가능하고 import 시 원하는 이름으로 받을 수 있습니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="async/await에서 에러를 처리하는 방법으로 올바른 것은 무엇인가요?"
+    question="Array.prototype.find()와 Array.prototype.filter()의 차이는 무엇인가요?"
     choices={[
-      ".catch() 메서드 체이닝만 가능",
-      "try/catch 블록으로 처리 가능",
-      "에러 처리가 불가능하다",
-      "오직 onRejected 콜백으로만 처리 가능",
+      "find()는 조건에 맞는 첫 번째 요소를, filter()는 조건에 맞는 모든 요소를 배열로 반환한다",
+      "find()는 인덱스를, filter()는 값을 반환한다",
+      "find()는 원본 배열을 변경하고, filter()는 변경하지 않는다",
+      "find()는 배열에서만, filter()는 객체에서도 사용 가능하다",
     ]}
-    answer={1}
-    explanation="async/await에서는 동기 코드처럼 try/catch 블록으로 에러를 처리할 수 있습니다. await가 reject된 Promise를 만나면 catch 블록으로 제어가 이동합니다."
-  />
-  <ArticleQuizItem
-    mode="multiple"
-    question="여러 비동기 작업을 동시에 실행하고 모두 완료되길 기다리는 메서드는 무엇인가요?"
-    choices={[
-      "Promise.race()",
-      "Promise.any()",
-      "Promise.all()",
-      "Promise.allSettled()",
-    ]}
-    answer={2}
-    explanation="Promise.all()은 배열의 모든 Promise가 fulfilled될 때까지 기다리고 결과 배열을 반환합니다. 하나라도 rejected되면 전체가 rejected됩니다."
-  />
-  <ArticleQuizItem
-    mode="multiple"
-    question="콜백 지옥(Callback Hell)이 생기는 이유와 Promise가 해결하는 방법은 무엇인가요?"
-    choices={[
-      "비동기 작업을 동기로 바꿔서 해결",
-      "중첩 콜백 대신 .then() 체이닝으로 가독성 높은 순차 처리 가능",
-      "콜백을 사용하지 않아서 해결",
-      "멀티스레드로 전환하여 해결",
-    ]}
-    answer={1}
-    explanation="콜백 지옥은 비동기 작업을 순차적으로 처리할 때 콜백이 중첩되어 가독성이 떨어지는 문제입니다. Promise의 .then() 체이닝으로 수평적으로 나열하여 해결합니다."
-  />
-  <ArticleQuizItem
-    mode="multiple"
-    question="JavaScript가 단일 스레드임에도 비동기 처리가 가능한 이유는 무엇인가요?"
-    choices={[
-      "JS 엔진이 내부적으로 멀티스레딩을 사용하기 때문",
-      "이벤트 루프(Event Loop)와 Web API가 비동기 작업을 처리하고 콜백 큐에 등록하기 때문",
-      "async 키워드를 쓰면 별도 스레드가 생성되기 때문",
-      "Promise가 스레드를 생성하기 때문",
-    ]}
-    answer={1}
-    explanation="JS는 단일 스레드지만 setTimeout, fetch 등 시간이 걸리는 작업은 Web API(브라우저)나 Node.js가 처리합니다. 작업 완료 후 콜백이 큐에 등록되고, 이벤트 루프가 콜 스택이 비면 큐에서 꺼내 실행합니다."
+    answer={0}
+    explanation="find()는 조건을 만족하는 첫 번째 요소(값)를 반환하고 없으면 undefined를 반환합니다. filter()는 조건을 만족하는 모든 요소를 모아 새 배열을 반환합니다."
   />
 </ArticleQuiz>
 
 ---
 
-<Subtitle level={2}>1. 클로저(Closure) — 렉시컬 환경을 기억하는 함수</Subtitle>
+<Subtitle level={2}>1. 배열 고차함수 — map, filter, reduce</Subtitle>
 
 <Paragraph>
-  클로저는 <strong>함수가 선언될 때의 렉시컬 환경을 기억</strong>하여, 그 환경의
-  변수에 계속 접근할 수 있는 특성입니다. 렉시컬 스코프의 자연스러운
-  결과물입니다.
+  고차함수(Higher-Order Function)는{" "}
+  <strong>함수를 인자로 받거나 반환하는 함수</strong>입니다. 배열 메서드 중 가장
+  중요한 세 가지를 살펴봅니다.
 </Paragraph>
 
+<Subtitle level={3}>map — 변환</Subtitle>
+
 ```js
-function makeCounter() {
-  let count = 0; // 외부 함수의 변수
+const numbers = [1, 2, 3, 4, 5];
 
-  return function () {
-    // 내부 함수 — 클로저
-    count++;
-    return count;
-  };
-}
+// 각 요소를 2배로
+const doubled = numbers.map((n) => n * 2);
+// [2, 4, 6, 8, 10]
 
-const counter = makeCounter();
-// makeCounter()는 이미 종료됐지만
-console.log(counter()); // 1
-console.log(counter()); // 2
-console.log(counter()); // 3
-// count 변수가 여전히 살아있음
+// React에서 리스트 렌더링
+const items = ["사과", "배", "포도"];
+const listItems = items.map((item, index) => <li key={index}>{item}</li>);
 ```
 
-<Subtitle level={3}>데이터 은닉</Subtitle>
-
-<Paragraph>
-  클로저를 활용하면 외부에서 직접 접근할 수 없는 <strong>private 변수</strong>를
-  만들 수 있습니다.
-</Paragraph>
+<Subtitle level={3}>filter — 필터링</Subtitle>
 
 ```js
-function createAccount(initialBalance) {
-  let balance = initialBalance; // 외부에서 직접 접근 불가
+const products = [
+  { name: "사과", price: 1000 },
+  { name: "한우", price: 50000 },
+  { name: "배", price: 2000 },
+];
 
-  return {
-    deposit(amount) {
-      balance += amount;
-    },
-    withdraw(amount) {
-      if (amount > balance) return "잔액 부족";
-      balance -= amount;
-    },
-    getBalance() {
-      return balance;
-    },
-  };
-}
-
-const account = createAccount(1000);
-account.deposit(500);
-console.log(account.getBalance()); // 1500
-console.log(account.balance); // undefined — 직접 접근 불가
+// 1만원 이하 상품만
+const affordable = products.filter((p) => p.price <= 10000);
+// [{ name: "사과", ... }, { name: "배", ... }]
 ```
 
-<Subtitle level={3}>React와 클로저</Subtitle>
-
-<Paragraph>
-  React의 <strong>`useState`</strong> 훅이 클로저를 기반으로 동작합니다.
-  컴포넌트가 리렌더링될 때마다 이벤트 핸들러 내부의 `count`, `setState` 등이
-  클로저로 기억됩니다. `useEffect`의 의존성 배열을 빠뜨리면 오래된 클로저(stale
-  closure)를 참조하는 버그가 생기는 이유도 클로저 때문입니다.
-</Paragraph>
-
----
-
-<Subtitle level={2}>2. Promise — 콜백 지옥 탈출</Subtitle>
-
-<Paragraph>
-  서버에서 데이터를 가져오는 `fetch`, 타이머 `setTimeout` 등은 결과가 나중에
-  옵니다. 과거에는 콜백으로 처리했고, 중첩이 깊어지면 <strong>콜백 지옥</strong>
-  이 생겼습니다. Promise는 비동기 작업의 결과를 <strong>값(객체)</strong>으로
-  표현하여 이를 해결합니다.
-</Paragraph>
+<Subtitle level={3}>reduce — 누적</Subtitle>
 
 ```js
-// 콜백 지옥
-fetch("/user", function (user) {
-  fetch("/posts?userId=" + user.id, function (posts) {
-    fetch("/comments?postId=" + posts[0].id, function (comments) {
-      // 점점 깊어짐...
-    });
-  });
-});
+const cart = [
+  { name: "사과", price: 1000, qty: 2 },
+  { name: "배", price: 2000, qty: 1 },
+];
 
-// Promise 체이닝 — 수평으로 나열
-fetch("/user")
-  .then((user) => fetch("/posts?userId=" + user.id))
-  .then((posts) => fetch("/comments?postId=" + posts[0].id))
-  .then((comments) => console.log(comments))
-  .catch((err) => console.error(err));
+// 총 금액 계산
+const total = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
+// 1000*2 + 2000*1 = 4000
+
+// reduce로 객체 만들기
+const byName = cart.reduce((acc, item) => {
+  acc[item.name] = item.price;
+  return acc;
+}, {});
+// { 사과: 1000, 배: 2000 }
 ```
 
-<Subtitle level={3}>Promise 상태</Subtitle>
-
-- <strong>`pending`</strong>: 비동기 작업 진행 중 (초기 상태)
-- <strong>`fulfilled`</strong>: 작업 성공 — `.then()` 콜백 실행
-- <strong>`rejected`</strong>: 작업 실패 — `.catch()` 콜백 실행
-- 한 번 fulfilled/rejected 상태가 되면 변경 불가
-
-<Subtitle level={3}>여러 Promise 동시 처리</Subtitle>
+<Subtitle level={3}>체이닝 — 조합해서 사용</Subtitle>
 
 ```js
-// 순차 실행 — 느림 (앞이 끝나야 다음 시작)
-const a = await fetchA();
-const b = await fetchB();
+const scores = [85, 42, 93, 67, 55, 78, 91];
 
-// 병렬 실행 — 동시에 시작하고 모두 완료 기다림
-const [a, b] = await Promise.all([fetchA(), fetchB()]);
+// 70점 이상인 점수들의 평균
+const avg = scores
+  .filter((s) => s >= 70) // [85, 93, 67, 78, 91]
+  .reduce((sum, s, _, arr) => sum + s / arr.length, 0);
+// 82.8
+```
 
-// 가장 먼저 완료된 것만 사용
-const fastest = await Promise.race([fetchA(), fetchB()]);
+<Subtitle level={3}>그 외 자주 쓰는 배열 메서드</Subtitle>
+
+```js
+const arr = [1, 2, 3, 4, 5];
+
+arr.find((n) => n > 3); // 4 — 첫 번째 일치 요소
+arr.findIndex((n) => n > 3); // 3 — 첫 번째 일치 인덱스
+arr.some((n) => n > 4); // true — 하나라도 조건 충족
+arr.every((n) => n > 0); // true — 모두 조건 충족
+arr.includes(3); // true — 포함 여부
+arr.flat(); // 중첩 배열 1단계 펼치기
+arr.flatMap((n) => [n, n * 2]); // map + flat 1단계
 ```
 
 ---
 
-<Subtitle level={2}>3. async/await — Promise를 동기처럼</Subtitle>
+<Subtitle level={2}>2. 구조 분해 할당 — Destructuring</Subtitle>
 
 <Paragraph>
-  `async/await`은 Promise를 기반으로 한{" "}
-  <strong>문법적 설탕(syntactic sugar)</strong>입니다. 비동기 코드를 마치 동기
-  코드처럼 읽기 쉽게 작성할 수 있게 해줍니다.
+  배열이나 객체에서 원하는 값을 변수로 한 번에 꺼내는 문법입니다. React에서
+  props, useState, API 응답 처리 등 어디서나 사용합니다.
 </Paragraph>
 
-```js
-// Promise 체이닝
-function getUser(id) {
-  return fetch(`/users/${id}`)
-    .then((res) => res.json())
-    .then((user) => user)
-    .catch((err) => {
-      throw err;
-    });
-}
+<Subtitle level={3}>배열 구조 분해</Subtitle>
 
-// async/await — 같은 동작, 더 직관적
-async function getUser(id) {
-  try {
-    const res = await fetch(`/users/${id}`);
-    const user = await res.json();
-    return user;
-  } catch (err) {
-    throw err;
-  }
+```js
+const [a, b, c] = [1, 2, 3];
+// a=1, b=2, c=3
+
+// 일부만 추출
+const [first, , third] = [10, 20, 30];
+// first=10, third=30
+
+// 기본값
+const [x = 0, y = 0] = [5];
+// x=5, y=0
+
+// React useState
+const [count, setCount] = useState(0);
+```
+
+<Subtitle level={3}>객체 구조 분해</Subtitle>
+
+```js
+const user = { name: "철수", age: 25, role: "admin" };
+
+const { name, age } = user;
+// name="철수", age=25
+
+// 이름 변경
+const { name: userName } = user;
+// userName="철수"
+
+// 기본값
+const { role = "user" } = {};
+// role="user"
+
+// 중첩 구조 분해
+const {
+  address: { city },
+} = { address: { city: "서울" } };
+// city="서울"
+
+// React props
+function Button({ label, onClick, disabled = false }) {
+  return (
+    <button onClick={onClick} disabled={disabled}>
+      {label}
+    </button>
+  );
 }
 ```
 
-<Subtitle level={3}>주의: await 병렬 실행</Subtitle>
+---
+
+<Subtitle level={2}>3. 스프레드 연산자와 Rest 파라미터</Subtitle>
+
+<Subtitle level={3}>스프레드 — 펼치기</Subtitle>
 
 ```js
-// 잘못된 예 — 순차 실행 (불필요하게 느림)
-async function bad() {
-  const a = await fetchA(); // fetchA 완료 대기
-  const b = await fetchB(); // 그 다음에야 fetchB 시작
-}
+// 배열 복사 & 합치기
+const arr1 = [1, 2, 3];
+const arr2 = [4, 5, 6];
+const merged = [...arr1, ...arr2]; // [1, 2, 3, 4, 5, 6]
 
-// 올바른 예 — 병렬 실행
-async function good() {
-  const [a, b] = await Promise.all([fetchA(), fetchB()]);
-}
+// 객체 복사 & 합치기 (React 상태 업데이트)
+const state = { name: "철수", age: 25 };
+const updated = { ...state, age: 26 };
+// { name: "철수", age: 26 } — age만 변경된 새 객체
+
+// 함수 인자
+Math.max(...[1, 3, 2]); // 3
 ```
 
+<Subtitle level={3}>Rest 파라미터 — 나머지 모으기</Subtitle>
+
+```js
+// 함수의 나머지 인자 모으기
+function sum(first, ...rest) {
+  return rest.reduce((acc, n) => acc + n, first);
+}
+sum(1, 2, 3, 4); // 10
+
+// 구조 분해에서 나머지 모으기
+const { name, ...others } = { name: "철수", age: 25, role: "admin" };
+// name="철수", others={ age: 25, role: "admin" }
+
+const [head, ...tail] = [1, 2, 3, 4, 5];
+// head=1, tail=[2, 3, 4, 5]
+```
+
+---
+
+<Subtitle level={2}>4. 옵셔널 체이닝(?.)과 null 병합 연산자(??)</Subtitle>
+
+```js
+const user = null;
+
+// 기존 방식 — 장황함
+const city = user && user.address && user.address.city;
+
+// 옵셔널 체이닝 — 간결함
+const city2 = user?.address?.city; // undefined (에러 없음)
+
+// 메서드 호출에도 사용 가능
+user?.greet?.();
+```
+
+```js
+// null 병합 연산자 (??) — null/undefined일 때만 기본값
+const name = user?.name ?? "익명";
+
+// || 와의 차이
+const count = 0 || "기본값"; // "기본값" — 0은 falsy
+const count2 = 0 ?? "기본값"; // 0 — null/undefined만 처리
+```
+
+---
+
+<Subtitle level={2}>5. ES6 모듈(Module)</Subtitle>
+
 <Paragraph>
-  실무에서는 React 컴포넌트에서 데이터를 가져올 때 `useEffect` 안에서 async
-  함수를 정의하고 호출하는 패턴을 주로 사용합니다.
+  모듈은 파일 단위로 코드를 분리하고, 필요한 것만 `import/export`하는
+  시스템입니다. React 프로젝트는 전부 모듈 기반으로 작성됩니다.
 </Paragraph>
 
 ```js
-useEffect(() => {
-  async function fetchData() {
-    try {
-      const res = await fetch("/api/data");
-      const data = await res.json();
-      setData(data);
-    } catch (err) {
-      setError(err);
-    }
-  }
+// math.js — named export
+export const add = (a, b) => a + b;
+export const subtract = (a, b) => a - b;
 
-  fetchData();
-}, []);
+// Button.jsx — default export
+export default function Button({ label }) {
+  return <button>{label}</button>;
+}
+```
+
+```js
+// 다른 파일에서 import
+import { add, subtract } from "./math.js";
+import Button from "./Button.jsx"; // default는 중괄호 없이
+
+// 이름 변경
+import { add as sum } from "./math.js";
+
+// 전부 가져오기
+import * as math from "./math.js";
+math.add(1, 2); // 3
 ```
 
 ---
@@ -367,54 +416,37 @@ useEffect(() => {
 <ArticleQuiz>
   <ArticleQuizItem
     mode="description"
-    question="아래 코드의 출력 결과를 순서대로 입력하세요."
-    code={`function makeAdder(x) {
-  return function (y) {
-    return x + y;
-  };
-}
+    question="아래 코드의 출력 결과는 무엇인가요?"
+    code={`const numbers = [1, 2, 3, 4, 5];
 
-const add5 = makeAdder(5);
-const add10 = makeAdder(10);
+const result = numbers
+.filter((n) => n % 2 !== 0)
+.map((n) => n \* n);
 
-console.log(add5(3));
-console.log(add10(3));
-console.log(add5(add10(1)));`}
-answer="8, 13, 16"
-explanation="add5는 x=5를 기억하는 클로저, add10은 x=10을 기억하는 클로저입니다. add5(3)=8, add10(3)=13, add10(1)=11이므로 add5(11)=16입니다."
+console.log(result);`}
+answer="[1, 9, 25]"
+explanation="먼저 filter로 홀수만 걸러내면 [1, 3, 5]가 됩니다. 그 다음 map으로 각 요소를 제곱하면 [1, 9, 25]가 됩니다."
 />
 
   <ArticleQuizItem
     mode="description"
-    question="아래 코드의 출력 순서와 결과를 입력하세요. (예: A, B, C 순서로 출력)"
-    code={`console.log("A");
-
-setTimeout(() => {
-console.log("B");
-}, 0);
-
-Promise.resolve().then(() => {
-console.log("C");
-});
-
-console.log("D");`}
-answer="A, D, C, B"
-explanation="동기 코드(A, D)가 먼저 실행됩니다. 그 다음 마이크로태스크 큐(Promise .then → C)가 매크로태스크 큐(setTimeout → B)보다 먼저 처리됩니다."
-/>
-
+    question="아래 코드에서 a, b, rest의 값을 순서대로 입력하세요."
+    code={`const [a, b, ...rest] = [10, 20, 30, 40, 50];
+console.log(a);
+console.log(b);
+console.log(rest);`}
+    answer="10, 20, [30, 40, 50]"
+    explanation="배열 구조 분해로 a=10, b=20이 할당되고, Rest 파라미터(...)로 나머지 [30, 40, 50]이 rest에 할당됩니다."
+  />
   <ArticleQuizItem
     mode="description"
-    question="아래 코드에서 result의 값은 무엇인가요?"
-    code={`async function fetchData() {
-  return 42;
-}
-
-const result = fetchData();
-console.log(result instanceof Promise);`}
-answer="true"
-explanation="async 함수는 항상 Promise를 반환합니다. return 42를 해도 Promise.resolve(42)로 래핑됩니다. 따라서 result는 Promise 인스턴스이고 instanceof Promise는 true입니다."
-/>
-
+    question="아래 코드의 출력 결과는 무엇인가요?"
+    code={`const user = null;
+const name = user?.profile?.name ?? "익명";
+console.log(name);`}
+    answer="익명"
+    explanation="user가 null이므로 user?.profile?.name은 undefined를 반환합니다. undefined ?? '익명'에서 null 병합 연산자는 undefined일 때 오른쪽을 반환하므로 '익명'이 출력됩니다."
+  />
 </ArticleQuiz>
 
 ---
@@ -426,16 +458,16 @@ explanation="async 함수는 항상 Promise를 반환합니다. return 42를 해
   남겨주세요.
 </Paragraph>
 
-> **Q1. 클로저(Closure)란 무엇인가요? 실제 활용 사례를 하나 들어 설명해주세요.**
+> **Q1. map, filter, reduce의 차이를 각각 설명하고, 어떤 상황에서 어떤 메서드를 선택하는지 설명해주세요.**
 >
 > <br />
 >
-> **Q2. async/await와 Promise의 관계를 설명해주세요. async 함수의 반환값은 어떤 타입인가요?**
+> **Q2. 옵셔널 체이닝(?.)과 null 병합 연산자(??)를 설명하고, `||` 연산자와 `??`의 차이를 예시와 함께 설명해주세요.**
 
 ---
 
 <Subtitle level={2}>관련 포스팅</Subtitle>
 
-- <Anchor href="/blog/study/clab-26-1/week8">
-    프론트엔드 스터디 8주차 학습 자료: 불변성, 프로토타입, 타입 체크
+- <Anchor href="/blog/study/clab-26-1/week9">
+    프론트엔드 스터디 9주차 학습 자료: 클로저, Promise, async/await
   </Anchor>
