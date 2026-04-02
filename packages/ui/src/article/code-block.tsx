@@ -80,11 +80,13 @@ export function FullscreenView({
   onClose,
   children,
   rotate,
+  zIndex = 50,
 }: {
   language?: string;
   onClose: () => void;
   children: ReactNode;
   rotate?: boolean;
+  zIndex?: number;
 }) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pressing, setPressing] = useState(false);
@@ -139,7 +141,8 @@ export function FullscreenView({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-gray-900"
+      className="fixed inset-0 bg-gray-900"
+      style={{ zIndex }}
       onTouchStart={handlePressStart}
       onTouchEnd={handlePressEnd}
       onTouchCancel={handlePressEnd}

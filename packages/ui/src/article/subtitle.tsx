@@ -4,6 +4,7 @@ import type { SubtitleProps } from "./article.types";
 const levelClasses = {
   2: "text-xl font-bold sm:text-2xl md:text-3xl",
   3: "text-lg font-semibold sm:text-xl md:text-2xl",
+  4: "text-base font-semibold sm:text-lg md:text-xl",
 } as const;
 
 export function Subtitle({

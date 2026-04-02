@@ -42,6 +42,10 @@ export function PresentationView({
     html: string;
     language: string;
   } | null>(null);
+  const fullscreenCodeRef = useRef<{ html: string; language: string } | null>(
+    null,
+  );
+  fullscreenCodeRef.current = fullscreenCode;
   const [pcScale, setPcScale] = useState(DEFAULT_pcScale);
 
   const [isMobile] = useState(() => {
@@ -113,7 +117,7 @@ export function PresentationView({
 
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (fullscreenCode) {
+        if (fullscreenCodeRef.current) {
           setFullscreenCode(null);
         } else {
           safeClose();
@@ -135,7 +139,7 @@ export function PresentationView({
       document.body.style.overflow = prev;
       document.removeEventListener("keydown", handleKey);
     };
-  }, [safeClose, totalSlides, fullscreenCode, goToNext]);
+  }, [safeClose, totalSlides, goToNext]);
 
   useEffect(() => {
     if (!slideContentRef.current || !slides[currentSlide]) return;
@@ -342,7 +346,8 @@ export function PresentationView({
           <FullscreenView
             language={fullscreenCode.language}
             onClose={() => setFullscreenCode(null)}
-            rotate={false}
+            rotate={needsRotation}
+            zIndex={60}
           >
             <code
               className="font-mono"
