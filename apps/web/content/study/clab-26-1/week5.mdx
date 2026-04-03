@@ -459,13 +459,33 @@ console.log(0 === false);`}
 
 <Subtitle level={2}>📝 5주차 스터디 인증 미션</Subtitle>
 
-<Paragraph>
-  다가오는 스터디 모임 전, 아래 질문에 대해 본인만의 말로 설명한 뒤 댓글로
-  남겨주세요.
-</Paragraph>
+<Paragraph>아래 질문 중 하나를 직접 찾아보고 답을 댓글로 남겨주세요.</Paragraph>
 
-> **Q1. `null`과 `undefined`의 차이를 설명해주세요. 본인이 이해한 방식으로 자유롭게 적어주세요.**
->
-> <br />
->
-> **Q2. `==`와 `===`의 차이는 무엇인가요? 실무에서 `===`를 권장하는 이유를 포함해서 설명해주세요.**
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="description"
+    question="typeof NaN의 결과는 무엇인가요? 왜 그런 결과가 나오는지 JS 스펙(IEEE 754) 관점에서 찾아보고, NaN인지 확인하는 올바른 방법은 무엇인지 설명하세요."
+    answer="typeof NaN은 'number'입니다. NaN은 IEEE 754 부동소수점 표준에서 정의한 '숫자가 아님을 나타내는 숫자 값'이기 때문입니다. NaN인지 확인하려면 Number.isNaN()을 사용해야 합니다. 전역 isNaN()은 인자를 숫자로 변환한 뒤 판단하므로 isNaN('hello')가 true를 반환하는 등 부정확할 수 있습니다."
+    explanation="NaN은 number 타입에 속하는 특수한 값입니다. IEEE 754 표준에서 수학적으로 정의할 수 없는 연산 결과(0/0, Infinity - Infinity 등)를 나타내기 위해 만들어졌습니다. Number.isNaN()은 타입 변환 없이 정확히 NaN인지 확인합니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="아래 코드의 실행 결과를 예측하고, 왜 그런 결과가 나오는지 TDZ(Temporal Dead Zone) 개념을 사용해 설명하세요."
+    code={`console.log(a);
+let a = 1;`}
+    answer="ReferenceError가 발생합니다. let으로 선언한 변수는 호이스팅은 되지만, 선언문에 도달하기 전까지 TDZ(Temporal Dead Zone)에 놓여 접근할 수 없기 때문입니다."
+    explanation="var는 호이스팅 시 undefined로 초기화되지만, let/const는 호이스팅은 되더라도 초기화가 선언문에서 이루어집니다. 선언문 이전의 구간이 TDZ이며, 이 구간에서 접근하면 ReferenceError가 발생합니다. 이 동작이 var보다 안전한 이유이기도 합니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="null == undefined는 true인데, null === undefined는 false입니다. 왜 이런 차이가 나는지 == 연산자의 타입 변환 규칙을 찾아보고 설명하세요."
+    answer="== 연산자는 ECMAScript 스펙에서 null과 undefined를 비교할 때 특별 규칙으로 true를 반환하도록 정의되어 있습니다. 반면 === 연산자는 타입 변환 없이 비교하므로 null(object 타입)과 undefined(undefined 타입)는 타입이 달라 false를 반환합니다."
+    explanation="== 연산자의 Abstract Equality Comparison 알고리즘에서 null과 undefined는 서로에 대해서만 동등(equal)하다고 정의합니다. 다른 값(0, '', false 등)과는 == 비교해도 false입니다. 이 특수 규칙 때문에 value == null로 null과 undefined를 동시에 체크하는 패턴이 실무에서 예외적으로 허용됩니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="JavaScript의 falsy 값 6가지를 나열하세요. 그리고 빈 배열 []이 falsy가 아닌 이유를 설명하세요."
+    answer="falsy 값 6가지: false, 0, ''(빈 문자열), null, undefined, NaN. 빈 배열 []은 객체(object)이고, JS에서 모든 객체는 truthy입니다. 배열의 길이가 0이더라도 객체 자체가 존재하므로 truthy로 평가됩니다."
+    explanation="JS에서 falsy로 정의된 값은 정확히 6가지뿐이며, 그 외 모든 값은 truthy입니다. 빈 객체 {}와 빈 배열 []은 값이 비어있어 보이지만 객체이므로 truthy입니다. 배열이 비어있는지 확인하려면 arr.length === 0으로 명시적으로 검사해야 합니다."
+  />
+</ArticleQuiz>

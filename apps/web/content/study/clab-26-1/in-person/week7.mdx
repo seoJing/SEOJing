@@ -48,6 +48,75 @@ description: 6주차 JS 기초 복습과 과제 풀이, 그리고 이번 주 핵
 - <strong>`||`</strong>: 왼쪽이 falsy면 오른쪽 반환 (기본값 패턴)
 - <strong>`&&`</strong>: 왼쪽이 truthy면 오른쪽 반환 (조건부 실행 패턴)
 
+<Subtitle level={3}>자주 헷갈리는 포인트 — 코드로 확인</Subtitle>
+
+<Subtitle level={3}>참조 복사의 함정</Subtitle>
+
+<Paragraph>
+  원시 타입(숫자, 문자열 등)은 값이 복사되지만, 객체는{" "}
+  <strong>참조(주소)가 복사</strong>됩니다. 같은 객체를 두 변수가 바라보게
+  되므로 한쪽을 바꾸면 다른 쪽도 바뀝니다.
+</Paragraph>
+
+```js
+// 원시 타입 — 값 복사 (독립적)
+let a = 1;
+let b = a;
+b = 99;
+console.log(a); // 1 — 영향 없음
+
+// 객체 — 참조 복사 (같은 객체를 가리킴)
+const obj1 = { x: 1 };
+const obj2 = obj1; // obj2는 obj1과 같은 객체를 가리킴
+obj2.x = 99;
+console.log(obj1.x); // 99 — !obj1도 바뀜!
+```
+
+<Subtitle level={3}>일급 객체가 왜 중요한가 — React와 연결</Subtitle>
+
+<Paragraph>
+  함수가 일급 객체라는 것은 <strong>함수를 값처럼 다룰 수 있다</strong>는
+  뜻입니다. 이게 왜 중요할까요? React에서 매일 쓰는 코드가 이 덕분에 동작합니다.
+</Paragraph>
+
+```jsx
+// React에서 이벤트 핸들러를 전달하는 코드
+function App() {
+  const handleClick = () => alert("클릭!");
+
+  // handleClick 함수를 값으로 전달 — 일급 객체이기 때문에 가능
+  return <button onClick={handleClick}>클릭</button>;
+}
+
+// 배열 메서드에 함수를 인자로 전달하는 것도 같은 원리
+const nums = [1, 2, 3];
+const doubled = nums.map((n) => n * 2); // [2, 4, 6]
+```
+
+<Subtitle level={3}>렉시컬 스코프 — 함수는 작성된 곳의 규칙을 따른다</Subtitle>
+
+<Paragraph>
+  "함수가 어디서 <strong>호출</strong>되는지"가 아니라 "어디서{" "}
+  <strong>작성</strong>되었는지"가 스코프를 결정합니다. 전학생 비유로: 학생이
+  다른 반에 놀러 가도(호출 위치), 소속 반(선언 위치)의 규칙을 따르는 것과
+  같습니다.
+</Paragraph>
+
+```js
+const x = 1; // 전역에서 선언
+
+function foo() {
+  console.log(x); // foo는 전역에서 작성됨 → 전역의 x를 봄
+}
+
+function bar() {
+  const x = 2; // bar 안의 x
+  foo(); // foo를 bar 안에서 호출해도...
+}
+
+bar(); // 1 출력 — foo는 전역에서 작성됐으므로 전역의 x(1)를 참조
+```
+
 ---
 
 <Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>

@@ -1,226 +1,349 @@
 ---
-title: "프론트엔드 스터디 대면 12주차: 에러 처리, 정규 표현식 — 1학기 마무리"
+title: "프론트엔드 스터디 대면 12주차: React 심화 — useState와 useEffect"
 date: 2026-06-06
 tags:
   - 프론트엔드
   - 스터디
-  - JavaScript
-  - 에러처리
-  - 정규표현식
-description: 11주차 복습과 과제 풀이, 면접 질문을 다루고, 1학기 JS 스터디를 마무리합니다. 하계 TypeScript 스터디와 2학기 React 스터디 안내도 함께 합니다.
+  - React
+  - useState
+  - useEffect
+  - 훅
+description: React의 핵심인 상태 관리(useState)와 사이드 이펙트(useEffect)를 다룹니다. 1학기를 마무리하며 2학기와 하계 스터디 방향도 함께 이야기합니다.
 ---
 
-<Subtitle level={2}>1. 저번 주 복습</Subtitle>
+<Subtitle level={2}>1. 저번 주 복습 — 컴포넌트, JSX, props</Subtitle>
 
 <Paragraph>
-  지난주에는 this 바인딩, 실행 컨텍스트, 이터러블과 Set/Map을 배웠습니다. 핵심만
+  지난주에는 React를 처음 시작하며 컴포넌트, JSX, props를 배웠습니다. 핵심만
   빠르게 짚어보겠습니다.
 </Paragraph>
 
-<Subtitle level={3}>this 바인딩</Subtitle>
+<Subtitle level={3}>컴포넌트</Subtitle>
 
-- <strong>일반 함수 호출</strong>: 전역 객체 (`window`) — strict mode에서는
-  `undefined`
-- <strong>메서드 호출</strong>: 호출한 객체
-- <strong>생성자 호출</strong>: 새로 생성되는 인스턴스
-- <strong>명시적 바인딩</strong>: `call` / `apply` (즉시 호출), `bind` (새 함수
-  반환)
-- <strong>화살표 함수</strong>: 자체 `this` 없음 — 선언 시점 상위 스코프의
-  `this` 사용 (렉시컬 this)
+- <strong>함수형 컴포넌트</strong>: props를 받아 JSX를 반환하는 JS 함수
+- <strong>이름은 대문자</strong>: 소문자이면 HTML 태그로 처리됨
+- <strong>재사용 가능</strong>: 레고처럼 조합해서 복잡한 UI 구성
 
-<Subtitle level={3}>실행 컨텍스트</Subtitle>
+<Subtitle level={3}>JSX 핵심 규칙</Subtitle>
 
-- <strong>역할</strong>: 코드가 실행될 때 생성되는 환경 정보 묶음 — 변수, 스코프
-  체인, this 포함
-- <strong>콜 스택</strong>: 함수 호출마다 실행 컨텍스트가 쌓이고, 종료 시 제거
-- <strong>연결</strong>: 호이스팅·스코프·클로저 모두 실행 컨텍스트 메커니즘으로
-  설명 가능
+- <strong>{} 안에 JS 표현식</strong>: `{name}`, `{1 + 1}`, `
+  {isAdmin && <Badge />}`
+- <strong>class → className</strong>: `class`는 JS 예약어
+- <strong>Fragment</strong>: `<>...</>`로 감싸면 불필요한 DOM 노드 없이 여러
+  요소 반환
 
-<Subtitle level={3}>Set / Map</Subtitle>
+<Subtitle level={3}>props</Subtitle>
 
-- <strong>Set</strong>: 중복 없는 값의 집합. `[...new Set(arr)]`로 배열 중복
-  제거
-- <strong>Map</strong>: 어떤 타입이든 키로 사용 가능. 삽입 순서 보장, `size`
-  프로퍼티 제공
+- <strong>부모 → 자식 단방향</strong>: 자식은 읽기만 가능, 수정 불가
+- <strong>구조 분해로 수신</strong>: `function Card({ title, desc }) {}`
+- <strong>key prop</strong>: 리스트 렌더링 시 필수 — 고유한 id 사용
 
 ---
 
 <Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
 
-<Subtitle level={3}>학습 자료 11주차 과제</Subtitle>
+<Subtitle level={3}>대면 11주차 인증 미션</Subtitle>
 
 <Paragraph>
-  <strong>
-    Q1. JavaScript에서 this는 어떻게 결정되나요? 화살표 함수의 this가 일반
-    함수와 다른 이유를 포함해서 설명해주세요.
-  </strong>
+  <strong>Q1. JSX에서 JS 표현식 사용 방법과 조건부 렌더링 2가지</strong>
 </Paragraph>
 
 <Paragraph>
-  `this`는 함수가 선언된 위치가 아니라 <strong>호출되는 방식</strong>에 따라
-  동적으로 결정됩니다. 메서드 호출이면 호출한 객체, 일반 함수 호출이면 전역
-  객체, `new`이면 새 인스턴스, `call/apply/bind`이면 명시적으로 지정한
-  객체입니다.
+  JSX에서 JS 표현식은 `{}` 안에 작성합니다. 조건부 렌더링 방법: (1) `&&` 연산자:
+  조건이 `true`일 때만 렌더링합니다. `{isLoggedIn && <Dashboard />}` (2) 삼항
+  연산자: true/false에 따라 다른 것을 렌더링합니다. `
+  {isLoggedIn ? <Dashboard /> : <Login />}`
 </Paragraph>
 
 <Paragraph>
-  화살표 함수는 자체 `this`를 가지지 않고{" "}
-  <strong>선언 시점의 상위 스코프 `this`를 캡처</strong>합니다. 호출 방식에
-  영향받지 않으므로, 콜백이나 이벤트 핸들러에서 `this`를 유지해야 할 때
-  유용합니다.
+  <strong>Q2. 컴포넌트 이름이 대문자여야 하는 이유</strong>
 </Paragraph>
 
 <Paragraph>
-  <strong>
-    Q2. 일반 객체({})와 Map의 차이를 설명하고, 어떤 상황에서 Map을 선택하는 게
-    나은지 예시와 함께 설명해주세요.
-  </strong>
+  소문자는 HTML 태그, 대문자는 컴포넌트로 구분합니다. JSX가
+  `React.createElement()`로 변환될 때 소문자는 문자열(`'button'`)로, 대문자는
+  함수 참조(`Button`)로 전달됩니다.
 </Paragraph>
 
-- <strong>키 타입</strong>: 일반 객체는 문자열/심볼만, Map은 어떤 타입이든 가능
-- <strong>크기 확인</strong>: 일반 객체는 `Object.keys(obj).length`, Map은
-  `map.size`
-- <strong>순서 보장</strong>: Map은 삽입 순서 보장, 일반 객체는 정수 키 먼저
-  정렬됨
-- <strong>선택 기준</strong>: 키가 문자열이고 단순 데이터 저장이면 객체, 키
-  타입이 다양하거나 순서·크기가 중요하면 Map
+<Paragraph>
+  <strong>Q3. props가 읽기 전용이어야 하는 이유</strong>
+</Paragraph>
+
+<Paragraph>
+  React는 <strong>단방향 데이터 흐름(부모 → 자식)</strong>을 원칙으로 합니다.
+  자식이 props를 수정하면 데이터 흐름이 깨지고, 어느 컴포넌트가 데이터를
+  변경했는지 추적하기 어려워집니다. 데이터 변경은 반드시 소유자(부모)에서만 해야
+  합니다.
+</Paragraph>
 
 ---
 
-<Subtitle level={2}>3. 면접 질문</Subtitle>
+<Subtitle level={2}>3. useState — 컴포넌트가 기억하는 값</Subtitle>
 
 <Paragraph>
-  이번 주 범위와 관련된 면접 질문들입니다. 1학기 마지막 면접 질문입니다.
+  일반 JS 변수는 컴포넌트가 리렌더링될 때마다 초기화됩니다.{" "}
+  <strong>useState</strong>는 렌더링 사이에도 값을 유지합니다.
 </Paragraph>
 
-<Subtitle level={3}>Q1. try/catch/finally는 각각 언제 실행되나요?</Subtitle>
+```jsx
+import { useState } from "react";
 
-- <strong>`try`</strong>: 에러가 발생할 수 있는 코드를 감싼 블록. 에러가 없으면
-  전부 실행
-- <strong>`catch`</strong>: `try` 블록에서 에러가 발생했을 때 실행. 에러 객체를
-  인자로 받음
-- <strong>`finally`</strong>: 에러 발생 여부와 관계없이
-  <strong>항상 실행</strong>. `return`이나 re-throw 후에도 실행
+function Counter() {
+  // [현재 값, 값을 바꾸는 함수]
+  const [count, setCount] = useState(0); // 초기값 0
 
-```js
-async function loadData() {
-  try {
-    const data = await fetch("/api/data").then((r) => r.json());
-    return data;
-  } catch (err) {
-    console.error("에러:", err.message);
-    throw err; // 상위로 전파
-  } finally {
-    setLoading(false); // 성공/실패 관계없이 로딩 해제
-  }
+  return (
+    <div>
+      <p>현재 카운트: {count}</p>
+      <button onClick={() => setCount(count + 1)}>+1</button>
+      <button onClick={() => setCount(count - 1)}>-1</button>
+    </div>
+  );
 }
 ```
 
+<Subtitle level={3}>state를 직접 변경하면 안 되는 이유</Subtitle>
+
+```jsx
+// ❌ 잘못된 방법 — React가 변경을 감지하지 못함
+count++;
+count = count + 1;
+
+// ✅ 올바른 방법 — setState로만 변경
+setCount(count + 1);
+```
+
 <Paragraph>
-  면접 팁: "finally는 리소스 정리(파일 닫기, 로딩 스피너 해제 등)에 사용합니다.
-  React에서 데이터 페칭 시 `setLoading(false)`를 finally에 두면 성공·실패
-  양쪽에서 로딩 상태를 안전하게 해제할 수 있습니다"라고 연결하면 좋습니다.
+  React는 `setState`가 호출될 때 상태 변경을 감지하고 리렌더링합니다. 직접
+  변경하면 React가 모르기 때문에 화면이 업데이트되지 않습니다.
 </Paragraph>
 
+<Subtitle level={3}>이전 상태 기반 업데이트 — 함수형 업데이트</Subtitle>
+
+```jsx
+// ❌ 클로저 함정 — 오래된 count를 참조할 수 있음
+setCount(count + 1);
+
+// ✅ 함수형 업데이트 — 항상 최신 상태를 받음
+setCount((prev) => prev + 1);
+```
+
+<Paragraph>
+  버튼을 빠르게 여러 번 클릭하거나 비동기 처리에서 상태를 업데이트할 때는{" "}
+  <strong>함수형 업데이트</strong>를 사용해야 안전합니다.
+</Paragraph>
+
+<Subtitle level={3}>객체 상태 — 스프레드로 불변 업데이트</Subtitle>
+
+```jsx
+const [user, setUser] = useState({ name: "철수", age: 25 });
+
+// ❌ 직접 수정 — 안 됨
+user.age = 26;
+
+// ✅ 스프레드로 새 객체 생성
+setUser((prev) => ({ ...prev, age: prev.age + 1 }));
+// { name: '철수', age: 26 }
+```
+
+<Paragraph>
+  <strong>지난 주 클로저 + 불변성 개념이 여기서 만납니다.</strong> `prev =>`
+  패턴은 클로저를 통해 최신 상태를 받고, 스프레드로 불변 업데이트를 합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. useEffect — 렌더링 이후 실행되는 사이드 이펙트</Subtitle>
+
+<Paragraph>
+  <strong>사이드 이펙트</strong>란 컴포넌트 외부에 영향을 주는 작업입니다 — API
+  호출, 타이머 설정, DOM 직접 조작 등. useEffect는 이런 작업을 렌더링 이후에
+  실행합니다.
+</Paragraph>
+
+<Subtitle level={3}>기본 구조와 의존성 배열</Subtitle>
+
+```jsx
+import { useState, useEffect } from "react";
+
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    // 렌더링 이후에 실행
+    fetch(`/api/users/${userId}`)
+      .then((res) => res.json())
+      .then((data) => setUser(data));
+  }, [userId]); // ← 의존성 배열: userId가 바뀔 때마다 재실행
+
+  return <div>{user?.name}</div>;
+}
+```
+
+<Subtitle level={3}>의존성 배열 3가지 패턴</Subtitle>
+
+```jsx
+// 1. 빈 배열 [] — 마운트 시 한 번만 실행
+useEffect(() => {
+  console.log("컴포넌트가 처음 나타났을 때 한 번만");
+}, []);
+
+// 2. 값이 있는 배열 [dep] — dep이 바뀔 때마다 실행
+useEffect(() => {
+  console.log("userId가 바뀔 때마다");
+}, [userId]);
+
+// 3. 배열 없음 — 매 렌더링마다 실행 (거의 안 씀)
+useEffect(() => {
+  console.log("렌더링할 때마다");
+});
+```
+
+<Subtitle level={3}>async/await + try/catch 패턴</Subtitle>
+
+```jsx
+// useEffect 안에서 async 직접 사용 불가
+// ❌ 잘못된 방법
+useEffect(async () => {
+  const data = await fetch("/api/data");
+});
+
+// ✅ 올바른 방법 — 내부에 async 함수 정의 후 호출
+useEffect(() => {
+  async function loadData() {
+    try {
+      const res = await fetch("/api/data");
+      const data = await res.json();
+      setData(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadData();
+}, []);
+```
+
+<Subtitle level={3}>클린업 함수 — 정리하기</Subtitle>
+
+```jsx
+useEffect(() => {
+  const timer = setInterval(() => {
+    setCount((prev) => prev + 1);
+  }, 1000);
+
+  // 클린업 함수 — 컴포넌트가 사라지거나 의존성이 바뀌기 전에 실행
+  return () => clearInterval(timer);
+}, []);
+```
+
+<Paragraph>
+  타이머, 이벤트 리스너 등을 설정했다면 반드시 클린업 함수에서 제거해야 메모리
+  누수를 방지할 수 있습니다.
+</Paragraph>
+
+<Subtitle level={3}>클로저와 stale closure 버그</Subtitle>
+
+<Paragraph>
+  useEffect와 클로저가 만나는 곳에서 버그가 자주 발생합니다. 의존성 배열에
+  사용하는 값을 빠뜨리면 오래된 클로저(stale closure)를 참조합니다.
+</Paragraph>
+
+```jsx
+// ❌ 버그 — count를 사용하지만 의존성에 없음
+useEffect(() => {
+  const timer = setInterval(() => {
+    console.log(count); // 항상 초기값(0)을 출력
+  }, 1000);
+  return () => clearInterval(timer);
+}, []); // count를 빠뜨림
+
+// ✅ 해결 — 함수형 업데이트로 의존성 회피
+useEffect(() => {
+  const timer = setInterval(() => {
+    setCount((prev) => prev + 1); // 함수형 업데이트로 count 의존성 제거
+  }, 1000);
+  return () => clearInterval(timer);
+}, []);
+```
+
+---
+
+<Subtitle level={2}>5. 면접 질문</Subtitle>
+
 <Subtitle level={3}>
-  Q2. 에러를 instanceof로 구별하는 이유는 무엇인가요?
+  Q1. useState에서 state를 직접 변경하면 안 되는 이유는?
 </Subtitle>
 
 <Paragraph>
-  `err.message`는 문자열이라 정확한 분기가 어렵습니다. 커스텀 에러 클래스를
-  만들어 `Error`를 상속하면 `instanceof`로 에러 종류를 명확하게 구별할 수
+  React는 setState 호출을 감지해서 리렌더링합니다. 직접 변경하면 React가 변경을
+  모르기 때문에 화면이 업데이트되지 않습니다. 또한 불변성을 유지해야 이전
+  상태와의 비교가 가능하고 React의 최적화 기능(memo, useMemo 등)이 올바르게
+  동작합니다.
+</Paragraph>
+
+<Subtitle level={3}>Q2. useEffect의 의존성 배열은 왜 필요한가요?</Subtitle>
+
+<Paragraph>
+  의존성 배열은 effect가 <strong>언제 재실행될지</strong>를 제어합니다. 배열이
+  없으면 매 렌더링마다, 빈 배열이면 마운트 시 한 번만, 값이 있으면 그 값이
+  변경될 때만 실행됩니다. 의존성을 잘못 명시하면 stale closure 버그가 발생할 수
   있습니다.
 </Paragraph>
 
-```js
-class NetworkError extends Error {
-  constructor(msg, status) {
-    super(msg);
-    this.name = "NetworkError";
-    this.status = status;
-  }
-}
-
-try {
-  throw new NetworkError("서버 오류", 500);
-} catch (err) {
-  if (err instanceof NetworkError) {
-    // 네트워크 에러 전용 처리
-  } else {
-    throw err; // 모르는 에러는 다시 전파
-  }
-}
-```
-
-<Subtitle level={3}>Q3. 정규 표현식은 어떤 상황에서 사용하나요?</Subtitle>
+<Subtitle level={3}>Q3. 빈 의존성 배열 []의 의미는?</Subtitle>
 
 <Paragraph>
-  정규 표현식은 <strong>문자열의 패턴을 검사하거나 추출·치환</strong>할 때
-  사용합니다. 실무에서 자주 쓰는 사례는 세 가지입니다.
-</Paragraph>
-
-- <strong>입력 유효성 검사</strong>: 이메일, 전화번호, 비밀번호 형식 검사
-- <strong>문자열 파싱</strong>: URL에서 도메인 추출, 날짜 포맷 파싱
-- <strong>포맷 변환</strong>: `YYYY-MM-DD` → `YYYY.MM.DD` 변환
-
-<Paragraph>
-  면접 팁: "정규 표현식을 무조건 쓰는 것보다, 단순한 경우는 `includes`,
-  `startsWith`, `split` 등으로 처리하고 복잡한 패턴에만 정규 표현식을 사용하는
-  게 가독성이 좋습니다" 라고 답하면 실무 감각이 있다는 인상을 줍니다.
+  컴포넌트가 처음 화면에 나타날 때(마운트) 한 번만 실행됩니다. API 초기 데이터
+  로딩, 이벤트 리스너 등록 등에 주로 사용합니다. 컴포넌트가 화면에서 사라질
+  때(언마운트) 클린업 함수가 실행됩니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>4. 관련 포스팅</Subtitle>
+<Subtitle level={2}>6. 1학기 마무리</Subtitle>
 
-- <Anchor href="/blog/study/clab-26-1/week11">
-    프론트엔드 스터디 11주차 학습 자료: this, 실행 컨텍스트, 이터러블
-  </Anchor>
-- <Anchor href="/blog/study/clab-26-1/week12">
-    프론트엔드 스터디 12주차 학습 자료: 에러 처리와 정규 표현식
+<Paragraph>
+  1학기를 돌아보면 HTML/CSS로 화면 구조와 스타일링을 배우고, JavaScript로 동작
+  원리를 이해했으며, 이번 주까지 React의 핵심을 맛봤습니다.
+</Paragraph>
+
+| 구간      | 주제                                              |
+| :-------- | :------------------------------------------------ |
+| 1~4주차   | HTML/CSS — 구조, 스타일, 레이아웃                 |
+| 5~8주차   | JS 기초 — 타입/스코프/클로저/비동기               |
+| 9~10주차  | JS 브릿지 — React를 위한 ES6+ 문법                |
+| 11~12주차 | React 입문 — 컴포넌트, props, useState, useEffect |
+
+<Subtitle level={3}>2학기 예고 — React 심화</Subtitle>
+
+- <strong>커스텀 훅(Custom Hook)</strong>: 상태 로직을 재사용 가능한 형태로 추출
+- <strong>상태 관리</strong>: Context API, Zustand, Recoil 등
+- <strong>라우팅</strong>: React Router로 SPA 멀티페이지 구현
+- <strong>TypeScript</strong>: 타입 안전성으로 대규모 앱 개발
+- <strong>Next.js</strong>: SSR, SSG, 파일 기반 라우팅
+
+<Subtitle level={3}>하계 TypeScript 스터디 안내</Subtitle>
+
+<Paragraph>
+  여름 방학 기간에 <strong>TypeScript 선택 스터디</strong>를 진행합니다. 2학기
+  React 심화를 위한 준비 과정으로, 타입 시스템과 기본 문법을 다룹니다. 관심
+  있으신 분은 별도 안내를 확인해주세요.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>7. 관련 포스팅</Subtitle>
+
+- <Anchor href="/blog/study/clab-26-1/week9">
+    프론트엔드 스터디 9주차: React 입문 전 필수 JS 문법
   </Anchor>
 
 ---
 
-<Subtitle level={2}>5. 1학기 마무리 — 그리고 앞으로</Subtitle>
-
 <Paragraph>
-  지금까지 12주 동안 정말 수고 많으셨습니다. HTML/CSS부터 시작해서 JavaScript의
-  핵심 개념들을 모두 다뤘습니다. 처음엔 낯설었던 프로토타입, 클로저, 비동기
-  처리가 이제는 설명할 수 있는 개념이 되었을 것입니다.
-</Paragraph>
-
-<Subtitle level={3}>하계 방학 — TypeScript 스터디 (온라인, 선택)</Subtitle>
-
-<Paragraph>
-  하계 방학 중에 <strong>TypeScript 온라인 스터디</strong>를 운영할 예정입니다.
-</Paragraph>
-
-- <strong>형식</strong>: 온라인 비대면, 자율 참여 —
-  <strong>필수가 아닙니다</strong>
-- <strong>내용</strong>: JS 위에서 타입 시스템을 더하는 TypeScript 기초
-- <strong>목적</strong>: 2학기 React 스터디를 TypeScript로 진행할 예정이라, 미리
-  익혀두면 훨씬 수월합니다
-- 참여 의사가 있으신 분은 별도로 공지드릴 예정입니다
-
-<Subtitle level={3}>2학기 — React 스터디 (본격 시작)</Subtitle>
-
-<Paragraph>
-  2학기에는 본격적으로 <strong>React</strong>를 다룹니다.
-</Paragraph>
-
-- <strong>초반</strong>: React를 JavaScript 기반으로 진행합니다 — 아직
-  TypeScript를 배우지 않아도 합류할 수 있습니다
-- <strong>연결</strong>: 하계 방학 중 TS 스터디 자료를 보고 중간에 합류하는 것도
-  충분히 가능합니다
-- 지금까지 배운 JS 개념들(클로저, 비동기, 배열 고차함수, 구조 분해)이 React에서 바로 활용됩니다
-
-<Paragraph>
-  이번 학기 인증 미션으로 남긴 댓글들은 <strong>포트폴리오 활동 기록</strong>
-  으로 활용하실 수 있습니다. GitHub Discussions 기반의 댓글이라 링크로
-  공유하기도 편합니다. 정리해두시면 나중에 도움이 됩니다.
-</Paragraph>
-
-<Paragraph>
-  1학기 동안 함께해 주셔서 감사합니다. 2학기에도 함께 성장해봅시다!
+  1학기 동안 함께해 주셔서 감사합니다. 하계 스터디 혹은 2학기 React 심화에서 또
+  보면 좋겠습니다!
 </Paragraph>

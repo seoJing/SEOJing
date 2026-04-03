@@ -41,6 +41,67 @@ description: 7주차 JS 복습과 과제 풀이, 그리고 이번 주 핵심인 
 - <strong>클로저의 근거</strong>: 렉시컬 스코프로 인해 외부 함수 종료 후에도
   내부 함수가 외부 변수 참조 가능
 
+<Subtitle level={3}>자주 헷갈리는 포인트 — 코드로 확인</Subtitle>
+
+<Subtitle level={3}>참조 vs 값 복사 — 리모컨과 TV 비유</Subtitle>
+
+<Paragraph>
+  `const`는 <strong>리모컨을 바꾸지 못하게</strong> 하는 것입니다. 하지만
+  리모컨이 가리키는 TV의 채널(객체 내부 값)은 마음대로 바꿀 수 있습니다.
+</Paragraph>
+
+```js
+// const는 리모컨(참조)을 고정할 뿐
+const tv = { channel: 5 };
+tv.channel = 11; // 가능 — TV 채널(내부 값) 변경
+console.log(tv.channel); // 11
+
+tv = { channel: 3 }; // TypeError — 리모컨 자체를 바꾸려 하면 에러!
+```
+
+<Subtitle level={3}>프로토타입 체인 — 족보 비유</Subtitle>
+
+<Paragraph>
+  프로토타입 체인은 <strong>족보</strong>와 같습니다. 내가 가진 게 없으면 부모
+  것을 쓰고, 부모도 없으면 조부모 것을 씁니다. 최상위
+  조상(`Object.prototype`)까지 올라가도 없으면 `undefined`입니다.
+</Paragraph>
+
+```js
+function Animal(name) {
+  this.name = name;
+}
+Animal.prototype.speak = function () {
+  return `${this.name}이(가) 소리를 냅니다`;
+};
+
+const dog = new Animal("멍멍이");
+
+// 탐색 순서: dog 자신 → Animal.prototype → Object.prototype
+dog.name; // "멍멍이" — 자신의 프로퍼티
+dog.speak(); // — Animal.prototype에서 찾음 (부모 것)
+dog.toString(); // — Object.prototype에서 찾음 (조부모 것)
+dog.fly; // undefined — 어디에도 없음
+```
+
+<Subtitle level={3}>Array.isArray()가 필요한 이유</Subtitle>
+
+<Paragraph>
+  `typeof`로는 배열과 객체를 구분할 수 없습니다. 배열도 결국 객체이기
+  때문입니다.
+</Paragraph>
+
+```js
+typeof []; // 'object' — 배열인데 object!
+typeof {}; // 'object' — 일반 객체도 object
+typeof null; // 'object' — null도 object (버그)
+
+// 배열 확인은 반드시 Array.isArray() 사용
+Array.isArray([]); // true
+Array.isArray({}); // false
+Array.isArray(null); // false
+```
+
 ---
 
 <Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>

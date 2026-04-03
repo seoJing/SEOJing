@@ -1,33 +1,36 @@
 ---
-title: "프론트엔드 스터디 11주차: 에러 처리와 정규 표현식"
+title: "프론트엔드 스터디 11주차: React 기초 2 — useEffect, 이벤트 처리, 폼"
 date: 2026-06-08
 tags:
   - 프론트엔드
   - 스터디
-  - JavaScript
-  - 에러처리
-  - 정규표현식
-description: 1학기 JS 스터디의 마지막 주차입니다. try/catch 기반 에러 처리, 커스텀 에러, 그리고 실무에서 자주 쓰이는 정규 표현식 패턴을 다룹니다.
+  - React
+  - useEffect
+  - 이벤트
+  - 폼
+description: useEffect로 사이드 이펙트를 다루고, 이벤트 처리와 폼 상태 관리까지 — React로 실제 동작하는 앱을 만들기 위한 핵심 기술을 배웁니다.
 ---
 
 <Subtitle level={2}>11주차 학습 자료</Subtitle>
 
-- <strong>학습 챕터:</strong> poiemaweb — 에러 처리 / 정규 표현식
+- <strong>학습 주제:</strong> React 공식 문서 — useEffect / 이벤트 처리 / 폼
 - <strong>자료 바로가기:</strong>
-  <Anchor external="https://poiemaweb.com/js-error">1. 에러 처리</Anchor>
-  <Anchor external="https://poiemaweb.com/js-regexp">2. 정규 표현식</Anchor>
-- <strong>딥다이브 요약본 (보충용):</strong>
-  <Anchor external="https://github.com/youngminss/Docs-modernJS__deepDive/tree/master/47-Error">
-    딥다이브 요약 GitHub
+  <Anchor external="https://react.dev/reference/react/useEffect">
+    1. useEffect 레퍼런스
+  </Anchor>
+  <Anchor external="https://react.dev/learn/synchronizing-with-effects">
+    2. Synchronizing with Effects
+  </Anchor>
+  <Anchor external="https://react.dev/learn/reacting-to-input-with-state">
+    3. Reacting to Input with State
   </Anchor>
 
 <Paragraph>
-  안녕하세요. 드디어 <strong>1학기 스터디 마지막 주차</strong>입니다. 이번 주는
-  실무에서 바로 쓸 수 있는 두 가지를 다룹니다. <strong>에러 처리</strong>는
-  async/await와 짝을 이루는 개념으로, 프로덕션 코드에서 예외 상황을 안전하게
-  처리하는 방법입니다.
-  <strong>정규 표현식</strong>은 처음 보면 암호처럼 느껴지지만, 자주 쓰는 패턴
-  몇 가지만 익혀두면 실무에서 강력한 도구가 됩니다.
+  안녕하세요. 11주차입니다. 지난 주에 컴포넌트, JSX, props, useState를
+  배웠습니다. 이번 주는 그 위에{" "}
+  <strong>useEffect, 이벤트 처리, 폼 상태 관리</strong> 세 가지를 더합니다. 이
+  세 가지를 익히면 "API에서 데이터를 가져와서 화면에 보여주고, 사용자 입력을
+  받아 처리하는" 실제 앱에 가까운 코드를 작성할 수 있게 됩니다.
 </Paragraph>
 
 ---
@@ -35,355 +38,620 @@ description: 1학기 JS 스터디의 마지막 주차입니다. try/catch 기반
 <Subtitle level={2}>스킵 진단 문제</Subtitle>
 
 <Paragraph>
-  아래 10문제를 막힘없이 풀 수 있다면,{" "}
+  아래 8문제를 막힘없이 풀 수 있다면,{" "}
   <strong>
     이번 주 학습 자료를 생략하거나, 모르는 부분만 선택적으로 읽으셔도 좋습니다.
   </strong>{" "}
-  바로 하단의 더 알면 좋을 것들을 확인해보세요.
+  바로 하단의 본문 섹션들을 확인해보세요.
 </Paragraph>
 
 <ArticleQuiz>
   <ArticleQuizItem
     mode="multiple"
-    question="try/catch/finally에 대한 설명으로 옳은 것은 무엇인가요?"
+    question="useEffect의 의존성 배열이 빈 배열([])이면 어떻게 동작하나요?"
     choices={[
-      "catch는 에러가 없어도 항상 실행된다",
-      "finally는 에러 발생 여부와 관계없이 항상 실행된다",
-      "try 블록에서 return을 하면 finally가 실행되지 않는다",
-      "catch에서 에러를 다시 throw하면 finally가 실행되지 않는다",
+      "매 렌더링마다 실행됨",
+      "컴포넌트가 마운트될 때 한 번만 실행됨",
+      "상태가 변경될 때마다 실행됨",
+      "컴포넌트가 언마운트될 때만 실행됨",
     ]}
     answer={1}
-    explanation="finally 블록은 try/catch 실행 후 에러 여부와 관계없이 항상 실행됩니다. try에서 return을 해도, catch에서 에러를 re-throw 해도 finally는 실행됩니다."
+    explanation="빈 의존성 배열 []은 '의존하는 값이 없다'는 의미이므로, 컴포넌트가 처음 화면에 나타날 때(마운트) 한 번만 실행됩니다. API 초기 데이터 로딩에 주로 사용합니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="Error 객체가 기본으로 가지는 프로퍼티가 아닌 것은 무엇인가요?"
-    choices={["message", "name", "stack", "code"]}
-    answer={3}
-    explanation="Error 객체의 기본 프로퍼티는 message(에러 메시지), name(에러 타입 이름), stack(호출 스택)입니다. code는 기본 프로퍼티가 아니며, 특정 에러 타입(NodeJS 등)에서 추가하는 경우가 있습니다."
-  />
-  <ArticleQuizItem
-    mode="multiple"
-    question="커스텀 에러 클래스를 만들 때 올바른 방법은 무엇인가요?"
+    question="useEffect의 클린업(cleanup) 함수는 언제 실행되나요?"
     choices={[
-      "Error 객체를 직접 수정한다",
-      "class CustomError extends Error로 Error를 상속한다",
-      "throw에 문자열을 전달한다",
-      "window.onerror를 재정의한다",
+      "컴포넌트가 마운트될 때",
+      "컴포넌트가 언마운트되거나, 의존성이 변경되어 effect가 재실행되기 직전",
+      "setState가 호출될 때마다",
+      "브라우저 탭이 닫힐 때만",
     ]}
     answer={1}
-    explanation="커스텀 에러는 Error 클래스를 상속하여 만듭니다. constructor에서 super(message)를 호출하고, this.name을 설정하면 instanceof로 에러 종류를 구별할 수 있습니다."
+    explanation="클린업 함수는 (1) 컴포넌트가 화면에서 사라질 때(언마운트), (2) 의존성이 변경되어 새 effect가 실행되기 직전에 호출됩니다. 타이머 해제, 이벤트 리스너 제거 등에 사용합니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="정규 표현식 /^hello/에서 ^의 의미는 무엇인가요?"
+    question="useEffect 안에서 async 함수를 사용하는 올바른 방법은 무엇인가요?"
     choices={[
-      "hello를 부정한다",
-      "문자열의 시작을 의미한다",
-      "대소문자를 무시한다",
-      "hello를 0번 이상 반복한다",
+      "useEffect(async () => { ... }, [])",
+      "useEffect 내부에 async 함수를 정의하고 호출",
+      "useEffect 밖에서 async 함수를 정의하고 useEffect 안에서 호출",
+      "async/await 대신 반드시 .then()을 사용",
     ]}
     answer={1}
-    explanation="^는 문자열의 시작을 의미하는 앵커입니다. /^hello/는 문자열이 'hello'로 시작하는지를 검사합니다. $는 문자열의 끝을 의미합니다."
+    explanation="useEffect의 콜백 자체를 async로 만들면 Promise를 반환하게 되어 React가 클린업 함수로 인식하지 못합니다. 내부에 별도의 async 함수를 정의하고 호출하는 것이 올바른 패턴입니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="정규 표현식 플래그 g와 i의 의미는 무엇인가요?"
+    question="React에서 이벤트 핸들러를 전달할 때 올바른 방법은 무엇인가요?"
     choices={[
-      "g: 전역 검색 (모든 매칭 반환), i: 대소문자 구분 없이 검색",
-      "g: 탐욕적 매칭, i: 비탐욕적 매칭",
-      "g: 줄바꿈 포함 검색, i: 인덱스 반환",
-      "g: 그룹 캡처, i: 인라인 검색",
-    ]}
-    answer={0}
-    explanation="g(global) 플래그는 매칭을 첫 번째에서 멈추지 않고 모든 매칭을 찾습니다. i(insensitive) 플래그는 대소문자를 구분하지 않고 검색합니다."
-  />
-  <ArticleQuizItem
-    mode="multiple"
-    question="str.replace(/a/g, 'b')와 str.replaceAll('a', 'b')의 동작은 어떻게 다른가요?"
-    choices={[
-      "동작이 완전히 다르다",
-      "동작은 같고 모든 'a'를 'b'로 교체하지만, replaceAll은 ES2021+에서 사용 가능하다",
-      "replace는 첫 번째만, replaceAll은 전부 바꾼다",
-      "replace는 문자열에만, replaceAll은 배열에도 사용 가능하다",
+      "<button onClick={handleClick()}>클릭</button>",
+      "<button onClick={handleClick}>클릭</button>",
+      "<button onclick={handleClick}>클릭</button>",
+      "<button onClick='handleClick()'>클릭</button>",
     ]}
     answer={1}
-    explanation="/a/g와 replaceAll('a', 'b')는 모든 'a'를 'b'로 교체하는 동일한 동작을 합니다. replaceAll은 ES2021에 도입된 더 직관적인 대안입니다."
+    explanation="handleClick()처럼 괄호를 붙이면 렌더링 시점에 즉시 실행됩니다. handleClick처럼 함수 참조를 전달해야 클릭할 때 실행됩니다. 또한 React에서는 onclick이 아닌 onClick(camelCase)을 사용합니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="async 함수 내부에서 에러가 발생하면 어떻게 처리하나요?"
+    question="Controlled Component(제어 컴포넌트) 패턴이란 무엇인가요?"
     choices={[
-      "에러는 자동으로 무시된다",
-      "try/catch 블록으로 처리하거나, 반환된 Promise에 .catch()를 사용한다",
-      "process.exit()가 자동으로 호출된다",
-      "에러는 항상 전역으로 전파된다",
+      "React가 DOM을 직접 제어하는 패턴",
+      "폼 요소의 값을 React state로 관리하여 state가 유일한 데이터 소스가 되는 패턴",
+      "useRef로 DOM 요소를 직접 참조하는 패턴",
+      "컴포넌트를 부모가 완전히 제어하는 패턴",
     ]}
     answer={1}
-    explanation="async 함수에서 에러가 발생하면 반환된 Promise가 rejected 상태가 됩니다. 내부에서 try/catch로 처리하거나, 함수 호출부에서 .catch()로 처리할 수 있습니다."
+    explanation="Controlled Component는 input, textarea 등의 값을 useState로 관리하고, value와 onChange를 함께 사용하는 패턴입니다. React state가 유일한 진실의 원천(Single Source of Truth)이 됩니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="정규 표현식 \\d, \\w, \\s의 의미로 옳은 것은 무엇인가요?"
+    question="폼의 onSubmit 이벤트에서 e.preventDefault()를 호출하는 이유는 무엇인가요?"
     choices={[
-      "\\d: 문자, \\w: 공백, \\s: 숫자",
-      "\\d: 숫자(0-9), \\w: 단어 문자(알파벳·숫자·_), \\s: 공백 문자",
-      "\\d: 대문자, \\w: 소문자, \\s: 특수문자",
-      "\\d: 점(.), \\w: 별표(*), \\s: 슬래시(/)",
+      "이벤트 버블링을 막기 위해",
+      "폼 제출 시 페이지가 새로고침되는 브라우저 기본 동작을 막기 위해",
+      "다른 이벤트 핸들러가 실행되는 것을 막기 위해",
+      "React가 폼 데이터를 자동으로 처리하도록 하기 위해",
     ]}
     answer={1}
-    explanation="\\d는 [0-9]와 동일한 숫자, \\w는 [a-zA-Z0-9_]와 동일한 단어 문자, \\s는 공백·탭·줄바꿈을 포함하는 공백 문자입니다. 대문자 \\D, \\W, \\S는 각각의 부정입니다."
+    explanation="HTML 폼은 submit 시 기본적으로 페이지를 새로고침합니다. SPA(Single Page Application)에서는 페이지 전환 없이 JS로 데이터를 처리해야 하므로 e.preventDefault()로 기본 동작을 막습니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="에러를 catch한 후 다시 throw하는 이유는 무엇인가요?"
+    question="useEffect에서 의존성 배열을 아예 생략하면 어떻게 되나요?"
     choices={[
-      "에러를 숨기기 위해",
-      "현재 레이어에서 처리할 수 없는 에러를 상위 레이어로 전파하기 위해",
-      "에러를 복제하기 위해",
-      "finally 블록을 실행시키기 위해",
+      "컴포넌트가 마운트될 때 한 번만 실행됨",
+      "에러가 발생함",
+      "매 렌더링마다 실행됨",
+      "아무것도 실행되지 않음",
     ]}
-    answer={1}
-    explanation="에러를 로깅하거나 일부 처리 후, 현재 함수에서 완전히 처리할 수 없을 때 re-throw합니다. 예를 들어 네트워크 에러를 잡아 로깅한 뒤, 상위 컴포넌트에서 에러 UI를 보여주도록 전파하는 패턴입니다."
+    answer={2}
+    explanation="의존성 배열을 생략하면 '모든 값에 의존한다'는 의미이므로, 컴포넌트가 렌더링될 때마다 effect가 실행됩니다. 대부분의 경우 의도한 동작이 아니므로 거의 사용하지 않습니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="정규 표현식에서 캡처 그룹 ()의 역할은 무엇인가요?"
+    question="onChange 이벤트에서 입력값을 가져오는 방법은 무엇인가요?"
     choices={[
-      "선택적 매칭을 나타낸다",
-      "매칭된 부분을 그룹으로 묶어 별도로 추출할 수 있게 한다",
-      "0번 이상 반복을 나타낸다",
-      "문자 집합을 정의한다",
+      "e.value",
+      "e.target.value",
+      "e.input.value",
+      "e.currentTarget.text",
     ]}
     answer={1}
-    explanation="()는 캡처 그룹을 만들어 매칭된 부분을 별도로 추출할 수 있습니다. '2026-06-08'.match(/(\d{4})-(\d{2})-(\d{2})/)는 [전체, '2026', '06', '08']을 반환합니다."
+    explanation="이벤트 객체(e)의 target은 이벤트가 발생한 DOM 요소를 가리킵니다. input 요소의 현재 값은 e.target.value로 접근할 수 있습니다."
   />
 </ArticleQuiz>
 
 ---
 
-<Subtitle level={2}>1. 에러 처리 — 안전한 코드 만들기</Subtitle>
+<Subtitle level={2}>1. useEffect — 렌더링 이후 실행되는 작업</Subtitle>
 
-<Subtitle level={3}>try/catch/finally 기본</Subtitle>
+<Paragraph>
+  컴포넌트의 주 역할은 화면(JSX)을 반환하는 것입니다. 하지만 실제 앱에서는
+  화면을 그리는 것 외에도 해야 할 일이 있습니다 — API에서 데이터 가져오기,
+  타이머 설정, 문서 제목 바꾸기 등. 이런{" "}
+  <strong>컴포넌트 외부에 영향을 주는 작업</strong>을{" "}
+  <strong>사이드 이펙트(side effect)</strong>라고 하며, useEffect가 이를
+  담당합니다.
+</Paragraph>
 
-```js
-function divide(a, b) {
-  if (b === 0) throw new Error("0으로 나눌 수 없습니다");
-  return a / b;
-}
+<Paragraph>
+  비유하면, 컴포넌트가 "카페 메뉴판"이라면, useEffect는 "주문이 들어온 뒤
+  주방에서 음료를 만드는 과정"입니다. 메뉴판(화면)을 보여주는 것과 음료를 만드는
+  것(사이드 이펙트)은 분리된 작업입니다.
+</Paragraph>
 
-try {
-  const result = divide(10, 0);
-  console.log(result);
-} catch (err) {
-  console.error(err.message); // "0으로 나눌 수 없습니다"
-  console.error(err.name); // "Error"
-} finally {
-  console.log("항상 실행"); // 에러 여부 관계없이 실행
-}
-```
+<Subtitle level={3}>기본 구조</Subtitle>
 
-<Subtitle level={3}>내장 에러 타입</Subtitle>
+```jsx
+import { useState, useEffect } from "react";
 
-```js
-// JS에서 자주 마주치는 에러 타입들
-try {
-  null.property; // TypeError
-  undeclaredVar; // ReferenceError
-  JSON.parse("{bad}"); // SyntaxError
-} catch (err) {
-  if (err instanceof TypeError) {
-    console.log("타입 에러:", err.message);
-  } else if (err instanceof ReferenceError) {
-    console.log("참조 에러:", err.message);
-  }
-}
-```
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
 
-<Subtitle level={3}>커스텀 에러 — Error 상속</Subtitle>
+  useEffect(() => {
+    // 이 함수는 렌더링 이후에 실행됨
+    fetch(`/api/users/${userId}`)
+      .then((res) => res.json())
+      .then((data) => setUser(data));
+  }, [userId]); // ← 의존성 배열: userId가 바뀔 때마다 재실행
 
-```js
-class ValidationError extends Error {
-  constructor(message, field) {
-    super(message);
-    this.name = "ValidationError";
-    this.field = field;
-  }
-}
-
-class NetworkError extends Error {
-  constructor(message, statusCode) {
-    super(message);
-    this.name = "NetworkError";
-    this.statusCode = statusCode;
-  }
-}
-
-// 에러 종류에 따라 다르게 처리
-try {
-  throw new ValidationError("이메일 형식이 올바르지 않습니다", "email");
-} catch (err) {
-  if (err instanceof ValidationError) {
-    console.log(`[${err.field}] ${err.message}`);
-  } else if (err instanceof NetworkError) {
-    console.log(`HTTP ${err.statusCode}: ${err.message}`);
-  } else {
-    throw err; // 처리할 수 없는 에러는 다시 전파
-  }
+  if (!user) return <p>로딩 중...</p>;
+  return <h1>{user.name}</h1>;
 }
 ```
 
-<Subtitle level={3}>async/await 에러 처리</Subtitle>
+<Subtitle level={3}>의존성 배열 3가지 패턴</Subtitle>
 
-```js
-// 기본 패턴
-async function fetchUser(id) {
-  try {
-    const res = await fetch(`/api/users/${id}`);
-    if (!res.ok) {
-      throw new NetworkError("요청 실패", res.status);
+<Paragraph>
+  의존성 배열은 "이 effect가 <strong>언제 다시 실행될지</strong>"를 결정합니다.
+</Paragraph>
+
+```jsx
+// 패턴 1. 빈 배열 [] — 마운트 시 한 번만 실행
+useEffect(() => {
+  console.log("컴포넌트가 처음 나타났을 때 한 번만");
+}, []);
+
+// 패턴 2. 값이 있는 배열 [dep] — dep이 바뀔 때마다 실행
+useEffect(() => {
+  console.log("userId가 바뀔 때마다 새 데이터를 가져옴");
+}, [userId]);
+
+// 패턴 3. 배열 없음 — 매 렌더링마다 실행 (거의 안 씀)
+useEffect(() => {
+  console.log("렌더링할 때마다 — 주의: 성능 문제 가능");
+});
+```
+
+<Subtitle level={3}>클린업 함수 — 뒷정리하기</Subtitle>
+
+<Paragraph>
+  타이머를 설정했는데 컴포넌트가 화면에서 사라진다면? 타이머는 계속 실행되어{" "}
+  <strong>메모리 누수</strong>가 발생합니다. 클린업 함수는 이런 상황을
+  방지합니다. useEffect에서 함수를 return하면 그것이 클린업 함수가 됩니다.
+</Paragraph>
+
+```jsx
+useEffect(() => {
+  // 설정(setup)
+  const timer = setInterval(() => {
+    setSeconds((prev) => prev + 1);
+  }, 1000);
+
+  // 클린업(cleanup) — 컴포넌트가 사라지거나 의존성이 바뀔 때 실행
+  return () => {
+    clearInterval(timer);
+  };
+}, []);
+```
+
+<Paragraph>
+  클린업 함수가 실행되는 타이밍은 두 가지입니다: (1) 컴포넌트가 화면에서 사라질
+  때(언마운트), (2) 의존성이 변경되어 effect가 재실행되기 직전. 비유하면
+  카페에서 새 메뉴판으로 교체하기 전에 이전 메뉴판을 먼저 치우는 것과 같습니다.
+</Paragraph>
+
+<Subtitle level={3}>async/await과 useEffect</Subtitle>
+
+<Paragraph>
+  useEffect의 콜백을 직접 async로 만들면 안 됩니다. async 함수는 Promise를
+  반환하는데, React는 useEffect의 반환값으로 클린업 함수(또는 undefined)를
+  기대하기 때문입니다.
+</Paragraph>
+
+```jsx
+// ❌ 잘못된 방법 — useEffect 콜백을 async로 만듦
+useEffect(async () => {
+  const data = await fetch("/api/data");
+  // React가 반환된 Promise를 클린업 함수로 인식하려고 시도
+}, []);
+
+// ✅ 올바른 방법 — 내부에 async 함수를 정의하고 호출
+useEffect(() => {
+  async function fetchData() {
+    try {
+      const res = await fetch("/api/data");
+      const data = await res.json();
+      setData(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-    return await res.json();
-  } catch (err) {
-    console.error("fetchUser 에러:", err.message);
-    throw err; // 필요하면 상위로 전파
   }
-}
 
-// 호출부 처리
-async function loadUser() {
-  try {
-    const user = await fetchUser(1);
-    setUser(user);
-  } catch (err) {
-    setError(err.message);
-  }
+  fetchData();
+}, []);
+```
+
+<Subtitle level={3}>실전 패턴: 데이터 fetching 컴포넌트</Subtitle>
+
+```jsx
+function PostList() {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function loadPosts() {
+      try {
+        const res = await fetch("/api/posts");
+        if (!res.ok) throw new Error("서버 오류");
+        const data = await res.json();
+        setPosts(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadPosts();
+  }, []);
+
+  if (loading) return <p>로딩 중...</p>;
+  if (error) return <p>에러: {error}</p>;
+
+  return (
+    <ul>
+      {posts.map((post) => (
+        <li key={post.id}>{post.title}</li>
+      ))}
+    </ul>
+  );
 }
 ```
+
+<Paragraph>
+  이 패턴은 React에서 데이터를 가져올 때 가장 기본이 되는 구조입니다.{" "}
+  <strong>loading, error, data</strong> 세 가지 상태를 관리하고, 각 상태에 따라
+  다른 UI를 보여줍니다.
+</Paragraph>
 
 ---
 
-<Subtitle level={2}>2. 정규 표현식 — 패턴으로 문자열 다루기</Subtitle>
+<Subtitle level={2}>2. 이벤트 처리 — 사용자와 상호작용하기</Subtitle>
 
 <Paragraph>
-  정규 표현식은 처음 보면 어렵지만, 자주 쓰는 패턴 몇 가지를 익혀두면 입력
-  유효성 검사, 문자열 파싱, 포맷 변환 등에서 강력하게 활용할 수 있습니다.
+  React에서 이벤트 처리는 HTML과 비슷하지만 몇 가지 차이가 있습니다.{" "}
+  <strong>camelCase</strong>로 이벤트 이름을 쓰고, <strong>함수 참조</strong>를
+  전달합니다.
 </Paragraph>
 
-<Subtitle level={3}>자주 쓰는 패턴</Subtitle>
+<Subtitle level={3}>기본 이벤트 처리</Subtitle>
 
-```js
-// 문자 클래스
-const digits = /\d/; // 숫자 [0-9]
-const words = /\w/; // 단어 문자 [a-zA-Z0-9_]
-const spaces = /\s/; // 공백 문자
-const any = /./; // 줄바꿈 제외 모든 문자
+```jsx
+function ButtonDemo() {
+  // 이벤트 핸들러 함수 정의
+  function handleClick() {
+    alert("버튼이 클릭되었습니다!");
+  }
 
-// 수량자
-const zeroOrMore = /a*/; // 0번 이상
-const oneOrMore = /a+/; // 1번 이상
-const optional = /a?/; // 0번 또는 1번
-const exactly3 = /a{3}/; // 정확히 3번
-const twoToFour = /a{2,4}/; // 2~4번
+  return (
+    <div>
+      {/* ✅ 함수 참조 전달 — 클릭할 때 실행 */}
+      <button onClick={handleClick}>클릭</button>
 
-// 앵커
-const start = /^hello/; // hello로 시작
-const end = /world$/; // world로 끝
-const exact = /^hello world$/; // 정확히 이 문자열
+      {/* ✅ 인라인 화살표 함수 — 인자가 필요할 때 */}
+      <button onClick={() => alert("안녕!")}>인사</button>
+
+      {/* ❌ 함수 호출 — 렌더링 시 즉시 실행됨! */}
+      <button onClick={handleClick()}>이건 잘못됨</button>
+    </div>
+  );
+}
 ```
 
-<Subtitle level={3}>실무 패턴 예시</Subtitle>
+<Paragraph>
+  가장 흔한 실수가 <strong>handleClick()처럼 괄호를 붙이는 것</strong>입니다.
+  괄호를 붙이면 컴포넌트가 렌더링되는 시점에 함수가 즉시 실행됩니다. 클릭했을 때
+  실행하려면 함수 자체를 참조로 전달해야 합니다.
+</Paragraph>
 
-```js
-// 이메일 유효성 검사
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-emailRegex.test("user@example.com"); // true
-emailRegex.test("invalid-email"); // false
+<Subtitle level={3}>이벤트 객체 (e)</Subtitle>
 
-// 한국 휴대폰 번호
-const phoneRegex = /^01[016789]-?\d{3,4}-?\d{4}$/;
-phoneRegex.test("010-1234-5678"); // true
+<Paragraph>
+  이벤트 핸들러는 자동으로 이벤트 객체를 인자로 받습니다. React는 브라우저 간
+  차이를 없앤 <strong>합성 이벤트(SyntheticEvent)</strong>를 제공합니다.
+</Paragraph>
 
-// URL에서 도메인 추출
-const url = "https://www.example.com/path?query=1";
-const domain = url.match(/https?:\/\/([^\/]+)/)?.[1];
-// "www.example.com"
+```jsx
+function InputDemo() {
+  function handleChange(e) {
+    // e.target — 이벤트가 발생한 DOM 요소
+    console.log(e.target.value); // 입력된 텍스트
+    console.log(e.target.name); // input의 name 속성
+  }
 
-// 날짜 포맷 변환 (YYYY-MM-DD → YYYY.MM.DD)
-"2026-06-08".replace(/(\d{4})-(\d{2})-(\d{2})/, "$1.$2.$3");
-// "2026.06.08"
+  function handleSubmit(e) {
+    // 폼 제출 시 페이지 새로고침 방지
+    e.preventDefault();
+    console.log("폼 제출됨");
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input name="username" onChange={handleChange} />
+      <button type="submit">제출</button>
+    </form>
+  );
+}
 ```
 
-<Subtitle level={3}>주요 메서드</Subtitle>
+<Subtitle level={3}>자주 사용하는 이벤트</Subtitle>
 
-```js
-const str = "Hello World hello";
-const regex = /hello/gi; // g: 전역, i: 대소문자 무시
+- <strong>onClick</strong> — 클릭 이벤트 (버튼, 링크 등)
+- <strong>onChange</strong> — 값 변경 이벤트 (input, select, textarea)
+- <strong>onSubmit</strong> — 폼 제출 이벤트
+- <strong>onFocus / onBlur</strong> — 포커스 진입 / 이탈
+- <strong>onKeyDown / onKeyUp</strong> — 키보드 입력
 
-// test — 매칭 여부 (boolean)
-regex.test(str); // true
+---
 
-// match — 매칭 결과 배열
-str.match(regex); // ["Hello", "hello"]
+<Subtitle level={2}>3. 폼 상태 관리 — Controlled Component 패턴</Subtitle>
 
-// replace — 교체
-str.replace(regex, "Hi"); // "Hi World Hi"
+<Paragraph>
+  HTML에서 input, textarea 등은 자체적으로 값을 관리합니다. 하지만 React에서는
+  이 값을 <strong>state로 관리</strong>하여 React가 유일한 데이터 소스가 되도록
+  합니다. 이것이 <strong>Controlled Component(제어 컴포넌트)</strong>{" "}
+  패턴입니다.
+</Paragraph>
 
-// split — 분리
-"a,b,,c".split(/,+/); // ["a", "b", "c"]
+<Subtitle level={3}>핵심: value + onChange 한 쌍</Subtitle>
 
-// search — 첫 번째 매칭 인덱스
-str.search(/World/); // 6
+```jsx
+function NameInput() {
+  const [name, setName] = useState("");
+
+  return (
+    <div>
+      {/* value로 표시할 값 지정, onChange로 변경 감지 */}
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="이름을 입력하세요"
+      />
+      <p>입력된 이름: {name}</p>
+    </div>
+  );
+}
+```
+
+<Paragraph>
+  <strong>value</strong>만 지정하고 onChange를 빠뜨리면 입력이 안 되는 읽기 전용
+  input이 됩니다. 반대로 onChange만 있고 value가 없으면 React가 값을 제어하지
+  못합니다. 반드시 <strong>둘 다 함께</strong> 사용해야 합니다.
+</Paragraph>
+
+<Subtitle level={3}>실전: 로그인 폼</Subtitle>
+
+```jsx
+function LoginForm() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  function handleSubmit(e) {
+    e.preventDefault(); // 페이지 새로고침 방지
+
+    // 간단한 유효성 검사
+    if (!email.includes("@")) {
+      setError("올바른 이메일 형식이 아닙니다");
+      return;
+    }
+    if (password.length < 6) {
+      setError("비밀번호는 6자 이상이어야 합니다");
+      return;
+    }
+
+    setError("");
+    console.log("로그인 시도:", { email, password });
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="이메일"
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="비밀번호"
+      />
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <button type="submit">로그인</button>
+    </form>
+  );
+}
+```
+
+<Subtitle level={3}>여러 input을 하나의 state로 관리하기</Subtitle>
+
+<Paragraph>
+  input이 많아지면 각각 useState를 만드는 것이 번거롭습니다. 객체 하나로
+  관리하면 코드가 깔끔해집니다. 이때 지난 주 배운{" "}
+  <strong>스프레드 연산자</strong>가 활약합니다.
+</Paragraph>
+
+```jsx
+function SignupForm() {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+
+  // name 속성을 기준으로 해당 필드만 업데이트
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    // [name]은 계산된 프로퍼티 이름 — name 변수의 값이 키가 됨
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    console.log("가입 정보:", form);
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input name="name" value={form.name} onChange={handleChange} />
+      <input name="email" value={form.email} onChange={handleChange} />
+      <input
+        name="password"
+        type="password"
+        value={form.password}
+        onChange={handleChange}
+      />
+      <button type="submit">가입</button>
+    </form>
+  );
+}
+```
+
+<Paragraph>
+  핵심은 <strong>handleChange 함수 하나로 모든 input을 처리</strong>하는 것입니다.
+  각 input에 name 속성을 주고, e.target.name으로 어떤 필드가 변경되었는지
+  판단합니다. `{ ...prev, [name]: value }`로 해당 필드만 업데이트하고 나머지는
+  유지합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. 종합 예제 — 할 일 목록 앱</Subtitle>
+
+<Paragraph>
+  지금까지 배운 useState, useEffect, 이벤트 처리, 폼을 모두 사용하는 작은
+  앱입니다. 각 줄에 어떤 개념이 적용되었는지 주석을 확인해보세요.
+</Paragraph>
+
+```jsx
+import { useState, useEffect } from "react";
+
+function TodoApp() {
+  const [todos, setTodos] = useState([]); // 할 일 목록 (배열 state)
+  const [input, setInput] = useState(""); // 입력 필드 (문자열 state)
+
+  // 마운트 시 localStorage에서 데이터 불러오기 (useEffect)
+  useEffect(() => {
+    const saved = localStorage.getItem("todos");
+    if (saved) {
+      setTodos(JSON.parse(saved));
+    }
+  }, []);
+
+  // todos가 바뀔 때마다 localStorage에 저장 (useEffect + 의존성)
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }, [todos]);
+
+  // 폼 제출 이벤트 처리
+  function handleSubmit(e) {
+    e.preventDefault(); // 기본 동작 방지
+    if (!input.trim()) return; // 빈 입력 방지
+
+    // 스프레드로 불변 업데이트
+    setTodos((prev) => [...prev, { id: Date.now(), text: input, done: false }]);
+    setInput(""); // 입력 필드 초기화
+  }
+
+  // 완료 토글
+  function toggleTodo(id) {
+    setTodos((prev) =>
+      prev.map((todo) =>
+        todo.id === id ? { ...todo, done: !todo.done } : todo,
+      ),
+    );
+  }
+
+  // 삭제
+  function deleteTodo(id) {
+    setTodos((prev) => prev.filter((todo) => todo.id !== id));
+  }
+
+  return (
+    <div>
+      <h1>할 일 목록</h1>
+
+      {/* Controlled Component — value + onChange */}
+      <form onSubmit={handleSubmit}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="할 일을 입력하세요"
+        />
+        <button type="submit">추가</button>
+      </form>
+
+      {/* 리스트 렌더링 — map + key */}
+      <ul>
+        {todos.map((todo) => (
+          <li key={todo.id}>
+            <span
+              onClick={() => toggleTodo(todo.id)}
+              style={{
+                textDecoration: todo.done ? "line-through" : "none",
+                cursor: "pointer",
+              }}
+            >
+              {todo.text}
+            </span>
+            <button onClick={() => deleteTodo(todo.id)}>삭제</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 ```
 
 ---
 
 <Subtitle level={2}>📝 학습 이해 퀴즈</Subtitle>
 
-<Paragraph>
-  아래 코드를 <strong>브라우저 콘솔에서 직접 실행</strong>해보고 결과를
-  입력해보세요.
-</Paragraph>
+<Paragraph>아래 코드를 읽고 동작을 예측해보세요.</Paragraph>
 
 <ArticleQuiz>
   <ArticleQuizItem
     mode="description"
-    question="아래 코드의 출력 결과를 순서대로 입력하세요."
-    code={`function riskyOperation() {
-  throw new TypeError("타입 에러 발생");
-}
+    question="아래 useEffect에서 문제가 무엇인지 찾고, 어떻게 수정해야 하는지 설명하세요."
+    code={`function Timer() {
+  const [count, setCount] = useState(0);
 
-try {
-riskyOperation();
-console.log("A");
-} catch (err) {
-console.log("B:", err.name);
-} finally {
-console.log("C");
+useEffect(() => {
+const timer = setInterval(() => {
+setCount(count + 1);
+}, 1000);
+}, []);
+
+return <p>{count}</p>;
 }`}
-answer="B: TypeError, C"
-explanation="throw로 에러가 발생하면 try 블록의 나머지 코드('A')는 실행되지 않고 즉시 catch로 이동합니다. err.name은 'TypeError'입니다. finally는 항상 실행되어 'C'가 출력됩니다."
+answer="문제 2가지: (1) 클린업 함수가 없어서 컴포넌트가 사라져도 타이머가 계속 실행됨 (메모리 누수). (2) count가 항상 초기값 0을 참조함 (stale closure). 수정: return () => clearInterval(timer)를 추가하고, setCount(count + 1)을 setCount(prev => prev + 1)로 변경."
+explanation="빈 의존성 배열 []로 인해 effect 안의 count는 초기값 0이 클로저로 캡처됩니다. 함수형 업데이트(prev => prev + 1)를 사용하면 항상 최신 상태를 기반으로 업데이트됩니다. 클린업 함수로 clearInterval을 반환해야 메모리 누수를 방지할 수 있습니다."
 />
 
   <ArticleQuizItem
     mode="description"
-    question="아래 코드의 출력 결과는 무엇인가요?"
-    code={`const str = "2026-06-08";
-const result = str.match(/(\d{4})-(\d{2})-(\d{2})/);
-console.log(result[1]);`}
-    answer="2026"
-    explanation="정규 표현식의 캡처 그룹 ()은 매칭 결과 배열에서 인덱스 1부터 순서대로 담깁니다. result[0]은 전체 매칭 '2026-06-08', result[1]은 첫 번째 그룹 '2026'입니다."
-  />
-  <ArticleQuizItem
-    mode="description"
-    question="아래 코드에서 emailRegex.test()의 결과를 순서대로 입력하세요."
-    code={`const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    question="아래 코드에서 input에 타이핑해도 화면에 글자가 나타나지 않는 이유를 설명하세요."
+    code={`function SearchBar() {
+  const [query, setQuery] = useState("");
 
-console.log(emailRegex.test("user@example.com"));
-console.log(emailRegex.test("user@"));
-console.log(emailRegex.test("user.name@domain.co.kr"));`}
-answer="true, false, true"
-explanation="첫 번째는 올바른 이메일 형식이라 true, 두 번째는 @ 이후에 도메인이 없어 false, 세 번째는 서브도메인 포함 올바른 형식이라 true입니다."
+return (
+<input
+      value={query}
+      placeholder="검색어를 입력하세요"
+    />
+);
+}`}
+answer="onChange 핸들러가 없기 때문입니다. value={query}로 React가 input의 값을 제어하고 있지만, 변경 이벤트를 처리하지 않아 query가 항상 빈 문자열로 유지됩니다. onChange={(e) => setQuery(e.target.value)}를 추가해야 합니다."
+explanation="Controlled Component 패턴에서 value만 있고 onChange가 없으면, React가 값을 고정시켜 사용자가 타이핑해도 반영되지 않습니다. 콘솔에 경고 메시지도 표시됩니다. value와 onChange는 반드시 함께 사용해야 합니다."
 />
 
 </ArticleQuiz>
@@ -393,20 +661,103 @@ explanation="첫 번째는 올바른 이메일 형식이라 true, 두 번째는 
 <Subtitle level={2}>📝 11주차 스터디 인증 미션</Subtitle>
 
 <Paragraph>
-  마지막 인증 미션입니다. 아래 질문에 대해 본인만의 말로 설명한 뒤 댓글로
-  남겨주세요.
+  아래 문제를 직접 코드로 작성해보고, 코드와 함께 댓글로 남겨주세요.
 </Paragraph>
 
-> **Q1. try/catch/finally의 각 블록이 실행되는 조건을 설명하고, async/await 환경에서 에러 처리를 어떻게 하는지 설명해주세요.**
->
-> <br />
->
-> **Q2. JavaScript로 배운 것 중 가장 인상 깊었던 개념 하나를 골라, 처음 이해했을 때와 지금 설명 방식이 어떻게 달라졌는지 자유롭게 작성해주세요.**
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="description"
+    question="useEffect를 사용하여 컴포넌트가 마운트될 때 문서 제목(document.title)을 '내 앱'으로 바꾸고, count 상태가 변경될 때마다 '내 앱 (N)'으로 업데이트하는 컴포넌트를 만들어보세요. 버튼 클릭으로 count를 올리는 기능도 포함해주세요."
+    answer={`function App() {
+  const [count, setCount] = useState(0);
+
+useEffect(() => {
+document.title = count === 0 ? '내 앱' : \`내 앱 (\${count})\`;
+}, [count]);
+
+return (
+<div>
+<p>클릭 횟수: {count}</p>
+<button onClick={() => setCount(prev => prev + 1)}>
+클릭
+</button>
+</div>
+);
+}`}
+explanation="useEffect의 의존성 배열에 count를 넣으면 count가 바뀔 때마다 effect가 재실행됩니다. document.title을 변경하는 것은 DOM 직접 조작이므로 사이드 이펙트에 해당하며, useEffect 안에서 처리하는 것이 올바릅니다."
+/>
+
+  <ArticleQuizItem
+    mode="description"
+    question="이메일과 메시지를 입력받는 문의하기 폼(ContactForm)을 만들어보세요. 조건: (1) Controlled Component 패턴 사용, (2) 제출 시 e.preventDefault() 호출, (3) 이메일에 @가 없으면 에러 메시지 표시, (4) 제출 성공 시 입력 필드 초기화"
+    answer={`function ContactForm() {
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+function handleSubmit(e) {
+e.preventDefault();
+if (!email.includes('@')) {
+setError('올바른 이메일을 입력하세요');
+return;
+}
+setError('');
+console.log({ email, message });
+setEmail('');
+setMessage('');
+}
+
+return (
+<form onSubmit={handleSubmit}>
+<input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="이메일" />
+<textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="메시지" />
+{error && <p style={{ color: 'red' }}>{error}</p>}
+<button type="submit">보내기</button>
+</form>
+);
+}`}
+explanation="Controlled Component 패턴으로 각 input의 value를 state로 관리합니다. onSubmit에서 e.preventDefault()로 새로고침을 방지하고, 유효성 검사 후 상태를 초기화합니다. 이 패턴은 실제 서비스의 문의 폼, 회원가입 폼 등에서 동일하게 사용됩니다."
+/>
+
+  <ArticleQuizItem
+    mode="description"
+    question="1초마다 자동으로 숫자가 올라가는 타이머 컴포넌트를 만들어보세요. 조건: (1) useEffect와 setInterval 사용, (2) 반드시 클린업 함수에서 clearInterval 호출, (3) 함수형 업데이트(prev => ...) 사용"
+    answer={`function Timer() {
+  const [seconds, setSeconds] = useState(0);
+
+useEffect(() => {
+const timer = setInterval(() => {
+setSeconds(prev => prev + 1);
+}, 1000);
+
+    return () => clearInterval(timer);
+
+}, []);
+
+return <p>경과 시간: {seconds}초</p>;
+}`}
+explanation="빈 의존성 배열로 마운트 시 한 번만 타이머를 설정하고, 클린업 함수에서 clearInterval로 정리합니다. setSeconds(prev => prev + 1) 함수형 업데이트를 사용하여 stale closure 문제를 방지합니다. 클린업 없이 setInterval을 사용하면 컴포넌트가 사라져도 타이머가 계속 실행되어 메모리 누수가 발생합니다."
+/>
+
+</ArticleQuiz>
+
+---
+
+<Subtitle level={2}>다음 주 안내</Subtitle>
+
+<Paragraph>
+  이번 주까지 React의 핵심 기초를 모두 다뤘습니다. 대면 스터디에서는 useState와
+  useEffect를 더 깊이 다루며 1학기를 마무리합니다. 2학기에는{" "}
+  <strong>React Router로 페이지 이동</strong>,{" "}
+  <strong>Context API / Zustand 등 전역 상태 관리</strong>,{" "}
+  <strong>TypeScript</strong> 등 React 심화 주제를 다룰 예정입니다.
+</Paragraph>
 
 ---
 
 <Subtitle level={2}>관련 포스팅</Subtitle>
 
-- <Anchor href="/blog/study/clab-26-1/week11">
-    프론트엔드 스터디 11주차 학습 자료: this, 실행 컨텍스트, 이터러블
+- <Anchor href="/blog/study/clab-26-1/week10">
+    프론트엔드 스터디 10주차 학습 자료: React 기초 1 — 컴포넌트, JSX, props,
+    useState
   </Anchor>

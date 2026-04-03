@@ -1,5 +1,5 @@
 ---
-title: "프론트엔드 스터디 9주차: 배열 고차함수와 ES6+ 문법"
+title: "프론트엔드 스터디 9주차: React 입문 전 필수 JS 문법 — map, 구조 분해, 스프레드"
 date: 2026-05-25
 tags:
   - 프론트엔드
@@ -9,7 +9,7 @@ tags:
   - ES6
   - 구조분해할당
   - 스프레드
-description: React 코드에서 매일 쓰는 JS 문법들을 정리합니다. map/filter/reduce 배열 고차함수부터 구조 분해, 스프레드, 옵셔널 체이닝, 모듈 시스템까지 실무 직결 문법을 다룹니다.
+description: 다음 주부터 React를 시작합니다. React 코드에서 매 줄 등장하는 map/filter, 구조 분해, 스프레드, 옵셔널 체이닝, 모듈까지 — React 코드를 막힘없이 읽기 위한 JS 문법을 한 번에 정리합니다.
 ---
 
 <Subtitle level={2}>9주차 학습 자료</Subtitle>
@@ -33,10 +33,11 @@ description: React 코드에서 매일 쓰는 JS 문법들을 정리합니다. m
   </Anchor>
 
 <Paragraph>
-  안녕하세요. 9주차입니다. 이번 주는 <strong>실무 체감이 가장 빠른 주차</strong>
-  입니다. React 코드를 열면 거의 모든 줄에서 `map`, `filter`, 구조 분해,
-  스프레드를 볼 수 있습니다. 개념보다는 <strong>언제 왜 쓰는지</strong>에
-  집중하며 읽어보세요.
+  안녕하세요. 9주차입니다. <strong>다음 주부터 React를 시작합니다.</strong>{" "}
+  React 코드를 처음 열면 거의 모든 줄에서 이번 주에 다루는 문법들이 등장합니다.
+  개념을 암기하기보다는 <strong>언제, 왜 쓰는지</strong>에 집중하며 읽어보세요.
+  이번 주 내용을 자연스럽게 읽을 수 있다면, 다음 주 React 코드가 훨씬 편하게
+  느껴질 것입니다.
 </Paragraph>
 
 ---
@@ -48,7 +49,7 @@ description: React 코드에서 매일 쓰는 JS 문법들을 정리합니다. m
   <strong>
     이번 주 학습 자료를 생략하거나, 모르는 부분만 선택적으로 읽으셔도 좋습니다.
   </strong>{" "}
-  바로 하단의 더 알면 좋을 것들을 확인해보세요.
+  바로 하단의 본문 섹션들을 확인해보세요.
 </Paragraph>
 
 <ArticleQuiz>
@@ -62,7 +63,7 @@ description: React 코드에서 매일 쓰는 JS 문법들을 정리합니다. m
       "배열을 하나의 값으로 줄여 반환한다",
     ]}
     answer={1}
-    explanation="map()은 원본 배열을 변경하지 않고(순수 함수), 각 요소에 콜백을 적용한 결과로 이루어진 같은 길이의 새 배열을 반환합니다."
+    explanation="map()은 원본 배열을 변경하지 않고, 각 요소에 콜백을 적용한 결과로 이루어진 같은 길이의 새 배열을 반환합니다. React에서 리스트를 렌더링할 때 가장 많이 사용하는 메서드입니다."
   />
   <ArticleQuizItem
     mode="multiple"
@@ -85,22 +86,27 @@ description: React 코드에서 매일 쓰는 JS 문법들을 정리합니다. m
   />
   <ArticleQuizItem
     mode="multiple"
-    question="구조 분해 할당(Destructuring)에 대한 설명으로 옳은 것은 무엇인가요?"
+    question="const { name, age } = { name: '철수', age: 25, role: 'admin' }에서 추출되는 변수는 무엇인가요?"
     choices={[
-      "객체나 배열을 복사하는 문법이다",
-      "객체나 배열의 값을 변수로 추출하는 문법이다",
-      "객체를 배열로 변환하는 문법이다",
-      "중첩 객체를 평탄화하는 문법이다",
+      "name, age, role 세 개 모두",
+      "name과 age만",
+      "에러 발생 — 모든 프로퍼티를 추출해야 한다",
+      "name만",
     ]}
     answer={1}
-    explanation="구조 분해 할당은 배열이나 객체의 값을 개별 변수로 한 번에 추출하는 문법입니다. React에서 props나 useState의 반환값을 받을 때 자주 사용합니다."
+    explanation="객체 구조 분해 할당은 원하는 프로퍼티만 선택적으로 추출할 수 있습니다. 명시하지 않은 role은 무시됩니다. React에서 props 중 필요한 것만 꺼내 쓸 때 이 패턴을 사용합니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="const { a, b = 10 } = { a: 1 }에서 b의 값은 무엇인가요?"
-    choices={["undefined", "10", "null", "에러 발생"]}
+    question="const [a, b] = useState(0)은 어떤 문법을 사용한 것인가요?"
+    choices={[
+      "객체 구조 분해 할당",
+      "배열 구조 분해 할당",
+      "스프레드 연산자",
+      "Rest 파라미터",
+    ]}
     answer={1}
-    explanation="객체 구조 분해에서 기본값을 지정할 수 있습니다. { a: 1 }에 b 프로퍼티가 없으므로 b는 기본값 10을 사용합니다."
+    explanation="useState()는 배열을 반환하므로, 배열 구조 분해 할당으로 [상태값, 세터함수]를 변수로 받습니다. React의 가장 기본적인 패턴입니다."
   />
   <ArticleQuizItem
     mode="multiple"
@@ -124,19 +130,14 @@ description: React 코드에서 매일 쓰는 JS 문법들을 정리합니다. m
       "비동기 작업을 취소하는 연산자다",
     ]}
     answer={0}
-    explanation="옵셔널 체이닝(?.)은 앞의 값이 null이나 undefined이면 에러 없이 undefined를 반환합니다. user?.address?.city처럼 깊은 중첩 접근을 안전하게 할 수 있습니다."
+    explanation="옵셔널 체이닝(?.)은 앞의 값이 null이나 undefined이면 에러 없이 undefined를 반환합니다. API에서 받아온 데이터를 안전하게 접근할 때 필수적으로 사용합니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="null 병합 연산자(??)의 동작으로 옳은 것은 무엇인가요?"
-    choices={[
-      "왼쪽이 falsy이면 오른쪽을 반환한다",
-      "왼쪽이 null 또는 undefined이면 오른쪽을 반환한다",
-      "왼쪽이 null이면 오른쪽을 반환하고, undefined면 undefined를 반환한다",
-      "왼쪽이 truthy이면 오른쪽을 반환한다",
-    ]}
+    question="0 ?? '기본값'의 결과는 무엇인가요?"
+    choices={["'기본값'", "0", "null", "undefined"]}
     answer={1}
-    explanation="?? 연산자는 null과 undefined일 때만 오른쪽을 반환합니다. ||와 달리 0이나 빈 문자열('')은 falsy지만 오른쪽을 반환하지 않습니다."
+    explanation="?? 연산자는 null과 undefined일 때만 오른쪽을 반환합니다. 0은 null도 undefined도 아니므로 그대로 0을 반환합니다. 반면 0 || '기본값'은 0이 falsy이므로 '기본값'을 반환합니다."
   />
   <ArticleQuizItem
     mode="multiple"
@@ -152,29 +153,37 @@ description: React 코드에서 매일 쓰는 JS 문법들을 정리합니다. m
   />
   <ArticleQuizItem
     mode="multiple"
-    question="Array.prototype.find()와 Array.prototype.filter()의 차이는 무엇인가요?"
+    question="const { id, ...rest } = { id: 1, name: '철수', age: 25 }에서 rest의 값은 무엇인가요?"
     choices={[
-      "find()는 조건에 맞는 첫 번째 요소를, filter()는 조건에 맞는 모든 요소를 배열로 반환한다",
-      "find()는 인덱스를, filter()는 값을 반환한다",
-      "find()는 원본 배열을 변경하고, filter()는 변경하지 않는다",
-      "find()는 배열에서만, filter()는 객체에서도 사용 가능하다",
+      "{ id: 1, name: '철수', age: 25 }",
+      "{ name: '철수', age: 25 }",
+      "[name, age]",
+      "undefined",
     ]}
-    answer={0}
-    explanation="find()는 조건을 만족하는 첫 번째 요소(값)를 반환하고 없으면 undefined를 반환합니다. filter()는 조건을 만족하는 모든 요소를 모아 새 배열을 반환합니다."
+    answer={1}
+    explanation="Rest 패턴(...)은 구조 분해에서 명시적으로 추출한 프로퍼티를 제외한 나머지를 모아 새 객체로 만듭니다. id를 꺼내고 나머지 name, age가 rest에 담깁니다."
   />
 </ArticleQuiz>
 
 ---
 
-<Subtitle level={2}>1. 배열 고차함수 — map, filter, reduce</Subtitle>
+<Subtitle level={2}>
+  1. map / filter / reduce — React에서 리스트를 다루는 핵심
+</Subtitle>
 
 <Paragraph>
   고차함수(Higher-Order Function)는{" "}
-  <strong>함수를 인자로 받거나 반환하는 함수</strong>입니다. 배열 메서드 중 가장
-  중요한 세 가지를 살펴봅니다.
+  <strong>함수를 인자로 받거나 반환하는 함수</strong>입니다. 배열 메서드 중
+  React에서 가장 자주 사용하는 세 가지를 살펴봅니다.
 </Paragraph>
 
-<Subtitle level={3}>map — 변환</Subtitle>
+<Subtitle level={3}>map — 각 요소를 변환하여 새 배열 만들기</Subtitle>
+
+<Paragraph>
+  `map`은 배열의 각 요소에 콜백 함수를 적용하고,{" "}
+  <strong>변환된 값으로 이루어진 새 배열</strong>을 반환합니다. 원본 배열은
+  변경되지 않습니다.
+</Paragraph>
 
 ```js
 const numbers = [1, 2, 3, 4, 5];
@@ -183,12 +192,39 @@ const numbers = [1, 2, 3, 4, 5];
 const doubled = numbers.map((n) => n * 2);
 // [2, 4, 6, 8, 10]
 
-// React에서 리스트 렌더링
-const items = ["사과", "배", "포도"];
-const listItems = items.map((item, index) => <li key={index}>{item}</li>);
+// 객체 배열에서 특정 값만 추출
+const users = [
+  { id: 1, name: "철수" },
+  { id: 2, name: "영희" },
+];
+const names = users.map((user) => user.name);
+// ["철수", "영희"]
 ```
 
-<Subtitle level={3}>filter — 필터링</Subtitle>
+<Paragraph>
+  React에서는 배열 데이터를 화면에 렌더링할 때 `map`을 사용합니다. 아래 코드는
+  다음 주부터 매일 보게 될 패턴입니다.
+</Paragraph>
+
+```jsx
+// React에서 리스트 렌더링 — 다음 주부터 이 패턴을 매일 씁니다
+function UserList({ users }) {
+  return (
+    <ul>
+      {users.map((user) => (
+        <UserCard key={user.id} {...user} />
+      ))}
+    </ul>
+  );
+}
+```
+
+<Subtitle level={3}>filter — 조건에 맞는 요소만 걸러내기</Subtitle>
+
+<Paragraph>
+  `filter`는 콜백이 `true`를 반환하는 요소만 모아 <strong>새 배열</strong>을
+  반환합니다.
+</Paragraph>
 
 ```js
 const products = [
@@ -202,7 +238,12 @@ const affordable = products.filter((p) => p.price <= 10000);
 // [{ name: "사과", ... }, { name: "배", ... }]
 ```
 
-<Subtitle level={3}>reduce — 누적</Subtitle>
+<Subtitle level={3}>reduce — 배열을 하나의 값으로 누적하기</Subtitle>
+
+<Paragraph>
+  `reduce`는 배열의 각 요소를 순회하며 하나의 값으로 누적합니다. 합계 계산,
+  그룹핑 등에 사용됩니다.
+</Paragraph>
 
 ```js
 const cart = [
@@ -214,7 +255,7 @@ const cart = [
 const total = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
 // 1000*2 + 2000*1 = 4000
 
-// reduce로 객체 만들기
+// reduce로 객체 만들기 (그룹핑)
 const byName = cart.reduce((acc, item) => {
   acc[item.name] = item.price;
   return acc;
@@ -222,15 +263,19 @@ const byName = cart.reduce((acc, item) => {
 // { 사과: 1000, 배: 2000 }
 ```
 
-<Subtitle level={3}>체이닝 — 조합해서 사용</Subtitle>
+<Subtitle level={3}>체이닝 — 여러 메서드를 연결해서 사용</Subtitle>
+
+<Paragraph>
+  `map`, `filter`, `reduce`는 모두 새 배열(또는 값)을 반환하므로, 점(`.`)으로
+  이어서 조합할 수 있습니다.
+</Paragraph>
 
 ```js
 const scores = [85, 42, 93, 67, 55, 78, 91];
 
-// 70점 이상인 점수들의 평균
-const avg = scores
-  .filter((s) => s >= 70) // [85, 93, 67, 78, 91]
-  .reduce((sum, s, _, arr) => sum + s / arr.length, 0);
+// 70점 이상인 점수만 골라 평균 구하기
+const passing = scores.filter((s) => s >= 70); // [85, 93, 67, 78, 91]
+const avg = passing.reduce((sum, s) => sum + s, 0) / passing.length;
 // 82.8
 ```
 
@@ -239,23 +284,49 @@ const avg = scores
 ```js
 const arr = [1, 2, 3, 4, 5];
 
-arr.find((n) => n > 3); // 4 — 첫 번째 일치 요소
-arr.findIndex((n) => n > 3); // 3 — 첫 번째 일치 인덱스
+arr.find((n) => n > 3); // 4 — 조건에 맞는 첫 번째 요소
+arr.findIndex((n) => n > 3); // 3 — 조건에 맞는 첫 번째 인덱스
 arr.some((n) => n > 4); // true — 하나라도 조건 충족
 arr.every((n) => n > 0); // true — 모두 조건 충족
 arr.includes(3); // true — 포함 여부
-arr.flat(); // 중첩 배열 1단계 펼치기
-arr.flatMap((n) => [n, n * 2]); // map + flat 1단계
 ```
 
 ---
 
-<Subtitle level={2}>2. 구조 분해 할당 — Destructuring</Subtitle>
+<Subtitle level={2}>2. 구조 분해 할당 — React props와 useState의 문법</Subtitle>
 
 <Paragraph>
-  배열이나 객체에서 원하는 값을 변수로 한 번에 꺼내는 문법입니다. React에서
-  props, useState, API 응답 처리 등 어디서나 사용합니다.
+  구조 분해 할당(Destructuring)은 배열이나 객체에서 원하는 값을 변수로 한 번에
+  꺼내는 문법입니다. React에서 props, useState, API 응답 처리 등{" "}
+  <strong>어디서나</strong> 사용합니다.
 </Paragraph>
+
+<Subtitle level={3}>객체 구조 분해</Subtitle>
+
+```js
+const user = { name: "철수", age: 25, role: "admin" };
+
+// 원하는 프로퍼티만 변수로 추출
+const { name, age } = user;
+// name="철수", age=25
+
+// 다른 이름으로 받기
+const { name: userName } = user;
+// userName="철수"
+
+// 기본값 지정 — 프로퍼티가 없으면 기본값 사용
+const { name = "익명" } = {};
+// name="익명"
+
+// 중첩 객체 구조 분해
+const response = { data: { user: { name: "철수" } } };
+const {
+  data: {
+    user: { name: apiUserName },
+  },
+} = response;
+// apiUserName="철수"
+```
 
 <Subtitle level={3}>배열 구조 분해</Subtitle>
 
@@ -263,53 +334,56 @@ arr.flatMap((n) => [n, n * 2]); // map + flat 1단계
 const [a, b, c] = [1, 2, 3];
 // a=1, b=2, c=3
 
-// 일부만 추출
+// 일부만 추출 (건너뛰기)
 const [first, , third] = [10, 20, 30];
 // first=10, third=30
 
 // 기본값
 const [x = 0, y = 0] = [5];
 // x=5, y=0
-
-// React useState
-const [count, setCount] = useState(0);
 ```
 
-<Subtitle level={3}>객체 구조 분해</Subtitle>
+<Paragraph>
+  React의 `useState`가 바로 배열 구조 분해의 대표적인 사용 예입니다. 다음 주에
+  가장 먼저 만나게 될 패턴입니다.
+</Paragraph>
 
-```js
-const user = { name: "철수", age: 25, role: "admin" };
+```jsx
+// React useState — 배열 구조 분해의 핵심 활용
+const [count, setCount] = useState(0);
+// count = 현재 상태값, setCount = 상태를 변경하는 함수
+```
 
-const { name, age } = user;
-// name="철수", age=25
+<Subtitle level={3}>함수 파라미터에서 구조 분해</Subtitle>
 
-// 이름 변경
-const { name: userName } = user;
-// userName="철수"
+<Paragraph>
+  React 컴포넌트의 props를 받을 때 가장 자주 사용하는 패턴입니다.
+</Paragraph>
 
-// 기본값
-const { role = "user" } = {};
-// role="user"
-
-// 중첩 구조 분해
-const {
-  address: { city },
-} = { address: { city: "서울" } };
-// city="서울"
-
-// React props
-function Button({ label, onClick, disabled = false }) {
+```jsx
+// React 컴포넌트 — 파라미터에서 바로 구조 분해
+function Card({ title, description, onClick }) {
   return (
-    <button onClick={onClick} disabled={disabled}>
-      {label}
-    </button>
+    <div onClick={onClick}>
+      <h2>{title}</h2>
+      <p>{description}</p>
+    </div>
   );
 }
+
+// 사용할 때
+<Card title="인사" description="안녕하세요" onClick={handleClick} />;
 ```
 
 ---
 
-<Subtitle level={2}>3. 스프레드 연산자와 Rest 파라미터</Subtitle>
+<Subtitle level={2}>3. 스프레드 & Rest — 불변 상태 업데이트 패턴</Subtitle>
+
+<Paragraph>
+  스프레드(`...`)는 배열이나 객체를 <strong>펼치는</strong> 문법이고, Rest는{" "}
+  <strong>나머지를 모으는</strong> 문법입니다. 같은 `...` 기호를 사용하지만
+  역할이 다릅니다.
+</Paragraph>
 
 <Subtitle level={3}>스프레드 — 펼치기</Subtitle>
 
@@ -319,89 +393,274 @@ const arr1 = [1, 2, 3];
 const arr2 = [4, 5, 6];
 const merged = [...arr1, ...arr2]; // [1, 2, 3, 4, 5, 6]
 
-// 객체 복사 & 합치기 (React 상태 업데이트)
-const state = { name: "철수", age: 25 };
-const updated = { ...state, age: 26 };
-// { name: "철수", age: 26 } — age만 변경된 새 객체
+// 배열에 새 요소 추가 (원본 변경 없이)
+const newArr = [...arr1, 7]; // [1, 2, 3, 7]
+```
 
-// 함수 인자
-Math.max(...[1, 3, 2]); // 3
+<Paragraph>
+  React에서 상태를 업데이트할 때, 기존 객체를 직접 수정하지 않고{" "}
+  <strong>스프레드로 새 객체를 만드는 패턴</strong>을 사용합니다. 이것이 React의
+  불변 업데이트입니다.
+</Paragraph>
+
+```jsx
+// React 상태 업데이트 — 스프레드로 새 객체 만들기
+const [user, setUser] = useState({ name: "철수", age: 25 });
+
+// age만 변경한 새 객체 생성
+setUser((prev) => ({ ...prev, age: prev.age + 1 }));
+// { name: "철수", age: 26 } — 새 객체, 원본은 그대로
+
+// 배열 상태에 항목 추가
+const [items, setItems] = useState(["사과", "배"]);
+setItems((prev) => [...prev, "포도"]);
+// ["사과", "배", "포도"]
 ```
 
 <Subtitle level={3}>Rest 파라미터 — 나머지 모으기</Subtitle>
 
 ```js
 // 함수의 나머지 인자 모으기
-function sum(first, ...rest) {
-  return rest.reduce((acc, n) => acc + n, first);
+function sum(...nums) {
+  return nums.reduce((acc, n) => acc + n, 0);
 }
 sum(1, 2, 3, 4); // 10
 
 // 구조 분해에서 나머지 모으기
-const { name, ...others } = { name: "철수", age: 25, role: "admin" };
-// name="철수", others={ age: 25, role: "admin" }
+const { id, ...rest } = { id: 1, name: "철수", age: 25 };
+// id=1, rest={ name: "철수", age: 25 }
 
 const [head, ...tail] = [1, 2, 3, 4, 5];
 // head=1, tail=[2, 3, 4, 5]
 ```
 
+<Paragraph>
+  Rest 패턴은 React에서 특정 props만 꺼내고 나머지를 하위 컴포넌트에 전달할 때
+  유용합니다.
+</Paragraph>
+
+```jsx
+// className만 꺼내고, 나머지 props는 button에 전달
+function Button({ className, ...rest }) {
+  return <button className={`btn ${className}`} {...rest} />;
+}
+```
+
 ---
 
-<Subtitle level={2}>4. 옵셔널 체이닝(?.)과 null 병합 연산자(??)</Subtitle>
+<Subtitle level={2}>
+  4. 옵셔널 체이닝(?.) & null 병합(??) — 안전한 데이터 접근
+</Subtitle>
+
+<Paragraph>
+  API에서 받아온 데이터는 특정 필드가 `null`이거나 `undefined`일 수 있습니다.
+  이때 안전하게 접근하기 위한 두 가지 연산자를 알아봅니다.
+</Paragraph>
+
+<Subtitle level={3}>옵셔널 체이닝 (?.)</Subtitle>
+
+<Paragraph>
+  `?.`는 앞의 값이 `null` 또는 `undefined`이면{" "}
+  <strong>에러 없이 undefined를 반환</strong>합니다.
+</Paragraph>
 
 ```js
 const user = null;
 
-// 기존 방식 — 장황함
+// 기존 방식 — 매번 null 체크를 해야 함
 const city = user && user.address && user.address.city;
 
-// 옵셔널 체이닝 — 간결함
+// 옵셔널 체이닝 — 간결하게
 const city2 = user?.address?.city; // undefined (에러 없음)
 
 // 메서드 호출에도 사용 가능
-user?.greet?.();
+user?.greet?.(); // user가 null이면 undefined, 에러 없음
+
+// 배열 요소 접근에도 사용 가능
+const first = arr?.[0]; // arr이 null이면 undefined
 ```
 
-```js
-// null 병합 연산자 (??) — null/undefined일 때만 기본값
-const name = user?.name ?? "익명";
-
-// || 와의 차이
-const count = 0 || "기본값"; // "기본값" — 0은 falsy
-const count2 = 0 ?? "기본값"; // 0 — null/undefined만 처리
-```
-
----
-
-<Subtitle level={2}>5. ES6 모듈(Module)</Subtitle>
+<Subtitle level={3}>null 병합 연산자 (??)</Subtitle>
 
 <Paragraph>
-  모듈은 파일 단위로 코드를 분리하고, 필요한 것만 `import/export`하는
-  시스템입니다. React 프로젝트는 전부 모듈 기반으로 작성됩니다.
+  `??`는 왼쪽 값이 `null` 또는 `undefined`일 때만 오른쪽 기본값을 반환합니다.{" "}
+  <strong>`||`와의 차이가 중요합니다.</strong>
 </Paragraph>
 
 ```js
-// math.js — named export
+// ?? — null/undefined일 때만 기본값
+const name = user?.name ?? "익명";
+
+// || vs ?? 차이 — 이 차이를 반드시 이해하세요
+const count1 = 0 || "기본값"; // "기본값" — 0은 falsy이므로
+const count2 = 0 ?? "기본값"; // 0 — null/undefined가 아니므로
+
+const text1 = "" || "기본값"; // "기본값" — 빈 문자열은 falsy
+const text2 = "" ?? "기본값"; // "" — null/undefined가 아니므로
+```
+
+<Paragraph>
+  실무에서 `0`이나 빈 문자열(`""`)이 유효한 값인 경우가 많습니다. 이때 `||`를
+  쓰면 의도치 않게 기본값으로 대체되므로,{" "}
+  <strong>`??`를 사용하는 것이 안전합니다.</strong>
+</Paragraph>
+
+---
+
+<Subtitle level={2}>
+  5. 모듈 (import / export) — 컴포넌트를 파일로 나누는 방법
+</Subtitle>
+
+<Paragraph>
+  모듈은 파일 단위로 코드를 분리하고, 필요한 것만 `import`/`export`하는
+  시스템입니다. React 프로젝트는 전부 모듈 기반으로 작성됩니다. 하나의
+  컴포넌트가 하나의 파일이 되는 구조입니다.
+</Paragraph>
+
+<Subtitle level={3}>named export — 여러 개 내보내기</Subtitle>
+
+```js
+// math.js — 유틸 함수는 named export
 export const add = (a, b) => a + b;
 export const subtract = (a, b) => a - b;
 
-// Button.jsx — default export
+// 다른 파일에서 import — 중괄호 필수
+import { add, subtract } from "./math.js";
+
+// 이름 변경도 가능
+import { add as sum } from "./math.js";
+```
+
+<Subtitle level={3}>default export — 파일당 한 개</Subtitle>
+
+```jsx
+// Button.jsx — React 컴포넌트는 보통 default export
 export default function Button({ label }) {
   return <button>{label}</button>;
+}
+
+// 다른 파일에서 import — 중괄호 없이, 원하는 이름으로
+import Button from "./Button.jsx";
+import MyButton from "./Button.jsx"; // 이름 자유롭게 지정 가능
+```
+
+<Subtitle level={3}>React 프로젝트의 관례</Subtitle>
+
+<Paragraph>
+  React 프로젝트에서는 일반적으로 <strong>컴포넌트는 default export</strong>,{" "}
+  <strong>유틸 함수나 상수는 named export</strong>로 내보냅니다. 실제 React
+  코드를 열면 이런 구조를 볼 수 있습니다.
+</Paragraph>
+
+```jsx
+// components/UserCard.jsx — 컴포넌트 (default export)
+import { formatDate } from "../utils/date";
+import styles from "./UserCard.module.css";
+
+export default function UserCard({ name, createdAt }) {
+  return (
+    <div className={styles.card}>
+      <h3>{name}</h3>
+      <span>{formatDate(createdAt)}</span>
+    </div>
+  );
 }
 ```
 
 ```js
-// 다른 파일에서 import
-import { add, subtract } from "./math.js";
-import Button from "./Button.jsx"; // default는 중괄호 없이
+// utils/date.js — 유틸 함수 (named export)
+export function formatDate(date) {
+  return new Date(date).toLocaleDateString("ko-KR");
+}
 
-// 이름 변경
-import { add as sum } from "./math.js";
+export function isToday(date) {
+  return new Date(date).toDateString() === new Date().toDateString();
+}
+```
 
-// 전부 가져오기
-import * as math from "./math.js";
-math.add(1, 2); // 3
+---
+
+<Subtitle level={2}>6. try/catch — API 호출에서 에러 처리하기</Subtitle>
+
+<Paragraph>
+  실제 앱에서는 네트워크 요청이 실패하거나, 예상치 못한 데이터가 올 수 있습니다.
+  `try/catch`는 이런 에러를 잡아서 앱이 멈추지 않도록 처리하는 문법입니다.
+</Paragraph>
+
+<Subtitle level={3}>기본 구조</Subtitle>
+
+```js
+try {
+  // 에러가 발생할 수 있는 코드
+  const result = JSON.parse("잘못된 JSON");
+} catch (error) {
+  // 에러 발생 시 실행되는 코드
+  console.error("파싱 실패:", error.message);
+} finally {
+  // 에러 여부와 관계없이 항상 실행 (선택사항)
+  console.log("처리 완료");
+}
+```
+
+<Subtitle level={3}>async/await + try/catch</Subtitle>
+
+<Paragraph>
+  API 호출은 비동기(async)로 이루어지므로, `async/await`와 `try/catch`를 함께
+  사용합니다. 이 패턴은 React에서 데이터를 불러올 때 기본이 됩니다.
+</Paragraph>
+
+```js
+async function fetchUser(userId) {
+  try {
+    const response = await fetch(`/api/users/${userId}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP 에러: ${response.status}`);
+    }
+
+    const user = await response.json();
+    return user;
+  } catch (error) {
+    console.error("사용자 조회 실패:", error.message);
+    return null;
+  }
+}
+```
+
+<Subtitle level={3}>React에서의 에러 처리 패턴</Subtitle>
+
+<Paragraph>
+  React에서는 `useEffect` 안에서 API를 호출하고, `try/catch`로 에러를
+  처리합니다. 아래 패턴은 다음 주에 React를 배우면서 직접 작성하게 됩니다.
+</Paragraph>
+
+```jsx
+// React useEffect에서의 데이터 fetching — 미리 눈에 익혀두세요
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const response = await fetch(`/api/users/${userId}`);
+        const data = await response.json();
+        setUser(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadUser();
+  }, [userId]);
+
+  if (loading) return <p>로딩 중...</p>;
+  if (error) return <p>에러: {error}</p>;
+  return <h1>{user?.name}</h1>;
+}
 ```
 
 ---
@@ -410,7 +669,7 @@ math.add(1, 2); // 3
 
 <Paragraph>
   아래 코드를 <strong>브라우저 콘솔에서 직접 실행</strong>해보고 결과를
-  입력해보세요.
+  예측해보세요.
 </Paragraph>
 
 <ArticleQuiz>
@@ -430,23 +689,28 @@ explanation="먼저 filter로 홀수만 걸러내면 [1, 3, 5]가 됩니다. 그
 
   <ArticleQuizItem
     mode="description"
-    question="아래 코드에서 a, b, rest의 값을 순서대로 입력하세요."
-    code={`const [a, b, ...rest] = [10, 20, 30, 40, 50];
-console.log(a);
-console.log(b);
+    question="아래 코드에서 name, rest의 값을 각각 입력하세요."
+    code={`const user = { name: '철수', age: 25, role: 'admin' };
+const { name, ...rest } = user;
+
+console.log(name);
 console.log(rest);`}
-    answer="10, 20, [30, 40, 50]"
-    explanation="배열 구조 분해로 a=10, b=20이 할당되고, Rest 파라미터(...)로 나머지 [30, 40, 50]이 rest에 할당됩니다."
-  />
+answer="name은 '철수', rest는 { age: 25, role: 'admin' }"
+explanation="객체 구조 분해로 name='철수'가 추출되고, Rest 패턴(...)으로 나머지 프로퍼티들이 rest 객체에 모입니다."
+/>
+
   <ArticleQuizItem
     mode="description"
-    question="아래 코드의 출력 결과는 무엇인가요?"
-    code={`const user = null;
-const name = user?.profile?.name ?? "익명";
-console.log(name);`}
-    answer="익명"
-    explanation="user가 null이므로 user?.profile?.name은 undefined를 반환합니다. undefined ?? '익명'에서 null 병합 연산자는 undefined일 때 오른쪽을 반환하므로 '익명'이 출력됩니다."
-  />
+    question="아래 코드의 출력 결과 세 줄을 순서대로 입력하세요."
+    code={`const value = 0;
+
+console.log(value || '기본값');
+console.log(value ?? '기본값');
+console.log(value?.toString());`}
+answer="'기본값', 0, '0'"
+explanation="value || '기본값': 0은 falsy이므로 '기본값' 반환. value ?? '기본값': 0은 null/undefined가 아니므로 0 반환. value?.toString(): 0은 null이 아니므로 toString()이 호출되어 '0' 반환."
+/>
+
 </ArticleQuiz>
 
 ---
@@ -454,20 +718,33 @@ console.log(name);`}
 <Subtitle level={2}>📝 9주차 스터디 인증 미션</Subtitle>
 
 <Paragraph>
-  다가오는 스터디 모임 전, 아래 질문에 대해 본인만의 말로 설명한 뒤 댓글로
-  남겨주세요.
+  다가오는 스터디 모임 전, 아래 질문에 대해 찾아보고 본인만의 말로 정리한 뒤
+  댓글로 남겨주세요.
 </Paragraph>
 
-> **Q1. map, filter, reduce의 차이를 각각 설명하고, 어떤 상황에서 어떤 메서드를 선택하는지 설명해주세요.**
->
-> <br />
->
-> **Q2. 옵셔널 체이닝(?.)과 null 병합 연산자(??)를 설명하고, `||` 연산자와 `??`의 차이를 예시와 함께 설명해주세요.**
-
----
-
-<Subtitle level={2}>관련 포스팅</Subtitle>
-
-- <Anchor href="/blog/study/clab-26-1/week9">
-    프론트엔드 스터디 9주차 학습 자료: 클로저, Promise, async/await
-  </Anchor>
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="description"
+    question="React의 useState는 왜 객체가 아닌 배열을 반환할까요? 배열 구조 분해로 받으면 어떤 점이 편리한지 설명해보세요."
+    answer="배열 구조 분해는 변수 이름을 자유롭게 지정할 수 있기 때문입니다. 객체 구조 분해는 프로퍼티 이름이 고정되어 있어 여러 useState를 사용할 때 이름 충돌이 발생합니다."
+    explanation="const [count, setCount] = useState(0)처럼 사용자가 원하는 이름을 바로 붙일 수 있습니다. 만약 객체였다면 const { state: count, setState: setCount } = useState(0)처럼 매번 이름을 변경해야 하므로 불편합니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="setState(prev => ({ ...prev, count: prev.count + 1 })) 패턴에서 스프레드(...)를 사용하는 이유를 설명해보세요. 스프레드 없이 { count: prev.count + 1 }만 쓰면 어떤 문제가 생길까요?"
+    answer="스프레드를 사용하면 기존 상태의 모든 프로퍼티를 유지하면서 특정 프로퍼티만 덮어쓸 수 있습니다. 스프레드 없이 쓰면 나머지 프로퍼티가 모두 사라집니다."
+    explanation="예를 들어 상태가 { name: '철수', count: 0 }일 때 { count: 1 }만 쓰면 name 프로퍼티가 사라져 { count: 1 }만 남습니다. { ...prev, count: 1 }로 써야 { name: '철수', count: 1 }이 됩니다. React에서는 상태를 직접 수정(mutation)하지 않고 새 객체를 만드는 불변 업데이트를 원칙으로 합니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="user?.address?.city와 user && user.address && user.address.city의 동작이 완전히 같을까요? 차이가 있다면 어떤 경우에 다르게 동작하는지 찾아보세요."
+    answer="대부분의 경우 같지만, user가 0이나 빈 문자열('')처럼 falsy 값일 때 다르게 동작합니다."
+    explanation="&&는 왼쪽이 falsy이면 그 값을 반환합니다. 따라서 user가 0이면 0 && 0.address는 0을 반환합니다. 하지만 0?.address는 undefined를 반환합니다. ?.는 오직 null과 undefined만 체크하기 때문입니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="React 프로젝트에서 named export와 default export를 각각 어떤 상황에 사용하는지, 실제 프로젝트의 관례를 기준으로 설명해보세요."
+    answer="React 컴포넌트는 default export, 유틸 함수/상수/타입은 named export가 일반적인 관례입니다."
+    explanation="컴포넌트는 파일당 하나가 원칙이므로 default export가 자연스럽습니다. 유틸 함수나 상수는 한 파일에 여러 개를 모아두므로 named export를 사용합니다. named export는 import 시 자동완성이 잘 되고, 오타를 에디터가 잡아주는 장점도 있습니다."
+  />
+</ArticleQuiz>

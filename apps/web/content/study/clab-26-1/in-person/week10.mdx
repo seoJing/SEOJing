@@ -1,46 +1,112 @@
 ---
-title: "프론트엔드 스터디 대면 10주차: 배열 고차함수와 ES6+ 문법"
+title: "프론트엔드 스터디 대면 10주차: React 입문 전 브릿지 — ES6+ 문법과 에러 처리"
 date: 2026-05-23
 tags:
   - 프론트엔드
   - 스터디
   - JavaScript
-  - 배열
   - ES6
   - 구조분해할당
-description: 9주차 JS 복습과 과제 풀이, 그리고 이번 주 핵심인 배열 고차함수, 구조 분해, 스프레드, 옵셔널 체이닝 관련 면접 질문을 다룹니다.
+  - 에러처리
+description: 클로저와 비동기 복습을 코드 중심으로 다시 짚고, React에서 매일 사용하는 ES6+ 문법과 에러 처리 관련 면접 질문을 다룹니다. JS에서 React로 넘어가는 브릿지 주차입니다.
 ---
 
-<Subtitle level={2}>1. 저번 주 복습</Subtitle>
+<Subtitle level={2}>1. 저번 주 복습 — 클로저와 비동기</Subtitle>
 
 <Paragraph>
-  지난주에는 클로저, Promise, async/await를 배웠습니다. 핵심만 빠르게
-  짚어보겠습니다.
+  지난주에는 클로저, Promise, async/await를 배웠습니다. React에서 가장 많이
+  쓰이는 JS 개념이기도 합니다. 코드 예시와 비유 중심으로 다시 짚어보겠습니다.
 </Paragraph>
 
-<Subtitle level={3}>클로저(Closure)</Subtitle>
+<Subtitle level={3}>클로저(Closure) — "함수가 기억하는 배낭"</Subtitle>
 
-- <strong>정의</strong>: 함수가 선언될 때의 렉시컬 환경을 기억하여, 외부 함수
-  종료 후에도 외부 변수에 접근할 수 있는 것
-- <strong>활용</strong>: 데이터 은닉(private 변수), 메모이제이션, 함수 팩토리
-- <strong>React 연결</strong>: `useState`, 이벤트 핸들러가 클로저로 상태를 기억.
-  stale closure 버그의 원인
+<Paragraph>
+  클로저를 비유하면, 함수가 태어날 때 주변 변수를{" "}
+  <strong>배낭에 담아가는 것</strong>
+  입니다. 함수가 어디서 실행되든, 태어났을 때 담아간 배낭(렉시컬 환경)은 그대로
+  들고 다닙니다.
+</Paragraph>
 
-<Subtitle level={3}>비동기 처리 흐름</Subtitle>
+```js
+function makeGreeting(greeting) {
+  // greeting이 배낭에 담김
+  return function (name) {
+    // 이 함수가 어디서 실행되든 greeting을 기억
+    return `${greeting}, ${name}!`;
+  };
+}
 
-- <strong>콜백 → Promise → async/await</strong>: 같은 비동기 처리를 가독성
-  순서로 발전
-- <strong>Promise 상태</strong>: `pending` → `fulfilled` / `rejected` (한 번
-  결정되면 변경 불가)
-- <strong>async 함수</strong>: 항상 Promise를 반환. `return 42` →
-  `Promise.resolve(42)`
-- <strong>에러 처리</strong>: `async/await`에서는 `try/catch`로 처리
+const hello = makeGreeting("안녕하세요"); // greeting = "안녕하세요" 담김
+const bye = makeGreeting("잘 가요"); // greeting = "잘 가요" 담김
 
-<Subtitle level={3}>이벤트 루프</Subtitle>
+hello("철수"); // "안녕하세요, 철수!"
+bye("영희"); // "잘 가요, 영희!"
+```
 
-- <strong>단일 스레드 + 이벤트 루프</strong>: 콜 스택이 비면
-  마이크로태스크(Promise) → 매크로태스크(setTimeout) 순서로 실행
-- <strong>병렬 처리</strong>: `Promise.all()`로 여러 비동기 작업을 동시에 실행
+<Paragraph>
+  <strong>React에서의 클로저</strong>: `useState`의 상태값, 이벤트 핸들러 안의
+  변수가 모두 클로저로 동작합니다. 나중에 React를 배우면 이 개념이 바로
+  연결됩니다.
+</Paragraph>
+
+```js
+// React에서 클로저가 쓰이는 패턴 (미리보기)
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  const handleClick = () => {
+    // handleClick은 count를 클로저로 기억
+    setCount(count + 1);
+  };
+
+  return <button onClick={handleClick}>{count}</button>;
+}
+```
+
+<Subtitle level={3}>비동기 처리 — "주문하고 번호표 받기"</Subtitle>
+
+<Paragraph>
+  비동기를 비유하면 <strong>카페에서 주문하는 것</strong>과 같습니다.
+  주문(요청)을 넣고 번호표(Promise)를 받습니다. 음료가 나올 때까지 다른 일을
+  하다가, 번호가 불리면(fulfilled) 음료를 받습니다. 만약 재료가 없으면(rejected)
+  "죄송합니다"라는 답을 받습니다.
+</Paragraph>
+
+```js
+// Promise = 번호표
+const order = fetch("/api/coffee"); // 주문 접수 → 번호표(Promise) 반환
+
+// async/await = 번호표를 들고 기다리기
+async function getCoffee() {
+  try {
+    const response = await fetch("/api/coffee"); // 기다림
+    const data = await response.json(); // 음료 수령
+    return data;
+  } catch (err) {
+    console.error("주문 실패:", err); // 재료 없음
+  }
+}
+```
+
+<Subtitle level={3}>이벤트 루프 — 실행 순서 퀴즈</Subtitle>
+
+<Paragraph>
+  아래 코드의 실행 순서를 맞춰보세요.{" "}
+  <strong>콜 스택 → 마이크로태스크(Promise) → 매크로태스크(setTimeout)</strong>{" "}
+  순서를 기억하면 됩니다.
+</Paragraph>
+
+```js
+console.log("1"); // 콜 스택 — 즉시 실행
+
+setTimeout(() => console.log("2"), 0); // 매크로태스크 큐
+
+Promise.resolve().then(() => console.log("3")); // 마이크로태스크 큐
+
+console.log("4"); // 콜 스택 — 즉시 실행
+
+// 출력 순서: 1, 4, 3, 2
+```
 
 ---
 
@@ -85,67 +151,75 @@ description: 9주차 JS 복습과 과제 풀이, 그리고 이번 주 핵심인 
 <Subtitle level={2}>3. 면접 질문</Subtitle>
 
 <Paragraph>
-  이번 주 범위와 관련된 실제 면접 질문들입니다. 정답을 외우기보다는 자신만의
-  말로 설명하는 연습을 해보세요.
+  이번 주는 React로 넘어가기 전 마지막 JS 면접 질문입니다. ES6+ 문법은 React에서
+  매일 사용하므로, 자신만의 말로 설명하는 연습을 해보세요.
 </Paragraph>
 
-<Subtitle level={3}>Q1. map, filter, reduce의 차이를 설명해주세요.</Subtitle>
+<Subtitle level={3}>
+  Q1. map과 filter의 차이는 무엇이고, 언제 사용하나요?
+</Subtitle>
 
-<Paragraph>세 메서드 모두 원본 배열을 변경하지 않는 순수 함수입니다.</Paragraph>
+<Paragraph>
+  둘 다 원본 배열을 변경하지 않고 <strong>새 배열을 반환</strong>하는 순수
+  함수입니다.
+</Paragraph>
 
-- <strong>`map`</strong>: 각 요소를 변환하여
-  <strong>같은 길이의 새 배열</strong>을 반환. 변환이 목적
-- <strong>`filter`</strong>: 조건에 맞는 요소만 모아
-  <strong>더 짧거나 같은 길이의 새 배열</strong>을 반환. 필터링이 목적
-- <strong>`reduce`</strong>: 배열을 순회하며 <strong>하나의 값으로 누적</strong>
-  . 합계, 객체 변환, 그룹핑 등에 사용
+- <strong>`map`</strong>: 각 요소를 <strong>변환</strong>하여 같은 길이의 새
+  배열을 반환. "모든 요소에 같은 작업 적용"
+- <strong>`filter`</strong>: 조건에 맞는 요소만 <strong>걸러내서</strong> 더
+  짧거나 같은 길이의 새 배열을 반환. "조건에 맞는 것만 선택"
 
 ```js
 const numbers = [1, 2, 3, 4, 5];
 
+// map — 변환: 모든 요소를 2배로
 numbers.map((n) => n * 2); // [2, 4, 6, 8, 10]
+
+// filter — 필터링: 짝수만 선택
 numbers.filter((n) => n % 2 === 0); // [2, 4]
-numbers.reduce((acc, n) => acc + n, 0); // 15
+
+// 체이닝: filter 먼저 → map
+// 짝수만 골라서(2개) 2배 하기 vs 전체(5개) 2배 후 짝수 고르기
+numbers.filter((n) => n % 2 === 0).map((n) => n * 2); // [4, 8]
 ```
 
 <Paragraph>
-  면접 팁: "React에서 map은 리스트 렌더링, filter는 조건부 렌더링이나 상태
-  필터링, reduce는 복잡한 상태 계산에 자주 사용합니다"라고 연결하면 좋습니다.
+  면접 팁: "React에서 `map`은 리스트 렌더링에, `filter`는 조건부 필터링에 매일
+  사용합니다. 체이닝할 때 `filter`를 먼저 하면 처리할 요소 수가 줄어들어 더
+  효율적입니다"라고 연결하면 좋습니다.
 </Paragraph>
 
-<Subtitle level={3}>
-  Q2. 구조 분해 할당이란 무엇이고, 실무에서 어떻게 활용하나요?
-</Subtitle>
+<Subtitle level={3}>Q2. 구조 분해 할당이 React에서 어떻게 쓰이나요?</Subtitle>
 
 <Paragraph>
   구조 분해 할당은{" "}
   <strong>배열이나 객체의 값을 개별 변수로 한 번에 추출</strong>하는 문법입니다.
+  React에서는 두 가지 핵심 패턴에 사용됩니다.
 </Paragraph>
 
-```js
-// 객체 구조 분해 — props 수신
+```jsx
+// 1. props 수신 — 객체 구조 분해
 function UserCard({ name, age, role = "user" }) {
   return (
     <div>
-      {name} ({age}) — {role}
+      {name} ({age}) - {role}
     </div>
   );
 }
 
-// 배열 구조 분해 — useState
+// 2. useState — 배열 구조 분해
 const [count, setCount] = useState(0);
+// useState가 [현재값, 변경함수] 배열을 반환하고,
+// 구조 분해로 각각 변수에 할당
 
-// API 응답에서 필요한 값만 추출
-const {
-  data: { users },
-  status,
-} = await fetchUsers();
+// 3. API 응답에서 필요한 값만 추출
+const { data, error, isLoading } = useSWR("/api/user");
 ```
 
 <Paragraph>
-  면접 팁: "기본값 지정, 이름 변경, 중첩 구조 분해까지 알고 있으면 코드가 훨씬
-  간결해집니다. Rest 파라미터와 조합하면 특정 프로퍼티를 제외한 나머지를 모으는
-  패턴도 자주 씁니다"라고 답하면 좋습니다.
+  면접 팁: "기본값 지정(`role = 'user'`), 이름 변경(`data: userData`), Rest
+  파라미터(`{ name, ...others }`)까지 알고 있으면 코드가 훨씬 간결해집니다"라고
+  답하면 좋습니다.
 </Paragraph>
 
 <Subtitle level={3}>
@@ -165,46 +239,89 @@ const {
 ```js
 const user = null;
 
-// 옵셔널 체이닝
-user?.address?.city; // undefined (TypeError 없음)
+// 옵셔널 체이닝 — TypeError 방지
+user?.address?.city; // undefined (에러 없음)
 
-// ?? vs ||
+// ?. + ?? 조합 — 안전한 접근 + 기본값
+user?.profile?.avatar ?? "/default.png"; // "/default.png"
+
+// ?? vs || — 핵심 차이
 const count = 0;
-count || "기본값"; // "기본값" — 0은 falsy라서
-count ?? "기본값"; // 0 — null/undefined만 해당하므로
+count || "기본값"; // "기본값" — 0은 falsy라서 오른쪽 반환
+count ?? "기본값"; // 0 — 0은 null/undefined가 아니므로 왼쪽 유지
+
+const name = "";
+name || "익명"; // "익명" — 빈 문자열은 falsy
+name ?? "익명"; // "" — 빈 문자열은 null/undefined가 아님
 ```
 
 <Paragraph>
-  면접 팁: "`||`는 0, 빈 문자열, false도 falsy로 처리해서 기본값이 적용됩니다.
-  수량이나 금액 같은 값에 기본값을 설정할 때는 `??`를 써야 0이 의도치 않게
-  바뀌지 않습니다"라고 설명하면 실무 감각이 있다는 인상을 줍니다.
+  면접 팁: "`||`는 0, 빈 문자열, false도 falsy로 처리합니다. 수량이나 금액처럼
+  0이 유효한 값인 경우 `??`를 써야 의도치 않게 기본값으로 바뀌지 않습니다"라고
+  설명하면 실무 감각이 있다는 인상을 줍니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>4. 관련 포스팅</Subtitle>
+<Subtitle level={2}>4. 인증 미션</Subtitle>
+
+<Paragraph>
+  아래 질문에 답해보세요. 직접 콘솔에서 실행해보고, 결과의 이유까지 설명할 수
+  있어야 합니다.
+</Paragraph>
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="description"
+    question="[1,2,3,4,5].filter(n => n % 2 === 0).map(n => n * 2)의 결과는 무엇인가요? 그리고 왜 filter를 먼저 하는 게 map을 먼저 하는 것보다 좋은지 설명하세요."
+    answer="결과는 [4, 8]입니다. filter가 먼저 실행되어 짝수 [2, 4]만 남기고, map이 각각 2배로 변환합니다."
+    explanation="filter를 먼저 하면 처리할 요소 수가 줄어들어 이후 map이 더 적은 요소만 변환하면 됩니다. 반대로 map을 먼저 하면 5개 전부를 변환한 뒤 filter로 걸러내야 하므로 불필요한 변환이 발생합니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="const { name = '익명', age } = {};를 실행하면 name과 age의 값은 각각 무엇인가요? 그 이유도 설명하세요."
+    answer="name은 '익명', age는 undefined입니다."
+    explanation="빈 객체 {}에는 name, age 프로퍼티가 모두 없으므로 둘 다 undefined가 됩니다. 하지만 name에는 기본값 '익명'이 지정되어 있어서, 값이 undefined일 때 기본값이 적용됩니다. age에는 기본값이 없으므로 undefined 그대로 남습니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="user?.profile?.avatar ?? '/default.png'에서 '/default.png'가 사용되는 경우는 정확히 어떤 경우인가요?"
+    answer="user가 null/undefined이거나, user.profile이 null/undefined이거나, user.profile.avatar가 null/undefined인 경우에 '/default.png'가 사용됩니다."
+    explanation="옵셔널 체이닝(?.)은 중간 어디서든 null/undefined를 만나면 평가를 중단하고 undefined를 반환합니다. null 병합 연산자(??)는 왼쪽이 null 또는 undefined일 때만 오른쪽 값을 반환합니다. 따라서 체이닝 결과가 undefined가 되는 모든 경우에 기본 이미지 경로가 사용됩니다. 만약 avatar가 빈 문자열 ''이라면 ??는 그것을 그대로 반환합니다(||와 다른 점)."
+  />
+</ArticleQuiz>
+
+---
+
+<Subtitle level={2}>5. 관련 포스팅</Subtitle>
 
 - <Anchor href="/blog/study/clab-26-1/week9">
     프론트엔드 스터디 9주차 학습 자료: 클로저, Promise, async/await
   </Anchor>
 - <Anchor href="/blog/study/clab-26-1/week10">
-    프론트엔드 스터디 10주차 학습 자료: 배열 고차함수와 ES6+ 문법
+    프론트엔드 스터디 10주차 학습 자료: ES6+ 문법과 에러 처리
   </Anchor>
 
 ---
 
-<Subtitle level={2}>5. 다음 주 안내</Subtitle>
+<Subtitle level={2}>6. 다음 주 안내</Subtitle>
 
 <Paragraph>
-  다음 주부터는 드디어 <strong>React</strong>로 넘어갑니다. 지금까지 배운 JS
-  개념들이 어떻게 React에서 활용되는지 바로 체감할 수 있을 것입니다. 첫 번째로{" "}
-  <strong>React 소개와 JSX, 컴포넌트</strong> 기초를 다룹니다. 공식 문서가 잘
-  되어 있어 포이마 외에도 React 공식 문서(react.dev)를 함께 보면 좋습니다.
+  다음 주부터 드디어 <strong>React</strong>를 시작합니다! 지금까지 배운 JS
+  개념들 — 클로저, 비동기, 구조 분해, map/filter, 옵셔널 체이닝 — 이 React에서
+  어떻게 활용되는지 바로 체감할 수 있을 것입니다.
+</Paragraph>
+
+<Paragraph>
+  React는 <strong>컴포넌트</strong>라는 작은 UI 조각을 조합해서 화면을 만드는
+  라이브러리입니다. HTML을 JS 안에 쓰는 <strong>JSX</strong> 문법, 부모에서
+  자식으로 데이터를 전달하는 <strong>props</strong>, 컴포넌트가 자신의 값을
+  기억하는 <strong>useState</strong> 같은 개념을 배우게 됩니다. JS를 이미 알고
+  있으니 생각보다 빠르게 적응할 수 있습니다.
 </Paragraph>
 
 <Subtitle level={3}>다음 주 예습</Subtitle>
 
-- <Anchor external="https://poiemaweb.com/react-jsx">React와 JSX</Anchor>
 - <Anchor external="https://react.dev/learn">
-    React 공식 문서 — 빠른 시작
+    React 공식 문서 — Quick Start
   </Anchor>

@@ -1,0 +1,311 @@
+---
+title: useEffect cleanup과 의존성 배열 — 실전 버그 사례로 이해하는 생애주기
+date: 2026-04-01
+tags:
+  - React
+  - useEffect
+  - cleanup
+  - 의존성 배열
+  - useRef
+  - stale closure
+  - 트러블슈팅
+description: useEffect 의존성 배열에 불필요한 값이 포함되면 cleanup과 재실행이 뒤엉켜 DOM 상태가 꼬일 수 있다. 프레젠테이션 모드에서 발생한 모바일 스크롤 고착 버그를 통해 원인과 해결 패턴을 정리한다.
+---
+
+<Subtitle level={2}>useEffect의 생애주기부터 정리하자</Subtitle>
+
+<Paragraph>
+  버그를 이해하려면 먼저 useEffect의 실행 흐름을 정확히 알아야 한다. useEffect는
+  세 가지 시점에 동작한다.
+</Paragraph>
+
+1. <strong>마운트</strong> — 컴포넌트가 DOM에 처음 삽입될 때 effect 함수가
+   실행된다.
+2. <strong>의존성 변경</strong> — 의존성 배열에 있는 값이 바뀌면
+   <strong>이전 effect의 cleanup을 먼저 실행</strong>하고, 새 effect 함수를
+   실행한다.
+3. <strong>언마운트</strong> — 컴포넌트가 DOM에서 제거될 때 마지막 cleanup이
+   실행된다.
+
+<Paragraph>
+  여기서 핵심은 2번이다. 의존성이 변경되면 cleanup과 재실행이{" "}
+  <strong>한 쌍으로 발생</strong>한다. 이 사이클이 예상치 못한 시점에 끼어들면
+  외부 상태가 꼬인다.
+</Paragraph>
+
+```
+마운트     → effect 실행 (prev 캡처 → overflow = "hidden")
+의존성 변경 → cleanup (overflow = prev) → effect 재실행 (prev 다시 캡처 → overflow = "hidden")
+언마운트   → cleanup (overflow = prev)
+```
+
+<Paragraph>
+  cleanup이 복원하는 값은 <strong>해당 effect가 실행된 시점에 캡처한 값</strong>
+  이다. effect가 재실행될 때마다 새로운 클로저가 생기고, 그 클로저 안의 `prev`도
+  새로 캡처된다. 이 점을 놓치면 아래와 같은 버그가 생긴다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>버그: 모바일에서 스크롤이 멈췄다</Subtitle>
+
+<Paragraph>
+  블로그의 프레젠테이션 모드에서 모바일 스크롤이 완전히 멈추는 버그가 발생했다.
+  프레젠테이션을 닫아도 스크롤이 돌아오지 않았다.
+  `document.body.style.overflow`가 `"hidden"`으로 고착되어 있었다.
+</Paragraph>
+
+<Subtitle level={3}>문제가 된 코드</Subtitle>
+
+```tsx
+// PresentationView 내부
+useEffect(() => {
+  const prev = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
+
+  const handleKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      if (fullscreenCode) {
+        setFullscreenCode(null);
+      } else {
+        safeClose();
+      }
+    }
+  };
+  document.addEventListener("keydown", handleKey);
+
+  return () => {
+    document.body.style.overflow = prev;
+    document.removeEventListener("keydown", handleKey);
+  };
+}, [safeClose, totalSlides, fullscreenCode, goToNext]);
+```
+
+<Paragraph>
+  이 effect는 프레젠테이션 모드가 열릴 때 스크롤을 잠그고, 닫힐 때 원래 값으로
+  복원한다. 언뜻 보면 문제가 없다. 하지만 의존성 배열에 `fullscreenCode`가 들어
+  있다.
+</Paragraph>
+
+<Subtitle level={3}>재현 시나리오</Subtitle>
+
+<Paragraph>
+  프레젠테이션 모드(PresentationView)와 코드 전체보기(FullscreenView)가 중첩된
+  상황에서 문제가 발생한다. 단계별로 보자.
+</Paragraph>
+
+1. <strong>PresentationView 마운트</strong> — effect 실행. `prev = ""`(기본값)을
+   캡처하고 `overflow = "hidden"` 설정.
+2. <strong>코드 전체보기 클릭</strong> — `fullscreenCode` 상태가 변경된다. 이
+   값이 의존성 배열에 있으므로 cleanup 실행 → `overflow = ""`(prev) → effect
+   재실행 → `prev = ""`를 캡처하고 다시 `overflow = "hidden"`.
+3. <strong>FullscreenView 마운트</strong> — 이 컴포넌트도 자체 effect에서
+   `overflow = "hidden"`을 설정한다. 이때 `prev = "hidden"`을 캡처한다.
+4. <strong>FullscreenView 닫힘</strong> — cleanup이 `overflow = prev`를
+   실행한다. `prev`는 `"hidden"`이므로 `overflow = "hidden"` 그대로.
+5. <strong>코드 전체보기 닫기</strong> — `fullscreenCode`가 `null`로 변경.
+   PresentationView의 cleanup 실행 → `overflow = ""`로 복원. effect 재실행 →
+   <strong>이 시점에서 `prev = "hidden"`을 캡처</strong>한다. FullscreenView의
+   cleanup이 `"hidden"`을 남겼기 때문이다.
+6. <strong>프레젠테이션 종료</strong> — 언마운트 cleanup 실행. `overflow = prev`
+   → `"hidden"`. 원래 값(`""`)이 아닌 `"hidden"`으로 "복원"된다.
+
+<Paragraph>
+  결과적으로 프레젠테이션을 닫아도 `overflow: hidden`이 남아서 페이지 스크롤이
+  불가능해진다. 모바일에서는 터치 스크롤이 아예 먹통이 되므로 사용자가 페이지를
+  떠나는 수밖에 없다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>
+  원인: 의존성 배열이 effect를 필요 이상으로 재실행시켰다
+</Subtitle>
+
+<Paragraph>
+  근본 원인은 <strong>`fullscreenCode`가 의존성 배열에 포함되어 있었다</strong>
+  는 것이다. 이 값이 바뀔 때마다 effect 전체가 cleanup → 재실행 사이클을 탔다.
+</Paragraph>
+
+<Paragraph>
+  effect가 재실행될 때마다 `const prev = document.body.style.overflow`를 새로
+  캡처한다. 그런데 다른 컴포넌트(FullscreenView)가 중간에 `overflow`를 건드리면,
+  재실행 시점의 `prev`가 원래 값이 아닌 `"hidden"`이 된다. 이후 cleanup이 이
+  오염된 값으로 "복원"하면서 상태가 꼬인다.
+</Paragraph>
+
+<Paragraph>
+  `fullscreenCode`는 왜 의존성 배열에 있었을까? `handleKey` 함수 안에서
+  `fullscreenCode`를 참조하고 있었기 때문이다. ESLint의
+  `react-hooks/exhaustive-deps` 규칙이 이 값을 의존성에 넣으라고 경고했을
+  가능성이 높다. 린트 규칙을 맹목적으로 따른 결과 effect의 의미가 변질된 것이다.
+</Paragraph>
+
+<Paragraph>
+  이 effect가 정말로 재실행되어야 하는 시점은{" "}
+  <strong>프레젠테이션 모드의 마운트/언마운트</strong>뿐이다. `fullscreenCode`가
+  바뀌었다고 스크롤 잠금을 해제했다가 다시 거는 것은 의미 없는 동작이다. "이
+  값이 변할 때 effect를 재실행해야 하는 이유가 있는가?"라는 질문에 답할 수
+  없다면, 의존성 배열에서 제거해야 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>해결: ref로 최신값을 참조한다</Subtitle>
+
+<Paragraph>
+  의존성 배열에서 `fullscreenCode`를 제거하면 되지만, `handleKey` 안에서 이 값을
+  참조해야 한다. 의존성에서 빼면 stale closure가 되어 항상 초기값만 읽는다. 이
+  문제를 해결하는 표준 패턴이 <strong>ref를 통한 최신값 참조</strong>다.
+</Paragraph>
+
+```tsx
+const fullscreenCodeRef = useRef(null);
+fullscreenCodeRef.current = fullscreenCode; // 렌더링마다 최신값 동기화
+
+useEffect(() => {
+  const prev = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
+
+  const handleKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      if (fullscreenCodeRef.current) {
+        // ref로 최신값 참조
+        setFullscreenCode(null);
+      } else {
+        safeClose();
+      }
+    }
+  };
+  document.addEventListener("keydown", handleKey);
+
+  return () => {
+    document.body.style.overflow = prev;
+    document.removeEventListener("keydown", handleKey);
+  };
+}, [safeClose, totalSlides, goToNext]); // fullscreenCode 제거됨
+```
+
+<Paragraph>
+  `fullscreenCodeRef.current`는 항상 최신 상태값을 가리킨다. ref는 값이 바뀌어도
+  React의 렌더링을 트리거하지 않고, 의존성 배열에 넣을 필요도 없다. effect 안의
+  이벤트 핸들러가 ref를 통해 값을 읽으므로 stale closure 문제도 없다.
+</Paragraph>
+
+<Paragraph>
+  이제 `fullscreenCode`가 변해도 effect는 재실행되지 않는다. cleanup → 재실행
+  사이클이 발생하지 않으므로 `prev`가 오염될 일이 없다. 프레젠테이션 모드를
+  닫으면 마운트 시점에 캡처한 원래 `overflow` 값으로 정확하게 복원된다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>
+  cleanup이 복원하는 대상이 외부 상태일 때 주의할 점
+</Subtitle>
+
+<Paragraph>
+  이 버그에서 배울 수 있는 더 넓은 교훈이 있다. cleanup에서
+  <strong>DOM이나 전역 객체 같은 외부 상태를 복원</strong>할 때는 각별히
+  주의해야 한다.
+</Paragraph>
+
+<Paragraph>
+  React의 상태(useState, useReducer)는 React가 관리한다. 값이 어떤 시점에 어떻게
+  변하는지 React가 추적한다. 하지만 `document.body.style`은 React 바깥에 있다.
+  어떤 컴포넌트든, 어떤 라이브러리든 이 값을 바꿀 수 있다. effect가 캡처한
+  `prev`는 캡처 시점의 스냅샷일 뿐, 이후 다른 코드가 이 값을 바꿨는지 알 수
+  없다.
+</Paragraph>
+
+<Paragraph>
+  따라서 외부 상태를 조작하는 effect에서는 두 가지를 확인해야 한다.
+</Paragraph>
+
+1. <strong>effect가 최소한으로 재실행되는가</strong> — 의존성 배열에 불필요한
+   값이 없는지 확인한다. 재실행 횟수가 늘어날수록 캡처 시점의 외부 상태가 오염될
+   가능성이 높아진다.
+2. <strong>복원 값이 정말 원래 값인가</strong> — 여러 컴포넌트가 같은 외부
+   상태를 건드린다면, cleanup 시점에 캡처한 값이 진짜 "원래" 값이 아닐 수 있다.
+   참조 카운팅이나 스택 기반 관리가 더 안전할 수 있다.
+
+---
+
+<Subtitle level={2}>stale closure 해결 패턴 정리</Subtitle>
+
+<Paragraph>
+  ref로 최신값을 참조하는 패턴은 useEffect와 함께 자주 쓰인다. 어떤 상황에서 이
+  패턴이 필요한지 정리해보자.
+</Paragraph>
+
+<Subtitle level={3}>패턴이 필요한 경우</Subtitle>
+
+<Paragraph>
+  effect 안에서 어떤 상태값을 <strong>읽기만</strong> 하고, 그 값이 변할 때
+  effect를 재실행할 필요가 없을 때 사용한다. 위 사례에서 `fullscreenCode`는
+  이벤트 핸들러 안에서 조건 분기에만 쓰인다. 이 값이 바뀐다고 이벤트 리스너를
+  해제했다가 다시 등록할 이유가 없다.
+</Paragraph>
+
+```tsx
+// 패턴
+const valueRef = useRef(value);
+valueRef.current = value; // 매 렌더링마다 동기화
+
+useEffect(() => {
+  const handler = () => {
+    // valueRef.current로 항상 최신값 읽기
+    console.log(valueRef.current);
+  };
+  window.addEventListener("some-event", handler);
+  return () => window.removeEventListener("some-event", handler);
+}, []); // value를 의존성에 넣지 않는다
+```
+
+<Subtitle level={3}>패턴을 쓰면 안 되는 경우</Subtitle>
+
+<Paragraph>
+  값이 변할 때 effect가 <strong>실제로 다른 동작</strong>을 해야 하는 경우에는
+  이 패턴을 쓰면 안 된다. 예를 들어 API 엔드포인트 URL이 바뀌면 이전 요청을
+  취소하고 새 요청을 보내야 한다. 이때는 URL이 의존성 배열에 있어야 맞다.
+</Paragraph>
+
+```tsx
+// 이 경우는 ref가 아니라 의존성 배열이 맞다
+useEffect(() => {
+  const controller = new AbortController();
+  fetch(url, { signal: controller.signal }).then(/* ... */);
+  return () => controller.abort(); // 이전 요청 취소
+}, [url]); // url이 바뀌면 재실행해야 한다
+```
+
+<Paragraph>
+  판단 기준은 간단하다 —{" "}
+  <strong>"이 값이 변할 때 cleanup → 재실행이 의미 있는 동작인가?"</strong> 답이
+  "아니오"라면 ref 패턴을 사용한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>핵심 정리</Subtitle>
+
+<Paragraph>
+  useEffect의 의존성 배열은 "이 값이 바뀌면 effect를 재실행하라"는 선언이다.
+  여기에 값을 추가하는 것은 단순히 린트 경고를 없애는 행위가 아니라,
+  <strong>cleanup → 재실행 사이클의 빈도를 결정하는 설계 행위</strong>다.
+</Paragraph>
+
+1. <strong>의존성 배열의 모든 값에 질문하라</strong> — "이 값이 변할 때 effect가
+   재실행되어야 하는 이유가 있는가?"
+2. <strong>읽기만 하는 값은 ref로 빼라</strong> — effect를 재실행하지 않으면서
+   최신값을 읽을 수 있다.
+3. <strong>외부 상태를 조작하는 effect는 재실행을 최소화하라</strong> —
+   cleanup이 복원하는 값이 오염될 수 있다.
+4. <strong>여러 컴포넌트가 같은 외부 상태를 건드리면 경쟁 조건이 생긴다</strong>
+   — 단순한 prev/restore 패턴으로는 부족할 수 있다.
+
+<Paragraph>
+  ESLint의 `react-hooks/exhaustive-deps`는 유용한 도구이지만, 모든 의존성을
+  맹목적으로 추가하라는 의미가 아니다. effect의 의도를 이해하고, 의존성 배열을
+  의식적으로 설계해야 한다.
+</Paragraph>
