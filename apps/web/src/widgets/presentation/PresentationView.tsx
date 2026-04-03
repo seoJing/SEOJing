@@ -45,7 +45,9 @@ export function PresentationView({
   const fullscreenCodeRef = useRef<{ html: string; language: string } | null>(
     null,
   );
-  fullscreenCodeRef.current = fullscreenCode;
+  useEffect(() => {
+    fullscreenCodeRef.current = fullscreenCode;
+  });
   const [pcScale, setPcScale] = useState(DEFAULT_pcScale);
 
   const [isMobile] = useState(() => {
