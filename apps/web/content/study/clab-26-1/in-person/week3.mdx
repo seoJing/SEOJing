@@ -122,7 +122,7 @@ description: 2주차 폼과 CSS 선택자 복습, 과제 풀이, 3주차 박스 
 
 ```html
 <!-- 태그 사이의 개행/공백이 초기값으로 들어감 -->
-<textarea name="content"></textarea>
+<textarea name="content"> </textarea>
 
 <!-- 이렇게 붙여써야 빈 상태로 시작함 -->
 <textarea name="content"></textarea>
@@ -308,8 +308,8 @@ POST 요청: https://example.com/login
 <Subtitle level={4}>CSS 적용 세 가지 방법</Subtitle>
 
 <Paragraph>
-  인라인 스타일(`style=""`), 내부 스타일시트(`&lt;style&gt;`), 외부 스타일
-  시트(`&lt;link&gt;`) 중 <strong>외부 스타일 시트</strong>가 유지보수와
+  인라인 스타일(`style=""`), 내부 스타일시트(`<style>`), 외부 스타일
+  시트(`<link>`) 중 <strong>외부 스타일 시트</strong>가 유지보수와
   재사용성 면에서 가장 권장됩니다. 인라인 스타일은 우선순위가 1,000점으로 너무
   높아 나중에 덮어쓰기가 극도로 어려워지므로 가급적 피합니다.
 </Paragraph>
@@ -526,71 +526,7 @@ p {
 }
 ```
 
----
-
-<Subtitle level={2}>4. 보충: script 로딩 전략 (defer, async)</Subtitle>
-
-<Paragraph>
-  2주차 학습 자료에서 `defer`를 잠깐 언급했는데, 이 개념을 조금 더 깊이
-  파보겠습니다. 브라우저가 HTML을 위에서 아래로 읽다가 `<script>` 태그를 만나면
-  어떤 일이 일어나는지가 핵심입니다.
-</Paragraph>
-
-<Subtitle level={3}>세 가지 로딩 방식</Subtitle>
-
-- <strong>`<script>`(기본)</strong>: HTML 파싱을 <strong>멈추고</strong>,
-스크립트를 다운로드한 뒤 실행합니다. 실행이 끝나야 나머지 HTML을 파싱합니다.
-그래서 `<body>` 끝에 두는 관행이 생겼습니다.
-- <strong>`<script defer>`</strong>: 스크립트를 <strong>백그라운드에서
-다운로드</strong>하면서 HTML 파싱을 계속합니다. HTML 파싱이 끝난 뒤에 스크립트를
-실행합니다. 여러 개의 defer 스크립트는 <strong>작성 순서대로</strong>
-실행됩니다.
-- <strong>`<script async>`</strong>: 마찬가지로 백그라운드에서 다운로드하지만,
-다운로드가 끝나면 <strong>즉시 실행</strong>합니다. 실행 순서가 보장되지
-않으므로, 다른 스크립트에 의존하지 않는 독립적인 스크립트(광고, 분석 도구 등)에
-적합합니다.
-
-```html
-<!-- 기본: HTML 파싱을 막음 -->
-<script src="app.js"></script>
-
-<!-- defer: HTML 파싱 완료 후 순서대로 실행 -->
-<script defer src="app.js"></script>
-
-<!-- async: 다운로드 완료 즉시 실행, 순서 보장 안 됨 -->
-<script async src="analytics.js"></script>
-```
-
-<Subtitle level={3}>React / Next.js에서는?</Subtitle>
-
-<Paragraph>
-  React 프로젝트에서는 번들러(Vite, Webpack 등)가 빌드한 JS 파일을 자동으로
-  적절한 위치에 삽입해주기 때문에, 직접 defer/async를 걱정할 일이 거의 없습니다.
-</Paragraph>
-
-<Paragraph>
-  하지만 외부 스크립트(Google Analytics, 카카오 SDK 등)를 직접 넣어야 할 때는
-  이야기가 달라집니다. Next.js는 이를 위해 `next/script` 컴포넌트를 제공합니다.
-</Paragraph>
-
-```jsx
-import Script from "next/script";
-
-// defer처럼 동작: HTML 파싱 후 실행
-<Script src="https://example.com/sdk.js" strategy="afterInteractive" />
-
-// async처럼 동작: 브라우저가 한가할 때 실행
-<Script src="https://example.com/analytics.js" strategy="lazyOnload" />
-```
-
-<Paragraph>
-  원리를 알아야 "외부 스크립트를 넣었더니 페이지가 느려졌다"는 상황에서 올바른
-  전략을 선택할 수 있습니다.
-</Paragraph>
-
----
-
-<Subtitle level={2}>5. 관련 포스팅</Subtitle>
+<Subtitle level={2}>4. 관련 포스팅</Subtitle>
 
 - <Anchor href="/blog/study/clab-26-1/week2">
     프론트엔드 스터디 2주차 학습 자료: 사용자와 소통하는 폼 & CSS의 시작
@@ -602,7 +538,7 @@ import Script from "next/script";
 
 ---
 
-<Subtitle level={2}>6. 다음 주 안내</Subtitle>
+<Subtitle level={2}>5. 다음 주 안내</Subtitle>
 
 <Paragraph>
   다음 주에는 CSS의 꽃인 <strong>레이아웃</strong>을 본격적으로 다룹니다.
