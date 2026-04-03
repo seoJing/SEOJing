@@ -112,38 +112,95 @@ console.log("4"); // 콜 스택 — 즉시 실행
 
 <Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
 
-<Subtitle level={3}>학습 자료 9주차 과제</Subtitle>
+<Subtitle level={3}>인증 미션 과제</Subtitle>
 
 <Paragraph>
   <strong>
-    Q1. 클로저(Closure)란 무엇인가요? 실제 활용 사례를 하나 들어 설명해주세요.
+    Q1. React의 `useState`는 왜 객체가 아닌 배열을 반환할까요? 배열 구조 분해로
+    받으면 어떤 점이 편리한지 설명해보세요.
   </strong>
 </Paragraph>
 
+<Subtitle level={4}>정답</Subtitle>
+
 <Paragraph>
-  클로저는{" "}
+  배열 구조 분해는 <strong>변수 이름을 자유롭게 지정</strong>할 수 있기
+  때문입니다. 객체 구조 분해는 프로퍼티 이름이 고정되어 있어 여러 `useState`를
+  사용할 때 이름 충돌이 발생합니다.
+</Paragraph>
+
+<Paragraph>
+  `const [count, setCount] = useState(0)`처럼 원하는 이름을 바로 붙일 수
+  있습니다. 만약 객체였다면 `const {"{"} state: count, setState: setCount {"}"}{" "}
+  = useState(0)`처럼 매번 이름을 변경해야 합니다.
+</Paragraph>
+
+---
+
+<Paragraph>
   <strong>
-    함수가 선언된 렉시컬 환경을 기억하여, 외부 함수가 종료된 후에도 외부 변수에
-    접근할 수 있는 특성
+    Q2. `setState(prev ={">"} ({"{"} ...prev, count: prev.count + 1 {"}"}))`
+    패턴에서 스프레드(`...`)를 사용하는 이유를 설명해보세요. 스프레드 없이 `
+    {"{"} count: prev.count + 1 {"}"}`만 쓰면 어떤 문제가 생길까요?
   </strong>
-  입니다. 활용 사례로는 데이터 은닉이 있습니다. `makeCounter()` 함수 내부의
-  `count` 변수는 외부에서 직접 접근할 수 없지만, 반환된 클로저 함수를 통해서만
-  조작할 수 있습니다.
 </Paragraph>
+
+<Subtitle level={4}>정답</Subtitle>
+
+<Paragraph>
+  스프레드를 사용하면{" "}
+  <strong>
+    기존 상태의 모든 프로퍼티를 유지하면서 특정 프로퍼티만 덮어쓸 수 있습니다.
+  </strong>{" "}
+  스프레드 없이 쓰면 나머지 프로퍼티가 모두 사라집니다.
+</Paragraph>
+
+<Paragraph>
+  예를 들어 상태가 `{"{"} name: '철수', count: 0 {"}"}`일 때 `{"{"} count: 1{" "}
+  {"}"}`만 쓰면 `name`이 사라져 `{"{"} count: 1 {"}"}`만 남습니다. React에서는
+  상태를 직접 수정(mutation)하지 않고 새 객체를 만드는{" "}
+  <strong>불변 업데이트</strong>를 원칙으로 합니다.
+</Paragraph>
+
+---
 
 <Paragraph>
   <strong>
-    Q2. async/await와 Promise의 관계를 설명해주세요. async 함수의 반환값은 어떤
-    타입인가요?
+    Q3. `user?.address?.city`와 `user && user.address && user.address.city`의
+    동작이 완전히 같을까요? 차이가 있다면 어떤 경우에 다르게 동작하는지
+    설명하세요.
   </strong>
 </Paragraph>
 
+<Subtitle level={4}>
+  정답: `user`가 `0`이나 `''`처럼 falsy 값일 때 다르게 동작합니다.
+</Subtitle>
+
 <Paragraph>
-  `async/await`은 Promise를 기반으로 한{" "}
-  <strong>문법적 설탕(syntactic sugar)</strong>입니다. 내부적으로는 Promise를
-  사용하며, 비동기 코드를 동기 코드처럼 읽기 쉽게 작성할 수 있게 해줍니다.
-  `async` 함수는 항상 <strong>Promise를 반환</strong>합니다. `return 42`를 해도
-  `Promise.resolve(42)`와 동일하게 동작합니다.
+  `&&`는 왼쪽이 falsy이면 그 값을 반환합니다. `user`가 `0`이면 `0 &&
+  0.address`는 `0`을 반환합니다. 하지만 `0?.address`는 `undefined`를 반환합니다.{" "}
+  <strong>`?.`는 오직 `null`과 `undefined`만 체크</strong>하기 때문입니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q4. React 프로젝트에서 named export와 default export를 각각 어떤 상황에
+    사용하는지, 실제 프로젝트 관례를 기준으로 설명해보세요.
+  </strong>
+</Paragraph>
+
+<Subtitle level={4}>정답</Subtitle>
+
+- <strong>default export</strong>: React 컴포넌트 — 파일당 하나가 원칙이므로
+  자연스럽습니다.
+- <strong>named export</strong>: 유틸 함수, 상수, 타입 — 한 파일에 여러 개를
+  모아두므로 named export를 사용합니다.
+
+<Paragraph>
+  named export는 import 시 자동완성이 잘 되고, 오타를 에디터가 잡아주는 장점도
+  있습니다.
 </Paragraph>
 
 ---
@@ -263,37 +320,7 @@ name ?? "익명"; // "" — 빈 문자열은 null/undefined가 아님
 
 ---
 
-<Subtitle level={2}>4. 인증 미션</Subtitle>
-
-<Paragraph>
-  아래 질문에 답해보세요. 직접 콘솔에서 실행해보고, 결과의 이유까지 설명할 수
-  있어야 합니다.
-</Paragraph>
-
-<ArticleQuiz>
-  <ArticleQuizItem
-    mode="description"
-    question="[1,2,3,4,5].filter(n => n % 2 === 0).map(n => n * 2)의 결과는 무엇인가요? 그리고 왜 filter를 먼저 하는 게 map을 먼저 하는 것보다 좋은지 설명하세요."
-    answer="결과는 [4, 8]입니다. filter가 먼저 실행되어 짝수 [2, 4]만 남기고, map이 각각 2배로 변환합니다."
-    explanation="filter를 먼저 하면 처리할 요소 수가 줄어들어 이후 map이 더 적은 요소만 변환하면 됩니다. 반대로 map을 먼저 하면 5개 전부를 변환한 뒤 filter로 걸러내야 하므로 불필요한 변환이 발생합니다."
-  />
-  <ArticleQuizItem
-    mode="description"
-    question="const { name = '익명', age } = {};를 실행하면 name과 age의 값은 각각 무엇인가요? 그 이유도 설명하세요."
-    answer="name은 '익명', age는 undefined입니다."
-    explanation="빈 객체 {}에는 name, age 프로퍼티가 모두 없으므로 둘 다 undefined가 됩니다. 하지만 name에는 기본값 '익명'이 지정되어 있어서, 값이 undefined일 때 기본값이 적용됩니다. age에는 기본값이 없으므로 undefined 그대로 남습니다."
-  />
-  <ArticleQuizItem
-    mode="description"
-    question="user?.profile?.avatar ?? '/default.png'에서 '/default.png'가 사용되는 경우는 정확히 어떤 경우인가요?"
-    answer="user가 null/undefined이거나, user.profile이 null/undefined이거나, user.profile.avatar가 null/undefined인 경우에 '/default.png'가 사용됩니다."
-    explanation="옵셔널 체이닝(?.)은 중간 어디서든 null/undefined를 만나면 평가를 중단하고 undefined를 반환합니다. null 병합 연산자(??)는 왼쪽이 null 또는 undefined일 때만 오른쪽 값을 반환합니다. 따라서 체이닝 결과가 undefined가 되는 모든 경우에 기본 이미지 경로가 사용됩니다. 만약 avatar가 빈 문자열 ''이라면 ??는 그것을 그대로 반환합니다(||와 다른 점)."
-  />
-</ArticleQuiz>
-
----
-
-<Subtitle level={2}>5. 관련 포스팅</Subtitle>
+<Subtitle level={2}>4. 관련 포스팅</Subtitle>
 
 - <Anchor href="/blog/study/clab-26-1/week9">
     프론트엔드 스터디 9주차 학습 자료: 클로저, Promise, async/await
@@ -304,7 +331,7 @@ name ?? "익명"; // "" — 빈 문자열은 null/undefined가 아님
 
 ---
 
-<Subtitle level={2}>6. 다음 주 안내</Subtitle>
+<Subtitle level={2}>5. 다음 주 안내</Subtitle>
 
 <Paragraph>
   다음 주부터 드디어 <strong>React</strong>를 시작합니다! 지금까지 배운 JS

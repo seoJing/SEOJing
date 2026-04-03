@@ -47,35 +47,120 @@ description: 8주차 JS 복습과 과제 풀이, 그리고 이번 주 핵심인 
 
 <Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
 
-<Subtitle level={3}>학습 자료 8주차 과제</Subtitle>
+<Subtitle level={3}>인증 미션 과제</Subtitle>
 
 <Paragraph>
   <strong>
-    Q1. JavaScript에서 프로토타입 기반 상속이란 무엇인가요? Java의 클래스 기반
-    상속과 어떻게 다른지 설명해주세요.
+    Q1. 아래 코드에서 클로저가 만들어지는 위치를 찾고, `makeCounter()`를 두 번
+    호출했을 때 각 카운터가 독립적으로 동작하는 이유를 설명하세요.
   </strong>
 </Paragraph>
 
+```js
+function makeCounter() {
+  let count = 0;
+  return function () {
+    count++;
+    return count;
+  };
+}
+
+const counterA = makeCounter();
+const counterB = makeCounter();
+
+console.log(counterA()); // ?
+console.log(counterA()); // ?
+console.log(counterB()); // ?
+```
+
+<Subtitle level={4}>정답: 1, 2, 1</Subtitle>
+
 <Paragraph>
-  JS의 프로토타입 기반 상속은 <strong>객체가 다른 객체를 직접 상속</strong>하는
-  방식입니다. 클래스를 먼저 정의하고 인스턴스를 만드는 Java와 달리, JS는 객체가
-  `[[Prototype]]`을 통해 다른 객체의 프로퍼티를 위임합니다. ES6의 `class` 문법도
-  내부적으로는 동일한 프로토타입 메커니즘을 사용하는 문법적 설탕(syntactic
-  sugar)입니다.
+  클로저는 <strong>`return function() { ... }` 부분</strong>에서 만들어집니다.
+  `makeCounter()`를 호출할 때마다 새로운 렉시컬 환경(새로운 `count` 변수)이
+  생성됩니다. `counterA`와 `counterB`는 각각 별도의 렉시컬 환경을 기억하는
+  클로저이므로 독립적인 `count`를 가집니다.
 </Paragraph>
+
+---
 
 <Paragraph>
   <strong>
-    Q2. `var`, `let`, `const`의 차이를 설명해주세요. `const`가 왜 완전한 불변을
-    보장하지 않는지도 포함해주세요.
+    Q2. `async function foo() {"{"} return 1; {"}"}` 에서 `foo()`의 반환값
+    타입과 실제 값을 확인하고, 왜 그런지 설명하세요.
   </strong>
 </Paragraph>
 
-- <strong>`var`</strong>: 함수 스코프, 재선언 가능, 호이스팅 시 `undefined` —
-  사용 지양
-- <strong>`let`</strong>: 블록 스코프, 재선언 불가, TDZ
-- <strong>`const`</strong>: 블록 스코프, 재선언·재할당 불가. 단, 객체의 참조를
-  고정할 뿐이라 내부 프로퍼티 변경은 가능
+```js
+async function foo() {
+  return 1;
+}
+
+const result = foo();
+console.log(result);
+console.log(result instanceof Promise);
+```
+
+<Subtitle level={4}>
+  정답: `result`는 `Promise` 객체, `instanceof Promise`는 `true`
+</Subtitle>
+
+<Paragraph>
+  `async` 함수는 반환값을 항상 `Promise`로 감쌉니다. `return 1`을 해도 자동으로
+  `Promise.resolve(1)`로 래핑됩니다. 이미 `Promise`를 반환하면 이중 래핑하지
+  않습니다. async 함수의 결과를 사용하려면{" "}
+  <strong>`await`를 쓰거나 `.then()`으로 받아야</strong> 합니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q3. `Promise.all()`로 병렬 실행할 때와 순차적으로 `await`를 연달아 쓸 때의
+    실행 시간 차이를 설명하세요. 각각 1초 걸리는 비동기 작업 2개라면 총 시간은
+    어떻게 다를까요?
+  </strong>
+</Paragraph>
+
+<Subtitle level={4}>정답</Subtitle>
+
+- <strong>순차 `await`</strong>: 약 2초 (1초 + 1초)
+- <strong>`Promise.all()`</strong>: 약 1초 (동시 시작, 가장 오래 걸리는
+  작업만큼만 소요)
+
+<Paragraph>
+  `const a = await fetchA(); const b = await fetchB();`는 `fetchA`가 완료된
+  후에야 `fetchB`를 시작합니다. 작업 간 의존성이 없다면{" "}
+  <strong>`Promise.all()`을 써야 합니다.</strong> 단, 하나라도 `reject`되면
+  전체가 `reject`되므로, 실패를 개별 처리해야 하면 `Promise.allSettled()`를
+  사용합니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q4. 아래 코드의 출력 순서를 예측하고, 이벤트 루프의 마이크로태스크 큐와
+    매크로태스크 큐의 우선순위를 사용해 설명하세요.
+  </strong>
+</Paragraph>
+
+```js
+console.log("A");
+setTimeout(() => console.log("B"), 0);
+Promise.resolve().then(() => console.log("C"));
+console.log("D");
+```
+
+<Subtitle level={4}>정답: A → D → C → B</Subtitle>
+
+<Paragraph>
+  동기 코드인 `A`와 `D`가 먼저 실행됩니다. 이후 콜 스택이 비면{" "}
+  <strong>마이크로태스크 큐(Promise.then)가 먼저</strong> 처리되어 `C`가
+  출력되고, 그 다음 매크로태스크 큐(setTimeout)에서 `B`가 출력됩니다.
+  `setTimeout`의 지연 시간이 `0`이라도 매크로태스크이므로 마이크로태스크보다
+  늦게 실행됩니다.
+</Paragraph>
 
 ---
 

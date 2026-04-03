@@ -644,6 +644,7 @@ explanation="빈 의존성 배열 []로 인해 effect 안의 count는 초기값 
   const [query, setQuery] = useState("");
 
 return (
+
 <input
       value={query}
       placeholder="검색어를 입력하세요"
@@ -676,6 +677,7 @@ document.title = count === 0 ? '내 앱' : \`내 앱 (\${count})\`;
 }, [count]);
 
 return (
+
 <div>
 <p>클릭 횟수: {count}</p>
 <button onClick={() => setCount(prev => prev + 1)}>
@@ -708,6 +710,7 @@ setMessage('');
 }
 
 return (
+
 <form onSubmit={handleSubmit}>
 <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="이메일" />
 <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="메시지" />

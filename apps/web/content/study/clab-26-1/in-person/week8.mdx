@@ -106,31 +106,107 @@ Array.isArray(null); // false
 
 <Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
 
-<Subtitle level={3}>학습 자료 7주차 과제</Subtitle>
-
-<Paragraph>
-  <strong>Q1. 스코프 체인(Scope Chain)이란 무엇인가요?</strong>
-</Paragraph>
-
-<Paragraph>
-  변수를 참조할 때 현재 스코프에서 먼저 탐색하고, 없으면{" "}
-  <strong>상위 스코프로 순서대로 올라가며 탐색하는 구조</strong>입니다. 전역
-  스코프까지 탐색해도 없으면 ReferenceError가 발생합니다.
-</Paragraph>
-
-- 탐색 방향은 <strong>안에서 밖으로만</strong> — 바깥에서 안쪽 스코프의 변수에는 접근 불가
-- 이 구조가 렉시컬 스코프, 나아가 클로저의 기반이 됨
+<Subtitle level={3}>인증 미션 과제</Subtitle>
 
 <Paragraph>
   <strong>
-    Q2. JavaScript에서 함수는 왜 일급 객체(First-Class Object)라고 하나요?
+    Q1. 아래 코드의 실행 결과는 무엇인가요? `Object.freeze()`의 동작 방식을
+    설명하세요.
   </strong>
 </Paragraph>
 
+```js
+const arr = [1, 2, 3];
+Object.freeze(arr);
+arr.push(4);
+```
+
+<Subtitle level={4}>정답: TypeError</Subtitle>
+
 <Paragraph>
-  일급 객체란 <strong>값처럼 다룰 수 있는 대상</strong>을 뜻합니다. JS의 함수는
-  변수에 할당, 인자로 전달, 반환값으로 사용이 모두 가능하기 때문에 일급
-  객체입니다. 이 특성이 콜백 함수, 고차 함수, 클로저의 근거가 됩니다.
+  `Object.freeze()`는 객체(배열 포함)를 동결하여 프로퍼티 추가, 삭제, 변경을
+  금지합니다. `push()`는 배열에 새 요소를 추가하므로{" "}
+  <strong>동결된 배열에서는 TypeError가 발생</strong>합니다. 단, 얕은
+  동결(shallow freeze)이므로 중첩된 객체 내부는 여전히 변경 가능합니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q2. `[] instanceof Array`는 `true`이고, `[] instanceof Object`도
+    `true`입니다. 왜 빈 배열이 `Object`의 인스턴스이기도 한지, 프로토타입
+    체인으로 설명하세요.
+  </strong>
+</Paragraph>
+
+<Subtitle level={4}>정답</Subtitle>
+
+<Paragraph>
+  `[]`의 프로토타입 체인은{" "}
+  <strong>`[] → Array.prototype → Object.prototype → null`</strong>입니다.
+  `instanceof`는 오른쪽 생성자의 `prototype`이 왼쪽 객체의 프로토타입 체인
+  어딘가에 존재하는지 확인합니다. `Array.prototype`도, `Object.prototype`도
+  체인에 있으므로 둘 다 `true`입니다. JS에서 거의 모든 객체의 체인 최상단에는
+  `Object.prototype`이 있습니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q3. 배열인지 확인할 때 `typeof`를 사용하면 안 되는 이유를 설명하고, 올바른
+    확인 방법을 제시하세요. `typeof []`의 결과도 함께 답하세요.
+  </strong>
+</Paragraph>
+
+<Subtitle level={4}>정답: `typeof []`는 `"object"`</Subtitle>
+
+<Paragraph>
+  `typeof`는 배열과 일반 객체, `null`을 모두 `"object"`로 반환하므로 배열을
+  구분할 수 없습니다. 배열 확인에는 <strong>`Array.isArray()`</strong>를
+  사용해야 합니다. `instanceof Array`는 다른 실행 컨텍스트(iframe)에서 생성된
+  배열을 인식하지 못하는 경우가 있어 `Array.isArray()`가 더 안전합니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q4. ES6의 `class`가 "프로토타입 기반 상속의 문법적 설탕(syntactic
+    sugar)"이라는 말의 의미를 설명하세요. `class`로 작성한 코드를 프로토타입
+    방식으로 바꾸면 어떤 구조가 되는지 보여주세요.
+  </strong>
+</Paragraph>
+
+<Subtitle level={4}>정답</Subtitle>
+
+```js
+// class 방식
+class Person {
+  constructor(name) {
+    this.name = name;
+  }
+  greet() {
+    return this.name;
+  }
+}
+
+// 프로토타입 방식 (동일 동작)
+function Person(name) {
+  this.name = name;
+}
+Person.prototype.greet = function () {
+  return this.name;
+};
+```
+
+<Paragraph>
+  `class`는 새로운 상속 모델이 아니라{" "}
+  <strong>프로토타입 기반 상속을 더 읽기 쉽게 작성하는 문법</strong>입니다.
+  `typeof`로 `class`를 확인하면 `"function"`이 나옵니다. 다만 `class`에는 strict
+  mode 강제, TDZ(호이스팅 불가), `new` 없이 호출 불가 등 추가 제약이 있어 완전히
+  동일하지는 않습니다.
 </Paragraph>
 
 ---

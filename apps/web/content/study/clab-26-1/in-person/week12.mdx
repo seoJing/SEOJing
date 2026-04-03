@@ -271,6 +271,132 @@ useEffect(() => {
 
 ---
 
+<Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
+
+<Subtitle level={3}>인증 미션 과제</Subtitle>
+
+<Paragraph>
+  <strong>
+    Q1. `useEffect`를 사용하여 컴포넌트가 마운트될 때 `document.title`을 '내
+    앱'으로 바꾸고, `count` 상태가 변경될 때마다 '내 앱 (N)'으로 업데이트하는
+    컴포넌트를 만들어보세요.
+  </strong>
+</Paragraph>
+
+```jsx
+function App() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    document.title = count === 0 ? "내 앱" : `내 앱 (${count})`;
+  }, [count]);
+
+  return (
+    <div>
+      <p>클릭 횟수: {count}</p>
+      <button onClick={() => setCount((prev) => prev + 1)}>클릭</button>
+    </div>
+  );
+}
+```
+
+<Paragraph>
+  `useEffect`의 의존성 배열에 `count`를 넣으면 `count`가 바뀔 때마다 effect가
+  재실행됩니다. `document.title`을 변경하는 것은 DOM 직접 조작이므로{" "}
+  <strong>사이드 이펙트에 해당하며, `useEffect` 안에서 처리</strong>하는 것이
+  올바릅니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q2. 이메일과 메시지를 입력받는 문의하기 폼(`ContactForm`)을 만들어보세요.
+    조건: (1) Controlled Component 패턴, (2) 제출 시 `e.preventDefault()` 호출,
+    (3) 이메일에 `@`가 없으면 에러 메시지 표시, (4) 제출 성공 시 입력 필드
+    초기화
+  </strong>
+</Paragraph>
+
+```jsx
+function ContactForm() {
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (!email.includes("@")) {
+      setError("올바른 이메일을 입력하세요");
+      return;
+    }
+    setError("");
+    console.log({ email, message });
+    setEmail("");
+    setMessage("");
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="이메일"
+      />
+      <textarea
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder="메시지"
+      />
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <button type="submit">보내기</button>
+    </form>
+  );
+}
+```
+
+<Paragraph>
+  Controlled Component 패턴으로 각 input의 `value`를 state로 관리합니다.
+  `onSubmit`에서 `e.preventDefault()`로 새로고침을 방지하고, 유효성 검사 후
+  상태를 초기화합니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q3. 1초마다 자동으로 숫자가 올라가는 타이머 컴포넌트를 만들어보세요. 조건:
+    (1) `useEffect`와 `setInterval` 사용, (2) 반드시 클린업 함수에서
+    `clearInterval` 호출, (3) 함수형 업데이트(`prev ={">"} ...`) 사용
+  </strong>
+</Paragraph>
+
+```jsx
+function Timer() {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSeconds((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  return <p>경과 시간: {seconds}초</p>;
+}
+```
+
+<Paragraph>
+  빈 의존성 배열로 마운트 시 한 번만 타이머를 설정하고, 클린업 함수에서
+  `clearInterval`로 정리합니다. `setSeconds(prev ={">"} prev + 1)` 함수형
+  업데이트를 사용하여 <strong>stale closure 문제를 방지</strong>합니다. 클린업
+  없이 `setInterval`을 사용하면 컴포넌트가 사라져도 타이머가 계속 실행되어
+  메모리 누수가 발생합니다.
+</Paragraph>
+
+---
+
 <Subtitle level={2}>5. 면접 질문</Subtitle>
 
 <Subtitle level={3}>

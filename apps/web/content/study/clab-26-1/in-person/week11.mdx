@@ -267,6 +267,95 @@ function App() {
 
 ---
 
+<Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
+
+<Subtitle level={3}>인증 미션 과제</Subtitle>
+
+<Paragraph>
+  <strong>
+    Q1. 아래 요구사항을 만족하는 `Counter` 컴포넌트를 만들어보세요. (1) + 버튼을
+    누르면 숫자가 1 올라감 (2) - 버튼을 누르면 숫자가 1 내려감 (3) 초기값은 0
+    (4) 함수형 업데이트(`prev ={">"} ...`)를 사용할 것
+  </strong>
+</Paragraph>
+
+```jsx
+function Counter() {
+  const [count, setCount] = useState(0);
+  return (
+    <div>
+      <p>{count}</p>
+      <button onClick={() => setCount((prev) => prev + 1)}>+</button>
+      <button onClick={() => setCount((prev) => prev - 1)}>-</button>
+    </div>
+  );
+}
+```
+
+<Paragraph>
+  `useState`로 `count` 상태를 관리하고, 버튼의 `onClick` 핸들러에서 `setCount`를
+  호출합니다. <strong>함수형 업데이트(`prev => prev + 1`)</strong>를 사용하면
+  항상 최신 상태를 기반으로 업데이트됩니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q2. `users` 배열을 props로 받아 이름 목록을 렌더링하는 `UserList` 컴포넌트를
+    만들어보세요. `key` prop도 올바르게 사용해야 합니다.
+  </strong>
+</Paragraph>
+
+```jsx
+function UserList({ users }) {
+  return (
+    <ul>
+      {users.map((user) => (
+        <li key={user.id}>{user.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+<Paragraph>
+  `map()`으로 배열을 순회하면서 각 요소를 `<li>`로 변환합니다.{" "}
+  <strong>`key`에는 배열 인덱스가 아닌 고유한 `id`</strong>를 사용합니다. 이
+  패턴은 React에서 가장 자주 사용하는 리스트 렌더링 방식입니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q3. `isLoggedIn` boolean prop을 받아서 `true`이면 `<Dashboard />`
+    컴포넌트를, `false`이면 `<Login />` 컴포넌트를 렌더링하는 `AuthGate`
+    컴포넌트를 작성해보세요.
+  </strong>
+</Paragraph>
+
+```jsx
+function Dashboard() {
+  return <h1>대시보드입니다</h1>;
+}
+
+function Login() {
+  return <h1>로그인해주세요</h1>;
+}
+
+function AuthGate({ isLoggedIn }) {
+  return isLoggedIn ? <Dashboard /> : <Login />;
+}
+```
+
+<Paragraph>
+  삼항 연산자(`조건 ? A : B`)를 사용한 조건부 렌더링 패턴입니다. 실제
+  프로젝트에서 인증 상태에 따라 다른 화면을 보여줄 때 이 패턴을 자주 사용합니다.
+</Paragraph>
+
+---
+
 <Subtitle level={2}>7. 면접 질문</Subtitle>
 
 <Subtitle level={3}>Q1. React에서 컴포넌트란 무엇인가요?</Subtitle>

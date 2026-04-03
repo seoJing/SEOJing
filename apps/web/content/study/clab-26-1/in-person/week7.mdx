@@ -121,39 +121,127 @@ bar(); // 1 출력 — foo는 전역에서 작성됐으므로 전역의 x(1)를 
 
 <Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
 
-<Subtitle level={3}>학습 자료 6주차 과제</Subtitle>
+<Subtitle level={3}>인증 미션 과제</Subtitle>
 
 <Paragraph>
-  <strong>Q1. JavaScript에서 호이스팅이란 무엇인가요?</strong>
+  <strong>
+    Q1. 함수 선언식은 호이스팅되어 선언 전에 호출할 수 있습니다. 그런데 함수
+    표현식(`const fn = function() {}`)은 선언 전에 호출하면 `TypeError`가
+    발생합니다. `ReferenceError`가 아니라 왜 `TypeError`인지, 호이스팅 과정을
+    단계별로 설명하세요.
+  </strong>
 </Paragraph>
+
+<Subtitle level={4}>정답</Subtitle>
 
 <Paragraph>
-  호이스팅이란 JS 엔진이 코드를 실행하기 전{" "}
-  <strong>변수와 함수 선언을 스코프 최상단으로 끌어올리는 동작</strong>입니다.
-  단, 선언만 올라가고 값 할당은 원래 위치에서 실행됩니다.
+  함수 선언식은 선언과 초기화가 함께 호이스팅되어 함수 전체가 올라갑니다. 반면{" "}
+  <strong>
+    `var` 함수 표현식은 변수 선언만 호이스팅되고 값(함수)은 `undefined`
+  </strong>
+  상태입니다. `undefined()`를 호출하면 "undefined is not a function"이라는{" "}
+  <strong>`TypeError`</strong>가 발생합니다. `const`/`let` 표현식은 TDZ 때문에
+  `ReferenceError`가 먼저 납니다.
 </Paragraph>
 
-- <strong>`var` 변수</strong>: 선언이 호이스팅되어 선언 전 참조 시 `undefined`
-  반환
-- <strong>`let` / `const`</strong>: 호이스팅은 일어나지만 TDZ(Temporal Dead
-  Zone)로 인해 선언 전 접근 시 `ReferenceError`
-- <strong>함수 선언식</strong>: 함수 전체가 호이스팅되어 선언 전에도 호출 가능
-- <strong>함수 표현식</strong>: 변수만 호이스팅(var면 `undefined`, const면 TDZ),
-  선언 전 호출 불가
+<Subtitle level={4}>흔한 오답 패턴</Subtitle>
 
 <Paragraph>
-  <strong>Q2. 익명 함수의 일반적인 사용 사례는 무엇인가요?</strong>
+  "호이스팅이 안 돼서 에러가 난다"고 답하는 경우가 많습니다.{" "}
+  <strong>
+    호이스팅은 일어났지만, 값이 `undefined`인 상태에서 호출해서 나는 에러
+  </strong>
+  라는 점이 핵심입니다.
 </Paragraph>
+
+---
 
 <Paragraph>
-  익명 함수는 이름 없이 정의된 함수입니다. 주요 사용 사례는 세 가지입니다.
+  <strong>
+    Q2. 아래 코드의 실행 결과를 예측하고, 렉시컬 스코프 개념을 사용해 이유를
+    설명하세요.
+  </strong>
 </Paragraph>
 
-- <strong>콜백 함수</strong>: 배열 메서드(`map`, `filter`, `forEach`)나 이벤트
-  핸들러에 인자로 전달할 때
-- <strong>함수 표현식</strong>: `const fn = function() {}`처럼 변수에 할당할 때
-- <strong>즉시 실행 함수(IIFE)</strong>: `(function() {})()`처럼 선언과 동시에
-  실행해 전역 스코프를 오염시키지 않을 때
+```js
+const x = "global";
+
+function foo() {
+  console.log(x);
+}
+
+function bar() {
+  const x = "bar";
+  foo();
+}
+
+bar();
+```
+
+<Subtitle level={4}>정답: `"global"`</Subtitle>
+
+<Paragraph>
+  JS는 <strong>렉시컬 스코프(정적 스코프)</strong>를 사용합니다. 함수의 상위
+  스코프는 "호출 위치"가 아니라 <strong>"선언 위치"</strong>에 의해 결정됩니다.
+  `foo`는 전역에서 선언됐으므로 어디서 호출하든 전역 스코프의 `x`를 참조합니다.
+</Paragraph>
+
+<Subtitle level={4}>흔한 오답 패턴</Subtitle>
+
+<Paragraph>
+  `bar()` 내부에서 호출했으니 `bar`의 `x`인 `"bar"`가 출력된다고 예측하는 경우가
+  많습니다. 이는 동적 스코프 방식의 사고입니다.{" "}
+  <strong>JS는 렉시컬 스코프이므로 선언 위치가 기준</strong>입니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q3. 아래 코드에서 `obj1.x`의 값은 무엇인가요? 원시값 복사와 참조 복사의
+    차이를 설명하세요.
+  </strong>
+</Paragraph>
+
+```js
+const obj1 = { x: 1 };
+const obj2 = obj1;
+obj2.x = 99;
+console.log(obj1.x);
+```
+
+<Subtitle level={4}>정답: `99`</Subtitle>
+
+<Paragraph>
+  객체를 변수에 할당하면 값이 복사되는 것이 아니라{" "}
+  <strong>참조(메모리 주소)가 복사</strong>됩니다. `obj1`과 `obj2`는 같은 객체를
+  가리키므로 `obj2.x`를 변경하면 `obj1.x`도 함께 바뀝니다. 원시값(숫자, 문자열
+  등)은 값 자체가 복사되어 독립적입니다. 복사본을 만들려면 spread 문법(`{...obj}
+  `)이나 `Object.assign()`으로 얕은 복사를 해야 합니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q4. IIFE(즉시 실행 함수 표현식)를 사용하는 이유는 무엇인가요? ES6 모듈
+    시스템이 있는 현재에도 IIFE를 쓰는 경우가 있는지 설명하세요.
+  </strong>
+</Paragraph>
+
+<Subtitle level={4}>정답</Subtitle>
+
+<Paragraph>
+  IIFE의 핵심은 <strong>스코프 격리</strong>와 <strong>즉시 실행</strong>입니다.
+  모듈 시스템이 보편화되기 전에는 전역 변수 충돌을 막는 사실상 유일한
+  방법이었습니다. 현재도 다음 경우에 사용됩니다.
+</Paragraph>
+
+- <strong>레거시 코드 유지보수</strong>
+- <strong>즉시 실행이 필요한 초기화 로직</strong>
+- <strong>번들러가 모듈을 래핑할 때</strong>
+- <strong>async IIFE</strong>: `top-level await`가 불가능한 환경에서 비동기 즉시
+  실행
 
 ---
 
