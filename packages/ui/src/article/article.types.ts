@@ -62,7 +62,7 @@ export interface ArticleImageProps extends Omit<
 }
 
 /** 퀴즈 타입 */
-export type ArticleQuizMode = "multiple" | "description";
+export type ArticleQuizMode = "multiple" | "description" | "essay";
 
 /** ArticleQuizItem — 개별 퀴즈 항목 */
 export interface ArticleQuizItemProps extends HTMLAttributes<HTMLDivElement> {
@@ -82,7 +82,7 @@ export interface ArticleQuizItemProps extends HTMLAttributes<HTMLDivElement> {
   explanation?: string | React.ReactNode;
   stepIndex?: number;
   currentStep?: number;
-  onResult?: (isCorrect: boolean) => void;
+  onResult?: (isCorrect: boolean, isEssay?: boolean) => void;
   onNext?: () => void;
 }
 

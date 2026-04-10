@@ -272,6 +272,15 @@ export function PresentationView({
           />
         </div>
 
+        {/* 첫 슬라이드 배율 안내 */}
+        {currentSlide === 0 && !isMobile && (
+          <div className="pointer-events-none absolute bottom-12 left-0 right-0 flex justify-center pb-3">
+            <span className="rounded-full bg-black/40 px-4 py-1.5 text-xs text-white/80 backdrop-blur-sm">
+              이 문자가 보일 때 까지 배율을 조절해주세요.
+            </span>
+          </div>
+        )}
+
         {/* 하단 바 */}
         <div
           className={`relative flex shrink-0 items-center bg-gray-100 dark:bg-gray-900 ${isMobile ? "px-4" : "px-6"}`}

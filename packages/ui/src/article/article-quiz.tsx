@@ -65,8 +65,8 @@ export function ArticleQuiz({
   const items = React.Children.toArray(children).filter(React.isValidElement);
   const totalSteps = items.length;
 
-  const handleResult = (isCorrect: boolean) => {
-    if (isCorrect) setScore((prev) => prev + 1);
+  const handleResult = (isCorrect: boolean, isEssay?: boolean) => {
+    if (!isEssay && isCorrect) setScore((prev) => prev + 1);
   };
 
   const handleNext = () => {
@@ -170,6 +170,13 @@ export function ArticleQuizItem({
     const value = selectedAnswer ?? userAnswer;
     if (!value && mode === "description") return;
 
+    if (mode === "essay") {
+      setIsSubmitted(true);
+      setShowExplanation(true);
+      if (onResult) onResult(true, true);
+      return;
+    }
+
     let correct = false;
     if (mode === "multiple") {
       correct = value === String(answer);
@@ -205,7 +212,41 @@ export function ArticleQuizItem({
       )}
 
       <div className="mt-1">
-        {mode === "multiple" && choices ? (
+        {mode === "essay" ? (
+          showExplanation ? (
+            <div className="animate-in fade-in slide-in-from-bottom-2">
+              <div className="rounded border border-[#569cd6]/30 bg-[#569cd6]/10 p-4 text-sm">
+                <p className="font-medium mb-2 text-[#569cd6]">모범 답안</p>
+                <p className="text-gray-300 leading-relaxed font-mono text-sm">
+                  {String(answer)}
+                </p>
+                {explanation && (
+                  <div className="pt-2 mt-2 border-t border-gray-700/50 text-gray-400 text-sm leading-relaxed">
+                    <strong className="block mb-1 text-gray-300">해설</strong>
+                    {explanation}
+                  </div>
+                )}
+                <div className="flex justify-end mt-3">
+                  <button
+                    onClick={onNext}
+                    className="rounded px-5 py-2 text-sm font-medium text-white transition-colors bg-[#569cd6] hover:bg-[#569cd6]/80"
+                  >
+                    다음 문제
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-end">
+              <button
+                onClick={() => handleSubmit()}
+                className="rounded bg-gray-700 px-5 py-2 text-sm font-medium text-gray-200 hover:bg-gray-600 transition-all"
+              >
+                정답 확인
+              </button>
+            </div>
+          )
+        ) : mode === "multiple" && choices ? (
           showExplanation ? (
             <div className="animate-in fade-in slide-in-from-bottom-2">
               <div
