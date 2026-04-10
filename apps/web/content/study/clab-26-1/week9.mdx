@@ -667,7 +667,7 @@ function UserProfile({ userId }) {
 
 <ArticleQuiz>
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="아래 코드의 출력 결과는 무엇인가요?"
     code={`const numbers = [1, 2, 3, 4, 5];
 
@@ -681,7 +681,7 @@ explanation="먼저 filter로 홀수만 걸러내면 [1, 3, 5]가 됩니다. 그
 />
 
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="아래 코드에서 name, rest의 값을 각각 입력하세요."
     code={`const user = { name: '철수', age: 25, role: 'admin' };
 const { name, ...rest } = user;
@@ -693,7 +693,7 @@ explanation="객체 구조 분해로 name='철수'가 추출되고, Rest 패턴(
 />
 
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="아래 코드의 출력 결과 세 줄을 순서대로 입력하세요."
     code={`const value = 0;
 
@@ -717,25 +717,25 @@ explanation="value || '기본값': 0은 falsy이므로 '기본값' 반환. value
 
 <ArticleQuiz>
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="React의 useState는 왜 객체가 아닌 배열을 반환할까요? 배열 구조 분해로 받으면 어떤 점이 편리한지 설명해보세요."
     answer="배열 구조 분해는 변수 이름을 자유롭게 지정할 수 있기 때문입니다. 객체 구조 분해는 프로퍼티 이름이 고정되어 있어 여러 useState를 사용할 때 이름 충돌이 발생합니다."
     explanation="const [count, setCount] = useState(0)처럼 사용자가 원하는 이름을 바로 붙일 수 있습니다. 만약 객체였다면 const { state: count, setState: setCount } = useState(0)처럼 매번 이름을 변경해야 하므로 불편합니다."
   />
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="setState(prev => ({ ...prev, count: prev.count + 1 })) 패턴에서 스프레드(...)를 사용하는 이유를 설명해보세요. 스프레드 없이 { count: prev.count + 1 }만 쓰면 어떤 문제가 생길까요?"
     answer="스프레드를 사용하면 기존 상태의 모든 프로퍼티를 유지하면서 특정 프로퍼티만 덮어쓸 수 있습니다. 스프레드 없이 쓰면 나머지 프로퍼티가 모두 사라집니다."
     explanation="예를 들어 상태가 { name: '철수', count: 0 }일 때 { count: 1 }만 쓰면 name 프로퍼티가 사라져 { count: 1 }만 남습니다. { ...prev, count: 1 }로 써야 { name: '철수', count: 1 }이 됩니다. React에서는 상태를 직접 수정(mutation)하지 않고 새 객체를 만드는 불변 업데이트를 원칙으로 합니다."
   />
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="user?.address?.city와 user && user.address && user.address.city의 동작이 완전히 같을까요? 차이가 있다면 어떤 경우에 다르게 동작하는지 찾아보세요."
     answer="대부분의 경우 같지만, user가 0이나 빈 문자열('')처럼 falsy 값일 때 다르게 동작합니다."
     explanation="&&는 왼쪽이 falsy이면 그 값을 반환합니다. 따라서 user가 0이면 0 && 0.address는 0을 반환합니다. 하지만 0?.address는 undefined를 반환합니다. ?.는 오직 null과 undefined만 체크하기 때문입니다."
   />
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="React 프로젝트에서 named export와 default export를 각각 어떤 상황에 사용하는지, 실제 프로젝트의 관례를 기준으로 설명해보세요."
     answer="React 컴포넌트는 default export, 유틸 함수/상수/타입은 named export가 일반적인 관례입니다."
     explanation="컴포넌트는 파일당 하나가 원칙이므로 default export가 자연스럽습니다. 유틸 함수나 상수는 한 파일에 여러 개를 모아두므로 named export를 사용합니다. named export는 import 시 자동완성이 잘 되고, 오타를 에디터가 잡아주는 장점도 있습니다."

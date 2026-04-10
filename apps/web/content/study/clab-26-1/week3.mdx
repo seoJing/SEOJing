@@ -269,12 +269,12 @@ span {
 
 <Paragraph>핵심 규칙을 정리하면 이렇습니다.</Paragraph>
 
-<Paragraph>
-  - <strong>인라인(Inline)</strong>: 좌우 margin만 적용, width/height 무시, 상하
-  margin 무시 - <strong>블록(Block)</strong>: width/height 적용, 상하좌우 margin
-  모두 적용, 항상 새 줄 시작 - <strong>인라인 블록(Inline-block)</strong>:
-  나란히 배치 + width/height/margin 모두 적용
-</Paragraph>
+- <strong>인라인(Inline)</strong>: 좌우 margin만 적용, width/height 무시, 상하
+  margin 무시
+- <strong>블록(Block)</strong>: width/height 적용, 상하좌우 margin 모두 적용,
+  항상 새 줄 시작
+- <strong>인라인 블록(Inline-block)</strong>: 나란히 배치 + width/height/margin
+  모두 적용
 
 <Paragraph>
   "이 요소에 크기를 주고 싶은데 안 먹힌다"면, 십중팔구 인라인 요소에
@@ -308,13 +308,12 @@ span {
 
 <Paragraph>마진 겹침이 발생하는 세 가지 경우를 기억해두세요.</Paragraph>
 
-<Paragraph>
-  - <strong>인접 형제 요소</strong>: 위 요소의 margin-bottom과 아래 요소의
-  margin-top이 겹침 - <strong>부모와 첫째/마지막 자식</strong>: 부모에
-  padding이나 border가 없으면, 자식의 margin이 부모 밖으로 "새어 나감" -{" "}
-  <strong>빈 블록 요소</strong>: 콘텐츠가 없는 요소의 margin-top과
+- <strong>인접 형제 요소</strong>: 위 요소의 margin-bottom과 아래 요소의
+  margin-top이 겹침
+- <strong>부모와 첫째/마지막 자식</strong>: 부모에 padding이나 border가 없으면,
+  자식의 margin이 부모 밖으로 "새어 나감"
+- <strong>빈 블록 요소</strong>: 콘텐츠가 없는 요소의 margin-top과
   margin-bottom끼리 겹침
-</Paragraph>
 
 ```css
 /* 부모-자식 마진 겹침 방지 */
@@ -326,7 +325,7 @@ span {
 }
 ```
 
-<Subtitle level={2}>5\. box-sizing: border-box — 현대 CSS의 필수 설정</Subtitle>
+<Subtitle level={2}>5\. box-sizing: border-box</Subtitle>
 
 <Paragraph>
   CSS 박스 모델의 기본 동작(`content-box`)에서는 `width: 200px`을 지정하면,
@@ -363,7 +362,6 @@ span {
 </Paragraph>
 
 ```css
-/* 현대 CSS 프로젝트의 첫 줄이라 해도 과언이 아닙니다 */
 *,
 *::before,
 *::after {
@@ -478,11 +476,9 @@ span {
 | <strong>`visibility: hidden`</strong> | O         | X         | X           | 가능            |
 | <strong>`opacity: 0`</strong>         | O         | O         | O           | 가능            |
 
-<Paragraph>
-  - 완전히 제거하고 싶으면 → `display: none` - 자리는 유지하되 보이지만 않게 →
-  `visibility: hidden` - 페이드인/페이드아웃 애니메이션을 주고 싶으면 →
-  `opacity`
-</Paragraph>
+- 완전히 제거하고 싶으면 → `display: none`
+- 자리는 유지하되 보이지만 않게 → `visibility: hidden`
+- 페이드인/페이드아웃 애니메이션을 주고 싶으면 → `opacity`
 
 <Paragraph>
   `display: none`은 요소를 DOM에서 차지하는 공간까지 제거하기 때문에, 보였다가
@@ -521,13 +517,11 @@ return { show && <Component />; }
   이런 차이를 해결하기 위해 두 가지 접근법이 있습니다.
 </Paragraph>
 
-<Paragraph>
-  - <strong>CSS Reset</strong>: 브라우저의 기본 스타일을{" "}
+- <strong>CSS Reset</strong>: 브라우저의 기본 스타일을
   <strong>전부 제거</strong>합니다. 모든 요소의 margin, padding, font-size 등을
-  0으로 밀어버리고, 백지 상태에서 시작합니다. -<strong>Normalize.css</strong>:
-  기본 스타일을 제거하는 대신 <strong>브라우저 간 차이만 통일</strong>합니다.
-  유용한 기본 스타일은 살려두되, 브라우저마다 다른 부분만 맞춰줍니다.
-</Paragraph>
+  0으로 밀어버리고, 백지 상태에서 시작합니다.
+
+-<strong>Normalize.css</strong>: 기본 스타일을 제거하는 대신 <strong>브라우저 간 차이만 통일</strong>합니다. 유용한 기본 스타일은 살려두되, 브라우저마다 다른 부분만 맞춰줍니다.
 
 ```css
 /* CSS Reset 스타일 예시 */
@@ -773,19 +767,19 @@ body {
 
 <ArticleQuiz>
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="box-sizing: content-box(기본값) 상태에서 width: 300px, padding: 20px, border: 10px solid black을 준 요소의 실제 화면 너비는 몇 px인가요? 직접 계산 과정을 쓰세요."
     answer="360px — width(300) + padding 양쪽(20×2=40) + border 양쪽(10×2=20) = 360px"
     explanation="content-box에서 width는 콘텐츠 영역만 의미합니다. padding과 border는 바깥에 더해지므로 실제 화면 너비 = width + padding×2 + border×2 = 300 + 40 + 20 = 360px입니다."
   />
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="같은 요소에 box-sizing: border-box를 적용하면 실제 화면 너비와 콘텐츠 영역 너비는 각각 몇 px가 되나요? 직접 계산하세요."
     answer="실제 화면 너비: 300px (그대로), 콘텐츠 영역 너비: 300 - 40 - 20 = 240px"
     explanation="border-box에서 width(300px) 안에 padding(40px)과 border(20px)가 포함됩니다. 콘텐츠 영역 = 300 - (padding 양쪽) - (border 양쪽) = 300 - 40 - 20 = 240px입니다. 화면 너비는 항상 300px로 고정됩니다."
   />
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="margin-bottom: 30px인 요소와 margin-top: 20px인 요소가 수직으로 붙어있을 때, 두 요소 사이의 실제 간격은 몇 px인가요? 이 현상의 이름과 방지 방법을 설명하세요."
     answer="30px — 마진 겹침(Margin Collapsing)으로 합산(50px)이 아닌 큰 값(30px)만 적용됩니다. 방지: 부모에 padding, border, overflow: hidden 적용, 또는 display: flex 사용"
     explanation="수직으로 인접한 블록 요소의 마진은 합산되지 않고 더 큰 값 하나만 남습니다. 이를 마진 겹침(Margin Collapsing)이라 합니다. Flexbox나 Grid 컨테이너 안에서는 발생하지 않습니다."

@@ -351,7 +351,7 @@ const mapFromObj = new Map(Object.entries(obj));
 
 <ArticleQuiz>
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="아래 코드에서 두 console.log의 출력 결과를 순서대로 입력하세요."
     code={`const obj = {
   value: 10,
@@ -370,7 +370,7 @@ explanation="double()은 메서드 호출이므로 this가 obj를 가리켜 10*2
 />
 
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="아래 코드의 출력 결과는 무엇인가요?"
     code={`const nums = [1, 2, 3, 2, 1, 4];
 const result = [...new Set(nums)].length;
@@ -379,7 +379,7 @@ console.log(result);`}
     explanation="Set은 중복을 제거하므로 new Set(nums)는 {1, 2, 3, 4}입니다. 스프레드로 배열로 변환하면 [1, 2, 3, 4]이고 length는 4입니다."
   />
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="아래 코드에서 출력되는 값들을 순서대로 입력하세요."
     code={`const map = new Map([
   ["a", 1],

@@ -382,7 +382,7 @@ new Date() instanceof Date  // true
 
 <ArticleQuiz>
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="아래 코드에서 마지막 console.log의 출력 결과는?"
     code={`const obj = Object.freeze({ x: 1, nested: { y: 2 } });
 obj.x = 99;
@@ -392,7 +392,7 @@ console.log(obj.x, obj.nested.y);`}
     explanation="Object.freeze()는 최상위 프로퍼티만 동결합니다. obj.x 변경은 무시되어 1 그대로지만, 중첩 객체 obj.nested는 freeze되지 않아 obj.nested.y는 99로 변경됩니다."
   />
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="아래 코드에서 두 console.log의 출력 결과를 순서대로 입력하세요."
     code={`function Animal(name) {
   this.name = name;
@@ -409,7 +409,7 @@ explanation="speak는 a 자신의 프로퍼티가 아니라 Animal.prototype에 
 />
 
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="아래 코드의 세 줄 출력 결과를 순서대로 입력하세요."
     code={`console.log(typeof null);
 console.log(typeof []);
@@ -427,7 +427,7 @@ console.log(Array.isArray([]));`}
 
 <ArticleQuiz>
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="아래 코드의 실행 결과는 무엇인가요? 왜 그런 결과가 나오는지 Object.freeze()의 동작 방식을 설명하세요."
     code={`const arr = [1, 2, 3];
 Object.freeze(arr);
@@ -436,19 +436,19 @@ arr.push(4);`}
     explanation="Object.freeze()는 배열에도 적용됩니다. 배열도 객체이기 때문입니다. 단, 얕은 동결(shallow freeze)이므로 배열 안에 중첩된 객체가 있다면 그 내부는 여전히 변경 가능합니다."
   />
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="[] instanceof Array는 true이고, [] instanceof Object도 true입니다. 왜 빈 배열이 Object의 인스턴스이기도 한지, 프로토타입 체인을 그려서 설명하세요."
     answer="[]의 프로토타입 체인은 [] → Array.prototype → Object.prototype → null입니다. instanceof는 오른쪽 생성자의 prototype이 왼쪽 객체의 프로토타입 체인 어딘가에 존재하는지 확인합니다. Array.prototype이 체인에 있으므로 [] instanceof Array는 true이고, Object.prototype도 체인에 있으므로 [] instanceof Object도 true입니다."
     explanation="JS에서 거의 모든 객체의 프로토타입 체인 최상단에는 Object.prototype이 있습니다. 따라서 배열, 함수, Date 등 대부분의 객체는 instanceof Object가 true입니다. 이것이 프로토타입 기반 상속의 핵심 구조입니다."
   />
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="배열인지 확인할 때 typeof를 사용하면 안 되는 이유를 설명하고, 올바른 확인 방법을 제시하세요. typeof []의 결과가 무엇인지도 함께 답하세요."
     answer="typeof []는 'object'를 반환합니다. typeof는 배열과 일반 객체, null을 모두 'object'로 반환하므로 배열을 구분할 수 없습니다. 배열 확인에는 Array.isArray([])를 사용해야 하며, 이 메서드는 정확하게 true/false를 반환합니다."
     explanation="typeof는 원시값 구분에는 유용하지만, 객체 세부 타입 구분에는 한계가 있습니다. Array.isArray()는 ES5에서 추가된 메서드로, iframe을 넘어오는 배열도 정확히 판별합니다. instanceof Array는 다른 실행 컨텍스트(iframe)에서 생성된 배열을 인식하지 못하는 경우가 있어 Array.isArray()가 더 안전합니다."
   />
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="ES6의 class가 '프로토타입 기반 상속의 문법적 설탕(syntactic sugar)'이라는 말의 의미를 찾아보세요. class로 작성한 코드를 프로토타입 방식으로 바꿔보면 어떤 구조가 되는지 설명하세요."
     answer="ES6 class는 내부적으로 생성자 함수와 prototype을 사용합니다. 예를 들어 class Person { constructor(name) { this.name = name; } greet() { return this.name; } }는 function Person(name) { this.name = name; } Person.prototype.greet = function() { return this.name; }과 동일하게 동작합니다. class는 새로운 상속 모델이 아니라 프로토타입 기반 상속을 더 읽기 쉽게 작성하는 문법입니다."
     explanation="class 문법은 프로토타입 패턴을 감싸는 편의 문법입니다. typeof로 class를 확인하면 'function'이 나오고, 메서드는 prototype에 추가됩니다. 다만 class에는 strict mode 강제, 호이스팅 불가(TDZ), new 없이 호출 불가 등 추가 제약이 있어 완전히 동일하지는 않습니다."

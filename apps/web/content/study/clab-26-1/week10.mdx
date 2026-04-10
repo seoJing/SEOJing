@@ -569,7 +569,7 @@ function SignupForm() {
 
 <ArticleQuiz>
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="아래 컴포넌트에서 버튼을 3번 클릭하면 화면에 표시되는 숫자는 무엇인가요?"
     code={`function Counter() {
   const [count, setCount] = useState(0);
@@ -593,7 +593,7 @@ explanation="React의 배칭(batching) 때문에 한 이벤트 핸들러 안의 
 />
 
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="아래 코드에서 문제를 찾고 수정해보세요."
     code={`function userCard({ name, age }) {
   return (
@@ -618,7 +618,7 @@ explanation="React의 배칭(batching) 때문에 한 이벤트 핸들러 안의 
 
 <ArticleQuiz>
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="아래 요구사항을 만족하는 Counter 컴포넌트를 만들어보세요. (1) + 버튼을 누르면 숫자가 1 올라감 (2) - 버튼을 누르면 숫자가 1 내려감 (3) 초기값은 0 (4) 함수형 업데이트(prev => ...)를 사용할 것"
     answer={`function Counter() {
   const [count, setCount] = useState(0);
@@ -633,7 +633,7 @@ explanation="React의 배칭(batching) 때문에 한 이벤트 핸들러 안의 
     explanation="useState로 count 상태를 관리하고, 버튼의 onClick 핸들러에서 setCount를 호출합니다. 함수형 업데이트(prev => prev + 1)를 사용하면 항상 최신 상태를 기반으로 업데이트됩니다."
   />
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="users 배열을 props로 받아 이름 목록을 렌더링하는 UserList 컴포넌트를 만들어보세요. key prop도 올바르게 사용해야 합니다. users 배열 예시: [{ id: 1, name: '철수' }, { id: 2, name: '영희' }, { id: 3, name: '민수' }]"
     answer={`function UserList({ users }) {
   return (
@@ -647,7 +647,7 @@ explanation="React의 배칭(batching) 때문에 한 이벤트 핸들러 안의 
     explanation="map()으로 배열을 순회하면서 각 요소를 <li>로 변환합니다. key에는 배열 인덱스가 아닌 고유한 id를 사용합니다. 이 패턴은 React에서 가장 자주 사용하는 리스트 렌더링 방식입니다."
   />
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="isLoggedIn boolean prop을 받아서 true이면 <Dashboard /> 컴포넌트를, false이면 <Login /> 컴포넌트를 렌더링하는 AuthGate 컴포넌트를 작성해보세요. (Dashboard와 Login은 간단히 텍스트만 보여주는 컴포넌트로 가정)"
     answer={`function Dashboard() {
   return <h1>대시보드입니다</h1>;

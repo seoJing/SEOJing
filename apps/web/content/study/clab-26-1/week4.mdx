@@ -951,7 +951,7 @@ width: calc(100% - calc(250px + 16px)); /* 중첩 calc */
 
 <ArticleQuiz>
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="아래 HTML에서 #C에 top: 0; left: 0;을 주면, #A / #B / 뷰포트 중 어느 것을 기준으로 배치될까요? 그 이유를 position 규칙으로 설명하세요."
     code={`<div id="A" style="position: relative;">
   <div id="B" style="position: static;">
@@ -962,7 +962,7 @@ width: calc(100% - calc(250px + 16px)); /* 중첩 calc */
     explanation="position: absolute인 요소는 DOM 트리를 올라가면서 position이 static이 아닌(relative, absolute, fixed, sticky) 첫 번째 조상을 containing block으로 삼습니다. 그런 조상이 없으면 뷰포트가 기준이 됩니다."
   />
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="아래 HTML에서 #E(position: absolute; top: 10px; left: 20px)는 #C와 #D 중 어느 것을 기준으로 배치될까요?"
     code={`<div id="C" style="position: absolute;">
   <div id="D" style="position: relative;">
@@ -973,7 +973,7 @@ width: calc(100% - calc(250px + 16px)); /* 중첩 calc */
     explanation="absolute 요소는 항상 가장 가까운 positioned 조상(static 제외)을 기준으로 합니다. #D가 position: relative이므로 #E의 바로 위 positioned 조상이 됩니다."
   />
   <ArticleQuizItem
-    mode="description"
+    mode="essay"
     question="#D의 position: relative를 position: static으로 바꾸면 #E의 기준 요소는 어떻게 달라질까요? 직접 브라우저에서 확인해보세요."
     answer="#D가 static이 되면, #E는 더 위로 올라가 position: absolute인 #C를 기준으로 배치됩니다."
     explanation="#D가 static으로 바뀌면 더 이상 positioned 요소가 아닙니다. #E는 상위로 계속 올라가 position: absolute인 #C를 기준으로 삼습니다. #C도 없다면 뷰포트가 기준이 됩니다."
