@@ -8,7 +8,13 @@ import {
   type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
-import { IoCloseOutline, IoAddOutline, IoRemoveOutline } from "react-icons/io5";
+import {
+  IoCloseOutline,
+  IoAddOutline,
+  IoRemoveOutline,
+  IoPhonePortraitOutline,
+  IoDesktopOutline,
+} from "react-icons/io5";
 import { FullscreenView } from "@app/ui";
 import { extractSlides, getFillRatio } from "./presentation.utils";
 
@@ -22,6 +28,9 @@ const MIN_SCALE = 1;
 const MAX_SCALE = 3;
 const SCALE_STEP = 0.2;
 const BOTTOM_BAR_HEIGHT_MOBILE = 36;
+const MIN_FILL_RATIO = 0.3;
+const MAX_FILL_RATIO = 1.0;
+const FILL_RATIO_STEP = 0.05;
 
 interface PresentationViewProps {
   articleRef: RefObject<HTMLElement | null>;
@@ -49,19 +58,39 @@ export function PresentationView({
     fullscreenCodeRef.current = fullscreenCode;
   });
   const [pcScale, setPcScale] = useState(DEFAULT_pcScale);
+  // null이면 getFillRatio 기본값 사용, 숫자면 덮어쓰기
+  const [fillRatioOverride, setFillRatioOverride] = useState<number | null>(
+    null,
+  );
+  const [overflowing, setOverflowing] = useState(false);
 
-  const [isMobile] = useState(() => {
+  const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === "undefined") return false;
-    // 물리적 짧은 변이 768px 이하면 모바일로 판단 (orientation 무관)
+    // pointer: coarse (터치 입력) 우선, 없으면 짧은 변으로 폴백
+    if (window.matchMedia?.("(pointer: coarse)").matches) return true;
     const short = Math.min(window.innerWidth, window.innerHeight);
     return short <= 768;
   });
 
   // portrait(세로) 상태에서만 회전 필요. 이미 landscape면 그대로 사용
-  const [needsRotation] = useState(() => {
+  const [needsRotation, setNeedsRotation] = useState(() => {
     if (typeof window === "undefined") return false;
     return isMobile && window.innerHeight > window.innerWidth;
   });
+
+  const toggleDeviceMode = useCallback(() => {
+    setIsMobile((prev) => {
+      const next = !prev;
+      // 모바일 모드로 전환할 때만 현재 화면 방향 기준으로 회전 여부 재계산
+      if (next && typeof window !== "undefined") {
+        setNeedsRotation(window.innerHeight > window.innerWidth);
+      } else {
+        setNeedsRotation(false);
+      }
+      return next;
+    });
+    setCurrentSlide(0);
+  }, []);
 
   const bottomBarHeight = isMobile
     ? BOTTOM_BAR_HEIGHT_MOBILE
@@ -79,7 +108,8 @@ export function PresentationView({
       ? (vv?.width ?? window.innerWidth)
       : (vv?.height ?? window.innerHeight);
     const padding = isMobile ? SLIDE_PADDING_Y_MOBILE : SLIDE_PADDING_Y;
-    const available = (viewH - padding - bottomBarHeight) * getFillRatio(viewH);
+    const ratio = fillRatioOverride ?? getFillRatio(viewH);
+    const available = (viewH - padding - bottomBarHeight) * ratio;
     const scale = isMobile ? 1 : pcScale;
     const slideW = needsRotation
       ? (vv?.height ?? window.innerHeight) - 64
@@ -88,7 +118,14 @@ export function PresentationView({
     setSlides(
       extractSlides(articleRef.current, available / scale, slideW / scale),
     );
-  }, [articleRef, isMobile, needsRotation, bottomBarHeight, pcScale]);
+  }, [
+    articleRef,
+    isMobile,
+    needsRotation,
+    bottomBarHeight,
+    pcScale,
+    fillRatioOverride,
+  ]);
 
   const totalSlides = slides.length;
   const closingRef = useRef(false);
@@ -150,6 +187,17 @@ export function PresentationView({
     const clonedSlide = slide.cloneNode(true) as HTMLElement;
     slideContentRef.current.appendChild(clonedSlide);
 
+    // 렌더 후 실제 콘텐츠 높이가 컨테이너(부모)를 넘치면 경고 표시
+    requestAnimationFrame(() => {
+      const el = slideContentRef.current;
+      const parent = el?.parentElement;
+      if (!el || !parent) return;
+      const scale = isMobile ? 1 : pcScale;
+      const contentH = el.scrollHeight * scale;
+      const parentH = parent.clientHeight;
+      setOverflowing(contentH > parentH + 1);
+    });
+
     const codeButtons = clonedSlide.querySelectorAll(
       "[data-presentation-code-fullscreen]",
     );
@@ -168,7 +216,7 @@ export function PresentationView({
     return () => {
       handlers.forEach((cleanup) => cleanup());
     };
-  }, [currentSlide, slides]);
+  }, [currentSlide, slides, isMobile, pcScale]);
 
   const handlePointerDown = useCallback(() => {
     if (!isMobile) return;
@@ -272,26 +320,23 @@ export function PresentationView({
           />
         </div>
 
-        {/* 첫 슬라이드 배율 안내 */}
-        {currentSlide === 0 && !isMobile && (
-          <div className="pointer-events-none absolute bottom-12 left-0 right-0 flex justify-center pb-3">
-            <span className="rounded-full bg-black/40 px-4 py-1.5 text-xs text-white/80 backdrop-blur-sm">
-              이 문자가 보일 때 까지 배율을 조절해주세요.
-            </span>
-          </div>
-        )}
-
         {/* 하단 바 */}
         <div
           className={`relative flex shrink-0 items-center bg-gray-100 dark:bg-gray-900 ${isMobile ? "px-4" : "px-6"}`}
           style={{ height: `${bottomBarHeight}px` }}
         >
-          <span className="text-xs text-gray-500">
-            {pressing
-              ? "놓지 마세요..."
-              : isMobile
-                ? `화면을 ${LONG_PRESS_MS / 1000}초간 누르면 종료`
-                : ""}
+          <span className="flex items-center gap-2 text-xs text-gray-500">
+            {pressing ? (
+              "놓지 마세요..."
+            ) : isMobile ? (
+              `화면을 ${LONG_PRESS_MS / 1000}초간 누르면 종료`
+            ) : overflowing ? (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                ⚠ 화면 넘침 — 표시 영역을 줄이세요
+              </span>
+            ) : (
+              ""
+            )}
           </span>
 
           <span className="absolute left-1/2 -translate-x-1/2 text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -299,6 +344,21 @@ export function PresentationView({
           </span>
 
           <div className="ml-auto flex items-center gap-1">
+            <button
+              type="button"
+              className="mr-1 flex size-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+              onClick={toggleDeviceMode}
+              aria-label={
+                isMobile ? "데스크탑 모드로 전환" : "모바일 모드로 전환"
+              }
+              title={isMobile ? "데스크탑 모드로 전환" : "모바일 모드로 전환"}
+            >
+              {isMobile ? (
+                <IoDesktopOutline className="size-4" />
+              ) : (
+                <IoPhonePortraitOutline className="size-4" />
+              )}
+            </button>
             {!isMobile && (
               <>
                 <button
@@ -313,11 +373,15 @@ export function PresentationView({
                     setCurrentSlide(0);
                   }}
                   disabled={pcScale <= MIN_SCALE}
-                  aria-label="축소"
+                  aria-label="글자 크기 축소"
+                  title="글자 크기 축소"
                 >
                   <IoRemoveOutline className="size-4" />
                 </button>
-                <span className="min-w-[3ch] text-center text-xs tabular-nums text-gray-500">
+                <span
+                  className="min-w-[3ch] text-center text-xs tabular-nums text-gray-500"
+                  title="글자 배율"
+                >
                   {pcScale.toFixed(1)}
                 </span>
                 <button
@@ -332,21 +396,81 @@ export function PresentationView({
                     setCurrentSlide(0);
                   }}
                   disabled={pcScale >= MAX_SCALE}
-                  aria-label="확대"
+                  aria-label="글자 크기 확대"
+                  title="글자 크기 확대"
                 >
                   <IoAddOutline className="size-4" />
                 </button>
+
+                {/* 표시 영역 조절 (미러링 등으로 화면 잘릴 때 사용) */}
+                <span className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-700" />
                 <button
                   type="button"
-                  className="ml-1 flex size-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-                  onClick={onClose}
-                  aria-label="프레젠테이션 종료"
+                  className="flex size-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:opacity-30 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                  onClick={() => {
+                    setFillRatioOverride((r) => {
+                      const base = r ?? getFillRatio(window.innerHeight);
+                      return (
+                        Math.round(
+                          Math.max(MIN_FILL_RATIO, base - FILL_RATIO_STEP) *
+                            100,
+                        ) / 100
+                      );
+                    });
+                    setCurrentSlide(0);
+                  }}
+                  disabled={
+                    (fillRatioOverride ?? 1) <= MIN_FILL_RATIO &&
+                    fillRatioOverride !== null
+                  }
+                  aria-label="표시 영역 줄이기"
+                  title="표시 영역 줄이기 (미러링에서 잘릴 때)"
                 >
-                  <IoCloseOutline className="size-5" />
+                  <IoRemoveOutline className="size-3.5 opacity-70" />
+                </button>
+                <span
+                  className="min-w-[3.5ch] text-center text-xs tabular-nums text-gray-500"
+                  title="슬라이드 표시 영역 비율"
+                >
+                  {Math.round(
+                    (fillRatioOverride ??
+                      (typeof window !== "undefined"
+                        ? getFillRatio(window.innerHeight)
+                        : 0.7)) * 100,
+                  )}
+                  %
+                </span>
+                <button
+                  type="button"
+                  className="flex size-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:opacity-30 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                  onClick={() => {
+                    setFillRatioOverride((r) => {
+                      const base = r ?? getFillRatio(window.innerHeight);
+                      return (
+                        Math.round(
+                          Math.min(MAX_FILL_RATIO, base + FILL_RATIO_STEP) *
+                            100,
+                        ) / 100
+                      );
+                    });
+                    setCurrentSlide(0);
+                  }}
+                  disabled={(fillRatioOverride ?? 0) >= MAX_FILL_RATIO}
+                  aria-label="표시 영역 늘리기"
+                  title="표시 영역 늘리기"
+                >
+                  <IoAddOutline className="size-3.5 opacity-70" />
                 </button>
               </>
             )}
-            {isMobile && <span className="w-7" />}
+            <button
+              type="button"
+              className="ml-1 flex size-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+              onClick={onClose}
+              aria-label="프레젠테이션 종료"
+            >
+              <IoCloseOutline className="size-5" />
+            </button>
           </div>
         </div>
       </div>

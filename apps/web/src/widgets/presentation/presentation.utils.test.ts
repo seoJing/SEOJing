@@ -100,6 +100,23 @@ describe("extractSlides", () => {
     expect(slides[0]!.querySelector(".sticky")).toBeNull();
   });
 
+  it("ignores leading hr with no preceding content", () => {
+    const article = makeArticle(`
+      <hr />
+      <p>First paragraph</p>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    // hr 앞에 내용이 없으므로 chapter push가 스킵되어야 하고, 빈 슬라이드는 없어야 함
+    expect(slides).toHaveLength(1);
+    expect(slides[0]!.textContent).toContain("First paragraph");
+  });
+
+  it("applies fontSize option when provided", () => {
+    const article = makeArticle("<p>Hello</p>");
+    const slides = extractSlides(article, 500, 800, { fontSize: "24px" });
+    expect(slides).toHaveLength(1);
+  });
+
   it("preserves element content in slides", () => {
     const article = makeArticle(`
       <h2>Title</h2>
@@ -459,6 +476,57 @@ describe("extractSlides — code block handling", () => {
     expect(btn!.textContent).toBe("코드 전체 보기");
     expect(btn!.getAttribute("data-code-html")).toContain("longCode");
     expect(btn!.getAttribute("data-code-language")).toBe("typescript");
+  });
+
+  it("falls back to pre innerHTML when code element is missing", () => {
+    Element.prototype.getBoundingClientRect = function () {
+      if (this.hasAttribute?.("data-presentation-code-fullscreen")) {
+        return {
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 50,
+          top: 0,
+          right: 800,
+          bottom: 50,
+          left: 0,
+          toJSON: () => ({}),
+        };
+      }
+      if (this.hasAttribute?.("data-code-block")) {
+        return {
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 800,
+          top: 0,
+          right: 800,
+          bottom: 800,
+          left: 0,
+          toJSON: () => ({}),
+        };
+      }
+      return {
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 100,
+        top: 0,
+        right: 800,
+        bottom: 100,
+        left: 0,
+        toJSON: () => ({}),
+      };
+    };
+
+    // code 태그 없이 pre만 있는 케이스 — preEl?.innerHTML fallback 경로 커버
+    const article = makeArticle(`
+      <div data-code-block><pre>raw pre content</pre></div>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    const btn = slides[0]!.querySelector("[data-presentation-code-fullscreen]");
+    expect(btn).not.toBeNull();
+    expect(btn!.getAttribute("data-code-html")).toContain("raw pre content");
   });
 
   it("does not contain original pre/code after replacement", () => {

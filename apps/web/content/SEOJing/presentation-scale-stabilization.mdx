@@ -13,6 +13,8 @@ tags:
   - Tailwind
   - 모바일
   - 반응형
+  - 미러링
+  - 디바이스 판정
 description: 모바일 Safari에서 100vh가 화면을 넘치는 이유, vh/svh/lvh/dvh의 차이, JavaScript에서 실제 뷰포트를 구하는 방법, 그리고 전체화면 UI를 만들 때 알아야 할 CSS zoom과 모바일 판정 패턴까지 정리한다.
 ---
 
@@ -362,6 +364,148 @@ const [needsRotation] = useState(() => {
 
 ---
 
+<Subtitle level={2}>자동 감지로는 부족했던 순간 — 미러링 환경 대응</Subtitle>
+
+<Paragraph>
+  짧은 변 기준 판정으로 대부분의 기기는 커버됐는데, 예상 못한 케이스가 스터디
+  자리에서 나왔다. 노트북을 빔프로젝터에 미러링해서 프레젠테이션을 띄웠는데,
+  화면에 "꾹 눌러서 종료" 문구가 보이고 배율 버튼이 사라져 있었다. PC인데 모바일
+  UI가 적용된 것이다.
+</Paragraph>
+
+<Paragraph>
+  원인을 추적해보니 미러링된 디스플레이의 해상도가 짧은 변 기준 768px을 밑돌 수
+  있었다. 물리적으로는 노트북인데, 브라우저가 받는 뷰포트 값이 모바일 조건에
+  걸려버리는 것이다. 자동 감지 로직만으로는 이런 엣지 케이스를 막기 어렵다.
+  "노트북을 쓰는 건 알지만, 지금 브라우저가 받은 값은 모바일이다"라는 모순적인
+  상황이기 때문이다.
+</Paragraph>
+
+<Subtitle level={3}>수동 토글을 허용하기</Subtitle>
+
+<Paragraph>
+  자동 감지를 더 정교하게 다듬는 대신,{" "}
+  <strong>사용자가 직접 모드를 바꿀 수 있게</strong> 열어주는 쪽으로 방향을
+  잡았다. `isMobile`을 const에서 state로 승격하고, 하단 바에 모바일·데스크탑
+  아이콘 토글 버튼을 추가했다. 초기 감지는 `pointer: coarse`(터치 입력) 미디어
+  쿼리를 우선으로 쓰고, 그게 없으면 짧은 변으로 폴백한다.
+</Paragraph>
+
+```tsx
+const [isMobile, setIsMobile] = useState(() => {
+  if (typeof window === "undefined") return false;
+  // pointer: coarse (터치 입력) 우선, 없으면 짧은 변으로 폴백
+  if (window.matchMedia?.("(pointer: coarse)").matches) return true;
+  const short = Math.min(window.innerWidth, window.innerHeight);
+  return short <= 768;
+});
+
+const toggleDeviceMode = useCallback(() => {
+  setIsMobile((prev) => {
+    const next = !prev;
+    // 모바일로 전환할 때만 현재 화면 방향 기준으로 회전 여부 재계산
+    if (next && typeof window !== "undefined") {
+      setNeedsRotation(window.innerHeight > window.innerWidth);
+    } else {
+      setNeedsRotation(false);
+    }
+    return next;
+  });
+  setCurrentSlide(0);
+}, []);
+```
+
+<Paragraph>
+  `pointer: coarse`는 주 입력 장치가 정밀하지 않은(터치) 기기에서 true를
+  반환한다. 미러링된 노트북은 마우스/트랙패드가 주 입력이므로 `pointer: coarse`
+  에 걸리지 않고, 짧은 변 fallback에서 걸린다면 사용자가 수동으로 되돌리면 된다.
+</Paragraph>
+
+<Subtitle level={3}>배율과 표시 영역을 분리하기</Subtitle>
+
+<Paragraph>
+  모드 토글로 UI 문제는 풀렸는데, 미러링 환경에서 또 다른 문제가 남아 있었다.
+  슬라이드 하단이 잘리는 현상이었다. 브라우저가 보고하는 `visualViewport.height`
+  와 실제 미러링 디스플레이의 가시 영역이 일치하지 않는 경우가 있었다.
+</Paragraph>
+
+<Paragraph>
+  처음에는 첫 슬라이드 하단에 "이 문구가 보일 때까지 배율을 조절하세요"라는
+  기준점 텍스트를 놨었는데, 이 문구가 슬라이드 콘텐츠와 다른 scale에 있어서
+  배율을 바꿔도 위치가 변하지 않았다. 기준선이 기준 역할을 못 했던 것이다. 그
+  상태에서 문구를 슬라이드 scale 안으로 옮겨도 봤지만, 이번에는 콘텐츠에 따라
+  위치가 흔들려서 오히려 혼란스러웠다.
+</Paragraph>
+
+<Paragraph>
+  돌아와서 문제를 다시 봤다. 배율(글자 크기)과 표시 영역(슬라이드가 쓰는 세로
+  공간)은 사실 <strong>별개의 축</strong>이다. 배율로 읽기 편한 글자 크기를 먼저
+  맞추고, 그다음에 짤리면 표시 영역을 줄이는 게 자연스러운 흐름이다. 두 개를
+  하나의 컨트롤로 묶으려 했던 게 잘못이었다.
+</Paragraph>
+
+<Paragraph>
+  하단 바에 표시 영역 조절 버튼을 배율 버튼과 구분자로 나눠서 추가했다. 내부
+  구현은 `getFillRatio`의 반환값을 사용자 지정값으로 덮어쓰는 방식이다.
+</Paragraph>
+
+```tsx
+const [fillRatioOverride, setFillRatioOverride] = useState<number | null>(null);
+
+// 슬라이드 생성 시 override가 있으면 우선 사용
+const ratio = fillRatioOverride ?? getFillRatio(viewH);
+const available = (viewH - padding - bottomBarHeight) * ratio;
+```
+
+<Paragraph>
+  override가 null이면 화면 높이 기반 기본 비율을 쓰고, 사용자가 버튼을 누르면
+  30%~100% 범위에서 5%씩 조정된다. 배율 조정과 표시 영역 조정이 각각 독립적으로
+  슬라이드 재계산을 트리거하므로, 어느 쪽을 만지든 실시간으로 반영된다.
+</Paragraph>
+
+<Subtitle level={3}>잘림 감지로 피드백 주기</Subtitle>
+
+<Paragraph>
+  사용자가 "지금 잘리고 있다"를 눈으로 확인하려면 발표자는 슬라이드를 계속
+  훑어봐야 한다. 그래서 렌더 후 실제 DOM 높이를 측정해서, 컨테이너를 초과하면
+  하단 바에 경고 뱃지를 띄우는 로직을 추가했다.
+</Paragraph>
+
+```tsx
+requestAnimationFrame(() => {
+  const el = slideContentRef.current;
+  const parent = el?.parentElement;
+  if (!el || !parent) return;
+  const scale = isMobile ? 1 : pcScale;
+  const contentH = el.scrollHeight * scale;
+  const parentH = parent.clientHeight;
+  setOverflowing(contentH > parentH + 1);
+});
+```
+
+<Paragraph>
+  `scrollHeight`는 zoom 전 원본 크기를 돌려주므로 `pcScale`을 곱해서 실제
+  렌더링되는 높이로 환산한다. `requestAnimationFrame`으로 감싼 이유는 DOM 삽입
+  직후 측정하면 레이아웃이 확정되기 전이라 오차가 나기 때문이다. 초과하면 `⚠
+  화면 넘침 — 표시 영역을 줄이세요` 뱃지가 하단 바에 뜨고, 표시 영역 버튼으로
+  바로 대응할 수 있다.
+</Paragraph>
+
+<Subtitle level={3}>자동 감지의 한계와 수동 탈출구</Subtitle>
+
+<Paragraph>
+  이번 작업에서 배운 건,{" "}
+  <strong>
+    자동 감지가 95%를 커버해도 나머지 5%가 실패하면 사용자는 완전히 막힌다
+  </strong>
+  는 점이다. 미러링·듀얼 모니터·드래그한 창 크기·접근성 확대 같은 조합은 감지
+  로직으로 전부 거르기 어렵다. 이럴 땐 감지 로직을 더 복잡하게 만드는 것보다,{" "}
+  <strong>사용자에게 수동 탈출구를 주는</strong> 편이 안정적이다. 지금은 기본
+  감지가 틀려도 두 번의 클릭으로 정상화할 수 있다.
+</Paragraph>
+
+---
+
 <Subtitle level={2}>
   Tailwind에서 자식 요소 스타일링 — 임의 변형(Arbitrary Variant)
 </Subtitle>
@@ -503,6 +647,10 @@ import { FullscreenView } from "@app/ui";
   친화적이지만, 측정 시 역스케일링을 잊지 않는다.
 - <strong>모바일 판정</strong>은 짧은 변 기준으로 하고, "모바일이다"와 "회전이
   필요하다"를 분리한다.
+- <strong>자동 감지는 95%만 맞춰도 충분하지 않다</strong>. 미러링·듀얼 모니터
+  같은 엣지 케이스는 수동 토글로 탈출구를 열어둔다.
+- <strong>배율과 표시 영역</strong>은 서로 다른 축이다. 하나의 컨트롤로 묶지
+  말고 각각 조절할 수 있게 분리한다.
 - <strong>Tailwind 자식 선택자</strong>는 `[&>selector]` 패턴으로 별도 CSS
 없이 처리한다.
 - <strong>같은 UI가 두 곳에 있으면</strong> prop으로 차이를 제어하는 공통
