@@ -8,14 +8,14 @@ tags:
   - 타입
   - 변수
   - 호이스팅
-description: JavaScript를 처음 제대로 배우는 주차입니다. var/let/const의 차이, JS만의 독특한 타입 시스템, 그리고 다른 언어 경험자도 헷갈리는 암묵적 타입 변환까지 다룹니다.
+description: JavaScript를 처음 제대로 배우는 주차입니다. var/let/const의 차이, JS만의 독특한 타입 시스템, 그리고 호이스팅·TDZ까지 다룹니다.
 ---
 
 <Subtitle level={2}>5주차 학습 자료</Subtitle>
 
 - <strong>입문 강의 (처음이라면):</strong> 얄코 JS 입문 강의
-  <Anchor external="https://youtu.be/aC55WY8jxX0">
-    타입, 변수, 연산자, 제어문 챕터
+  <Anchor external="https://youtu.be/8kmtCVgqM34?t=0">
+    Section 1~2 (변수·상수, 자료형과 연산자) 챕터
   </Anchor>
 - <strong>강의 스킵 가능:</strong> 아래 스킵 진단 문제 10개를 모두 맞히면 강의
   시청 스킵 가능합니다.
@@ -31,12 +31,6 @@ description: JavaScript를 처음 제대로 배우는 주차입니다. var/let/c
   있습니다. 하지만 JS에는 다른 언어에서 보기 힘든{" "}
   <strong>독특한 동작 방식</strong>이 있습니다. 이번 주는 그 차이를 이해하는
   것이 목표입니다.
-</Paragraph>
-
-<Paragraph>
-  학습 자료는 텍스트 위주입니다. 읽으면서{" "}
-  <strong>브라우저 콘솔(F12 → Console 탭)</strong>을 열고 코드를 직접
-  실행해보면서 따라오세요. 눈으로만 읽는 것과 실행해보는 것은 완전히 다릅니다.
 </Paragraph>
 
 ---
@@ -80,29 +74,24 @@ description: JavaScript를 처음 제대로 배우는 주차입니다. var/let/c
   />
   <ArticleQuizItem
     mode="multiple"
-    question="다음 중 falsy 값이 아닌 것은 무엇일까요?"
-    choices={["0", "''(빈 문자열)", "'false'(문자열)", "null"]}
+    question="JavaScript에서 변수에 값을 재할당할 수 없는 키워드는 무엇일까요?"
+    choices={["var", "let", "const", "셋 다 재할당 가능"]}
     answer={2}
-    explanation="'false'는 내용이 있는 문자열이므로 truthy입니다. 0, ''(빈 문자열), null, undefined, NaN, false(불리언)가 falsy 값입니다. 주의할 점은 빈 배열 []과 빈 객체 {}는 truthy입니다."
+    explanation="const는 한 번 할당한 값을 다시 바꿀 수 없습니다. var와 let은 재할당이 가능합니다. 단, const로 선언한 객체의 내부 프로퍼티(obj.name = 'hi')는 변경할 수 있습니다. 재할당과 내부 값 변경은 다른 개념입니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="'5' - 1의 결과는 무엇일까요?"
-    choices={["'51'", "NaN", "4", "오류 발생"]}
+    question="다음 중 JavaScript의 원시 타입(Primitive Type)이 아닌 것은 무엇일까요?"
+    choices={["string", "boolean", "object", "undefined"]}
     answer={2}
-    explanation="- 연산자는 숫자 연산만 가능하므로, JS가 '5'를 숫자 5로 암묵적 변환한 후 계산합니다. 결과는 4입니다. 반면 '5' + 1은 '51'이 됩니다. + 연산자는 문자열이 있으면 문자열 연결을 우선하기 때문입니다."
+    explanation="JS의 원시 타입은 number, string, boolean, undefined, null, symbol, bigint 7가지입니다. object는 참조 타입이며 배열·함수·일반 객체가 모두 object에 해당합니다. 원시 타입은 값 자체가 복사되고, 참조 타입은 메모리 주소가 복사됩니다."
   />
   <ArticleQuizItem
     mode="multiple"
-    question="== 와 === 의 차이는 무엇일까요?"
-    choices={[
-      "차이 없음, 동일하게 동작",
-      "==는 타입 변환 후 비교, ===는 타입까지 같아야 true",
-      "===는 타입 변환 후 비교, ==는 타입까지 같아야 true",
-      "==는 값만 비교, ===는 참조까지 비교",
-    ]}
-    answer={1}
-    explanation="==는 비교 전에 타입을 자동으로 변환(암묵적 강제 변환)합니다. 그래서 0 == '0'은 true, 0 == false도 true가 됩니다. ===는 타입 변환 없이 값과 타입이 모두 같아야 true를 반환합니다. 실무에서는 항상 ===를 사용하는 것이 권장됩니다."
+    question="JavaScript에서 typeof 연산자의 결과로 얻을 수 없는 문자열은 무엇일까요?"
+    choices={["'number'", "'string'", "'array'", "'function'"]}
+    answer={2}
+    explanation="배열은 객체의 한 종류이므로 typeof []는 'object'입니다. typeof가 반환하는 값은 'number', 'string', 'boolean', 'undefined', 'object', 'function', 'symbol', 'bigint' 총 8가지이며 'array'나 'null'은 없습니다. 배열 확인은 Array.isArray()를 사용해야 합니다."
   />
   <ArticleQuizItem
     mode="multiple"
@@ -137,10 +126,15 @@ description: JavaScript를 처음 제대로 배우는 주차입니다. var/let/c
   />
   <ArticleQuizItem
     mode="multiple"
-    question="단축 평가(Short-circuit evaluation)에서 'hello' || 'world'의 결과는 무엇일까요?"
-    choices={["true", "'world'", "'hello'", "false"]}
+    question="let과 const로 같은 이름의 변수를 같은 스코프에서 다시 선언하면 어떻게 될까요?"
+    choices={[
+      "경고 없이 덮어써진다",
+      "undefined가 할당된다",
+      "SyntaxError가 발생한다",
+      "이전 값이 유지된다",
+    ]}
     answer={2}
-    explanation="|| 연산자는 왼쪽 피연산자가 truthy이면 왼쪽 값을 그대로 반환합니다. 'hello'는 truthy이므로 오른쪽을 평가하지 않고 'hello'를 반환합니다. && 연산자는 반대로 왼쪽이 truthy면 오른쪽을 반환합니다."
+    explanation="let과 const는 같은 스코프에서 중복 선언이 금지되어 있어 SyntaxError: Identifier 'x' has already been declared가 발생합니다. 반면 var는 중복 선언이 허용되어 조용히 덮어써집니다. 이 차이가 var를 쓰지 않는 이유 중 하나입니다."
   />
 </ArticleQuiz>
 
@@ -166,9 +160,10 @@ x = null; // 이제 null — 에러 없음
 
 <Paragraph>
   JS의 원시 타입은 7가지입니다:{" "}
-  <strong>number, string, boolean, undefined, null, symbol, bigint</strong>. 이
-  외에 참조 타입으로 <strong>object</strong>(배열, 함수, 일반 객체 포함)가
-  있습니다.
+  <strong>number, string, boolean, undefined, null, symbol, bigint</strong> (
+  <code>symbol</code>과 <code>bigint</code>는 지금 주차에서는 몰라도 됩니다.
+  심화 주차에서 다룹니다). 이 외에 참조 타입으로 <strong>object</strong>(배열,
+  함수, 일반 객체 포함)가 있습니다.
 </Paragraph>
 
 <Subtitle level={3}>number 타입의 특이점</Subtitle>
@@ -177,7 +172,9 @@ x = null; // 이제 null — 에러 없음
   대부분의 언어는 정수와 실수 타입이 분리되어 있습니다(int, float, double 등).
   JS는
   <strong>number 하나</strong>로 모든 숫자를 표현합니다. 내부적으로 IEEE 754
-  64비트 부동소수점을 사용합니다. 여기서 유명한 버그가 나옵니다.
+  64비트 부동소수점을 사용하는데, 쉽게 말해{" "}
+  <strong>컴퓨터가 소수를 2진수로 저장할 때 딱 맞아 떨어지지 않는 경우</strong>
+  가 생긴다는 뜻입니다. 여기서 유명한 버그가 나옵니다.
 </Paragraph>
 
 ```js
@@ -228,7 +225,9 @@ let y = null; // null — 개발자가 의도적으로 "비어있음" 명시
   실무에서 권장하는 방식은{" "}
   <strong>변수를 의도적으로 비울 때는 null을 사용</strong>하고, undefined는 직접
   할당하지 않는 것입니다. undefined를 직접 할당하면 "아직 초기화 안 됨"인지
-  "의도적으로 비운 것"인지 구분이 안 되기 때문입니다.
+  "의도적으로 비운 것"인지 구분이 안 되기 때문입니다. undefined가 "아직
+  초기화되지 않은 상태"를 어떻게 만들어내는지는 섹션 2의 var/let/const 호이스팅
+  파트에서 다시 만납니다.
 </Paragraph>
 
 ---
@@ -238,8 +237,9 @@ let y = null; // null — 개발자가 의도적으로 "비어있음" 명시
 </Subtitle>
 
 <Paragraph>
-  다른 언어 경험자라면 변수 선언 자체는 낯설지 않을 텐데, JS의 var는 상당히
-  특이합니다. ES6(2015년)에서 let과 const가 나온 이유가 있습니다.
+  다른 언어 경험자라면 변수 선언에서 const는 상수구나, 하고 이해할 수
+  있을겁니다. 그러나, var와 let은 왜 있는 걸까요? 그리고 var는 왜 쓰지 말라고
+  하는 걸까요?
 </Paragraph>
 
 <Subtitle level={3}>var의 문제점 1: 함수 스코프</Subtitle>
@@ -262,8 +262,9 @@ console.log(y); // ReferenceError: y is not defined
 <Subtitle level={3}>var의 문제점 2: 호이스팅(Hoisting)</Subtitle>
 
 <Paragraph>
-  JS 엔진은 코드를 실행하기 전에 var 선언을 스코프 최상단으로
-  끌어올립니다(호이스팅). 선언은 올라가지만 값 할당은 올라가지 않습니다.
+  JS 엔진은 코드를 실행하기 전에 var 선언을 스코프 최상단으로 끌어올립니다. 이를
+  호이스팅이라고 합니다. 이 때 발생하는 이슈가 선언은 올라가지만 값 할당은
+  올라가지 않는다 입니다.
 </Paragraph>
 
 ```js
@@ -279,9 +280,81 @@ console.log(x); // 5
 ```
 
 <Paragraph>
-  let/const도 호이스팅은 일어나지만, 선언 전에 접근하면{" "}
-  <strong>TDZ(Temporal Dead Zone)</strong>에 의해 ReferenceError가 발생합니다.
-  이 동작이 훨씬 예측 가능하고 안전합니다.
+  왜 이런 일이 벌어지는지 한 단계 더 들어가 봅니다. 쉽게 말해{" "}
+  <strong>JS 엔진은 코드를 두 번 읽는다</strong>고 생각하면 됩니다. 첫 번째
+  읽기가 <strong>생성 단계</strong>로, 엔진이 스코프 안의 선언(변수와 함수)을
+  미리 수집해둡니다. 두 번째 읽기가 <strong>실행 단계</strong>이고, 이때 비로소
+  위에서 아래로 한 줄씩 코드가 흘러가며 할당·계산이 일어납니다. 호이스팅은
+  뭔가가 물리적으로 코드 위로 올라가는 것이 아니라,{" "}
+  <strong>
+    첫 번째 읽기에서 이미 엔진이 변수의 존재를 알고 있기 때문에 나타나는 현상
+  </strong>
+  입니다.
+</Paragraph>
+
+<Paragraph>
+  여기서 핵심은 "같은 호이스팅인데 왜 var만 undefined가 되는가"입니다. 생성
+  단계에서{" "}
+  <strong>var는 선언과 함께 undefined로 초기화까지 끝내버립니다</strong>. 그래서
+  선언문보다 앞에서 읽어도 undefined가 반환됩니다. 반면{" "}
+  <strong>
+    let과 const는 생성 단계에서 선언만 이루어지고, 초기화는 실제 선언문에 도달한
+    순간에야 일어납니다
+  </strong>
+  . 이 "선언은 끝났지만 아직 초기화되지 않은 구간"이 바로 뒤에서 볼 TDZ입니다.
+</Paragraph>
+
+<Subtitle level={3}>TDZ(Temporal Dead Zone) 시각화</Subtitle>
+
+<Paragraph>
+  말로만 들으면 잘 와닿지 않으니 코드로 단계를 쪼개서 봅니다. let으로 선언한
+  변수를 선언문보다 먼저 접근하면 어떻게 되는지부터 확인합니다.
+</Paragraph>
+
+```js
+console.log(a); // ReferenceError: Cannot access 'a' before initialization
+let a = 1;
+```
+
+<Paragraph>
+  var였다면 undefined가 출력됐겠지만, let은 선언만 호이스팅되고 초기화는 아직
+  이뤄지지 않았기 때문에 접근 자체가 막힙니다. 이 "선언은 됐지만 초기화는 안 된"
+  구간이 <strong>TDZ(Temporal Dead Zone)</strong>, 우리말로 옮기면 "일시적
+  사각지대"입니다.
+</Paragraph>
+
+<Paragraph>
+  함수 안에서 TDZ가 어디서 시작해서 어디서 끝나는지 주석으로 표시해보면 이렇게
+  됩니다.
+</Paragraph>
+
+```js
+function example() {
+  // ── 여기부터 TDZ 시작 (a가 선언은 됐지만 초기화 전)
+  console.log(a); // ReferenceError
+  let a = 1;
+  // ── 여기부터 TDZ 끝 (a 초기화 완료)
+  console.log(a); // 1
+}
+```
+
+<Paragraph>
+  한 가지 주의할 점은 TDZ 안에서는{" "}
+  <strong>typeof 연산자조차 에러를 냅니다</strong>. "선언되지 않은 변수에는
+  typeof가 안전하다"고 기억하는 분들이 많은데, TDZ에 놓인 변수에는 이 규칙이
+  통하지 않습니다.
+</Paragraph>
+
+```js
+typeof a; // ReferenceError
+let a;
+```
+
+<Paragraph>
+  TDZ 덕분에 let과 const는 var에서 흔하게 일어나던 "선언 전 참조 시 undefined
+  반환" 문제가 근본적으로 차단됩니다. 예상하지 못한 undefined가 코드 어딘가로
+  흘러들어가 버그를 만드는 대신, 에러가 즉시 터져 개발자가 바로 잡을 수 있도록
+  설계한 것입니다.
 </Paragraph>
 
 <Subtitle level={3}>var의 문제점 3: 중복 선언 허용</Subtitle>
@@ -311,100 +384,84 @@ let y = 2; // SyntaxError: Identifier 'y' has already been declared
 
 ---
 
-<Subtitle level={2}>
-  3. 암묵적 타입 변환 — JS가 "이상하다"는 말이 나오는 이유
-</Subtitle>
+<Subtitle level={2}>💡 더 알면 좋을 것들</Subtitle>
 
 <Paragraph>
-  JS는 연산 시 타입이 맞지 않으면 에러를 내는 대신 알아서 타입을 변환하려고
-  시도합니다. 이를 <strong>암묵적 타입 변환(Implicit Type Coercion)</strong>
-  이라고 합니다.
+  이번 주 본문에서는 얄코 강의 Section 1~2 범위(타입·변수·호이스팅)만 다뤘지만,
+  JS 입문에서 자주 같이 묶이는 주제가 두 가지 더 있습니다. 암묵적 타입 변환과{" "}
+  <code>==</code>/<code>===</code>는 이번 주 안에서 핵심만 짚고 마무리하고, 단축
+  평가와 <code>??</code> 연산자는 실무 패턴이 중요해서{" "}
+  <strong>week10(스프레드· 디스트럭처링 주차)</strong>로 미뤄둡니다.
+</Paragraph>
+
+<Subtitle level={3}>암묵적 타입 변환과 == vs ===</Subtitle>
+
+<Paragraph>
+  JS는 타입이 맞지 않는 연산을 만나면 에러 대신 타입을 알아서 바꿔주는 동작이
+  있습니다. <code>'5' - 1</code>이 <code>4</code>가 되고 <code>0 == false</code>
+  가 <code>true</code>가 되는 게 여기서 옵니다. 먼저 콘솔에서 아래 몇 줄을 직접
+  돌려보며 "이상하다" 감각부터 잡아볼게요.
 </Paragraph>
 
 ```js
-// + 연산자: 문자열이 있으면 문자열 연결 우선
-"5" + 1; // "51"
-1 + "5"; // "15"
-1 + 2 + "3"; // "33" — 왼쪽부터 평가: 3 + "3" = "33"
-"3" + 1 + 2; // "312" — "3" + 1 = "31", "31" + 2 = "312"
-
-// -, *, / 연산자: 숫자 변환 시도
 "5" - 1; // 4
-"5" * "2"; // 10
-"5" - "3"; // 2
-"hello" - 1; // NaN
-```
-
-<Paragraph>
-  이 동작 때문에 JS를 처음 접하는 다른 언어 개발자들이 당황하는 경우가 많습니다.
-  유명한 예시들을 직접 실행해보세요.
-</Paragraph>
-
-```js
-[] + []      // ""
-[] + {}      // "[object Object]"
-{} + []      // 0 (브라우저 콘솔에서는 다를 수 있음)
-true + true  // 2
-false + 1    // 1
-null + 1     // 1
-undefined + 1 // NaN
-```
-
-<Subtitle level={3}>== 를 쓰면 안 되는 이유</Subtitle>
-
-<Paragraph>
-  ==는 비교 전에 타입을 맞추려고 암묵적 변환을 수행합니다. 결과가 직관적이지
-  않습니다.
-</Paragraph>
-
-```js
 0 == false; // true
-0 == ""; // true
-"" == false; // true
 null == undefined; // true
-null == 0; // false  ← 이상하지 않나요?
-NaN == NaN; // false  ← NaN은 자신과도 다름
+null == 0; // false — 이상하지 않나요?
 ```
 
 <Paragraph>
-  ===는 타입 변환 없이 값과 타입이 모두 같아야 true를 반환합니다.
-  <strong>항상 === 를 사용</strong>하는 것이 버그를 예방하는 기본입니다.
-</Paragraph>
-
----
-
-<Subtitle level={2}>4. 단축 평가 — 실무에서 자주 쓰는 JS 패턴</Subtitle>
-
-<Paragraph>
-  논리 연산자 ||와 &&는 boolean이 아닌 값을 반환한다는 점이 독특합니다. 이를
-  활용한 패턴이 실무에서 자주 등장합니다.
+  <code>+</code> 연산자에는 한 가지 꼭 알아둬야 할 규칙이 하나 더 있습니다.{" "}
+  <strong>
+    피연산자 중 한쪽이라도 문자열이면, 나머지를 문자열로 변환해서 이어 붙인다
+  </strong>
+  는 규칙입니다. 또 <code>+</code>는 <strong>왼쪽에서 오른쪽으로</strong>{" "}
+  순서대로 평가되기 때문에, 같은 수식이라도 항의 순서가 결과를 바꿉니다.
 </Paragraph>
 
 ```js
-// || : 왼쪽이 falsy면 오른쪽 반환, truthy면 왼쪽 반환
-"hello" || "default"; // "hello"
-"" || "default"; // "default"
-null || "default"; // "default"
-0 || 42; // 42
-
-// && : 왼쪽이 falsy면 왼쪽 반환, truthy면 오른쪽 반환
-"hello" && "world"; // "world"
-"" && "world"; // ""
-null && "world"; // null
+"3" + 1; // "31" — + 연산자는 한쪽이 문자열이면 나머지를 문자열로 변환
+3 + 1 + "1"; // "41" — 왼쪽부터 평가: 3+1=4, 4+"1"="41"
 ```
 
-<Paragraph>React 코드에서 이런 패턴을 자주 보게 됩니다.</Paragraph>
+<Paragraph>
+  비교 연산자에도 비슷한 "알아서 바꿔주는" 함정이 있습니다. <code>==</code>는 두
+  값의 타입이 다르면 <strong>먼저 타입을 맞춘 뒤</strong> 비교합니다. 그래서{" "}
+  <code>0 == false</code>, <code>'' == false</code>,{" "}
+  <code>null == undefined</code>가 전부 <code>true</code>로 나옵니다.{" "}
+  <code>===</code>는 타입 변환 없이 <strong>값과 타입이 모두 같아야</strong>{" "}
+  <code>true</code>를 반환합니다. 실무에서는 예측 불가능한 버그를 피하려고{" "}
+  <strong>
+    기본적으로 <code>===</code>
+  </strong>
+  를 씁니다. 한 줄 규칙:{" "}
+  <strong>
+    비교는 <code>===</code>, 문자열 결합만 <code>+</code>
+  </strong>
+  라고 외워두세요.
+</Paragraph>
 
 ```js
-// 기본값 설정
-const name = userInput || "익명";
+0 == false; // true  — false를 숫자 0으로 변환해서 비교
+0 === false; // false — 타입이 달라서 false
+null == undefined; // true  — == 스펙의 특별 규칙
+null === undefined; // false
+```
 
-// 조건부 렌더링 (React에서 흔한 패턴)
-isLoggedIn && <Dashboard />;
+<Subtitle level={3}>단축 평가와 ?? 연산자</Subtitle>
 
-// null 병합 연산자 (??) — 0이나 ''도 유효한 값일 때 사용
-const count = userCount ?? 0; // null, undefined일 때만 0으로 대체
-// || 와 달리 0, ''는 그대로 유지됨
+<Paragraph>
+  <code>||</code>와 <code>&&</code> 연산자는 boolean이 아닌 "값"을 반환합니다.
+  <code>'hello' || 'default'</code>가 <code>'hello'</code>를 돌려주는 동작(단축
+  평가)과, <code>null</code>/<code>undefined</code>일 때만 대체하는{" "}
+  <code>??</code> 연산자는 React 컴포넌트에서 기본값을 다룰 때 정말 자주 씁니다.
+  이 주제는 <strong>week10(스프레드·디스트럭처링 주차)</strong>에서 실무 패턴과
+  함께 다룹니다. 지금은 "이런 게 있구나" 정도로 충분합니다.
+</Paragraph>
+
+```js
+const name = userInput || "익명"; // userInput이 falsy면 "익명"
+const count = userCount ?? 0; // userCount가 null/undefined일 때만 0
 ```
 
 ---
@@ -441,6 +498,17 @@ console.log(3 + 1 + "1");`}
 console.log(0 === false);`}
     answer="true, false"
     explanation="==는 타입 변환 후 비교합니다. false가 0으로 변환되어 0 == 0이 되므로 true. ===는 타입 변환 없이 비교하므로 숫자 0과 불리언 false는 타입이 달라 false."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="아래 두 코드 블록의 실행 결과를 순서대로 입력하세요. (예: undefined, ReferenceError)"
+    code={`console.log(x);
+var x = 5;
+// --- 아래는 별도 실행
+console.log(y);
+let y = 5;`}
+    answer="undefined, ReferenceError"
+    explanation="var는 생성 단계에서 선언과 undefined 초기화가 함께 이뤄지므로 선언문 이전에 참조해도 undefined가 반환됩니다. 반면 let은 선언만 호이스팅되고 초기화가 선언문에서 일어나기 때문에, 선언문 이전 구간(TDZ)에서 접근하면 ReferenceError가 발생합니다."
   />
 </ArticleQuiz>
 

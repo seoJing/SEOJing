@@ -1,527 +1,220 @@
 ---
-title: "프론트엔드 스터디 대면 4주차: 박스 모델 실전, Position과 Flexbox"
-date: 2026-04-10
+title: "프론트엔드 스터디 대면 4주차: 반응형 웹, CSS Grid, 그리고 CSS 마무리"
+date: 2026-04-17
 tags:
   - 프론트엔드
   - 스터디
   - CSS
-  - 박스모델
-  - Position
-  - Flexbox
-description: 3주차 박스 모델과 스타일링 복습, 과제 풀이, 4주차 Position과 Flexbox 레이아웃까지 다룬 대면 스터디 정리입니다. 면접에서 자주 나오는 마진 겹침, box-sizing, Flexbox 관련 질문도 함께 준비합니다.
+  - 반응형
+  - Grid
+  - 미디어쿼리
+description: 4주차 Position/Flexbox/반응형 복습, 과제 풀이, CSS Grid와 미디어 쿼리 보충까지 다룬 대면 스터디 정리입니다. HTML/CSS 전체를 아우르는 면접 질문도 함께 준비합니다.
 ---
 
 <Subtitle level={2}>1. 저번 주 복습</Subtitle>
 
 <Paragraph>
-  지난주에는 CSS의 본격적인 스타일링에 들어갔습니다. 글꼴과 색상을 제어하고,
-  인라인과 블록 요소의 차이, 그리고 프론트엔드 초심자가 가장 먼저 부딪히는 벽인
-  <strong>박스 모델</strong>을 배웠습니다. 핵심만 빠르게 짚어보겠습니다.
+  지난주에는 CSS 레이아웃의 핵심인 <strong>Position</strong>과{" "}
+  <strong>Flexbox</strong>를 배웠고, 학습 자료에서는{" "}
+  <strong>Reflow/Repaint</strong>, <strong>미디어 쿼리</strong>,{" "}
+  <strong>반응형 단위</strong>까지 다뤘습니다. 핵심만 빠르게 짚어보겠습니다.
 </Paragraph>
 
-<Subtitle level={3}>폰트와 색상</Subtitle>
+<Subtitle level={3}>Position</Subtitle>
 
-- <strong>`font-family`</strong>: 쉼표로 여러 폰트를 나열하면 앞에서부터
-  순서대로 사용 가능한 폰트를 적용합니다. 마지막에 `sans-serif` 같은 일반
-  패밀리를 넣는 것이 관례입니다.
-- <strong>색상 표기법</strong>: 키워드(`red`), Hex(`#FF5733`), RGB(`rgb(255, 87,
-  51)`), HSL(`hsl(11, 100%, 60%)`) 등 다양한 방식으로 표현합니다.
-
-<Subtitle level={3}>인라인 vs 블록 vs 인라인 블록</Subtitle>
-
-- <strong>인라인(Inline)</strong>: 콘텐츠 크기만큼만 차지, width/height 무시,
-  상하 margin 무시
-- <strong>블록(Block)</strong>: 한 줄 전체를 차지, width/height/margin 모두 적용
-- <strong>인라인 블록(Inline-block)</strong>: 나란히 배치되면서
-  width/height/margin 모두 적용
-
-<Subtitle level={3}>박스 모델</Subtitle>
-
-- 안쪽부터: <strong>Content → Padding → Border → Margin</strong>
-- <strong>`box-sizing: content-box`</strong>(기본값): width는 콘텐츠 영역만
-  의미, padding과 border가 추가로 더해짐
-- <strong>`box-sizing: border-box`</strong>: width 안에 padding과 border까지
-  포함, 현대 CSS의 필수 설정
+- <strong>`static`</strong>(기본값): 문서 흐름대로, top/left 등 무시
+- <strong>`relative`</strong>: 원래 위치 기준으로 이동, 원래 자리는 유지
+- <strong>`absolute`</strong>: positioned 조상 기준, 문서 흐름에서 빠짐
+- <strong>`fixed`</strong>: 뷰포트 기준, 스크롤해도 고정
 
 ```css
-/* content-box: width(200) + padding×2(40) + border×2(10) = 실제 250px */
-.box {
-  width: 200px;
-  padding: 20px;
-  border: 5px solid black;
+/* absolute 자식 제어 패턴 — 부모에 반드시 relative */
+.parent {
+  position: relative;
 }
+.child {
+  position: absolute;
+  top: 0;
+  right: 0;
+} /* 부모 오른쪽 상단 */
 
-/* border-box: 실제 너비 200px 고정, 콘텐츠 영역 = 200 - 40 - 10 = 150px */
-.box {
-  box-sizing: border-box;
-  width: 200px;
-  padding: 20px;
-  border: 5px solid black;
+/* fixed: 스크롤해도 화면에 고정 — 고정 헤더, 플로팅 버튼 */
+.floating-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
 }
+```
+
+<Subtitle level={3}>Flexbox</Subtitle>
+
+- <strong>`justify-content`</strong>: 주축(Main Axis) 정렬
+- <strong>`align-items`</strong>: 교차축(Cross Axis) 정렬
+- <strong>`flex: 1`</strong>: 남은 공간 전부 차지
+- <strong>`flex-wrap: wrap`</strong>: 넘치면 줄바꿈
+
+```css
+/* 정중앙 배치 — 가장 자주 쓰는 패턴 */
+.center {
+  display: flex;
+  justify-content: center; /* 주축(가로) 중앙 */
+  align-items: center; /* 교차축(세로) 중앙 */
+  height: 100vh;
+}
+/* "주축은 justify, 교차축은 align" */
 ```
 
 <Subtitle level={3}>학습 자료에서 다룬 추가 개념</Subtitle>
 
 <Paragraph>
-  3주차 학습 자료에서 강의 외 개념들을 꽤 많이 다뤘습니다. 중요한 것들을 다시
-  짚어보겠습니다.
+  4주차 학습 자료에는 강의에서 다루지 않은 개념들이 많았습니다. 특히 실무와
+  직결되는 내용이 많으니 다시 짚어보겠습니다.
 </Paragraph>
 
-<Subtitle level={4}>px, em, rem 단위</Subtitle>
-
-<Paragraph>
-  세 단위의 차이는 "무엇을 기준으로 크기를 계산하느냐"입니다.
-</Paragraph>
-
-- <strong>`px`</strong>: 고정값. 화면 해상도와 무관하게 항상 같은 크기.
-- <strong>`em`</strong>: <strong>부모 요소</strong>의 `font-size` 기준. 부모가
-  16px이면 `1em = 16px`, `2em = 32px`.
-- <strong>`rem`</strong>: <strong>루트(`<html>`)</strong>의 `font-size` 기준.
-기본값은 16px이므로 `1rem = 16px`. 부모가 누구든 기준이 변하지 않습니다.
+- <strong>Reflow/Repaint</strong>: 브라우저는 화면을 Layout(위치·크기 계산) →
+  Paint(색상·그림자 칠하기) → Composite(레이어 합성) 3단계로 그립니다.
+  `top`/`left`를 변경하면 매 프레임 Reflow(가장 비쌈)가 발생하지만,
+  `transform`을 사용하면 Composite만 발생해서 부드럽습니다. 애니메이션에는
+  <strong>`transform`과 `opacity`</strong>를 사용하세요.
+- <strong>미디어 쿼리(@media)</strong>: `min-width`로 모바일 퍼스트 반응형을
+  구현합니다. 반응형 외에도 `prefers-color-scheme`(다크 모드),
+  `prefers-reduced-motion`(접근성), `hover`(터치 기기 감지), `print`(인쇄) 등
+  다양한 용도가 있습니다.
 
 ```css
-html {
-  font-size: 16px; /* rem의 기준 */
-}
-
-.parent {
-  font-size: 20px;
-}
-
-.child-em {
-  font-size: 1.5em; /* 부모(20px) × 1.5 = 30px */
-}
-
-.child-rem {
-  font-size: 1.5rem; /* 루트(16px) × 1.5 = 24px */
-}
-```
-
-<Paragraph>
-  `em`의 함정: 중첩이 깊어지면 계산이 복잡해집니다. 손자 요소에서 `1.5em`을 쓰면
-  부모가 이미 `1.5em`인 경우 `1.5 × 1.5 = 2.25em`이 되어 예상보다 커집니다.
-  실무에서는 <strong>`rem`을 기본 단위</strong>로 쓰고, `px`은 1~2px 같은 아주
-  작은 값(테두리, 그림자)에만 사용합니다.
-</Paragraph>
-
-<Subtitle level={4}>마진 겹침(Margin Collapsing)</Subtitle>
-
-<Paragraph>
-  수직으로 인접한 두 블록 요소의 마진은 합산되지 않고,{" "}
-  <strong>더 큰 값 하나만 적용</strong>됩니다.
-</Paragraph>
-
-```css
-/* 두 p 태그 사이 간격: 30 + 20 = 50px이 아닌 30px (큰 쪽만) */
-.box-a {
-  margin-bottom: 30px;
-}
-.box-b {
-  margin-top: 20px;
-}
-
-/* 방지법: 부모에 overflow: hidden 또는 padding/border 추가 */
-.parent {
-  overflow: hidden; /* 새 BFC 생성 → 자식 마진 겹침 차단 */
-}
-
-/* 방지법 2: Flexbox 컨테이너 안에서는 마진 겹침 없음 */
-.flex-parent {
-  display: flex;
-  flex-direction: column;
-}
-```
-
-<Paragraph>
-  겹침이 발생하는 세 가지 상황: ① 인접 형제 요소, ② 부모-자식(padding/border
-  없을 때 자식 마진이 부모 밖으로 새어 나감), ③ 빈 블록 요소(자신의 위아래
-  마진끼리 겹침).
-</Paragraph>
-
-<Subtitle level={4}>CSS 리셋과 Normalize</Subtitle>
-
-<Paragraph>
-  브라우저마다 기본 스타일이 다릅니다. Chrome과 Firefox에서 `<h1>` 크기나
-  `<ul>` 들여쓰기가 조금씩 다릅니다. 이를 해결하는 두 가지 방법이 있습니다.
-</Paragraph>
-
-- <strong>CSS Reset</strong>: 브라우저 기본 스타일을 전부 제거하고 백지에서
-  시작. `margin: 0`, `padding: 0`을 전체 요소에 적용.
-- <strong>Normalize.css</strong>: 브라우저 간 차이만 통일. 유용한 기본 스타일은
-  유지.
-
-```css
-/* 거의 모든 프로젝트의 첫 줄 — 전체 box-sizing 일괄 설정 */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-/* 기본 마진 제거 */
-body,
-h1,
-h2,
-h3,
-p,
-ul,
-ol {
-  margin: 0;
-  padding: 0;
-}
-```
-
-<Subtitle level={4}>가상 요소 (::before, ::after)</Subtitle>
-
-<Paragraph>
-  HTML에 태그를 추가하지 않고 CSS만으로 시각적 요소를 삽입합니다.{" "}
-  <strong>`content` 속성이 필수</strong>이며, 빈 장식이라도 `content: ""`를
-  반드시 써야 합니다.
-</Paragraph>
-
-```css
-/* 링크 앞에 아이콘 추가 */
-.link::before {
-  content: "→ ";
-  color: blue;
-}
-
-/* 카드에 장식용 라인 추가 */
-.card::after {
-  content: ""; /* 빈 문자열 필수 */
-  display: block;
-  width: 40px;
-  height: 3px;
-  background: coral;
-  margin-top: 8px;
-}
-
-/* 활용: 툴팁 말풍선 꼬리 */
-.tooltip::before {
-  content: "";
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-top-color: black;
-}
-```
-
-<Paragraph>
-  중요한 콘텐츠(접근성에 필요한 텍스트)는 HTML에, 순수 장식은 가상 요소에
-  작성합니다. 스크린 리더는 `::before`/`::after`의 `content`를 읽을 수도 있어서
-  빈 문자열로 두는 것이 안전합니다.
-</Paragraph>
-
-<Subtitle level={4}>BFC (Block Formatting Context)</Subtitle>
-
-<Paragraph>
-  BFC는 "마진 겹침과 float가 영향을 미치는 독립된 레이아웃 구역"입니다. 새 BFC를
-  만들면 그 안에서는 외부 마진 겹침이 차단됩니다.
-</Paragraph>
-
-```css
-/* BFC를 만드는 방법들 */
-.bfc-1 {
-  overflow: hidden; /* 가장 오래된 방법 */
-}
-.bfc-2 {
-  display: flow-root; /* 부작용 없이 BFC만 생성 — 권장 */
-}
-.bfc-3 {
-  display: flex; /* flex/grid 컨테이너는 자동으로 BFC */
-}
-
-/* 활용 예: 부모-자식 마진 겹침 방지 */
+/* 모바일 퍼스트(Mobile First) — 작은 화면을 기본으로, min-width로 확장 */
 .card {
-  display: flow-root; /* 자식의 margin-top이 부모 밖으로 새지 않음 */
-  padding: 16px;
+  width: 100%;
+} /* 기본: 모바일 */
+
+@media (min-width: 768px) {
+  /* 태블릿 이상 */
+  .card {
+    width: 48%;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* 데스크톱 이상 */
+  .card {
+    width: 30%;
+  }
 }
 ```
 
-<Subtitle level={4}>CSS 상속</Subtitle>
-
-<Paragraph>
-  CSS 속성은 두 종류로 나뉩니다. <strong>상속되는 속성</strong>은 부모에 한 번만
-  써도 자식 전체에 적용되고, <strong>상속되지 않는 속성</strong>은 각 요소마다
-  별도로 지정해야 합니다.
-</Paragraph>
-
-| 분류          | 상속 여부 | 대표 속성                                          |
-| :------------ | :-------- | :------------------------------------------------- |
-| 텍스트 관련   | 상속됨    | `color`, `font-family`, `font-size`, `line-height` |
-| 레이아웃 관련 | 상속 안됨 | `margin`, `padding`, `border`, `width`, `display`  |
+- <strong>absolute vs fixed 실전 예시</strong>: 맴버스 앱에서 FAB 버튼이
+  `absolute`일 때 렌더링 순서에 따라 하단 내비게이션에 가려지는 문제가 발생했고,
+  `fixed`로 바꿔서 해결했습니다. 항상 화면에 떠 있어야 하는 요소는 `fixed`, 부모
+  안에서 위치를 잡아야 하는 요소는 `absolute`입니다.
+- <strong>CSS Grid</strong>: Flexbox가 1차원이라면 Grid는 2차원입니다. `1fr`은
+  남은 공간을 비율로 나누고, `repeat(auto-fill, minmax(280px, 1fr))`로 미디어
+  쿼리 없이도 자동 반응형이 가능합니다.
 
 ```css
-/* 부모에 color 지정 → 자식 전체에 적용 */
-body {
-  color: #333;
-  font-family: "Pretendard", sans-serif;
+/* Grid 3열 레이아웃 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
 }
 
-/* 상속 동작 제어 키워드 */
-.child {
-  color: inherit; /* 부모 값 강제 상속 */
-  color: initial; /* 브라우저 기본값으로 초기화 */
-  color: unset; /* 상속되는 속성이면 inherit, 아니면 initial */
-}
-```
-
-<Subtitle level={4}>`overflow`와 텍스트 말줄임</Subtitle>
-
-<Paragraph>콘텐츠가 요소 크기를 넘칠 때 어떻게 처리할지 결정합니다.</Paragraph>
-
-```css
-/* overflow 기본 동작 */
-.box-visible {
-  overflow: visible; /* 기본값: 넘쳐도 그냥 표시 */
-}
-.box-hidden {
-  overflow: hidden; /* 넘치는 부분 잘라냄 */
-}
-.box-scroll {
-  overflow: auto; /* 넘칠 때만 스크롤바 표시 */
-}
-
-/* 한 줄 텍스트 말줄임 — 세 속성 세트로 사용 */
-.ellipsis {
-  white-space: nowrap; /* 줄바꿈 금지 */
-  overflow: hidden; /* 넘치는 텍스트 숨김 */
-  text-overflow: ellipsis; /* 잘린 자리에 ... 표시 */
+/* 미디어 쿼리 없이 자동 반응형 */
+.auto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
 }
 ```
 
-```html
-<!-- Tailwind: truncate 클래스 하나로 동일하게 적용 -->
-<p class="truncate w-48">이 텍스트는 너무 길어서 잘립니다...</p>
-```
-
-<Subtitle level={4}>요소 숨기기 세 가지</Subtitle>
-
-<Paragraph>
-  세 방법은 "공간을 차지하는가", "클릭이 되는가"에서 차이가 납니다.
-</Paragraph>
-
-| 속성                 | 공간 차지 | 클릭 가능 | 대표 사용처                |
-| :------------------- | :-------- | :-------- | :------------------------- |
-| `display: none`      | ✗ 없음    | ✗         | 완전 제거, 조건부 렌더링   |
-| `visibility: hidden` | ✓ 있음    | ✗         | 레이아웃 유지하면서 숨기기 |
-| `opacity: 0`         | ✓ 있음    | ✓         | 페이드 인/아웃 애니메이션  |
-
-```css
-/* 모달 오버레이 페이드 애니메이션 예시 */
-.overlay {
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none; /* opacity: 0이어도 클릭 차단 */
-}
-.overlay.active {
-  opacity: 1;
-  pointer-events: auto;
-}
-```
-
-<Subtitle level={4}>`cursor`와 `pointer-events`</Subtitle>
-
-<Paragraph>
-  사용자에게 "이 요소가 클릭 가능한가"를 시각적·기능적으로 제어합니다.
-</Paragraph>
-
-```css
-/* cursor: 마우스 포인터 모양 변경 */
-.button {
-  cursor: pointer; /* 손가락 모양 → 클릭 가능 암시 */
-}
-.disabled-button {
-  cursor: not-allowed; /* 금지 아이콘 → 비활성 상태 암시 */
-  opacity: 0.5;
-}
-.loading {
-  cursor: wait; /* 로딩 중 */
-}
-
-/* pointer-events: 클릭 이벤트 자체를 차단 */
-.overlay {
-  pointer-events: none; /* 이 요소 위에서 클릭해도 아래 요소에 전달 */
-}
-.interactive {
-  pointer-events: auto; /* 기본값 — 클릭 가능 */
-}
-```
-
-```html
-<!-- Tailwind 예시 -->
-<button class="cursor-pointer hover:bg-blue-600">클릭 버튼</button>
-<button class="cursor-not-allowed opacity-50" disabled>비활성 버튼</button>
-<div class="pointer-events-none">클릭 통과 레이어</div>
-```
+- <strong>반응형 단위</strong>: `vw`(뷰포트 너비), `vh`(뷰포트 높이), `dvh`(동적
+  뷰포트 높이). 모바일에서 `100vh`를 쓰면 주소창에 가려지므로 `100dvh`를
+  사용합니다.
+- <strong>`transition`</strong>: CSS 속성 값이 변할 때 부드럽게 전환되도록
+  합니다. `transition: background-color 0.2s ease`처럼 속성, 시간, 타이밍 함수를
+  지정합니다. 버튼 호버 효과, 카드 떠오르는 효과, 사이드바 슬라이드 등에
+  활용됩니다. `transition: all`보다 전환할 속성을 명시하는 것이 성능에 좋습니다.
+  Tailwind에서는 `transition-colors duration-200` 같은 유틸리티로 적용합니다.
+- <strong>CSS `calc()` 함수</strong>: `width: calc(100% - 250px)`처럼 서로 다른
+  단위(`%`, `px`, `rem`, `vw`)를 섞어서 계산할 수 있습니다. 연산자(+, -, *, /)
+  앞뒤에 공백이 필수입니다. CSS 변수와 조합하면 `calc(100vh -
+  var(--header-height))` 같은 동적 계산도 가능합니다.
 
 ---
 
 <Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
 
-<Subtitle level={3}>인증 미션 과제</Subtitle>
+<Paragraph>아래 질문 중 하나를 직접 찾아보고 답을 댓글로 남겨주세요.</Paragraph>
 
-<Paragraph>
-  <strong>
-    Q1. `box-sizing: content-box`(기본값) 상태에서 `width: 300px`, `padding:
-    20px`, `border: 10px solid black`을 준 요소의 실제 화면 너비는 몇 px인가요?
-    직접 계산 과정을 쓰세요.
-  </strong>
-</Paragraph>
-
-<Subtitle level={4}>정답: 360px</Subtitle>
-
-<Paragraph>
-  `content-box`에서는 `width`가 콘텐츠 영역만을 의미합니다. padding과 border가
-  바깥쪽으로 추가됩니다.
-</Paragraph>
-
-- 콘텐츠 영역: 300px
-- 좌우 패딩: 20px × 2 = 40px
-- 좌우 보더: 10px × 2 = 20px
-- <strong>실제 화면 너비: 300 + 40 + 20 = 360px</strong>
-
-<Subtitle level={4}>흔한 오답 패턴</Subtitle>
-
-<Paragraph>
-  padding이나 border 중 하나만 더하거나, 한쪽 방향만 계산해 320px, 340px로
-  답하는 경우가 많습니다. <strong>좌우 양쪽을 모두 더해야 한다</strong>는 점을
-  기억하세요.
-</Paragraph>
-
----
-
-<Paragraph>
-  <strong>
-    Q2. 같은 요소에 `box-sizing: border-box`를 적용하면 실제 화면 너비와 콘텐츠
-    영역 너비는 각각 몇 px가 되나요? 직접 계산하세요.
-  </strong>
-</Paragraph>
-
-<Subtitle level={4}>정답: 실제 화면 너비 300px, 콘텐츠 영역 240px</Subtitle>
-
-<Paragraph>
-  `border-box`에서는 `width: 300px` 안에 padding과 border가 포함됩니다.
-</Paragraph>
-
-- 실제 화면 너비: <strong>300px</strong> (그대로)
-- 좌우 패딩: 20px × 2 = 40px
-- 좌우 보더: 10px × 2 = 20px
-- <strong>콘텐츠 영역: 300 - 40 - 20 = 240px</strong>
-
-<Paragraph>
-  이것이 `border-box`가 편리한 이유입니다. "내가 300px이라고 썼으니 화면에서도
-  300px"이라는 직관적인 결과를 얻을 수 있습니다. `content-box`에서는 padding이나
-  border를 변경할 때마다 전체 크기가 바뀌어 레이아웃이 깨지기 쉽습니다.
-</Paragraph>
-
----
-
-<Paragraph>
-  <strong>
-    Q3. `margin-bottom: 30px`인 요소와 `margin-top: 20px`인 요소가 수직으로
-    붙어있을 때, 두 요소 사이의 실제 간격은 몇 px인가요? 이 현상의 이름과 방지
-    방법을 설명하세요.
-  </strong>
-</Paragraph>
-
-<Subtitle level={4}>정답: 30px — 마진 겹침(Margin Collapsing)</Subtitle>
-
-<Paragraph>
-  수직으로 인접한 블록 요소의 마진은 합산(50px)되지 않고,{" "}
-  <strong>더 큰 값(30px)만 남습니다.</strong> 이를 마진 겹침(Margin
-  Collapsing)이라 합니다.
-</Paragraph>
-
-<Subtitle level={4}>방지 방법</Subtitle>
-
-- <strong>부모 요소에 `overflow: hidden` 적용</strong>
-- <strong>부모 요소에 `padding` 또는 `border` 추가</strong>
-- <strong>`display: flex` 또는 `display: grid` 컨테이너 사용</strong>:
-  Flexbox·Grid 안에서는 마진 겹침이 발생하지 않습니다.
-
-<Subtitle level={4}>흔한 오답 패턴</Subtitle>
-
-<Paragraph>
-  "30 + 20 = 50px"라고 합산하는 경우가 가장 많습니다.{" "}
-  <strong>수직 마진은 더 큰 쪽이 이긴다</strong>는 규칙을 기억하세요. 수평
-  마진은 겹치지 않으니 혼동하지 마세요.
-</Paragraph>
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="essay"
+    question="아래 HTML에서 #C에 top: 0; left: 0;을 주면, #A / #B / 뷰포트 중 어느 것을 기준으로 배치될까요? 그 이유를 position 규칙으로 설명하세요."
+    code={`<div id="A" style="position: relative;">
+  <div id="B" style="position: static;">
+    <div id="C" style="position: absolute; top: 0; left: 0;"></div>
+  </div>
+</div>`}
+    answer="#A를 기준으로 배치됩니다. position: absolute인 요소는 position이 static이 아닌 첫 번째 조상을 기준으로 잡습니다. #B는 static이므로 건너뛰고, position: relative인 #A가 기준이 됩니다."
+    explanation="position: absolute인 요소는 DOM 트리를 올라가면서 position이 static이 아닌(relative, absolute, fixed, sticky) 첫 번째 조상을 containing block으로 삼습니다. 그런 조상이 없으면 뷰포트가 기준이 됩니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="아래 HTML에서 #E(position: absolute; top: 10px; left: 20px)는 #C와 #D 중 어느 것을 기준으로 배치될까요?"
+    code={`<div id="C" style="position: absolute;">
+  <div id="D" style="position: relative;">
+    <div id="E" style="position: absolute; top: 10px; left: 20px;"></div>
+  </div>
+</div>`}
+    answer="#D를 기준으로 배치됩니다. #E에서 가장 가까운 position: static이 아닌 조상이 #D(relative)이기 때문입니다."
+    explanation="absolute 요소는 항상 가장 가까운 positioned 조상(static 제외)을 기준으로 합니다. #D가 position: relative이므로 #E의 바로 위 positioned 조상이 됩니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="#D의 position: relative를 position: static으로 바꾸면 #E의 기준 요소는 어떻게 달라질까요? 직접 브라우저에서 확인해보세요."
+    answer="#D가 static이 되면, #E는 더 위로 올라가 position: absolute인 #C를 기준으로 배치됩니다."
+    explanation="#D가 static으로 바뀌면 더 이상 positioned 요소가 아닙니다. #E는 상위로 계속 올라가 position: absolute인 #C를 기준으로 삼습니다. #C도 없다면 뷰포트가 기준이 됩니다."
+  />
+</ArticleQuiz>
 
 ---
 
 <Subtitle level={2}>3. 면접 질문</Subtitle>
 
 <Paragraph>
-  이번 주 범위와 관련된 실제 면접 질문들을 함께 생각해봅시다. 정답을
-  외우기보다는 자신만의 말로 설명하는 연습을 해보세요.
+  이번 주는 CSS 마무리 주차인 만큼, 4주차 범위뿐만 아니라 HTML/CSS 전체를
+  아우르는 면접 질문을 다뤄보겠습니다.
+</Paragraph>
+
+<Subtitle level={3}>Q1. CSS Grid와 Flexbox의 차이를 설명해주세요.</Subtitle>
+
+<Paragraph>
+  둘 다 CSS 레이아웃 시스템이지만, <strong>다루는 차원</strong>이 다릅니다.
+</Paragraph>
+
+- <strong>Flexbox</strong>: <strong>1차원</strong> 레이아웃입니다. 가로 또는
+  세로, 한 방향으로 요소를 배치합니다. 내비게이션 바, 카드 한 줄 배치 등에
+  적합합니다.
+- <strong>CSS Grid</strong>: <strong>2차원</strong> 레이아웃입니다. 행과 열을
+  동시에 제어할 수 있습니다. 대시보드, 사이드바+메인 레이아웃 등에 적합합니다.
+
+<Paragraph>
+  면접 팁: "한 방향이면 Flex, 두 방향이면 Grid"라고 요약한 뒤, 실무에서는 페이지
+  전체를 Grid로, 내부 컴포넌트는 Flexbox로 섞어 쓴다고 답하면 좋습니다.
 </Paragraph>
 
 <Subtitle level={3}>
-  Q1. 마진 겹침(Margin Collapsing) 현상을 설명해주세요.
+  Q2. 반응형 웹 디자인에서 모바일 퍼스트(Mobile First) 접근법이란 무엇인가요?
 </Subtitle>
 
 <Paragraph>
-  수직 방향으로 인접한 두 요소의 마진이 만나면, 합산되지 않고{" "}
-  <strong>둘 중 큰 값만 적용</strong>되는 CSS의 의도적인 동작입니다.
+  모바일(작은 화면)을 <strong>기본 스타일로 작성</strong>하고, `min-width`
+  미디어 쿼리로 점점 큰 화면에 대응하는 방식입니다.
 </Paragraph>
 
-- <strong>인접 형제</strong>: 위 요소의 `margin-bottom`과 아래 요소의
-  `margin-top`이 겹침
-- <strong>부모와 자식</strong>: 부모에 padding이나 border가 없으면, 자식의
-  margin이 부모 밖으로 새어 나감
-- <strong>해결법</strong>: 부모에 `padding`, `border`, 또는 `overflow: hidden`을
-  적용하면 겹침을 방지할 수 있습니다.
-
-<Paragraph>
-  면접 팁: "왜 이런 동작이 존재하느냐"는 질문이 이어질 수 있습니다. 문단(p)
-  태그의 상하 마진이 겹침 없이 합산되면 간격이 두 배로 벌어지기 때문에,
-  자연스러운 여백을 유지하기 위한 설계라고 답하면 됩니다.
-</Paragraph>
-
-<Subtitle level={3}>
-  Q2. `position: absolute`와 `position: fixed`의 차이를 설명해주세요.
-</Subtitle>
-
-<Paragraph>
-  둘 다 문서의 정상 흐름에서 빠진다는 공통점이 있지만, <strong>기준점</strong>이
-  다릅니다.
-</Paragraph>
-
-- <strong>`absolute`</strong>: 가장 가까운 `position`이 `static`이 아닌 조상
-  요소를 기준으로 배치됩니다. 그런 조상이 없으면 뷰포트가 기준이 됩니다.
-  스크롤하면 함께 움직입니다.
-- <strong>`fixed`</strong>: 항상 뷰포트(브라우저 화면)를 기준으로 배치됩니다.
-  스크롤해도 화면의 같은 위치에 고정됩니다. 고정 헤더, 플로팅 버튼 등에
-  사용합니다.
-
-<Paragraph>
-  `absolute`를 쓸 때 가장 흔한 실수는 부모에 `position: relative`를 빼먹는
-  것입니다. 기준이 될 조상 요소에 `position: relative`를 줘야 합니다.
-</Paragraph>
-
-<Subtitle level={3}>
-  Q3. Flexbox의 `justify-content`와 `align-items`의 차이를 설명해주세요.
-</Subtitle>
-
-<Paragraph>
-  둘 다 Flex 컨테이너 안에서 자식 요소들을 정렬하는 속성이지만,{" "}
-  <strong>정렬하는 축</strong>이 다릅니다.
-</Paragraph>
-
-- <strong>`justify-content`</strong>: <strong>주축(Main Axis)</strong> 방향으로
-  정렬합니다. `flex-direction: row`일 때는 가로 정렬, `column`일 때는 세로
-  정렬이 됩니다.
-- <strong>`align-items`</strong>: <strong>교차축(Cross Axis)</strong> 방향으로
-  정렬합니다. `flex-direction: row`일 때는 세로 정렬, `column`일 때는 가로
-  정렬이 됩니다.
-
-<Paragraph>
-  "주축은 justify, 교차축은 align"이라는 규칙만 외우면, `flex-direction`이
-  바뀌어도 헷갈리지 않습니다.
-</Paragraph>
+- <strong>이유</strong>: 전 세계 웹 트래픽의 약 60%가 모바일이고, 단순한 것에서
+  복잡한 것으로 확장하는 것이 반대 방향보다 쉽습니다.
+- <strong>반대</strong>: 데스크톱 퍼스트는 `max-width`로 줄여나가는 방식입니다.
+  레거시 프로젝트에서 볼 수 있지만 현재는 권장되지 않습니다.
 
 ---
 
@@ -540,38 +233,24 @@ body {
 <Subtitle level={2}>5. 다음 주 안내</Subtitle>
 
 <Paragraph>
-  다음 주에는 4주차 학습 자료에서 다룬 <strong>반응형 웹 디자인</strong>,{" "}
-  <strong>미디어 쿼리</strong>, <strong>CSS Grid</strong>를 복습하고, CSS 파트를
-  마무리합니다. HTML/CSS 전체를 아우르는 면접 질문도 함께 준비합니다.
+  다음 주부터는 <strong>JavaScript</strong>에 들어갑니다. HTML과 CSS로 화면을
+  구성하는 방법을 배웠으니, 이제 그 화면에 <strong>동작</strong>을 부여하는
+  차례입니다.
 </Paragraph>
 
 <Subtitle level={3}>다음 주 영상 예습</Subtitle>
 
 <Paragraph>
-  다음 주는 강의 영상의 마지막 구간(05:28:02 이후)을 다루며 CSS 파트를
-  마무리합니다. 동시에 4주차 학습 자료의 후반부(미디어 쿼리, Grid, 반응형
-  단위)도 함께 복습하니, 학습 자료를 꼭 읽어오세요.
+  다음 주부터 JavaScript 강의 영상이 시작됩니다. HTML이 구조, CSS가
+  스타일이라면, JavaScript는 <strong>동작</strong>을 담당합니다. 영상에서 다루게
+  될 핵심 주제를 미리 훑어보세요.
 </Paragraph>
 
-- <strong>미디어 쿼리 (@media)</strong>: 강의에서 화면 크기에 따라 다른 스타일을
-적용하는 법을 배웁니다. `@media (min-width: 768px) { ... }` 형태로 작성하며,
-데스크톱/태블릿/모바일에 따라 레이아웃을 바꿀 수 있습니다.
-- <strong>CSS Grid</strong>: 강의 마지막에 Grid가 등장할 수 있습니다. Flexbox가
-  가로 또는 세로 한 방향이라면, Grid는 행과 열을 동시에 다루는 2차원
-  레이아웃입니다.
-- <strong>반응형 단위 (vw, vh)</strong>: 뷰포트(화면) 크기를 기준으로 하는
-  단위입니다. `100vw`는 화면 전체 너비, `100vh`는 화면 전체 높이입니다.
-
-<Subtitle level={3}>사전 과제</Subtitle>
-
-<Paragraph>
-  아래 영상의 <strong>4주차 진도 구간(04:28:10 ~ 05:28:02)</strong>을
-  시청해주세요. 배경 이미지 제어부터 Flexbox 레이아웃까지의 내용입니다.
-</Paragraph>
-
-- <strong>영상</strong>: 제대로 파는 HTML & CSS
-- <strong>구간</strong>: 04:28:10 ~ 05:28:02 (약 1시간)
-- <strong>링크</strong>:
-  <Anchor external="https://youtu.be/TrC2x4N0XqY?t=16090">
-    제대로 파는 HTML & CSS - 4주차 진도 시청하기
-  </Anchor>
+- <strong>변수 선언</strong>: 데이터를 저장하는 `let`, `const`, `var`가
+  나옵니다. 강의에서 세 가지의 차이와 언제 뭘 써야 하는지를 배우게 됩니다.
+- <strong>자료형</strong>: 문자열, 숫자, 불리언 등 데이터의 종류를 배웁니다.
+  JavaScript는 다른 언어와 달리 타입을 미리 선언하지 않아도 됩니다.
+- <strong>연산자와 조건문</strong>: `+`, `-`, `===` 같은 연산자와 `if/else`로
+  상황에 따라 다른 동작을 하는 법을 배웁니다.
+- <strong>함수</strong>: 반복되는 작업을 묶어서 이름을 붙이는 법을 배웁니다.
+`function`과 화살표 함수(`=>`)가 등장합니다.

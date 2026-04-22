@@ -1,112 +1,269 @@
 ---
-title: "프론트엔드 스터디 대면 10주차: React 입문 전 브릿지 — ES6+ 문법과 에러 처리"
-date: 2026-05-23
+title: "프론트엔드 스터디 대면 10주차: React 첫 번째 — 컴포넌트, JSX, props"
+date: 2026-05-30
 tags:
   - 프론트엔드
   - 스터디
-  - JavaScript
-  - ES6
-  - 구조분해할당
-  - 에러처리
-description: 클로저와 비동기 복습을 코드 중심으로 다시 짚고, React에서 매일 사용하는 ES6+ 문법과 에러 처리 관련 면접 질문을 다룹니다. JS에서 React로 넘어가는 브릿지 주차입니다.
+  - React
+  - 컴포넌트
+  - JSX
+  - props
+description: React를 처음 시작합니다. 지난 주 ES6+ 브릿지 복습을 시작으로, 컴포넌트, JSX, props까지 직접 코드를 작성하며 배웁니다.
 ---
 
-<Subtitle level={2}>1. 저번 주 복습 — 클로저와 비동기</Subtitle>
+<Subtitle level={2}>1. 저번 주 복습 — ES6+ 브릿지</Subtitle>
 
 <Paragraph>
-  지난주에는 클로저, Promise, async/await를 배웠습니다. React에서 가장 많이
-  쓰이는 JS 개념이기도 합니다. 코드 예시와 비유 중심으로 다시 짚어보겠습니다.
+  지난주에는 React에서 매일 쓰는 ES6+ 문법을 집중적으로 배웠습니다. 핵심만
+  빠르게 짚어보겠습니다.
 </Paragraph>
 
-<Subtitle level={3}>클로저(Closure) — "함수가 기억하는 배낭"</Subtitle>
+<Subtitle level={3}>배열 고차함수 — React의 리스트 렌더링 기반</Subtitle>
 
-<Paragraph>
-  클로저를 비유하면, 함수가 태어날 때 주변 변수를{" "}
-  <strong>배낭에 담아가는 것</strong>
-  입니다. 함수가 어디서 실행되든, 태어났을 때 담아간 배낭(렉시컬 환경)은 그대로
-  들고 다닙니다.
-</Paragraph>
+- <strong>`map`</strong>: 각 요소를 변환 → 새 배열 반환. React에서 리스트
+  렌더링의 핵심
+- <strong>`filter`</strong>: 조건 충족 요소만 → 더 짧은 새 배열. 상품 목록
+  필터링 등
+- <strong>`reduce`</strong>: 배열 → 하나의 값. 합계, 그룹핑, 장바구니 금액 계산
+  등
 
 ```js
-function makeGreeting(greeting) {
-  // greeting이 배낭에 담김
-  return function (name) {
-    // 이 함수가 어디서 실행되든 greeting을 기억
-    return `${greeting}, ${name}!`;
-  };
-}
+const products = [
+  { name: "사과", price: 1000, inStock: true },
+  { name: "바나나", price: 500, inStock: false },
+  { name: "포도", price: 3000, inStock: true },
+];
 
-const hello = makeGreeting("안녕하세요"); // greeting = "안녕하세요" 담김
-const bye = makeGreeting("잘 가요"); // greeting = "잘 가요" 담김
-
-hello("철수"); // "안녕하세요, 철수!"
-bye("영희"); // "잘 가요, 영희!"
+// 재고 있는 상품만 → 이름만 추출
+products.filter((p) => p.inStock).map((p) => p.name); // ['사과', '포도']
 ```
 
-<Paragraph>
-  <strong>React에서의 클로저</strong>: `useState`의 상태값, 이벤트 핸들러 안의
-  변수가 모두 클로저로 동작합니다. 나중에 React를 배우면 이 개념이 바로
-  연결됩니다.
-</Paragraph>
+<Subtitle level={3}>구조 분해 — props 수신의 핵심</Subtitle>
+
+- <strong>객체 구조 분해</strong>: `const { name, age } = user` — React props 수신
+시 매일 사용
+- <strong>배열 구조 분해</strong>: `const [count, setCount] = useState(0)` —
+  useState 반환값
 
 ```js
-// React에서 클로저가 쓰이는 패턴 (미리보기)
-function Counter() {
-  const [count, setCount] = useState(0);
-
-  const handleClick = () => {
-    // handleClick은 count를 클로저로 기억
-    setCount(count + 1);
-  };
-
-  return <button onClick={handleClick}>{count}</button>;
+// React props 수신 패턴
+function UserCard({ name, age, isAdmin = false }) {
+  // 기본값 설정까지 한 번에
+  return (
+    <div>
+      {name} ({age}세) {isAdmin && "👑"}
+    </div>
+  );
 }
 ```
 
-<Subtitle level={3}>비동기 처리 — "주문하고 번호표 받기"</Subtitle>
+<Subtitle level={3}>스프레드 & 옵셔널 체이닝</Subtitle>
+
+- <strong>스프레드</strong>: `{ ...prev, age: 26 }` — 불변 패턴. `useState`에서
+객체 상태 업데이트 시 핵심
+- <strong>`?.`</strong>: `user?.address?.city` — null/undefined 안전 접근. API
+  응답 처리 시 필수
+- <strong>`??`</strong>: `user.age ?? "나이 미입력"` — null/undefined만 폴백.
+  `||`와 달리 0·''도 통과
+
+---
+
+<Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
+
+<Subtitle level={3}>대면 9주차 인증 미션</Subtitle>
 
 <Paragraph>
-  비동기를 비유하면 <strong>카페에서 주문하는 것</strong>과 같습니다.
-  주문(요청)을 넣고 번호표(Promise)를 받습니다. 음료가 나올 때까지 다른 일을
-  하다가, 번호가 불리면(fulfilled) 음료를 받습니다. 만약 재료가 없으면(rejected)
-  "죄송합니다"라는 답을 받습니다.
+  <strong>
+    Q1. 아래 코드에서 재고 있는 상품 이름 목록을 만들어보세요 — filter + map
+    체이닝
+  </strong>
 </Paragraph>
 
 ```js
-// Promise = 번호표
-const order = fetch("/api/coffee"); // 주문 접수 → 번호표(Promise) 반환
+const products = [
+  { name: "사과", price: 1000, inStock: true },
+  { name: "바나나", price: 500, inStock: false },
+  { name: "포도", price: 3000, inStock: true },
+];
 
-// async/await = 번호표를 들고 기다리기
-async function getCoffee() {
-  try {
-    const response = await fetch("/api/coffee"); // 기다림
-    const data = await response.json(); // 음료 수령
-    return data;
-  } catch (err) {
-    console.error("주문 실패:", err); // 재료 없음
-  }
+// filter로 inStock이 true인 것만 → map으로 name만 추출
+const availableNames = products.filter((p) => p.inStock).map((p) => p.name);
+// ['사과', '포도']
+```
+
+<Paragraph>
+  <strong>Q2. 구조 분해 기본값 설정 — role이 없으면 'guest' 사용</strong>
+</Paragraph>
+
+```js
+const user = { name: "철수", age: 25 };
+
+const { name, age, role = "guest" } = user;
+// role → 'guest' (user 객체에 role이 없으므로 기본값 적용)
+```
+
+<Paragraph>
+  <strong>Q3. `?.`와 `??` 조합 — user.profile이 없을 때 안전하게 처리</strong>
+</Paragraph>
+
+```js
+const user = { name: "영희" };
+
+// user.profile이 없으면 안전하게 undefined 반환, ?? 로 기본값 적용
+const bio = user?.profile?.bio ?? "소개글이 없습니다";
+// "소개글이 없습니다"
+```
+
+---
+
+<Subtitle level={2}>3. React란 무엇인가?</Subtitle>
+
+<Paragraph>
+  React는 Facebook이 만든{" "}
+  <strong>UI를 만들기 위한 JavaScript 라이브러리</strong>
+  입니다. 지금까지 배운 JS를 그대로 쓰되, UI를 <strong>컴포넌트 단위</strong>로
+  나눠서 만드는 방식을 따릅니다.
+</Paragraph>
+
+- <strong>선언적(Declarative)</strong>: "이렇게 보여라"라고 선언. 어떻게 DOM을
+  수정할지는 React가 알아서 처리
+- <strong>컴포넌트 기반</strong>: 레고처럼 작은 조각을 조합해서 복잡한 UI 구성
+- <strong>단방향 데이터 흐름</strong>: 부모 → 자식 방향. 예측 가능하고 디버깅
+  쉬움
+
+---
+
+<Subtitle level={2}>4. 컴포넌트 — UI의 레고 블록</Subtitle>
+
+<Paragraph>
+  컴포넌트는 <strong>재사용 가능한 UI 조각</strong>입니다. 함수형 컴포넌트는
+  props를 입력받아 JSX(화면 구조)를 반환하는 JS 함수입니다.
+</Paragraph>
+
+```jsx
+// 가장 단순한 컴포넌트
+function Greeting() {
+  return <h1>안녕하세요!</h1>;
+}
+
+// 컴포넌트를 조합해서 사용
+function App() {
+  return (
+    <div>
+      <Greeting />
+      <Greeting />
+    </div>
+  );
 }
 ```
 
-<Subtitle level={3}>이벤트 루프 — 실행 순서 퀴즈</Subtitle>
-
 <Paragraph>
-  아래 코드의 실행 순서를 맞춰보세요.{" "}
-  <strong>콜 스택 → 마이크로태스크(Promise) → 매크로태스크(setTimeout)</strong>{" "}
-  순서를 기억하면 됩니다.
+  컴포넌트 이름이 <strong>소문자</strong>이면 React는 HTML 태그로 인식합니다.
+  컴포넌트는 반드시 대문자로 시작해야 합니다.
 </Paragraph>
 
-```js
-console.log("1"); // 콜 스택 — 즉시 실행
+---
 
-setTimeout(() => console.log("2"), 0); // 매크로태스크 큐
+<Subtitle level={2}>5. JSX — JS 안에 HTML처럼</Subtitle>
 
-Promise.resolve().then(() => console.log("3")); // 마이크로태스크 큐
+<Paragraph>
+  JSX는 JS 안에서 HTML처럼 작성하는 문법입니다. 실제로는{" "}
+  <strong>React.createElement() 호출</strong>로 변환됩니다. 바벨(Babel)이 이
+  변환을 담당합니다.
+</Paragraph>
 
-console.log("4"); // 콜 스택 — 즉시 실행
+```jsx
+// JSX 문법
+const element = <h1 className="title">안녕하세요</h1>;
 
-// 출력 순서: 1, 4, 3, 2
+// 바벨이 변환하는 실제 코드
+const element = React.createElement("h1", { className: "title" }, "안녕하세요");
 ```
+
+<Subtitle level={3}>JSX 주요 규칙</Subtitle>
+
+```jsx
+// 1. JS 표현식은 {} 안에 작성
+const name = "철수";
+<h1>안녕하세요, {name}님!</h1>;
+<p>1 + 1 = {1 + 1}</p>;
+
+// 2. class 대신 className (class는 JS 예약어)
+<div className="container">내용</div>;
+
+// 3. 반드시 하나의 루트 요소로 감싸야 함
+// 잘못된 예
+return (
+  <h1>제목</h1>
+  <p>내용</p>
+);
+
+// 올바른 예 — Fragment로 감싸기 (실제 DOM 요소 없이)
+return (
+  <>
+    <h1>제목</h1>
+    <p>내용</p>
+  </>
+);
+
+// 4. 조건부 렌더링
+{isLoggedIn && <Dashboard />}           // 조건이 true일 때만 렌더링
+{isLoggedIn ? <Dashboard /> : <Login />} // 삼항 연산자
+```
+
+---
+
+<Subtitle level={2}>6. props — 부모에서 자식으로 데이터 전달</Subtitle>
+
+<Paragraph>
+  props는 부모 컴포넌트에서 자식 컴포넌트로 데이터를 전달하는 방법입니다.{" "}
+  <strong>읽기 전용</strong>입니다 — 자식은 props를 수정할 수 없습니다.
+</Paragraph>
+
+```jsx
+// 부모 → 자식으로 데이터 전달
+function App() {
+  return <UserCard name="김철수" age={25} isAdmin={true} />;
+}
+
+// 자식 컴포넌트에서 props 수신 (구조 분해 권장)
+function UserCard({ name, age, isAdmin }) {
+  return (
+    <div>
+      <h2>
+        {name} ({age}세)
+      </h2>
+      {isAdmin && <span>관리자</span>}
+    </div>
+  );
+}
+```
+
+<Subtitle level={3}>props로 리스트 렌더링하기</Subtitle>
+
+```jsx
+const users = [
+  { id: 1, name: "철수", role: "admin" },
+  { id: 2, name: "영희", role: "user" },
+];
+
+function App() {
+  return (
+    <ul>
+      {users.map((user) => (
+        // key는 React가 리스트를 효율적으로 업데이트하는 데 필요
+        <UserCard key={user.id} name={user.name} role={user.role} />
+      ))}
+    </ul>
+  );
+}
+```
+
+<Paragraph>
+  리스트 렌더링 시 <strong>`key` prop</strong>이 필수입니다. key가 없으면 경고가
+  발생하고 성능 문제가 생깁니다. key는 리스트 안에서 고유한 값이어야 하며, 보통
+  데이터의 id를 사용합니다.
+</Paragraph>
 
 ---
 
@@ -116,256 +273,147 @@ console.log("4"); // 콜 스택 — 즉시 실행
 
 <Paragraph>
   <strong>
-    Q1. React의 `useState`는 왜 객체가 아닌 배열을 반환할까요? 배열 구조 분해로
-    받으면 어떤 점이 편리한지 설명해보세요.
+    Q1. 아래 요구사항을 만족하는 `Counter` 컴포넌트를 만들어보세요. (1) + 버튼을
+    누르면 숫자가 1 올라감 (2) - 버튼을 누르면 숫자가 1 내려감 (3) 초기값은 0
+    (4) 함수형 업데이트(`prev ={">"} ...`)를 사용할 것
   </strong>
-</Paragraph>
-
-<Subtitle level={4}>정답</Subtitle>
-
-<Paragraph>
-  배열 구조 분해는 <strong>변수 이름을 자유롭게 지정</strong>할 수 있기
-  때문입니다. 객체 구조 분해는 프로퍼티 이름이 고정되어 있어 여러 `useState`를
-  사용할 때 이름 충돌이 발생합니다.
-</Paragraph>
-
-<Paragraph>
-  `const [count, setCount] = useState(0)`처럼 원하는 이름을 바로 붙일 수
-  있습니다. 만약 객체였다면 `const {"{"} state: count, setState: setCount {"}"}{" "}
-  = useState(0)`처럼 매번 이름을 변경해야 합니다.
-</Paragraph>
-
----
-
-<Paragraph>
-  <strong>
-    Q2. `setState(prev ={">"} ({"{"} ...prev, count: prev.count + 1 {"}"}))`
-    패턴에서 스프레드(`...`)를 사용하는 이유를 설명해보세요. 스프레드 없이 `
-    {"{"} count: prev.count + 1 {"}"}`만 쓰면 어떤 문제가 생길까요?
-  </strong>
-</Paragraph>
-
-<Subtitle level={4}>정답</Subtitle>
-
-<Paragraph>
-  스프레드를 사용하면{" "}
-  <strong>
-    기존 상태의 모든 프로퍼티를 유지하면서 특정 프로퍼티만 덮어쓸 수 있습니다.
-  </strong>{" "}
-  스프레드 없이 쓰면 나머지 프로퍼티가 모두 사라집니다.
-</Paragraph>
-
-<Paragraph>
-  예를 들어 상태가 `{"{"} name: '철수', count: 0 {"}"}`일 때 `{"{"} count: 1{" "}
-  {"}"}`만 쓰면 `name`이 사라져 `{"{"} count: 1 {"}"}`만 남습니다. React에서는
-  상태를 직접 수정(mutation)하지 않고 새 객체를 만드는{" "}
-  <strong>불변 업데이트</strong>를 원칙으로 합니다.
-</Paragraph>
-
----
-
-<Paragraph>
-  <strong>
-    Q3. `user?.address?.city`와 `user && user.address && user.address.city`의
-    동작이 완전히 같을까요? 차이가 있다면 어떤 경우에 다르게 동작하는지
-    설명하세요.
-  </strong>
-</Paragraph>
-
-<Subtitle level={4}>
-  정답: `user`가 `0`이나 `''`처럼 falsy 값일 때 다르게 동작합니다.
-</Subtitle>
-
-<Paragraph>
-  `&&`는 왼쪽이 falsy이면 그 값을 반환합니다. `user`가 `0`이면 `0 &&
-  0.address`는 `0`을 반환합니다. 하지만 `0?.address`는 `undefined`를 반환합니다.{" "}
-  <strong>`?.`는 오직 `null`과 `undefined`만 체크</strong>하기 때문입니다.
-</Paragraph>
-
----
-
-<Paragraph>
-  <strong>
-    Q4. React 프로젝트에서 named export와 default export를 각각 어떤 상황에
-    사용하는지, 실제 프로젝트 관례를 기준으로 설명해보세요.
-  </strong>
-</Paragraph>
-
-<Subtitle level={4}>정답</Subtitle>
-
-- <strong>default export</strong>: React 컴포넌트 — 파일당 하나가 원칙이므로
-  자연스럽습니다.
-- <strong>named export</strong>: 유틸 함수, 상수, 타입 — 한 파일에 여러 개를
-  모아두므로 named export를 사용합니다.
-
-<Paragraph>
-  named export는 import 시 자동완성이 잘 되고, 오타를 에디터가 잡아주는 장점도
-  있습니다.
-</Paragraph>
-
----
-
-<Subtitle level={2}>3. 면접 질문</Subtitle>
-
-<Paragraph>
-  이번 주는 React로 넘어가기 전 마지막 JS 면접 질문입니다. ES6+ 문법은 React에서
-  매일 사용하므로, 자신만의 말로 설명하는 연습을 해보세요.
-</Paragraph>
-
-<Subtitle level={3}>
-  Q1. map과 filter의 차이는 무엇이고, 언제 사용하나요?
-</Subtitle>
-
-<Paragraph>
-  둘 다 원본 배열을 변경하지 않고 <strong>새 배열을 반환</strong>하는 순수
-  함수입니다.
-</Paragraph>
-
-- <strong>`map`</strong>: 각 요소를 <strong>변환</strong>하여 같은 길이의 새
-  배열을 반환. "모든 요소에 같은 작업 적용"
-- <strong>`filter`</strong>: 조건에 맞는 요소만 <strong>걸러내서</strong> 더
-  짧거나 같은 길이의 새 배열을 반환. "조건에 맞는 것만 선택"
-
-```js
-const numbers = [1, 2, 3, 4, 5];
-
-// map — 변환: 모든 요소를 2배로
-numbers.map((n) => n * 2); // [2, 4, 6, 8, 10]
-
-// filter — 필터링: 짝수만 선택
-numbers.filter((n) => n % 2 === 0); // [2, 4]
-
-// 체이닝: filter 먼저 → map
-// 짝수만 골라서(2개) 2배 하기 vs 전체(5개) 2배 후 짝수 고르기
-numbers.filter((n) => n % 2 === 0).map((n) => n * 2); // [4, 8]
-```
-
-<Paragraph>
-  면접 팁: "React에서 `map`은 리스트 렌더링에, `filter`는 조건부 필터링에 매일
-  사용합니다. 체이닝할 때 `filter`를 먼저 하면 처리할 요소 수가 줄어들어 더
-  효율적입니다"라고 연결하면 좋습니다.
-</Paragraph>
-
-<Subtitle level={3}>Q2. 구조 분해 할당이 React에서 어떻게 쓰이나요?</Subtitle>
-
-<Paragraph>
-  구조 분해 할당은{" "}
-  <strong>배열이나 객체의 값을 개별 변수로 한 번에 추출</strong>하는 문법입니다.
-  React에서는 두 가지 핵심 패턴에 사용됩니다.
 </Paragraph>
 
 ```jsx
-// 1. props 수신 — 객체 구조 분해
-function UserCard({ name, age, role = "user" }) {
+function Counter() {
+  const [count, setCount] = useState(0);
   return (
     <div>
-      {name} ({age}) - {role}
+      <p>{count}</p>
+      <button onClick={() => setCount((prev) => prev + 1)}>+</button>
+      <button onClick={() => setCount((prev) => prev - 1)}>-</button>
     </div>
   );
 }
-
-// 2. useState — 배열 구조 분해
-const [count, setCount] = useState(0);
-// useState가 [현재값, 변경함수] 배열을 반환하고,
-// 구조 분해로 각각 변수에 할당
-
-// 3. API 응답에서 필요한 값만 추출
-const { data, error, isLoading } = useSWR("/api/user");
 ```
 
 <Paragraph>
-  면접 팁: "기본값 지정(`role = 'user'`), 이름 변경(`data: userData`), Rest
-  파라미터(`{ name, ...others }`)까지 알고 있으면 코드가 훨씬 간결해집니다"라고
-  답하면 좋습니다.
-</Paragraph>
-
-<Subtitle level={3}>
-  Q3. 옵셔널 체이닝(?.)과 null 병합 연산자(??)를 설명해주세요. ||와 ??의 차이는?
-</Subtitle>
-
-<Paragraph>
-  <strong>옵셔널 체이닝(`?.`)</strong>: 앞의 값이 `null`이나 `undefined`이면
-  에러 없이 `undefined`를 반환합니다. 중첩 객체에 안전하게 접근할 때 사용합니다.
-</Paragraph>
-
-<Paragraph>
-  <strong>null 병합 연산자(`??`)</strong>: 왼쪽이 `null` 또는 `undefined`일 때만
-  오른쪽 값을 반환합니다.
-</Paragraph>
-
-```js
-const user = null;
-
-// 옵셔널 체이닝 — TypeError 방지
-user?.address?.city; // undefined (에러 없음)
-
-// ?. + ?? 조합 — 안전한 접근 + 기본값
-user?.profile?.avatar ?? "/default.png"; // "/default.png"
-
-// ?? vs || — 핵심 차이
-const count = 0;
-count || "기본값"; // "기본값" — 0은 falsy라서 오른쪽 반환
-count ?? "기본값"; // 0 — 0은 null/undefined가 아니므로 왼쪽 유지
-
-const name = "";
-name || "익명"; // "익명" — 빈 문자열은 falsy
-name ?? "익명"; // "" — 빈 문자열은 null/undefined가 아님
-```
-
-<Paragraph>
-  면접 팁: "`||`는 0, 빈 문자열, false도 falsy로 처리합니다. 수량이나 금액처럼
-  0이 유효한 값인 경우 `??`를 써야 의도치 않게 기본값으로 바뀌지 않습니다"라고
-  설명하면 실무 감각이 있다는 인상을 줍니다.
+  `useState`로 `count` 상태를 관리하고, 버튼의 `onClick` 핸들러에서 `setCount`를
+  호출합니다. <strong>함수형 업데이트(`prev => prev + 1`)</strong>를 사용하면
+  항상 최신 상태를 기반으로 업데이트됩니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>4. 관련 포스팅</Subtitle>
+<Paragraph>
+  <strong>
+    Q2. `users` 배열을 props로 받아 이름 목록을 렌더링하는 `UserList` 컴포넌트를
+    만들어보세요. `key` prop도 올바르게 사용해야 합니다.
+  </strong>
+</Paragraph>
+
+```jsx
+function UserList({ users }) {
+  return (
+    <ul>
+      {users.map((user) => (
+        <li key={user.id}>{user.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+<Paragraph>
+  `map()`으로 배열을 순회하면서 각 요소를 `<li>`로 변환합니다.{" "}
+  <strong>`key`에는 배열 인덱스가 아닌 고유한 `id`</strong>를 사용합니다. 이
+  패턴은 React에서 가장 자주 사용하는 리스트 렌더링 방식입니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q3. `isLoggedIn` boolean prop을 받아서 `true`이면 `<Dashboard />`
+    컴포넌트를, `false`이면 `<Login />` 컴포넌트를 렌더링하는 `AuthGate`
+    컴포넌트를 작성해보세요.
+  </strong>
+</Paragraph>
+
+```jsx
+function Dashboard() {
+  return <h1>대시보드입니다</h1>;
+}
+
+function Login() {
+  return <h1>로그인해주세요</h1>;
+}
+
+function AuthGate({ isLoggedIn }) {
+  return isLoggedIn ? <Dashboard /> : <Login />;
+}
+```
+
+<Paragraph>
+  삼항 연산자(`조건 ? A : B`)를 사용한 조건부 렌더링 패턴입니다. 실제
+  프로젝트에서 인증 상태에 따라 다른 화면을 보여줄 때 이 패턴을 자주 사용합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>7. 면접 질문</Subtitle>
+
+<Subtitle level={3}>Q1. React에서 컴포넌트란 무엇인가요?</Subtitle>
+
+<Paragraph>
+  컴포넌트는 <strong>재사용 가능한 UI 조각</strong>입니다. 함수형 컴포넌트는
+  props를 입력받아 JSX(화면 구조)를 반환하는 JS 함수입니다. 레고 블록처럼 작은
+  컴포넌트를 조합해서 복잡한 UI를 만듭니다.
+</Paragraph>
+
+<Paragraph>
+  면접 팁: "컴포넌트는 단일 책임 원칙을 따르는 것이 좋습니다. 한 컴포넌트가 너무
+  많은 역할을 하면 재사용성과 테스트 가능성이 떨어집니다"라고 더하면 좋습니다.
+</Paragraph>
+
+<Subtitle level={3}>Q2. JSX란 무엇이고 왜 사용하나요?</Subtitle>
+
+<Paragraph>
+  JSX는 JS 안에서 HTML처럼 UI를 작성하는 문법 확장입니다. 내부적으로
+  React.createElement() 호출로 변환됩니다. UI 구조를 직관적으로 표현할 수 있고,
+  JS 표현식을 {}로 바로 삽입할 수 있어서 조건부 렌더링, 리스트 렌더링이
+  편합니다.
+</Paragraph>
+
+<Subtitle level={3}>Q3. props와 state의 차이는 무엇인가요?</Subtitle>
+
+<Paragraph>
+  <strong>props</strong>는 부모 컴포넌트가 자식에게 전달하는 데이터입니다.
+  자식은 읽을 수만 있고 수정할 수 없습니다. <strong>state</strong>는 컴포넌트
+  자신이 관리하는 내부 데이터입니다. state가 변경되면 컴포넌트가 리렌더링됩니다.
+  state는 다음 주에 자세히 다룹니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>8. 관련 포스팅</Subtitle>
 
 - <Anchor href="/blog/study/clab-26-1/week9">
-    프론트엔드 스터디 9주차 학습 자료: 클로저, Promise, async/await
-  </Anchor>
-- <Anchor href="/blog/study/clab-26-1/week10">
-    프론트엔드 스터디 10주차 학습 자료: ES6+ 문법과 에러 처리
+    프론트엔드 스터디 9주차 학습 자료: React 입문 전 필수 JS 문법
   </Anchor>
 
 ---
 
-<Subtitle level={2}>5. 다음 주 안내</Subtitle>
+<Subtitle level={2}>9. 다음 주 안내</Subtitle>
 
 <Paragraph>
-  다음 주부터 드디어 <strong>React</strong>를 시작합니다! 지금까지 배운 JS
-  개념들 — 클로저, 비동기, 구조 분해, map/filter, 옵셔널 체이닝 — 이 React에서
-  어떻게 활용되는지 바로 체감할 수 있을 것입니다.
-</Paragraph>
-
-<Paragraph>
-  React는 <strong>컴포넌트</strong>라는 작은 UI 조각을 조합해서 화면을 만드는
-  라이브러리입니다. HTML을 JS 안에 쓰는 <strong>JSX</strong> 문법, 부모에서
-  자식으로 데이터를 전달하는 <strong>props</strong>, 컴포넌트가 자신의 값을
-  기억하는 <strong>useState</strong> 같은 개념을 배우게 됩니다. JS를 이미 알고
-  있으니 생각보다 빠르게 적응할 수 있습니다.
+  다음 주에는 React의 핵심인 <strong>상태 관리(useState)</strong>와{" "}
+  <strong>사이드 이펙트(useEffect)</strong>를 배웁니다. 컴포넌트가 어떻게 값을
+  기억하고, 데이터를 불러오는지를 배우면 진짜 앱을 만들 수 있게 됩니다.
 </Paragraph>
 
 <Subtitle level={3}>다음 주 예습</Subtitle>
 
 <Paragraph>
-  아래 챕터를 순서대로 읽어오세요. 코드 예제는 직접 따라 작성해보는 것을
-  권장합니다.
+  아래 챕터를 읽어오세요. 이번 주에 배운 useState와 어떻게 연결되는지 생각하며
+  읽으면 좋습니다.
 </Paragraph>
 
-- <Anchor external="https://reactjs.winterlood.com/8c7c4423-01d2-4abc-9616-e95298522778">
-    컴포넌트
-  </Anchor>
-- <Anchor external="https://reactjs.winterlood.com/d60d9a2c-18ed-4488-9dc9-09a0cd205998">
-    JSX
-  </Anchor>
-- <Anchor external="https://reactjs.winterlood.com/c89cba30-39b6-4094-85f6-f87a16842028">
-    컴포넌트에 값 전달하기 (Props)
-  </Anchor>
-- <Anchor external="https://reactjs.winterlood.com/f5477777-a3f2-4fe2-8a80-4bb6142c679b">
-    이벤트 처리하기
-  </Anchor>
-- <Anchor external="https://reactjs.winterlood.com/c167aa87-b661-4d35-9bc3-2a5e5434d4ac">
-    컴포넌트와 상태 (useState)
+- <Anchor external="https://reactjs.winterlood.com/eb666fea-0170-4399-a1d0-5dbb77e8b12b">
+    useEffect
   </Anchor>

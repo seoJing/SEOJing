@@ -14,9 +14,11 @@ description: JS 비동기 처리의 흐름을 배웁니다. 클로저가 왜 중
 <Subtitle level={2}>8주차 학습 자료</Subtitle>
 
 - <strong>입문 강의 (처음이라면):</strong> 얄코 JS 입문 강의
-  <Anchor external="https://youtu.be/aC55WY8jxX0">
-    비동기 처리(Promise, async/await) 챕터
+  <Anchor external="https://youtu.be/8kmtCVgqM34?t=12325">
+    Section 4 (함수·일급 객체·매개변수) 챕터 — 3:25:25부터, 클로저 이해의 전제
   </Anchor>
+  <br />※ 얄코 무료 파트에는 Promise/async 비동기 파트가 포함되어 있지 않으므로,
+  비동기 부분은 아래 본문과 심화 자료로 학습하세요.
 - <strong>강의 스킵 가능:</strong> 아래 스킵 진단 문제 10개를 모두 맞히면 강의
   시청 스킵 가능합니다.
 - <strong>심화 자료 (딥다이브 대비):</strong>
@@ -168,9 +170,15 @@ description: JS 비동기 처리의 흐름을 배웁니다. 클로저가 왜 중
 <Subtitle level={2}>1. 클로저(Closure) — 렉시컬 환경을 기억하는 함수</Subtitle>
 
 <Paragraph>
-  클로저는 <strong>함수가 선언될 때의 렉시컬 환경을 기억</strong>하여, 그 환경의
-  변수에 계속 접근할 수 있는 특성입니다. 렉시컬 스코프의 자연스러운
-  결과물입니다.
+  먼저 한 줄 리마인드 —{" "}
+  <strong>
+    렉시컬 스코프는 "함수가 선언된 위치"를 기준으로 접근 가능한 상위 변수가
+    정해지는 규칙
+  </strong>
+  이었어요(week6 복습). 클로저는 바로 이 렉시컬 환경을{" "}
+  <strong>함수가 끝난 뒤에도 계속 기억</strong>하는 현상입니다. 렉시컬 스코프의
+  자연스러운 결과물이고, 이 특성이 없으면 React의 `useState` 같은 것도 동작 못
+  해요.
 </Paragraph>
 
 ```js
@@ -226,10 +234,15 @@ console.log(account.balance); // undefined — 직접 접근 불가
 <Subtitle level={3}>React와 클로저</Subtitle>
 
 <Paragraph>
-  React의 <strong>`useState`</strong> 훅이 클로저를 기반으로 동작합니다.
-  컴포넌트가 리렌더링될 때마다 이벤트 핸들러 내부의 `count`, `setState` 등이
-  클로저로 기억됩니다. `useEffect`의 의존성 배열을 빠뜨리면 오래된 클로저(stale
-  closure)를 참조하는 버그가 생기는 이유도 클로저 때문입니다.
+  <strong>
+    지금 이 문단은 React를 배우지 않은 상태에서 전부 이해할 필요 없습니다.
+  </strong>{" "}
+  "React도 클로저 위에 얹혀 돌아가는구나" 정도만 감 잡고, 자세한 이야기는 week10
+  React 주차에서 다시 만납니다. React의 <strong>`useState`</strong> 훅이
+  클로저를 기반으로 동작합니다. 컴포넌트가 리렌더링될 때마다 이벤트 핸들러
+  내부의 `count`, `setState` 등이 클로저로 기억됩니다. `useEffect`의 의존성
+  배열을 빠뜨리면 오래된 클로저(stale closure)를 참조하는 버그가 생기는 이유도
+  클로저 때문입니다.
 </Paragraph>
 
 ---
@@ -270,16 +283,30 @@ fetch("/user")
 
 <Subtitle level={3}>여러 Promise 동시 처리</Subtitle>
 
+<Paragraph>
+  아래 코드에 `await`가 미리 등장합니다.{" "}
+  <strong>`await`는 3번 섹션에서 정식으로 설명합니다</strong> — 지금은
+  "Promise가 완료될 때까지 기다렸다가 값을 꺼낸다" 정도로만 읽어주세요.
+</Paragraph>
+
 ```js
 // 순차 실행 — 느림 (앞이 끝나야 다음 시작)
-const a = await fetchA();
-const b = await fetchB();
+async function sequential() {
+  const a = await fetchA();
+  const b = await fetchB();
+  return [a, b];
+}
 
 // 병렬 실행 — 동시에 시작하고 모두 완료 기다림
-const [a, b] = await Promise.all([fetchA(), fetchB()]);
+async function parallel() {
+  const [a, b] = await Promise.all([fetchA(), fetchB()]);
+  return [a, b];
+}
 
 // 가장 먼저 완료된 것만 사용
-const fastest = await Promise.race([fetchA(), fetchB()]);
+async function race() {
+  return await Promise.race([fetchA(), fetchB()]);
+}
 ```
 
 ---
@@ -332,7 +359,10 @@ async function good() {
 
 <Paragraph>
   실무에서는 React 컴포넌트에서 데이터를 가져올 때 `useEffect` 안에서 async
-  함수를 정의하고 호출하는 패턴을 주로 사용합니다.
+  함수를 정의하고 호출하는 패턴을 주로 사용합니다. 아래 코드는{" "}
+  <strong>React 문법이라 지금 당장 이해 안 해도 됩니다</strong>. "async 함수를
+  만들고 그 안에서 await를 쓴다" 패턴만 눈에 익혀두세요. React는 week10에서
+  만납니다.
 </Paragraph>
 
 ```js
@@ -477,6 +507,12 @@ console.log("D");`}
 
 <Subtitle level={2}>관련 포스팅</Subtitle>
 
+- <Anchor href="/blog/study/clab-26-1/week7">
+    프론트엔드 스터디 7주차 학습 자료: 불변성, 프로토타입, 타입 체크
+  </Anchor>
 - <Anchor href="/blog/study/clab-26-1/week8">
-    프론트엔드 스터디 8주차 학습 자료: 불변성, 프로토타입, 타입 체크
+    프론트엔드 스터디 8주차 학습 자료: 클로저, Promise, async/await
+  </Anchor>
+- <Anchor href="/blog/study/clab-26-1/week9">
+    프론트엔드 스터디 9주차 학습 자료: React 입문 전 필수 JS 문법
   </Anchor>

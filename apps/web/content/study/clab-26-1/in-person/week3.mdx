@@ -1,374 +1,360 @@
 ---
-title: "프론트엔드 스터디 대면 3주차: 폼(Form), CSS 선택자, 그리고 박스 모델"
-date: 2026-04-03
+title: "프론트엔드 스터디 대면 3주차: 박스 모델 실전, Position과 Flexbox"
+date: 2026-04-10
 tags:
   - 프론트엔드
   - 스터디
   - CSS
-  - Form
   - 박스모델
-  - 선택자
-description: 2주차 폼과 CSS 선택자 복습, 과제 풀이, 3주차 박스 모델과 스타일링까지 다룬 대면 스터디 정리입니다. 면접에서 자주 나오는 GET vs POST, CSS 우선순위, 박스 모델 관련 질문도 함께 준비합니다.
+  - Position
+  - Flexbox
+description: 3주차 박스 모델과 스타일링 복습, 과제 풀이, 4주차 Position과 Flexbox 레이아웃까지 다룬 대면 스터디 정리입니다. 면접에서 자주 나오는 마진 겹침, box-sizing, Flexbox 관련 질문도 함께 준비합니다.
 ---
 
 <Subtitle level={2}>1. 저번 주 복습</Subtitle>
 
 <Paragraph>
-  지난주에는 사용자로부터 정보를 입력받는 <strong>폼(Form)</strong>과, CSS를
-  HTML에 연결하고 원하는 요소를 정확히 선택하는 <strong>CSS 선택자</strong>를
-  배웠습니다. 이번에는 단순 나열이 아니라, 각 개념이{" "}
-  <strong>왜 중요한지</strong>와 <strong>실수하기 쉬운 포인트</strong>를
-  중심으로 복습하겠습니다.
+  지난주에는 CSS의 본격적인 스타일링에 들어갔습니다. 글꼴과 색상을 제어하고,
+  인라인과 블록 요소의 차이, 그리고 프론트엔드 초심자가 가장 먼저 부딪히는 벽인
+  <strong>박스 모델</strong>을 배웠습니다. 핵심만 빠르게 짚어보겠습니다.
 </Paragraph>
 
-<Subtitle level={3}>폼(Form) 핵심</Subtitle>
+<Subtitle level={3}>폰트와 색상</Subtitle>
 
-<Subtitle level={4}>`form` 태그와 `action`, `method`</Subtitle>
+- <strong>`font-family`</strong>: 쉼표로 여러 폰트를 나열하면 앞에서부터
+  순서대로 사용 가능한 폰트를 적용합니다. 마지막에 `sans-serif` 같은 일반
+  패밀리를 넣는 것이 관례입니다.
+- <strong>색상 표기법</strong>: 키워드(`red`), Hex(`#FF5733`), RGB(`rgb(255, 87,
+  51)`), HSL(`hsl(11, 100%, 60%)`) 등 다양한 방식으로 표현합니다.
 
-<Paragraph>
-  `form` 태그는 입력 요소들을 감싸는 컨테이너입니다. <strong>택배 상자</strong>
-  에 비유하면, `action`은 <strong>배송지 주소</strong>이고 `method`는
-  <strong>배송 방법</strong>(일반 택배 vs 등기)입니다. 상자 없이 물건만 던지면
-  배달이 안 되듯, `form` 없이 `input`만 있으면 데이터가 서버로 전송되지
-  않습니다.
-</Paragraph>
+<Subtitle level={3}>인라인 vs 블록 vs 인라인 블록</Subtitle>
 
-```html
-<form action="/signup" method="post">
-  <input type="text" name="username" />
-  <input type="password" name="password" />
-  <button type="submit">회원가입</button>
-</form>
-```
+- <strong>인라인(Inline)</strong>: 콘텐츠 크기만큼만 차지, width/height 무시,
+  상하 margin 무시
+- <strong>블록(Block)</strong>: 한 줄 전체를 차지, width/height/margin 모두 적용
+- <strong>인라인 블록(Inline-block)</strong>: 나란히 배치되면서
+  width/height/margin 모두 적용
 
-<Subtitle level={4}>`name` 속성 — 없으면 서버로 안 간다</Subtitle>
+<Subtitle level={3}>박스 모델</Subtitle>
 
-<Paragraph>
-  `name` 속성은 서버로 데이터를 보낼 때 <strong>키(key)</strong> 역할을 합니다.
-  택배 송장에 <strong>받는 사람 이름이 없는 것</strong>과 같습니다. 택배가
-  도착해도 누구 것인지 모르면 전달할 수 없듯, `name`이 없는 `input`의 값은
-  서버에 전혀 전달되지 않습니다.
-</Paragraph>
-
-```html
-<!-- name이 없어서 서버로 전송 안 됨 -->
-<input type="text" />
-
-<!-- name이 있어서 서버에 username=입력값 형태로 전송 -->
-<input type="text" name="username" />
-```
-
-<Paragraph>
-  <strong>흔한 실수</strong>: 폼을 만들고 "서버에 데이터가 안 들어와요"라고 할
-  때, 가장 먼저 확인할 것이 `name` 속성 누락입니다. 개발자 도구의 Network 탭에서
-  Form Data를 보면 바로 확인할 수 있습니다.
-</Paragraph>
-
-<Subtitle level={4}>`label`과 `for` — 클릭 면적을 넓혀주는 연결</Subtitle>
-
-<Paragraph>
-  `label`의 `for` 값과 `input`의 `id` 값을 일치시키면,{" "}
-  <strong>label 텍스트를 클릭해도 input에 포커스</strong>가 이동합니다.
-  데스크톱에서는 편의 기능이지만, 모바일에서는{" "}
-  <strong>터치 영역이 넓어지는 실질적인 UX 개선</strong>입니다. 작은 체크박스나
-  라디오 버튼을 손가락으로 정확히 누르기 어려운 상황을 떠올려보세요.
-</Paragraph>
-
-```html
-<!-- label을 클릭하면 id="email" input에 포커스 -->
-<label for="email">이메일 주소</label>
-<input type="email" id="email" name="email" />
-
-<!-- 체크박스: label 클릭으로 체크/해제 가능 -->
-<input type="checkbox" id="agree" name="agree" />
-<label for="agree">이용약관에 동의합니다</label>
-```
-
-<Paragraph>
-  <strong>접근성 보너스</strong>: 스크린 리더가 input을 읽을 때 연결된 label의
-  텍스트를 함께 읽어줍니다. label이 없으면 시각 장애인 사용자는 이 입력칸이 뭘
-  위한 것인지 알 수 없습니다.
-</Paragraph>
-
-<Subtitle level={4}>`input` 태그의 `type` 속성</Subtitle>
-
-<Paragraph>
-  `type` 하나만 바꿔도 브라우저가 <strong>무료로 도와주는 기능</strong>이
-  달라집니다. `type="text"`로 모든 걸 해결하려는 것은 만능 리모컨 대신 모든
-  가전에 일일이 손을 대는 것과 같습니다.
-</Paragraph>
-
-| type       | 브라우저가 해주는 것    | 모바일 키보드   |
-| :--------- | :---------------------- | :-------------- |
-| `text`     | 없음                    | 일반 키보드     |
-| `email`    | @ 포함 여부 자동 검증   | @ . 버튼 포함   |
-| `password` | 입력값 마스킹(●)        | 일반 키보드     |
-| `number`   | 숫자만 입력 가능        | 숫자 키패드     |
-| `tel`      | 없음 (패턴은 직접 지정) | 전화번호 키패드 |
-
-<Subtitle level={4}>`select`, `textarea`</Subtitle>
-
-<Paragraph>
-  `select`는 드롭다운 선택, `textarea`는 여러 줄 텍스트 입력을 담당합니다.
-  `input`은 한 줄 입력에 특화되어 있으므로, 긴 텍스트(자기소개, 문의 내용
-  등)에는 반드시 `textarea`를 사용합니다.
-</Paragraph>
-
-<Paragraph>
-  `textarea`를 쓸 때 한 가지 주의할 점이 있습니다. 아래처럼 태그 사이에
-  줄바꿈이나 들여쓰기를 넣으면, 그 공백이{" "}
-  <strong>초기값으로 그대로 들어갑니다.</strong>
-</Paragraph>
-
-```html
-<!-- 태그 사이의 개행/공백이 초기값으로 들어감 -->
-<textarea name="content"> </textarea>
-
-<!-- 이렇게 붙여써야 빈 상태로 시작함 -->
-<textarea name="content"></textarea>
-```
-
-<Paragraph>
-  이 문제는 `input`에서는 발생하지 않습니다. `input`은 자기 닫힘 태그이고 값은
-  `value` 속성으로 지정하기 때문입니다. `textarea`는 태그 사이의 내용이 곧
-  값이기 때문에 개행 문자가 끼어들 수 있습니다.
-</Paragraph>
-
-<Paragraph>
-  나중에 JavaScript를 배우면 이런 상황에서 <strong>`trim()`</strong>이라는
-  메서드를 자주 쓰게 됩니다. `trim()`은 문자열 앞뒤의 공백과 개행을 제거합니다.
-</Paragraph>
-
-```js
-const value = document.querySelector("textarea").value;
-// 사용자가 입력한 값: "\n안녕하세요\n"
-console.log(value.trim()); // "안녕하세요"
-```
-
-<Paragraph>
-  왜 제거해야 할까요? 앞뒤 공백이 붙은 채로 서버에 저장되면, 나중에 값을
-  비교하거나 검색할 때 오작동이 생깁니다. 예를 들어 사용자가 아이디로 "seojin"을
-  입력했는데 실제로 저장된 값이 " seojin"이라면, 로그인 비교 시 불일치가
-  발생합니다. 사용자 입장에서는 올바르게 입력했는데 오류가 나는 것처럼 보이죠.
-  `trim()`은 이런{" "}
-  <strong>눈에 보이지 않는 공백 버그를 예방하는 가장 기본적인 습관</strong>
-  입니다.
-</Paragraph>
-
-<Subtitle level={3}>CSS 선택자 핵심</Subtitle>
-
-<Subtitle level={4}>기본 선택자 정리</Subtitle>
+- 안쪽부터: <strong>Content → Padding → Border → Margin</strong>
+- <strong>`box-sizing: content-box`</strong>(기본값): width는 콘텐츠 영역만
+  의미, padding과 border가 추가로 더해짐
+- <strong>`box-sizing: border-box`</strong>: width 안에 padding과 border까지
+  포함, 현대 CSS의 필수 설정
 
 ```css
-/* 태그 선택자: 해당 태그 전부 선택 */
-p {
-  color: black;
+/* content-box: width(200) + padding×2(40) + border×2(10) = 실제 250px */
+.box {
+  width: 200px;
+  padding: 20px;
+  border: 5px solid black;
 }
 
-/* 클래스 선택자: 마침표(.)로 시작, 여러 요소에 재사용 가능 */
-.highlight {
-  background: yellow;
-}
-
-/* 아이디 선택자: 샵(#)으로 시작, 페이지에서 딱 하나 */
-#main-title {
-  font-size: 2rem;
-}
-```
-
-<Paragraph>
-  <strong>헷갈리는 포인트</strong>: 클래스는 한 요소에 여러 개 붙일 수 있지만
-  (`class="btn btn-primary"`), 아이디는 페이지에서 <strong>단 하나</strong>여야
-  합니다. 아이디가 중복되면 HTML 문법 위반이고, JavaScript의 `getElementById`도
-  첫 번째 요소만 반환합니다.
-</Paragraph>
-
-<Subtitle level={4}>자손 결합자 vs 자식 결합자</Subtitle>
-
-```html
-<nav>
-  <ul>
-    <li><a href="/">홈</a></li>
-    <li>
-      <div>
-        <a href="/about">소개</a>
-      </div>
-    </li>
-  </ul>
-</nav>
-```
-
-```css
-/* 자손 결합자: nav 안의 모든 a를 선택 (깊이 무관) */
-nav a {
-  color: white;
-}
-
-/* 자식 결합자: nav의 직계 자식 a만 선택 (여기서는 해당 없음) */
-nav > a {
-  color: white;
+/* border-box: 실제 너비 200px 고정, 콘텐츠 영역 = 200 - 40 - 10 = 150px */
+.box {
+  box-sizing: border-box;
+  width: 200px;
+  padding: 20px;
+  border: 5px solid black;
 }
 ```
-
-<Paragraph>
-  위 HTML에서 `nav a`는 "홈"과 "소개" 링크 <strong>모두</strong> 선택합니다.
-  하지만 `nav > a`는 `nav`의 직계 자식인 `a`가 없으므로 <strong>아무것도
-  선택하지 않습니다</strong>. 자손 결합자(공백)는 "안에 있는 모든 것",
-  자식 결합자(`>`)는 "바로 아래 한 단계"라고 기억하세요.
-</Paragraph>
-
-<Subtitle level={4}>CSS 우선순위 — 점수제로 이해하기</Subtitle>
-
-<Paragraph>
-  CSS 우선순위는 <strong>점수 계산</strong>으로 이해하면 직관적입니다. 같은
-  요소에 여러 규칙이 적용될 때, 점수가 높은 쪽이 이깁니다.
-</Paragraph>
-
-| 종류                          | 점수    | 예시                              |
-| :---------------------------- | :------ | :-------------------------------- |
-| 인라인 스타일                 | 1,000점 | `style="color: red"`              |
-| 아이디(#)                     | 100점   | `#header`                         |
-| 클래스(.) / 속성 / 가상클래스 | 10점    | `.btn`, `[type="text"]`, `:hover` |
-| 태그 / 가상요소               | 1점     | `div`, `p`, `::before`            |
-
-```css
-/* 점수: 태그(1) + 클래스(10) = 11점 */
-p.intro {
-  color: blue;
-}
-
-/* 점수: 아이디(100) = 100점 → 이쪽이 이김 */
-#welcome {
-  color: red;
-}
-```
-
-<Paragraph>
-  <strong>왜 id로 스타일링하면 안 좋을까?</strong> id 선택자는 100점이라
-  클래스(10점)로는 절대 이길 수 없습니다. 나중에 스타일을 덮어써야 할 때 더 높은
-  우선순위(`!important` 등)를 남발하게 되고, CSS가 점점 관리 불가능해집니다.
-  그래서 실무에서는 <strong>스타일링에는 클래스만 사용</strong>하고, id는
-  JavaScript 선택이나 앵커 링크 용도로만 쓰는 것이 관례입니다.
-</Paragraph>
-
-<Paragraph>
-  <strong>같은 점수라면?</strong> 나중에 작성된(아래에 있는) 스타일이 이깁니다.
-  이것을 <strong>캐스케이드(Cascade)</strong>라고 합니다. CSS의 C가 바로 이
-  Cascade입니다.
-</Paragraph>
 
 <Subtitle level={3}>학습 자료에서 다룬 추가 개념</Subtitle>
 
 <Paragraph>
-  2주차 학습 자료에서 강의 외 추가 개념들을 다뤘습니다. 다시 한번
+  3주차 학습 자료에서 강의 외 개념들을 꽤 많이 다뤘습니다. 중요한 것들을 다시
   짚어보겠습니다.
 </Paragraph>
 
-<Subtitle level={4}>GET vs POST — 엽서 vs 편지 봉투</Subtitle>
+<Subtitle level={4}>px, em, rem 단위</Subtitle>
 
 <Paragraph>
-  둘 다 데이터를 서버로 보내지만, <strong>데이터를 싣는 위치</strong>가
-  다릅니다. GET은 <strong>엽서</strong>처럼 내용이 겉면(URL)에 다 보이고, POST는
-  <strong>편지 봉투</strong>처럼 내용이 안에 들어 있습니다.
+  세 단위의 차이는 "무엇을 기준으로 크기를 계산하느냐"입니다.
 </Paragraph>
 
-```
-GET 요청:  https://example.com/search?q=프론트엔드&page=1
-                                       ↑ 데이터가 URL에 노출
+- <strong>`px`</strong>: 고정값. 화면 해상도와 무관하게 항상 같은 크기.
+- <strong>`em`</strong>: <strong>부모 요소</strong>의 `font-size` 기준. 부모가
+  16px이면 `1em = 16px`, `2em = 32px`.
+- <strong>`rem`</strong>: <strong>루트(`<html>`)</strong>의 `font-size` 기준.
+기본값은 16px이므로 `1rem = 16px`. 부모가 누구든 기준이 변하지 않습니다.
 
-POST 요청: https://example.com/login
-           Body: { username: "seojin", password: "1234" }
-                  ↑ 데이터가 본문에 숨겨짐
-```
+```css
+html {
+  font-size: 16px; /* rem의 기준 */
+}
 
-<Paragraph>
-  "주소창에 보여도 괜찮으면 GET, 아니면 POST"가 판단 기준입니다. GET은 URL 공유,
-  북마크, 브라우저 캐싱이 가능하다는 고유한 장점이 있어서 검색과 필터에
-  적합합니다.
-</Paragraph>
+.parent {
+  font-size: 20px;
+}
 
-<Subtitle level={4}>`fieldset`과 `legend`</Subtitle>
+.child-em {
+  font-size: 1.5em; /* 부모(20px) × 1.5 = 30px */
+}
 
-<Paragraph>
-  회원가입처럼 입력 필드가 많을 때 "기본 정보", "보안 설정"처럼 관련 항목을
-  그룹화합니다. 스크린 리더가 `legend`를 먼저 읽어주기 때문에 접근성에도 도움이
-  됩니다.
-</Paragraph>
-
-```html
-<fieldset>
-  <legend>기본 정보</legend>
-  <label for="name">이름</label>
-  <input type="text" id="name" name="name" />
-  <label for="email">이메일</label>
-  <input type="email" id="email" name="email" />
-</fieldset>
+.child-rem {
+  font-size: 1.5rem; /* 루트(16px) × 1.5 = 24px */
+}
 ```
 
-<Subtitle level={4}>CSS 적용 세 가지 방법</Subtitle>
-
 <Paragraph>
-  인라인 스타일(`style=""`), 내부 스타일시트(`<style>`), 외부 스타일
-  시트(`<link>`) 중 <strong>외부 스타일 시트</strong>가 유지보수와
-  재사용성 면에서 가장 권장됩니다. 인라인 스타일은 우선순위가 1,000점으로 너무
-  높아 나중에 덮어쓰기가 극도로 어려워지므로 가급적 피합니다.
+  `em`의 함정: 중첩이 깊어지면 계산이 복잡해집니다. 손자 요소에서 `1.5em`을 쓰면
+  부모가 이미 `1.5em`인 경우 `1.5 × 1.5 = 2.25em`이 되어 예상보다 커집니다.
+  실무에서는 <strong>`rem`을 기본 단위</strong>로 쓰고, `px`은 1~2px 같은 아주
+  작은 값(테두리, 그림자)에만 사용합니다.
 </Paragraph>
 
-<Subtitle level={4}>벤더 프리픽스</Subtitle>
+<Subtitle level={4}>마진 겹침(Margin Collapsing)</Subtitle>
 
 <Paragraph>
-  `-webkit-`, `-moz-` 같은 접두사는 브라우저가 실험적 CSS 기능을 제공할 때
-  붙입니다. 현재는 Autoprefixer가 빌드 시 자동으로 처리해주므로 직접 작성할 일은
-  거의 없고, Can I Use 사이트로 브라우저 지원 현황을 확인할 수 있습니다.
-</Paragraph>
-
-<Subtitle level={4}>CSS 변수 (Custom Properties)</Subtitle>
-
-<Paragraph>
-  `--color-primary: #3b82f6`처럼 `--`로 시작하는 변수를 `:root`에 정의하고,
-  `var(--color-primary)`로 참조합니다. 한 곳에서 값을 바꾸면 사용하는 모든 곳에
-  반영되어 유지보수가 편합니다. 다크 모드 구현에도 활용됩니다.
+  수직으로 인접한 두 블록 요소의 마진은 합산되지 않고,{" "}
+  <strong>더 큰 값 하나만 적용</strong>됩니다.
 </Paragraph>
 
 ```css
-:root {
-  --color-primary: #3b82f6;
-  --color-text: #1f2937;
+/* 두 p 태그 사이 간격: 30 + 20 = 50px이 아닌 30px (큰 쪽만) */
+.box-a {
+  margin-bottom: 30px;
+}
+.box-b {
+  margin-top: 20px;
 }
 
-.btn {
-  background: var(--color-primary);
-  color: var(--color-text);
+/* 방지법: 부모에 overflow: hidden 또는 padding/border 추가 */
+.parent {
+  overflow: hidden; /* 새 BFC 생성 → 자식 마진 겹침 차단 */
+}
+
+/* 방지법 2: Flexbox 컨테이너 안에서는 마진 겹침 없음 */
+.flex-parent {
+  display: flex;
+  flex-direction: column;
 }
 ```
 
-<Subtitle level={4}>의사 클래스 (`:hover`, `:focus`, `:nth-child`)</Subtitle>
-
 <Paragraph>
-  요소의 <strong>특정 상태</strong>를 선택하는 선택자입니다. 마우스를 올렸을
-  때(`:hover`), 키보드 포커스가 갔을 때(`:focus`), n번째 자식(`:nth-child`) 등
-  상태 기반 스타일링에 사용합니다. Tailwind에서는 `hover:`, `focus:` 접두사로
-  적용합니다.
+  겹침이 발생하는 세 가지 상황: ① 인접 형제 요소, ② 부모-자식(padding/border
+  없을 때 자식 마진이 부모 밖으로 새어 나감), ③ 빈 블록 요소(자신의 위아래
+  마진끼리 겹침).
 </Paragraph>
 
-<Subtitle level={4}>폼 유효성 검증 속성</Subtitle>
+<Subtitle level={4}>CSS 리셋과 Normalize</Subtitle>
 
 <Paragraph>
-  `required`(필수 입력), `pattern`(정규표현식), `minlength`/`maxlength`(글자 수
-  제한) 등 <strong>HTML 속성만으로 기본적인 폼 검증이 가능</strong>합니다.
-  JavaScript를 한 줄도 쓰지 않고도 "이 칸은 필수입니다"를 구현할 수 있습니다.
+  브라우저마다 기본 스타일이 다릅니다. Chrome과 Firefox에서 `<h1>` 크기나
+  `<ul>` 들여쓰기가 조금씩 다릅니다. 이를 해결하는 두 가지 방법이 있습니다.
 </Paragraph>
+
+- <strong>CSS Reset</strong>: 브라우저 기본 스타일을 전부 제거하고 백지에서
+  시작. `margin: 0`, `padding: 0`을 전체 요소에 적용.
+- <strong>Normalize.css</strong>: 브라우저 간 차이만 통일. 유용한 기본 스타일은
+  유지.
+
+```css
+/* 거의 모든 프로젝트의 첫 줄 — 전체 box-sizing 일괄 설정 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* 기본 마진 제거 */
+body,
+h1,
+h2,
+h3,
+p,
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+}
+```
+
+<Subtitle level={4}>가상 요소 (::before, ::after)</Subtitle>
+
+<Paragraph>
+  HTML에 태그를 추가하지 않고 CSS만으로 시각적 요소를 삽입합니다.{" "}
+  <strong>`content` 속성이 필수</strong>이며, 빈 장식이라도 `content: ""`를
+  반드시 써야 합니다.
+</Paragraph>
+
+```css
+/* 링크 앞에 아이콘 추가 */
+.link::before {
+  content: "→ ";
+  color: blue;
+}
+
+/* 카드에 장식용 라인 추가 */
+.card::after {
+  content: ""; /* 빈 문자열 필수 */
+  display: block;
+  width: 40px;
+  height: 3px;
+  background: coral;
+  margin-top: 8px;
+}
+
+/* 활용: 툴팁 말풍선 꼬리 */
+.tooltip::before {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: black;
+}
+```
+
+<Paragraph>
+  중요한 콘텐츠(접근성에 필요한 텍스트)는 HTML에, 순수 장식은 가상 요소에
+  작성합니다. 스크린 리더는 `::before`/`::after`의 `content`를 읽을 수도 있어서
+  빈 문자열로 두는 것이 안전합니다.
+</Paragraph>
+
+<Subtitle level={4}>BFC (Block Formatting Context)</Subtitle>
+
+<Paragraph>
+  BFC는 "마진 겹침과 float가 영향을 미치는 독립된 레이아웃 구역"입니다. 새 BFC를
+  만들면 그 안에서는 외부 마진 겹침이 차단됩니다.
+</Paragraph>
+
+```css
+/* BFC를 만드는 방법들 */
+.bfc-1 {
+  overflow: hidden; /* 가장 오래된 방법 */
+}
+.bfc-2 {
+  display: flow-root; /* 부작용 없이 BFC만 생성 — 권장 */
+}
+.bfc-3 {
+  display: flex; /* flex/grid 컨테이너는 자동으로 BFC */
+}
+
+/* 활용 예: 부모-자식 마진 겹침 방지 */
+.card {
+  display: flow-root; /* 자식의 margin-top이 부모 밖으로 새지 않음 */
+  padding: 16px;
+}
+```
+
+<Subtitle level={4}>CSS 상속</Subtitle>
+
+<Paragraph>
+  CSS 속성은 두 종류로 나뉩니다. <strong>상속되는 속성</strong>은 부모에 한 번만
+  써도 자식 전체에 적용되고, <strong>상속되지 않는 속성</strong>은 각 요소마다
+  별도로 지정해야 합니다.
+</Paragraph>
+
+| 분류          | 상속 여부 | 대표 속성                                          |
+| :------------ | :-------- | :------------------------------------------------- |
+| 텍스트 관련   | 상속됨    | `color`, `font-family`, `font-size`, `line-height` |
+| 레이아웃 관련 | 상속 안됨 | `margin`, `padding`, `border`, `width`, `display`  |
+
+```css
+/* 부모에 color 지정 → 자식 전체에 적용 */
+body {
+  color: #333;
+  font-family: "Pretendard", sans-serif;
+}
+
+/* 상속 동작 제어 키워드 */
+.child {
+  color: inherit; /* 부모 값 강제 상속 */
+  color: initial; /* 브라우저 기본값으로 초기화 */
+  color: unset; /* 상속되는 속성이면 inherit, 아니면 initial */
+}
+```
+
+<Subtitle level={4}>`overflow`와 텍스트 말줄임</Subtitle>
+
+<Paragraph>콘텐츠가 요소 크기를 넘칠 때 어떻게 처리할지 결정합니다.</Paragraph>
+
+```css
+/* overflow 기본 동작 */
+.box-visible {
+  overflow: visible; /* 기본값: 넘쳐도 그냥 표시 */
+}
+.box-hidden {
+  overflow: hidden; /* 넘치는 부분 잘라냄 */
+}
+.box-scroll {
+  overflow: auto; /* 넘칠 때만 스크롤바 표시 */
+}
+
+/* 한 줄 텍스트 말줄임 — 세 속성 세트로 사용 */
+.ellipsis {
+  white-space: nowrap; /* 줄바꿈 금지 */
+  overflow: hidden; /* 넘치는 텍스트 숨김 */
+  text-overflow: ellipsis; /* 잘린 자리에 ... 표시 */
+}
+```
 
 ```html
-<!-- 필수 입력 + 최소 8자 + 영문/숫자만 허용 -->
-<input
-  type="text"
-  name="username"
-  required
-  minlength="8"
-  pattern="[a-zA-Z0-9]+"
-  title="영문과 숫자만 사용 가능합니다"
-/>
+<!-- Tailwind: truncate 클래스 하나로 동일하게 적용 -->
+<p class="truncate w-48">이 텍스트는 너무 길어서 잘립니다...</p>
+```
+
+<Subtitle level={4}>요소 숨기기 세 가지</Subtitle>
+
+<Paragraph>
+  세 방법은 "공간을 차지하는가", "클릭이 되는가"에서 차이가 납니다.
+</Paragraph>
+
+| 속성                 | 공간 차지 | 클릭 가능 | 대표 사용처                |
+| :------------------- | :-------- | :-------- | :------------------------- |
+| `display: none`      | ✗ 없음    | ✗         | 완전 제거, 조건부 렌더링   |
+| `visibility: hidden` | ✓ 있음    | ✗         | 레이아웃 유지하면서 숨기기 |
+| `opacity: 0`         | ✓ 있음    | ✓         | 페이드 인/아웃 애니메이션  |
+
+```css
+/* 모달 오버레이 페이드 애니메이션 예시 */
+.overlay {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none; /* opacity: 0이어도 클릭 차단 */
+}
+.overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+```
+
+<Subtitle level={4}>`cursor`와 `pointer-events`</Subtitle>
+
+<Paragraph>
+  사용자에게 "이 요소가 클릭 가능한가"를 시각적·기능적으로 제어합니다.
+</Paragraph>
+
+```css
+/* cursor: 마우스 포인터 모양 변경 */
+.button {
+  cursor: pointer; /* 손가락 모양 → 클릭 가능 암시 */
+}
+.disabled-button {
+  cursor: not-allowed; /* 금지 아이콘 → 비활성 상태 암시 */
+  opacity: 0.5;
+}
+.loading {
+  cursor: wait; /* 로딩 중 */
+}
+
+/* pointer-events: 클릭 이벤트 자체를 차단 */
+.overlay {
+  pointer-events: none; /* 이 요소 위에서 클릭해도 아래 요소에 전달 */
+}
+.interactive {
+  pointer-events: auto; /* 기본값 — 클릭 가능 */
+}
+```
+
+```html
+<!-- Tailwind 예시 -->
+<button class="cursor-pointer hover:bg-blue-600">클릭 버튼</button>
+<button class="cursor-not-allowed opacity-50" disabled>비활성 버튼</button>
+<div class="pointer-events-none">클릭 통과 레이어</div>
 ```
 
 ---
@@ -379,74 +365,89 @@ POST 요청: https://example.com/login
 
 <Paragraph>
   <strong>
-    Q1. 네이버나 구글에서 검색을 해보고, 주소창 URL을 확인해보세요. 어떤
-    방식(GET/POST)을 사용하고 있나요? 그리고 왜 로그인 폼은 같은 방식을 쓰지
-    않는다고 생각하나요?
+    Q1. `box-sizing: content-box`(기본값) 상태에서 `width: 300px`, `padding:
+    20px`, `border: 10px solid black`을 준 요소의 실제 화면 너비는 몇 px인가요?
+    직접 계산 과정을 쓰세요.
   </strong>
 </Paragraph>
 
-<Subtitle level={4}>검색은 왜 GET인가?</Subtitle>
+<Subtitle level={4}>정답: 360px</Subtitle>
 
 <Paragraph>
-  검색창에 "리액트"를 입력하면 URL이{" "}
-  <strong>`?q=리액트`처럼 쿼리스트링에 검색어가 붙습니다.</strong> 이것이 GET
-  방식입니다.
+  `content-box`에서는 `width`가 콘텐츠 영역만을 의미합니다. padding과 border가
+  바깥쪽으로 추가됩니다.
 </Paragraph>
 
-- <strong>북마크·공유 가능</strong>: URL 자체가 검색 결과를 담고 있어서 링크를
-  복사해 공유하면 상대방도 같은 결과를 볼 수 있습니다.
-- <strong>캐싱 가능</strong>: 브라우저와 서버가 결과를 캐시해 두어 반복 검색이
-  빠릅니다.
-- <strong>멱등성</strong>: 몇 번을 요청해도 서버 상태가 변하지 않습니다.
+- 콘텐츠 영역: 300px
+- 좌우 패딩: 20px × 2 = 40px
+- 좌우 보더: 10px × 2 = 20px
+- <strong>실제 화면 너비: 300 + 40 + 20 = 360px</strong>
 
-<Subtitle level={4}>로그인은 왜 POST인가?</Subtitle>
+<Subtitle level={4}>흔한 오답 패턴</Subtitle>
 
-- <strong>URL 노출 금지</strong>: GET을 쓰면 비밀번호가 주소창에 그대로
-  나타납니다. 브라우저 히스토리, 서버 로그, 공유 화면에 모두 노출됩니다.
-- <strong>서버 상태 변경</strong>: 로그인 성공 시 세션이 생성되는 등 서버 상태가
-  바뀝니다. 상태를 변경하는 요청은 POST가 맞습니다.
-- <strong>HTTPS + POST</strong>: POST 바디는 HTTPS 암호화 구간에서 보호되어
-  안전하게 전달됩니다.
+<Paragraph>
+  padding이나 border 중 하나만 더하거나, 한쪽 방향만 계산해 320px, 340px로
+  답하는 경우가 많습니다. <strong>좌우 양쪽을 모두 더해야 한다</strong>는 점을
+  기억하세요.
+</Paragraph>
 
 ---
 
 <Paragraph>
   <strong>
-    Q2. 아래 CSS 코드에서 `.btn` 텍스트는 최종적으로 무슨 색이 될까요? 그리고 왜
-    그 색이 적용되는지, 어떤 규칙 때문인지 설명해보세요.
+    Q2. 같은 요소에 `box-sizing: border-box`를 적용하면 실제 화면 너비와 콘텐츠
+    영역 너비는 각각 몇 px가 되나요? 직접 계산하세요.
   </strong>
 </Paragraph>
 
-```css
-p {
-  color: green;
-}
-.btn {
-  color: red;
-}
-#submit {
-  color: blue;
-}
-```
-
-```html
-<p class="btn" id="submit">제출</p>
-```
-
-<Subtitle level={4}>정답: blue</Subtitle>
+<Subtitle level={4}>정답: 실제 화면 너비 300px, 콘텐츠 영역 240px</Subtitle>
 
 <Paragraph>
-  CSS <strong>명시도(Specificity)</strong> 규칙에 따라 가장 높은 점수를 가진
-  선택자가 이깁니다.
+  `border-box`에서는 `width: 300px` 안에 padding과 border가 포함됩니다.
 </Paragraph>
 
-- <strong>`p` (태그 선택자)</strong>: 명시도 0-0-1 → green
-- <strong>`.btn` (클래스 선택자)</strong>: 명시도 0-1-0 → red
-- <strong>`#submit` (ID 선택자)</strong>: 명시도 1-0-0 → blue
+- 실제 화면 너비: <strong>300px</strong> (그대로)
+- 좌우 패딩: 20px × 2 = 40px
+- 좌우 보더: 10px × 2 = 20px
+- <strong>콘텐츠 영역: 300 - 40 - 20 = 240px</strong>
 
 <Paragraph>
-  ID 선택자가 가장 높은 명시도를 가지므로 <strong>최종 색은 blue</strong>입니다.
-  코드에서 선언 순서와 관계없이 명시도가 높은 규칙이 항상 우선합니다.
+  이것이 `border-box`가 편리한 이유입니다. "내가 300px이라고 썼으니 화면에서도
+  300px"이라는 직관적인 결과를 얻을 수 있습니다. `content-box`에서는 padding이나
+  border를 변경할 때마다 전체 크기가 바뀌어 레이아웃이 깨지기 쉽습니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q3. `margin-bottom: 30px`인 요소와 `margin-top: 20px`인 요소가 수직으로
+    붙어있을 때, 두 요소 사이의 실제 간격은 몇 px인가요? 이 현상의 이름과 방지
+    방법을 설명하세요.
+  </strong>
+</Paragraph>
+
+<Subtitle level={4}>정답: 30px — 마진 겹침(Margin Collapsing)</Subtitle>
+
+<Paragraph>
+  수직으로 인접한 블록 요소의 마진은 합산(50px)되지 않고,{" "}
+  <strong>더 큰 값(30px)만 남습니다.</strong> 이를 마진 겹침(Margin
+  Collapsing)이라 합니다.
+</Paragraph>
+
+<Subtitle level={4}>방지 방법</Subtitle>
+
+- <strong>부모 요소에 `overflow: hidden` 적용</strong>
+- <strong>부모 요소에 `padding` 또는 `border` 추가</strong>
+- <strong>`display: flex` 또는 `display: grid` 컨테이너 사용</strong>:
+  Flexbox·Grid 안에서는 마진 겹침이 발생하지 않습니다.
+
+<Subtitle level={4}>흔한 오답 패턴</Subtitle>
+
+<Paragraph>
+  "30 + 20 = 50px"라고 합산하는 경우가 가장 많습니다.{" "}
+  <strong>수직 마진은 더 큰 쪽이 이긴다</strong>는 규칙을 기억하세요. 수평
+  마진은 겹치지 않으니 혼동하지 마세요.
 </Paragraph>
 
 ---
@@ -458,82 +459,80 @@ p {
   외우기보다는 자신만의 말로 설명하는 연습을 해보세요.
 </Paragraph>
 
-<Subtitle level={3}>Q1. GET과 POST의 차이를 설명해주세요.</Subtitle>
-
-<Paragraph>
-  둘 다 HTTP 요청 방식이지만, <strong>데이터를 실어 보내는 위치</strong>가
-  다릅니다.
-</Paragraph>
-
-- <strong>GET</strong>: 데이터가 URL의 쿼리 스트링에 붙어서 전송됩니다
-  (`?key=value`). URL에 노출되므로 민감하지 않은 데이터(검색, 필터링)에
-  적합합니다. URL 공유, 북마크, 브라우저 캐싱이 가능한 것이 장점입니다.
-- <strong>POST</strong>: 데이터가 HTTP 요청 본문(Body)에 담겨 전송됩니다. URL에
-  노출되지 않아 로그인, 회원가입, 결제 등 민감한 정보에 적합합니다.
-
-<Paragraph>
-  면접 팁: "주소창에 보여도 괜찮으면 GET, 아니면 POST"라고 정리하면 간결합니다.
-  다만 POST도 HTTPS 없이는 안전하지 않다는 점도 언급하면 좋습니다.
-</Paragraph>
-
 <Subtitle level={3}>
-  Q2. CSS 선택자 우선순위(Specificity)를 설명해주세요.
+  Q1. 마진 겹침(Margin Collapsing) 현상을 설명해주세요.
 </Subtitle>
 
 <Paragraph>
-  같은 요소에 여러 CSS 규칙이 적용될 때, 어떤 스타일이 최종 적용될지 결정하는
-  규칙입니다.
+  수직 방향으로 인접한 두 요소의 마진이 만나면, 합산되지 않고{" "}
+  <strong>둘 중 큰 값만 적용</strong>되는 CSS의 의도적인 동작입니다.
 </Paragraph>
 
-- <strong>우선순위 순서</strong>: `!important` > 인라인 스타일 > 아이디(#) >
-클래스(.) / 속성 / 가상 클래스 > 태그 / 가상 요소
-- 같은 우선순위라면 <strong>나중에 작성된 스타일</strong>이 적용됩니다.
-- `!important`는 우선순위를 강제로 끌어올리지만, 디버깅이 극도로 어려워지므로
-  실무에서는 가급적 사용하지 않습니다.
-
-<Subtitle level={3}>Q3. 박스 모델(Box Model)이 무엇인가요?</Subtitle>
+- <strong>인접 형제</strong>: 위 요소의 `margin-bottom`과 아래 요소의
+  `margin-top`이 겹침
+- <strong>부모와 자식</strong>: 부모에 padding이나 border가 없으면, 자식의
+  margin이 부모 밖으로 새어 나감
+- <strong>해결법</strong>: 부모에 `padding`, `border`, 또는 `overflow: hidden`을
+  적용하면 겹침을 방지할 수 있습니다.
 
 <Paragraph>
-  모든 HTML 요소는 사각형 상자로 이루어져 있습니다. 이 상자는 안쪽부터
-  바깥쪽으로 네 영역으로 구성됩니다.
+  면접 팁: "왜 이런 동작이 존재하느냐"는 질문이 이어질 수 있습니다. 문단(p)
+  태그의 상하 마진이 겹침 없이 합산되면 간격이 두 배로 벌어지기 때문에,
+  자연스러운 여백을 유지하기 위한 설계라고 답하면 됩니다.
 </Paragraph>
 
-1. <strong>Content</strong>: 텍스트, 이미지 등 실제 내용이 들어가는 영역
-2. <strong>Padding</strong>: 콘텐츠와 테두리 사이의 안쪽 여백 (배경색 적용됨)
-3. <strong>Border</strong>: 요소의 테두리
-4. <strong>Margin</strong>: 테두리 바깥쪽의 다른 요소와의 간격 (투명)
+<Subtitle level={3}>
+  Q2. `position: absolute`와 `position: fixed`의 차이를 설명해주세요.
+</Subtitle>
 
 <Paragraph>
-  `box-sizing: content-box`(기본값)에서는 width가 콘텐츠 영역만을 의미하고,
-  `box-sizing: border-box`에서는 padding과 border까지 포함합니다. 현대 웹
-  개발에서는 `border-box`를 기본으로 설정하는 것이 표준입니다.
+  둘 다 문서의 정상 흐름에서 빠진다는 공통점이 있지만, <strong>기준점</strong>이
+  다릅니다.
 </Paragraph>
 
-```css
-/* content-box: width(200) + padding×2(40) + border×2(10) = 실제 250px */
-.box {
-  width: 200px;
-  padding: 20px;
-  border: 5px solid;
-}
+- <strong>`absolute`</strong>: 가장 가까운 `position`이 `static`이 아닌 조상
+  요소를 기준으로 배치됩니다. 그런 조상이 없으면 뷰포트가 기준이 됩니다.
+  스크롤하면 함께 움직입니다.
+- <strong>`fixed`</strong>: 항상 뷰포트(브라우저 화면)를 기준으로 배치됩니다.
+  스크롤해도 화면의 같은 위치에 고정됩니다. 고정 헤더, 플로팅 버튼 등에
+  사용합니다.
 
-/* border-box: 실제 너비 200px 고정, 콘텐츠 = 200 - 40 - 10 = 150px */
-.box {
-  box-sizing: border-box;
-  width: 200px;
-  padding: 20px;
-  border: 5px solid;
-}
-```
+<Paragraph>
+  `absolute`를 쓸 때 가장 흔한 실수는 부모에 `position: relative`를 빼먹는
+  것입니다. 기준이 될 조상 요소에 `position: relative`를 줘야 합니다.
+</Paragraph>
+
+<Subtitle level={3}>
+  Q3. Flexbox의 `justify-content`와 `align-items`의 차이를 설명해주세요.
+</Subtitle>
+
+<Paragraph>
+  둘 다 Flex 컨테이너 안에서 자식 요소들을 정렬하는 속성이지만,{" "}
+  <strong>정렬하는 축</strong>이 다릅니다.
+</Paragraph>
+
+- <strong>`justify-content`</strong>: <strong>주축(Main Axis)</strong> 방향으로
+  정렬합니다. `flex-direction: row`일 때는 가로 정렬, `column`일 때는 세로
+  정렬이 됩니다.
+- <strong>`align-items`</strong>: <strong>교차축(Cross Axis)</strong> 방향으로
+  정렬합니다. `flex-direction: row`일 때는 세로 정렬, `column`일 때는 가로
+  정렬이 됩니다.
+
+<Paragraph>
+  "주축은 justify, 교차축은 align"이라는 규칙만 외우면, `flex-direction`이
+  바뀌어도 헷갈리지 않습니다.
+</Paragraph>
+
+---
 
 <Subtitle level={2}>4. 관련 포스팅</Subtitle>
 
-- <Anchor href="/blog/study/clab-26-1/week2">
-    프론트엔드 스터디 2주차 학습 자료: 사용자와 소통하는 폼 & CSS의 시작
-  </Anchor>
 - <Anchor href="/blog/study/clab-26-1/week3">
     프론트엔드 스터디 3주차 학습 자료: 프론트엔드의 첫 번째 벽, 박스 모델과
     스타일링
+  </Anchor>
+- <Anchor href="/blog/study/clab-26-1/week4">
+    프론트엔드 스터디 4주차 학습 자료: 자유자재 레이아웃 (포지션과 플렉스박스)
   </Anchor>
 
 ---
@@ -541,38 +540,38 @@ p {
 <Subtitle level={2}>5. 다음 주 안내</Subtitle>
 
 <Paragraph>
-  다음 주에는 CSS의 꽃인 <strong>레이아웃</strong>을 본격적으로 다룹니다.
-  Position으로 요소를 원하는 위치에 배치하고, <strong>Flexbox</strong>로 유연한
-  가로·세로 레이아웃을 구성하는 것이 목표입니다.
+  다음 주에는 4주차 학습 자료에서 다룬 <strong>반응형 웹 디자인</strong>,{" "}
+  <strong>미디어 쿼리</strong>, <strong>CSS Grid</strong>를 복습하고, CSS 파트를
+  마무리합니다. HTML/CSS 전체를 아우르는 면접 질문도 함께 준비합니다.
 </Paragraph>
 
 <Subtitle level={3}>다음 주 영상 예습</Subtitle>
 
 <Paragraph>
-  다음 주 영상(4주차 진도: 04:28:10 ~ 05:28:02)에서는 CSS의 꽃인 레이아웃에
-  들어갑니다. 영상을 보기 전에 아래 내용을 가볍게 훑어두면 이해가 빠릅니다.
+  다음 주는 강의 영상의 마지막 구간(05:28:02 이후)을 다루며 CSS 파트를
+  마무리합니다. 동시에 4주차 학습 자료의 후반부(미디어 쿼리, Grid, 반응형
+  단위)도 함께 복습하니, 학습 자료를 꼭 읽어오세요.
 </Paragraph>
 
-- <strong>배경 이미지</strong>: `background-image`로 요소에 이미지를 넣고,
-  `background-size`, `background-repeat` 등으로 크기와 반복을 제어하는 법을
-  배웁니다.
-- <strong>Position</strong>: 요소를 문서 흐름에서 꺼내서 원하는 위치에 배치하는
-  속성입니다. `static`, `relative`, `absolute`, `fixed` 네 가지가 나오는데, 각각
-  <strong>"기준점이 어디인가"</strong>가 다릅니다.
-- <strong>Flexbox</strong>: 이번 주 가장 중요한 개념입니다. 자식 요소들을 가로
-  또는 세로로 유연하게 정렬하는 레이아웃 시스템입니다. 내비게이션 바, 카드 배치,
-  정중앙 정렬 등 거의 모든 레이아웃에 쓰입니다.
+- <strong>미디어 쿼리 (@media)</strong>: 강의에서 화면 크기에 따라 다른 스타일을
+적용하는 법을 배웁니다. `@media (min-width: 768px) { ... }` 형태로 작성하며,
+데스크톱/태블릿/모바일에 따라 레이아웃을 바꿀 수 있습니다.
+- <strong>CSS Grid</strong>: 강의 마지막에 Grid가 등장할 수 있습니다. Flexbox가
+  가로 또는 세로 한 방향이라면, Grid는 행과 열을 동시에 다루는 2차원
+  레이아웃입니다.
+- <strong>반응형 단위 (vw, vh)</strong>: 뷰포트(화면) 크기를 기준으로 하는
+  단위입니다. `100vw`는 화면 전체 너비, `100vh`는 화면 전체 높이입니다.
 
 <Subtitle level={3}>사전 과제</Subtitle>
 
 <Paragraph>
-  아래 영상의 <strong>3주차 진도 구간(02:59:19 ~ 04:28:10)</strong>을
-  시청해주세요. 폰트/색상 제어부터 박스 모델까지의 내용입니다.
+  아래 영상의 <strong>4주차 진도 구간(04:28:10 ~ 05:28:02)</strong>을
+  시청해주세요. 배경 이미지 제어부터 Flexbox 레이아웃까지의 내용입니다.
 </Paragraph>
 
 - <strong>영상</strong>: 제대로 파는 HTML & CSS
-- <strong>구간</strong>: 02:59:19 ~ 04:28:10 (약 1시간 29분)
+- <strong>구간</strong>: 04:28:10 ~ 05:28:02 (약 1시간)
 - <strong>링크</strong>:
-  <Anchor external="https://youtu.be/TrC2x4N0XqY?t=10759">
-    제대로 파는 HTML & CSS - 3주차 진도 시청하기
+  <Anchor external="https://youtu.be/TrC2x4N0XqY?t=16090">
+    제대로 파는 HTML & CSS - 4주차 진도 시청하기
   </Anchor>

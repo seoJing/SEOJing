@@ -14,7 +14,10 @@ description: JS에서 가장 낯선 개념 중 하나인 프로토타입 기반 
 <Subtitle level={2}>7주차 학습 자료</Subtitle>
 
 - <strong>입문 강의 (처음이라면):</strong> 얄코 JS 입문 강의
-  <Anchor external="https://youtu.be/aC55WY8jxX0">클래스 챕터</Anchor>
+  <Anchor external="https://youtu.be/8kmtCVgqM34?t=16284">
+    Section 5 후반~Section 6 (생성자 함수·클래스·상속, 주요 빌트인 객체) 챕터 —
+    4:31:24부터
+  </Anchor>
 - <strong>강의 스킵 가능:</strong> 아래 스킵 진단 문제 10개를 모두 맞히면 강의
   시청 스킵 가능합니다.
 - <strong>심화 자료 (딥다이브 대비):</strong>
@@ -222,7 +225,9 @@ function deepFreeze(obj) {
 <Paragraph>
   실무에서는 상태를 직접 변경하지 않고 새 객체를 만들어 반환하는{" "}
   <strong>불변 패턴</strong>을 많이 사용합니다. React의 상태 관리(`setState`,
-  `useState`)가 이 방식을 따릅니다.
+  `useState`)가 이 방식을 따릅니다. 지금은 React를 배우지 않은 상태이니
+  <strong>"나중에 React 배울 때 이 감각이 살아난다"</strong> 정도로만
+  넘겨두세요. 이유는 week10에서 자연스럽게 이어집니다.
 </Paragraph>
 
 ---
@@ -279,6 +284,17 @@ console.log(p1.greet === p2.greet); // true
 
 <Subtitle level={3}>[[Prototype]] vs prototype — 헷갈리는 두 개념</Subtitle>
 
+<Paragraph>
+  이름이 비슷해서 매우 헷갈리는 두 개념입니다. 한 줄로 먼저 구분하면:{" "}
+  <strong>
+    <code>[[Prototype]]</code>은 모든 객체가 자동으로 가지는 "보이지 않는
+    링크"(위로 찾아 올라갈 부모를 가리킴)이고, <code>prototype</code>은 함수
+    객체에만 달린 프로퍼티 (그 함수로 <code>new</code>해서 만들어질 인스턴스들의
+    부모가 될 객체)
+  </strong>
+  입니다.
+</Paragraph>
+
 - <strong>`[[Prototype]]`</strong>: 모든 객체가 가지는 내부 슬롯. 상위
   프로토타입을 가리킴. `__proto__`로 접근 가능 (권장 안 함)
 - <strong>`prototype`</strong>: 함수 객체만 가지는 프로퍼티. `new`로 인스턴스를
@@ -289,6 +305,7 @@ function Foo() {}
 
 const foo = new Foo();
 
+// foo의 [[Prototype]] (부모)이 곧 Foo.prototype (함수가 미리 준비한 부모 객체)
 console.log(foo.__proto__ === Foo.prototype); // true
 console.log(Foo.prototype.constructor === Foo); // true
 ```
@@ -333,8 +350,17 @@ typeof new Date(); // 'object'
   정확한 타입 확인: Object.prototype.toString.call()
 </Subtitle>
 
+<Paragraph>
+  이 API는 <strong>실무에서 직접 호출하는 일은 많지 않습니다</strong>. 다만
+  "가장 정밀한 타입 체크의 원리"를 한 번 이해해두면, 라이브러리 내부에서 이
+  패턴이 나올 때 읽을 수 있습니다. 지금은 <strong>"이런 방법이 있다"</strong>{" "}
+  정도만 기억해도 충분해요.
+</Paragraph>
+
 ```js
 function getType(value) {
+  // toString.call(value)는 '[object Number]' 같은 문자열을 돌려줌.
+  // .slice(8, -1)은 앞 '[object '(8글자)과 뒤 ']'(1글자)를 잘라 'Number'만 남김.
   return Object.prototype.toString.call(value).slice(8, -1);
 }
 
@@ -369,6 +395,8 @@ new Date() instanceof Date  // true
 <Paragraph>
   TypeScript를 사용하면 이런 런타임 타입 체크의 대부분을 컴파일 타임으로 옮길 수
   있습니다. React 프로젝트에서 TypeScript가 사실상 표준인 이유 중 하나입니다.
+  (TypeScript는 지금 주차에서는 다루지 않습니다. "이름만 들어두세요" 수준으로
+  OK.)
 </Paragraph>
 
 ---

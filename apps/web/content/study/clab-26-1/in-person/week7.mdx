@@ -1,363 +1,511 @@
 ---
-title: "프론트엔드 스터디 대면 7주차: 객체, 함수, 스코프"
-date: 2026-05-02
+title: "프론트엔드 스터디 대면 7주차: 불변성·프로토타입 점검 + 렌더링 파이프라인"
+date: 2026-05-11
 tags:
   - 프론트엔드
   - 스터디
   - JavaScript
-  - 객체
-  - 함수
-  - 스코프
-  - 호이스팅
-description: 6주차 JS 기초 복습과 과제 풀이, 그리고 이번 주 핵심인 호이스팅, 일급 객체로서의 함수, 렉시컬 스코프 관련 면접 질문을 다룹니다.
+  - 불변성
+  - 프로토타입
+  - 타입체크
+  - 렌더링 파이프라인
+  - Reflow
+  - Paint
+description: 불변성·프로토타입·타입 체크 사전학습 점검 후, 렌더링 파이프라인을 통해 reflow·paint·transform 감각과 React 리렌더까지 예습으로 짚는 대면입니다.
 ---
 
-<Subtitle level={2}>1. 저번 주 복습</Subtitle>
+<Subtitle level={2}>1. 이번 주 사전학습 점검</Subtitle>
 
 <Paragraph>
-  지난주에는 JavaScript를 시작하며 타입 시스템, var/let/const, 암묵적 타입 변환,
-  단축 평가를 배웠습니다. 핵심만 빠르게 짚어보겠습니다.
+  이번 주 사전학습(비대면 week7)에서는 <strong>불변성</strong>,{" "}
+  <strong>프로토타입</strong>, <strong>타입 체크</strong> 세 축을 다뤘습니다.
+  다른 언어 경험자에게 JS가 가장 낯설게 느껴지는 구간이에요. 완전한 이해가
+  목표가 아니라, 오늘 대면 앞부분에서 구술 설명용으로 다시 짚어 "코드를 옆에
+  두고 말로 풀어낼 수 있는 상태"를 만드는 것이 목표입니다.
 </Paragraph>
 
-<Subtitle level={3}>타입 시스템</Subtitle>
+<Subtitle level={3}>핵심 리마인드</Subtitle>
 
-- <strong>동적 타입 언어</strong>: 변수에 어떤 타입이든 넣을 수 있고, 런타임에
-  타입이 결정
-- <strong>원시 타입 7가지</strong>: number, string, boolean, undefined, null,
-  symbol, bigint
-- <strong>`typeof null === 'object'`</strong>: JS 초기 설계 버그, 하위 호환을
-  위해 유지
-- <strong>`NaN === NaN`은 `false`</strong>: NaN 확인은 `Number.isNaN()` 사용
-
-<Subtitle level={3}>var / let / const</Subtitle>
-
-- <strong>`var`</strong>: 함수 스코프, 재선언 가능, 호이스팅 시 `undefined` —
-  사용 지양
-- <strong>`let`</strong>: 블록 스코프, 재선언 불가, TDZ로 선언 전 접근 시
-  ReferenceError
-- <strong>`const`</strong>: 블록 스코프, 재선언·재할당 불가. 단, 객체 내부
-  변경은 가능
-- <strong>실무 원칙</strong>: 기본 const, 재할당 필요 시 let, var는 쓰지 않음
-
-<Subtitle level={3}>암묵적 타입 변환 & 단축 평가</Subtitle>
-
-- <strong>`'5' + 1 = '51'`</strong>: `+`는 문자열 우선, `'5' - 1 = 4`: `-`는
-  숫자 변환 시도
-- <strong>`===` 사용</strong>: `==`는 타입 변환 후 비교하므로 예측 불가 — 항상
-  `===`
-- <strong>`||`</strong>: 왼쪽이 falsy면 오른쪽 반환 (기본값 패턴)
-- <strong>`&&`</strong>: 왼쪽이 truthy면 오른쪽 반환 (조건부 실행 패턴)
-
-<Subtitle level={3}>자주 헷갈리는 포인트 — 코드로 확인</Subtitle>
-
-<Subtitle level={3}>참조 복사의 함정</Subtitle>
+<Subtitle level={4}>
+  불변성 — `const`는 리모컨 고정이지 채널 고정이 아니다
+</Subtitle>
 
 <Paragraph>
-  원시 타입(숫자, 문자열 등)은 값이 복사되지만, 객체는{" "}
-  <strong>참조(주소)가 복사</strong>됩니다. 같은 객체를 두 변수가 바라보게
-  되므로 한쪽을 바꾸면 다른 쪽도 바뀝니다.
+  `const`는 <strong>리모컨(참조)을 바꾸지 못하게</strong> 하는 것입니다.
+  리모컨이 가리키는 TV의 채널(객체 내부 값)은 얼마든지 바꿀 수 있어요. 이 감각이
+  이번 주 내내 따라다녔던 핵심이고, 오늘 대면 메인에서도 다시 만나게 됩니다.
 </Paragraph>
 
 ```js
-// 원시 타입 — 값 복사 (독립적)
-let a = 1;
-let b = a;
-b = 99;
-console.log(a); // 1 — 영향 없음
+// const는 리모컨(참조)을 고정할 뿐
+const tv = { channel: 5 };
+tv.channel = 11; // 가능 — TV 채널(내부 값) 변경
+console.log(tv.channel); // 11
 
-// 객체 — 참조 복사 (같은 객체를 가리킴)
-const obj1 = { x: 1 };
-const obj2 = obj1; // obj2는 obj1과 같은 객체를 가리킴
-obj2.x = 99;
-console.log(obj1.x); // 99 — !obj1도 바뀜!
+tv = { channel: 3 }; // TypeError — 리모컨 자체를 바꾸려 하면 에러
 ```
 
-<Subtitle level={3}>일급 객체가 왜 중요한가 — React와 연결</Subtitle>
-
 <Paragraph>
-  함수가 일급 객체라는 것은 <strong>함수를 값처럼 다룰 수 있다</strong>는
-  뜻입니다. 이게 왜 중요할까요? React에서 매일 쓰는 코드가 이 덕분에 동작합니다.
+  한 단계 더 들어가면 `Object.freeze()`도{" "}
+  <strong>얕은 동결(shallow freeze)</strong>
+  이라는 한계가 있습니다. 최상위 프로퍼티는 동결되지만, 중첩된 객체 안쪽까지는
+  얼리지 못해요. "진짜 불변"을 원하면 재귀적으로 얼려야 한다는 감각만
+  기억해두세요.
 </Paragraph>
 
-```jsx
-// React에서 이벤트 핸들러를 전달하는 코드
-function App() {
-  const handleClick = () => alert("클릭!");
-
-  // handleClick 함수를 값으로 전달 — 일급 객체이기 때문에 가능
-  return <button onClick={handleClick}>클릭</button>;
-}
-
-// 배열 메서드에 함수를 인자로 전달하는 것도 같은 원리
-const nums = [1, 2, 3];
-const doubled = nums.map((n) => n * 2); // [2, 4, 6]
-```
-
-<Subtitle level={3}>렉시컬 스코프 — 함수는 작성된 곳의 규칙을 따른다</Subtitle>
+<Subtitle level={4}>
+  프로토타입 — 내가 없으면 부모, 부모도 없으면 조부모를 본다
+</Subtitle>
 
 <Paragraph>
-  "함수가 어디서 <strong>호출</strong>되는지"가 아니라 "어디서{" "}
-  <strong>작성</strong>되었는지"가 스코프를 결정합니다. 전학생 비유로: 학생이
-  다른 반에 놀러 가도(호출 위치), 소속 반(선언 위치)의 규칙을 따르는 것과
-  같습니다.
+  프로토타입 체인은 <strong>족보</strong>와 같습니다. 어떤 객체에서 프로퍼티나
+  메서드를 찾을 때, 자신에게 없으면 부모 프로토타입으로 올라가고, 부모도 없으면
+  조부모(`Object.prototype`)까지 올라갑니다. 최상단까지 없으면 `undefined`예요.
 </Paragraph>
 
 ```js
-const x = 1; // 전역에서 선언
-
-function foo() {
-  console.log(x); // foo는 전역에서 작성됨 → 전역의 x를 봄
-}
-
-function bar() {
-  const x = 2; // bar 안의 x
-  foo(); // foo를 bar 안에서 호출해도...
-}
-
-bar(); // 1 출력 — foo는 전역에서 작성됐으므로 전역의 x(1)를 참조
+const obj = {};
+Object.getPrototypeOf(obj) === Object.prototype; // true
+obj.toString(); // Object.prototype에서 찾아서 실행됨
 ```
 
----
-
-<Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
-
-<Subtitle level={3}>인증 미션 과제</Subtitle>
-
 <Paragraph>
-  <strong>
-    Q1. 함수 선언식은 호이스팅되어 선언 전에 호출할 수 있습니다. 그런데 함수
-    표현식(`const fn = function() {}`)은 선언 전에 호출하면 `TypeError`가
-    발생합니다. `ReferenceError`가 아니라 왜 `TypeError`인지, 호이스팅 과정을
-    단계별로 설명하세요.
-  </strong>
+  JS가 <strong>프로토타입 기반 상속</strong>을 쓴다는 얘기가 여기서 나옵니다.
+  ES6의 `class` 문법도 사실 이 프로토타입 체인을 감싸는 문법적 설탕(syntactic
+  sugar)이에요. "다른 언어와 달리 JS는 객체가 직접 다른 객체를 상속한다" 한 줄만
+  가져가도 충분합니다.
 </Paragraph>
 
-<Subtitle level={4}>정답</Subtitle>
+<Subtitle level={4}>타입 체크 — `typeof`의 한계와 상황별 선택</Subtitle>
 
 <Paragraph>
-  함수 선언식은 선언과 초기화가 함께 호이스팅되어 함수 전체가 올라갑니다. 반면{" "}
-  <strong>
-    `var` 함수 표현식은 변수 선언만 호이스팅되고 값(함수)은 `undefined`
-  </strong>
-  상태입니다. `undefined()`를 호출하면 "undefined is not a function"이라는{" "}
-  <strong>`TypeError`</strong>가 발생합니다. `const`/`let` 표현식은 TDZ 때문에
-  `ReferenceError`가 먼저 납니다.
+  `typeof`는 원시값 구분엔 좋지만, 객체 세부 타입에선 한계가 있습니다.{" "}
+  <strong>`typeof null === 'object'`</strong>는 JS 초창기 엔진 구현의{" "}
+  <strong>역사적 버그</strong>로, 이제 와서 고치면 기존 코드가 전부 깨져서 못
+  고치는 상태예요. 배열도 결국 객체라 `typeof [] === 'object'`로 나옵니다.
 </Paragraph>
 
-<Subtitle level={4}>흔한 오답 패턴</Subtitle>
+```js
+typeof null; // 'object' — 역사적 버그
+typeof []; // 'object' — 배열도 객체
+Array.isArray([]); // true — 배열은 이걸로 확인
+new Date() instanceof Date; // true — 특정 생성자 체크
+Object.prototype.toString.call(null); // '[object Null]' — 가장 정밀
+```
 
 <Paragraph>
-  "호이스팅이 안 돼서 에러가 난다"고 답하는 경우가 많습니다.{" "}
-  <strong>
-    호이스팅은 일어났지만, 값이 `undefined`인 상태에서 호출해서 나는 에러
-  </strong>
-  라는 점이 핵심입니다.
+  상황별로 다르게 씁니다. <strong>배열은 `Array.isArray`</strong>, 특정 클래스
+  인스턴스는 <strong>`instanceof`</strong>, 가장 정밀한 타입 문자열이 필요하면{" "}
+  <strong>`Object.prototype.toString.call()`</strong>이라는 방법이 있다는 것만.
+  마지막 것은 <strong>오늘 외울 필요 없고 "이런 게 있다"로 충분</strong>합니다.
+  TypeScript를 쓰면 이런 런타임 체크의 많은 부분이 컴파일 타임으로 옮겨간다는
+  점도 예습 수준에서 같이 기억해두세요.
 </Paragraph>
 
----
+<Subtitle level={3}>사전학습 인증 미션 풀이</Subtitle>
+
+<Paragraph>
+  인증 미션 Q1~Q4 중 오늘 대면에서는{" "}
+  <strong>Q1(`Object.freeze`와 `push`)</strong>와{" "}
+  <strong>Q2(`[] instanceof Array/Object`)</strong>만 함께 풀어봅니다.
+  Q3(`typeof []` vs `Array.isArray`)와 Q4(`class`의 문법적 설탕)는 위
+  리마인드에서 이미 맥락이 깔렸으니,{" "}
+  <strong>비대면 자료를 참고해 정리한 답을 댓글로 제출</strong>
+  해주세요. 궁금한 점은 아래 "막힌 사람 클리닉"에서 바로 꺼내도 됩니다.
+</Paragraph>
 
 <Paragraph>
   <strong>
-    Q2. 아래 코드의 실행 결과를 예측하고, 렉시컬 스코프 개념을 사용해 이유를
+    Q1. 아래 코드의 실행 결과는 무엇인가요? `Object.freeze()`의 동작 방식을
     설명하세요.
   </strong>
 </Paragraph>
 
 ```js
-const x = "global";
-
-function foo() {
-  console.log(x);
-}
-
-function bar() {
-  const x = "bar";
-  foo();
-}
-
-bar();
+const arr = [1, 2, 3];
+Object.freeze(arr);
+arr.push(4);
 ```
 
-<Subtitle level={4}>정답: `"global"`</Subtitle>
+<Subtitle level={4}>정답: `TypeError`</Subtitle>
 
 <Paragraph>
-  JS는 <strong>렉시컬 스코프(정적 스코프)</strong>를 사용합니다. 함수의 상위
-  스코프는 "호출 위치"가 아니라 <strong>"선언 위치"</strong>에 의해 결정됩니다.
-  `foo`는 전역에서 선언됐으므로 어디서 호출하든 전역 스코프의 `x`를 참조합니다.
+  `Object.freeze()`는 객체(배열 포함)의 프로퍼티 추가·삭제·변경을 금지합니다.
+  `push()`는 배열에 새 요소를 추가하면서 `length`도 바꾸는 동작이라{" "}
+  <strong>동결된 배열에서는 `TypeError`</strong>가 발생합니다. 배열도 결국
+  객체이기 때문에 `freeze`가 그대로 적용된다는 점이 포인트예요.
 </Paragraph>
 
-<Subtitle level={4}>흔한 오답 패턴</Subtitle>
+<Subtitle level={4}>놓치기 쉬운 지점</Subtitle>
 
 <Paragraph>
-  `bar()` 내부에서 호출했으니 `bar`의 `x`인 `"bar"`가 출력된다고 예측하는 경우가
-  많습니다. 이는 동적 스코프 방식의 사고입니다.{" "}
-  <strong>JS는 렉시컬 스코프이므로 선언 위치가 기준</strong>입니다.
+  `Object.freeze`는 <strong>얕은 동결</strong>이라,{" "}
+  `Object.freeze({ nested: { x: 1 } })`에서 `nested.x = 99`는 막지 못합니다. "배열
+  안에 객체가 들어있다면 그 객체는 여전히 변경 가능하다"는 점을 덧붙여주면 완벽한
+  답이 됩니다.
 </Paragraph>
 
 ---
 
 <Paragraph>
   <strong>
-    Q3. 아래 코드에서 `obj1.x`의 값은 무엇인가요? 원시값 복사와 참조 복사의
-    차이를 설명하세요.
-  </strong>
-</Paragraph>
-
-```js
-const obj1 = { x: 1 };
-const obj2 = obj1;
-obj2.x = 99;
-console.log(obj1.x);
-```
-
-<Subtitle level={4}>정답: `99`</Subtitle>
-
-<Paragraph>
-  객체를 변수에 할당하면 값이 복사되는 것이 아니라{" "}
-  <strong>참조(메모리 주소)가 복사</strong>됩니다. `obj1`과 `obj2`는 같은 객체를
-  가리키므로 `obj2.x`를 변경하면 `obj1.x`도 함께 바뀝니다. 원시값(숫자, 문자열
-  등)은 값 자체가 복사되어 독립적입니다. 복사본을 만들려면 spread 문법(`{...obj}
-  `)이나 `Object.assign()`으로 얕은 복사를 해야 합니다.
-</Paragraph>
-
----
-
-<Paragraph>
-  <strong>
-    Q4. IIFE(즉시 실행 함수 표현식)를 사용하는 이유는 무엇인가요? ES6 모듈
-    시스템이 있는 현재에도 IIFE를 쓰는 경우가 있는지 설명하세요.
+    Q2. `[] instanceof Array`는 `true`이고, `[] instanceof Object`도
+    `true`입니다. 왜 빈 배열이 `Object`의 인스턴스이기도 한지, 프로토타입
+    체인으로 설명하세요.
   </strong>
 </Paragraph>
 
 <Subtitle level={4}>정답</Subtitle>
 
 <Paragraph>
-  IIFE의 핵심은 <strong>스코프 격리</strong>와 <strong>즉시 실행</strong>입니다.
-  모듈 시스템이 보편화되기 전에는 전역 변수 충돌을 막는 사실상 유일한
-  방법이었습니다. 현재도 다음 경우에 사용됩니다.
+  `[]`의 프로토타입 체인은{" "}
+  <strong>`[] → Array.prototype → Object.prototype → null`</strong>입니다.
+  `instanceof`는{" "}
+  <strong>
+    오른쪽 생성자의 `prototype`이 왼쪽 객체의 프로토타입 체인 어딘가에
+    존재하는지
+  </strong>{" "}
+  확인하는 연산자예요. `Array.prototype`도, `Object.prototype`도 체인 위에
+  있으므로 둘 다 `true`가 됩니다.
 </Paragraph>
 
-- <strong>레거시 코드 유지보수</strong>
-- <strong>즉시 실행이 필요한 초기화 로직</strong>
-- <strong>번들러가 모듈을 래핑할 때</strong>
-- <strong>async IIFE</strong>: `top-level await`가 불가능한 환경에서 비동기 즉시
-  실행
+<Subtitle level={4}>놓치기 쉬운 지점</Subtitle>
+
+<Paragraph>
+  JS에서{" "}
+  <strong>거의 모든 객체의 체인 최상단에 `Object.prototype`이 있다</strong>는
+  점이 핵심입니다. 그래서 배열·함수·`Date` 같은 대부분의 객체가 `instanceof
+  Object`를 만족해요. 이 구조가 곧 "JS의 상속 방식은 프로토타입" 이라는 말의
+  구체적 의미입니다.
+</Paragraph>
+
+<Subtitle level={3}>막힌 사람 클리닉 (상시)</Subtitle>
+
+<Paragraph>
+  사전학습에서 막힌 포인트를 자유롭게 공유합니다. 이 섹션은 매주 고정이며,{" "}
+  <strong>"이해 안 됐어요"라고 말하는 것이 스터디의 기본값</strong>입니다. 혼자
+  덮고 넘어가면 다음 주가 더 무거워집니다.
+</Paragraph>
+
+<Paragraph>
+  진행 방식: 말로 바로 해도 되고, 익명이 편하면 포스트잇이나 채팅에 적어 건네도
+  됩니다. 질문이 어색하면 "내가 비대면 자료 어디에서 몇 분 멈췄다" 한 줄도
+  충분해요.
+</Paragraph>
 
 ---
 
-<Subtitle level={2}>3. 면접 질문</Subtitle>
+<Subtitle level={2}>2. [대면 메인] 렌더링 파이프라인</Subtitle>
 
 <Paragraph>
-  이번 주 범위와 관련된 실제 면접 질문들입니다. 정답을 외우기보다는 자신만의
-  말로 설명하는 연습을 해보세요.
+  오늘 본론은 JS 문법이 아니라 <strong>브라우저가 하는 일</strong> 얘기입니다.
+  우리가 쓴 HTML/CSS/JS는 결국 그냥 <strong>글자(문자열)</strong>인데, 이게
+  어떻게 네모·색·움직임으로 화면에 나타나는지. 그 과정이 바로 "렌더링
+  파이프라인" 이에요. React를 배우기 3주쯤 전인 지금,{" "}
+  <strong>감각을 예습</strong>해두는 시간입니다.
 </Paragraph>
 
-<Subtitle level={3}>Q1. 스코프 체인(Scope Chain)이란 무엇인가요?</Subtitle>
+<Subtitle level={3}>2-1. 왜 이 얘기를 지금 하는가</Subtitle>
 
 <Paragraph>
-  변수를 참조할 때 현재 스코프에서 먼저 탐색하고, 없으면{" "}
-  <strong>상위 스코프로 순서대로 올라가며 탐색하는 구조</strong>입니다. 전역
-  스코프까지 탐색해도 없으면 ReferenceError가 발생합니다.
+  이번 주 비대면에서 "객체 참조가 바뀌는지 아닌지"를 계속 얘기했습니다. 그게
+  실제로 <strong>화면이 다시 그려지는 타이밍</strong>과 직접 연결돼요. 3주 뒤
+  week10에서 React를 만날 때 "왜 `setState`에 새 객체를 넘기라고 하지?" 얘기가
+  반드시 나옵니다. 그 답을 오늘 감각으로 심어두면, 그때 "아, 그 reflow 얘기!"
+  싶어지는 순간이 옵니다.
 </Paragraph>
 
-```js
-const a = "전역";
+<Paragraph>
+  오늘 미리 볼 키워드는 다섯 개입니다. 외울 필요는 없고, 이름과 윤곽만 머리에
+  들어오면 충분합니다.
+</Paragraph>
 
-function outer() {
-  const b = "outer";
-
-  function inner() {
-    const c = "inner";
-    console.log(c); // "inner" — 자신의 스코프
-    console.log(b); // "outer" — 상위 스코프
-    console.log(a); // "전역" — 전역 스코프
-  }
-
-  inner();
-  console.log(c); // ReferenceError — 하위 스코프는 접근 불가
-}
-```
+- <strong>파이프라인 5단계</strong> — 이름 외우지 말고 "대략 5단계가 있다"만
+- <strong>reflow · paint</strong> — 오늘의 두 단어. 이것만 남아도 성공
+- <strong>`transform` / `opacity`</strong> — 왜 애니메이션에서 이걸 쓰라고
+  하는가
+- <strong>불변성과 리렌더</strong> — 비대면 week7과 오늘을 잇는 핵심 고리
+- <strong>Performance 탭</strong> — 실무에서는 감이 아니라 측정으로 본다
 
 <Paragraph>
-  면접 팁: "스코프 체인은 안에서 밖으로만 탐색합니다. 바깥에서 안쪽은 접근할 수
-  없습니다. 이 구조가 렉시컬 스코프, 나아가 클로저의 기반이 됩니다"라고 정리하면
-  좋습니다.
+  지금 이 얘기를 꺼내는 이유는 분명합니다. React 진입 주차(week10)에서 "리렌더
+  최적화" 얘기가 나올 때, 왜 그게 필요한지 <strong>브라우저 관점</strong>이
+  없으면 공중에 뜨거든요. 오늘은 브라우저가 무슨 일을 하는지 한 번 깔아두는
+  자리입니다.
 </Paragraph>
 
 <Subtitle level={3}>
-  Q2. JavaScript에서 함수는 왜 일급 객체(First-Class Object)라고 하나요?
+  2-2. 파이프라인 5단계 개괄 — 두 단어만 머리에 넣기
 </Subtitle>
 
 <Paragraph>
-  일급 객체란 <strong>값처럼 다룰 수 있는 대상</strong>을 뜻합니다. JS의 함수는
-  아래 세 가지가 모두 가능하기 때문에 일급 객체입니다.
+  브라우저가 우리가 쓴 코드를 받아서 화면에 픽셀을 찍기까지, 대략{" "}
+  <strong>5단계</strong>를 거칩니다. 단계 이름이 낯설 텐데, 전부 외울 필요는
+  없어요. 이름만 한 번 훑고 지나갑시다.
 </Paragraph>
 
-- <strong>변수에 할당 가능</strong>: `const fn = function() {}`
-- <strong>함수의 인자로 전달 가능</strong>: `arr.map(fn)`
-- <strong>함수의 반환값으로 사용 가능</strong>: `return function() {}`
+- <strong>Parsing (파싱)</strong> — HTML을 읽어서 DOM 트리를 만든다
+- <strong>CSSOM</strong> — CSS Object Model. DOM과 짝을 이루는 CSS 트리 구조로,
+  CSS를 읽어 브라우저가 "어떤 요소에 어떤 스타일이 적용되는지"를 아는 지도를
+  만든다
+- <strong>Layout (레이아웃)</strong> — 각 요소의 <strong>위치와 크기</strong>를
+  계산한다
+- <strong>Paint (페인트)</strong> — 픽셀에 <strong>색을 칠한다</strong>
+- <strong>Composite (합성)</strong> — 레이어들을 겹쳐서 최종 화면을 만든다
 
 <Paragraph>
-  이 특성이 콜백 함수, 고차 함수, 클로저의 근거가 됩니다. React에서 컴포넌트를
-  props로 넘기거나, 이벤트 핸들러를 전달하는 것도 모두 이 특성 덕분입니다.
+  비유로 풀면 "설계도(HTML)를 읽고 → 색칠표(CSS)를 읽고 → 도면을 합쳐
+  위치·크기를 계산하고 → 색을 칠하고 → 레이어를 합성해 화면에 뿌린다"는
+  흐름이에요. 쉼표가 네 개나 되는 문장이라 지금은 "대략 이런 순서가 있다"
+  정도로만 충분합니다.
 </Paragraph>
-
-<Subtitle level={3}>Q3. 렉시컬 스코프(Lexical Scope)란 무엇인가요?</Subtitle>
 
 <Paragraph>
-  함수의 상위 스코프를 <strong>함수가 선언된 위치</strong>를 기준으로 결정하는
-  방식입니다. 함수가 어디서 호출되느냐와는 무관합니다.
+  오늘 진짜로 머리에 넣을 건 두 단어입니다 —{" "}
+  <strong>`reflow`(= Layout을 다시 하는 것)</strong>와{" "}
+  <strong>`paint`(= 색을 다시 칠하는 것)</strong>. 이 둘만 감각으로 들어와
+  있으면, 앞으로 성능 얘기가 나올 때마다 맥락이 잡힙니다.
 </Paragraph>
 
-```js
-const x = "전역";
+<Subtitle level={3}>
+  2-3. Reflow vs Repaint — 다시 계산이냐 다시 칠하기냐
+</Subtitle>
 
-function foo() {
-  console.log(x);
+<Paragraph>
+  파이프라인에서 가장 비싼 두 단계가 Layout과 Paint입니다.{" "}
+  <strong>Reflow는 Layout을 다시 하는 것</strong>,{" "}
+  <strong>Repaint는 Paint만 다시 하는 것</strong>이에요. 책장 비유가
+  직관적입니다.
+</Paragraph>
+
+- <strong>Reflow</strong> = 책장 <strong>배치를 바꿈</strong> — 책을 빼서 다른
+  칸으로 옮기고 주변 책들도 밀어야 함. 손이 많이 감.
+- <strong>Repaint</strong> = 책 <strong>표지만 다시 칠함</strong> — 위치는
+  그대로, 색만 바뀜. 상대적으로 싸다.
+
+<Paragraph>
+  "애니메이션이 버벅여요"라는 문제가 처음 생기는 이유가 보통{" "}
+  <strong>매 프레임마다 reflow가 일어나서</strong>예요. 브라우저는 보통 초당
+  60번 프레임을 그리는데, 매번 책장 전체 배치를 다시 계산하면 당연히 느려집니다.
+</Paragraph>
+
+```css
+/* reflow를 매 프레임 유발 — 위치가 바뀌면 Layout 재계산 */
+.box {
+  top: 10px;
+  transition: top 0.3s;
 }
 
-function bar() {
-  const x = "bar 내부";
-  foo(); // foo를 bar 안에서 호출해도
+/* Composite만 유발 — Layout·Paint 건너뜀 */
+.box {
+  transform: translateY(10px);
+  transition: transform 0.3s;
 }
-
-bar(); // "전역" 출력 — foo는 전역에서 선언됐으므로 전역의 x를 참조
 ```
 
 <Paragraph>
-  면접 팁: "렉시컬 스코프는 클로저가 동작하는 근거입니다. 함수가 선언된
-  환경(스코프)을 기억하기 때문에, 외부 함수가 종료된 후에도 내부 함수가 외부
-  변수를 참조할 수 있습니다" 라고 연결해서 답하면 좋습니다.
+  두 코드는 눈에 보이는 결과가 거의 똑같습니다. 그런데 브라우저가 내부적으로
+  하는 일은 완전히 달라요. 위 코드는 매 프레임 Layout → Paint → Composite을 전부
+  다시 돌리고, 아래 코드는 <strong>Composite만</strong> 돌립니다. "이름은
+  비슷한데 비용이 다르다"가 오늘의 핵심 감각이에요.
+</Paragraph>
+
+<Subtitle level={3}>
+  2-4. 왜 `transform`/`opacity`가 좋은가 — Composite만 유발
+</Subtitle>
+
+<Paragraph>
+  CSS에는 <strong>reflow를 건너뛰는 속성</strong>이 몇 개 있습니다. 대표가{" "}
+  <strong>`transform`</strong>과 <strong>`opacity`</strong>예요. 이 둘은
+  브라우저가 "별도 레이어로 띄워놓고 GPU에서 겹치기만 하면 되는" 작업으로
+  처리합니다. Layout도 Paint도 건너뛰고 Composite만 일어나요.
+</Paragraph>
+
+```css
+/* Before — left 변경 → reflow + paint 매 프레임 */
+.ball {
+  left: 0;
+  transition: left 0.3s;
+}
+
+/* After — transform 변경 → composite만 */
+.ball {
+  transform: translateX(0);
+  transition: transform 0.3s;
+}
+```
+
+<Paragraph>
+  "이동은 `transform`, 투명도는 `opacity`로" — 이 한 줄이 애니메이션 최적화의
+  기본기입니다. `top`/`left`/`width`/`height` 같이{" "}
+  <strong>위치나 크기에 영향을 주는 속성</strong>으로 움직이면 reflow를
+  유발하고, <strong>`transform`/`opacity`</strong>로 움직이면 Composite만
+  일어나요.
+</Paragraph>
+
+<Paragraph>
+  실무 감각으로 덧붙이면, 라이브러리가 만들어주는 애니메이션(예: Framer
+  Motion)이 기본적으로 `transform`을 밑에 깔고 도는 것도 이 이유 때문입니다.
+  지금은 이름만 눈에 익혀두면 충분해요 — `transform`·`opacity`는 싸다.
+</Paragraph>
+
+<Subtitle level={3}>
+  2-5. 불변성과 리렌더 — 비대면 week7과 오늘의 다리 (핵심)
+</Subtitle>
+
+<Paragraph>
+  오늘 대면에서 <strong>가장 중요한 서브</strong>입니다. 비대면 week7의 불변성
+  얘기가 왜 렌더링 파이프라인과 만나는지.
+</Paragraph>
+
+<Paragraph>
+  React 같은 UI 라이브러리는 "state가 바뀌었으니 화면을 다시 그려야 한다"를
+  결정해야 해요. 그런데 state가 객체·배열이면 문제가 생깁니다. 값이 바뀌었는지
+  확인하려고 <strong>객체 안을 하나하나 비교</strong>하면 너무 느려요. 100개짜리
+  배열을 요소별로 비교하는 걸 매번 하면 화면이 뻑뻑해집니다.
+</Paragraph>
+
+<Paragraph>
+  그래서 React는 <strong>참조(주소)만 본다</strong>는 전략을 씁니다. 주소가
+  바뀌었으면 "뭐가 바뀌었구나" 간주하고 리렌더를 판단하고, 주소가 같으면 "안
+  바뀐 걸로" 간주하고 건너뜁니다. 싸고 빠른 비교예요. 대신 개발자 쪽에서 맞춰야
+  할 게 하나 있습니다 —{" "}
+  <strong>바뀔 때는 반드시 새 객체·새 배열로 바꿔야 한다</strong>.
+</Paragraph>
+
+<Paragraph>
+  여기서 비대면 week7의 불변성이 바로 이어집니다. 기존 배열에 `push`로 요소를
+  추가하면 <strong>참조는 그대로</strong>라서 React 입장에서는 "안 바뀐 걸로"
+  보입니다. 화면이 안 갱신돼요. 반면 `[...list, newItem]`처럼{" "}
+  <strong>새 배열</strong>을 만들어 넘기면 참조가 바뀌어서 React가 변화를
+  감지합니다.
+</Paragraph>
+
+<Paragraph>
+  아래 코드는 <strong>React 문법이라 지금 당장 이해 안 해도 됩니다</strong>.
+  `setList`는 "React가 화면을 다시 그리게 신호 보내는 함수" 정도로 생각하고,{" "}
+  <strong>참조가 바뀌는지 안 바뀌는지만 눈으로</strong> 확인해보세요.
+</Paragraph>
+
+```js
+// 나쁜 예 — 참조 그대로, React가 변화를 못 알아챔
+list.push(newItem);
+setList(list);
+
+// 좋은 예 — 새 배열을 만들어 넘김
+setList([...list, newItem]);
+```
+
+<Paragraph>
+  <strong>`setList([...list, newItem])`</strong> 이 한 줄만 눈에 익혀두세요.
+  week10에서 React를 만날 때 "왜 이런 식으로 써야 해?"라는 질문이 반드시
+  나옵니다. 그때 "아, 참조가 바뀌어야 React가 알아본댔지"가 떠오르면 오늘 대면은
+  성공한 거예요.
+</Paragraph>
+
+<Paragraph>
+  한 발짝 더 나가면, 이 "불필요한 리렌더를 줄인다"는 게 곧{" "}
+  <strong>불필요한 reflow·paint를 줄인다</strong>는 뜻입니다. 참조 비교는 싸고,
+  화면을 다시 그리는 건 비싸요. React의 불변성 패턴은 비싼 작업을 덜 하려고 싼
+  비교를 먼저 통과시키는 구조인 거죠. 오늘의 파이프라인 얘기와 비대면 불변성이
+  여기서 하나의 감각으로 묶입니다.
+</Paragraph>
+
+<Subtitle level={3}>2-6. 개발자 도구 Performance 탭 맛보기</Subtitle>
+
+<Paragraph>
+  마지막으로 실무 감각 한 가지. "이 페이지 왜 느리지?"를{" "}
+  <strong>감으로 판단하지 않고 측정한다</strong>는 얘기입니다. 브라우저 개발자
+  도구에 내장된 <strong>Performance 탭</strong>이 그 도구예요.
+</Paragraph>
+
+<Paragraph>
+  <strong>이 부분은 오늘 대면에서 같이 열어보며 진행합니다</strong>. 지금 혼자
+  따라 켤 필요는 없고, 흐름만 눈으로 훑어두세요. — <strong>F12</strong>로 개발자
+  도구를 열고, <strong>Performance 탭</strong>으로 간 다음, Record 버튼을 누르고
+  페이지에서 몇 초 동안 상호작용한 뒤 Stop을 누릅니다. 타임라인에 긴 막대들이
+  뜨는데, 그 안에 "Layout"·"Paint"·"Composite Layers" 같은 항목이 색깔별로
+  보여요. 이게 뭔지 지금 알 필요는 없습니다. <strong>"이런 게 있다"</strong>만
+  기억하세요.
+</Paragraph>
+
+<Paragraph>
+  취업 시장 감각으로 덧붙이면, 주니어가 성능 얘기를 할 때 "감으로 느린 것
+  같아요"와 "Performance 탭으로 재봤더니 Layout이 이만큼 찍혀서요"는 완전히 다른
+  말로 들립니다. 실무에서는 항상 후자예요. 비슷한 맥락으로 배포 환경에서는{" "}
+  <strong>Lighthouse</strong> 같은 자동 측정 도구도 있는데, 이건 week11 배포
+  주차에서 다시 만납니다.
+</Paragraph>
+
+<Subtitle level={3}>2-7. 앞으로 스터디에서 어떻게 연결되는가</Subtitle>
+
+<Paragraph>
+  오늘 미리 본 키워드를 한 장에 정리합니다. 키워드만 가져가세요. 몇 주 뒤 해당
+  주차에서 "아, 그때 그 얘기!" 싶으면 오늘 대면은 제 역할을 한 거예요.
+</Paragraph>
+
+- <strong>reflow · paint</strong> → <strong>week10 React</strong>에서 리렌더
+  최적화 얘기로 다시. "state를 불변하게 관리하라"가 곧 "불필요한 reflow를
+  줄여라" 와 같은 말이라는 걸 그때 깨닫게 됩니다.
+- <strong>`transform` / `opacity`</strong> → 면접·실무에서 자주 묻는 CSS 최적화
+  감각. week10 이후 스타일링 얘기할 때도 다시 올라옵니다.
+- <strong>불변성 → 참조 변경 → 리렌더</strong> (2-5의 핵심) →
+  <strong>week10 React</strong>에서 "왜 `setState`에 새 객체를 넘기는가"로 직접
+  회수. 오늘 대면의 심장이 이 자리예요.
+- <strong>Performance 탭</strong> → <strong>week11 배포</strong>에서 Vercel ·
+  Lighthouse 같은 측정 도구로 확장. "감이 아니라 측정" 감각이 배포 환경으로
+  옮겨갑니다.
+
+<Paragraph>
+  반복하지만, 오늘 전부 외우지 마세요. 이 단어들이 week10·week11에서 다시 올라올
+  때 "아, 그때 그 얘기!" 싶으면 충분합니다. 그게 예습의 기준이에요.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>4. 관련 포스팅</Subtitle>
-
-- <Anchor href="/blog/study/clab-26-1/week6">
-    프론트엔드 스터디 6주차 학습 자료: JavaScript 시작 — 타입, 변수, 그리고 JS가
-    이상한 이유
-  </Anchor>
-- <Anchor href="/blog/study/clab-26-1/week7">
-    프론트엔드 스터디 7주차 학습 자료: 객체, 함수, 그리고 스코프
-  </Anchor>
-
----
-
-<Subtitle level={2}>5. 다음 주 안내</Subtitle>
+<Subtitle level={2}>3. 다음 주 안내</Subtitle>
 
 <Paragraph>
-  다음 주에는 JS에서 가장 어렵다고 꼽히는 개념들을 다룹니다.{" "}
-  <strong>let/const</strong>의 세부 동작, <strong>프로토타입(Prototype)</strong>
-  과 상속, 그리고 <strong>일급 객체로서의 함수 심화</strong>입니다. 특히
-  프로토타입은 다른 언어의 클래스 상속과 다른 JS만의 방식이라 처음엔 낯설 수
-  있습니다. 미리 읽어오면 대면 때 훨씬 이해가 빠릅니다.
+  다음 주(week8)에는 JS에서 실무에서 가장 자주 마주치는 두 축을 다룹니다 —{" "}
+  <strong>클로저(Closure)</strong>와{" "}
+  <strong>비동기 처리(Promise, async/await)</strong>. 클로저는 이번 주
+  사전학습에서 잠깐 언급했던 "함수가 자신이 선언된 환경을 기억한다"는 감각에서
+  출발하는 개념이에요. JS 면접에서 가장 자주 나오는 주제 중 하나입니다.
+</Paragraph>
+
+<Paragraph>
+  비동기 처리는 <strong>콜백 → Promise → async/await</strong>으로 이어지는 발전
+  흐름을 따라갑니다. 서버에서 데이터를 가져오는 `fetch`, 타이머 `setTimeout`처럼
+  "결과가 나중에 오는" 작업을 JS가 어떻게 다루는지를 이해하는 주차예요.
+</Paragraph>
+
+<Paragraph>
+  오늘 대면과의 연결도 한 줄.{" "}
+  <strong>오늘 2-5에서 얘기한 "변경을 언제 감지하나"</strong>가 다음 주
+  클로저(React `useState`가 돌아가는 기반) · Promise (비동기 결과가 언제
+  도착하나)와 직접 이어집니다. 오늘의 "참조와 리렌더" 감각이 다음 주 "시간과
+  실행 순서" 감각으로 확장되는 거예요.
 </Paragraph>
 
 <Subtitle level={3}>다음 주 예습</Subtitle>
 
-<Paragraph>
-  <Anchor href="/blog/study/clab-26-1/week7">다음 주 학습 자료(week7)</Anchor>의
-  얄코 강의를 시청하거나, 스킵 진단 문제 10개를 풀어보세요. 프로토타입은 다른
-  언어와 다르므로 미리 읽어오면 대면 때 이해가 훨씬 빠릅니다.
-</Paragraph>
+- <Anchor href="/blog/study/clab-26-1/week8">다음 주 학습 자료(week8)</Anchor>의
+  얄코 강의 시청 또는 스킵 진단 문제 10개 도전
+- 콘솔에서{" "}
+  `function makeCounter() { let c = 0; return () => ++c; } const counter = makeCounter(); counter(); counter();`
+  실행해보고 숫자가 어떻게 이어지는지 확인 (클로저 감 잡기)
+- 콘솔에서{" "}
+  `Promise.resolve().then(() => console.log("A")); console.log("B");` 실행해서
+  출력 순서가 B → A인지 확인 (비동기 실행 순서 감 잡기)
+
+<Subtitle level={3}>관련 포스팅</Subtitle>
+
+- <Anchor href="/blog/study/clab-26-1/week6">
+    지난 주 학습 자료(week6) — 객체, 함수, 그리고 스코프
+  </Anchor>
+- <Anchor href="/blog/study/clab-26-1/week7">
+    이번 주 학습 자료(week7) — 불변성, 프로토타입, 타입 체크
+  </Anchor>
+- <Anchor href="/blog/study/clab-26-1/week8">
+    다음 주 학습 자료(week8) — 클로저, Promise, async/await
+  </Anchor>

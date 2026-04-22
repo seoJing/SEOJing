@@ -1,47 +1,112 @@
 ---
-title: "프론트엔드 스터디 대면 9주차: 클로저, Promise, async/await"
-date: 2026-05-16
+title: "프론트엔드 스터디 대면 9주차: React 입문 전 브릿지 — ES6+ 문법과 에러 처리"
+date: 2026-05-23
 tags:
   - 프론트엔드
   - 스터디
   - JavaScript
-  - 클로저
-  - Promise
-  - 비동기
-description: 8주차 JS 복습과 과제 풀이, 그리고 이번 주 핵심인 클로저, 비동기 처리 흐름, async/await 관련 면접 질문을 다룹니다.
+  - ES6
+  - 구조분해할당
+  - 에러처리
+description: 클로저와 비동기 복습을 코드 중심으로 다시 짚고, React에서 매일 사용하는 ES6+ 문법과 에러 처리 관련 면접 질문을 다룹니다. JS에서 React로 넘어가는 브릿지 주차입니다.
 ---
 
-<Subtitle level={2}>1. 저번 주 복습</Subtitle>
+<Subtitle level={2}>1. 저번 주 복습 — 클로저와 비동기</Subtitle>
 
 <Paragraph>
-  지난주에는 const와 불변성의 차이, 프로토타입 기반 상속, 런타임 타입 체크를
-  배웠습니다. 핵심만 빠르게 짚어보겠습니다.
+  지난주에는 클로저, Promise, async/await를 배웠습니다. React에서 가장 많이
+  쓰이는 JS 개념이기도 합니다. 코드 예시와 비유 중심으로 다시 짚어보겠습니다.
 </Paragraph>
 
-<Subtitle level={3}>불변성(Immutability)</Subtitle>
+<Subtitle level={3}>클로저(Closure) — "함수가 기억하는 배낭"</Subtitle>
 
-- <strong>`const`</strong>: 변수 바인딩(참조)만 고정 — 객체 내부 변경은 자유롭게
-  가능
-- <strong>`Object.freeze()`</strong>: 최상위 프로퍼티만 동결 (중첩 객체는 여전히
-  변경 가능)
-- <strong>불변 패턴</strong>: 상태를 직접 변경하지 않고 새 객체를 반환 — React
-  `useState`의 방식
+<Paragraph>
+  클로저를 비유하면, 함수가 태어날 때 주변 변수를{" "}
+  <strong>배낭에 담아가는 것</strong>
+  입니다. 함수가 어디서 실행되든, 태어났을 때 담아간 배낭(렉시컬 환경)은 그대로
+  들고 다닙니다.
+</Paragraph>
 
-<Subtitle level={3}>프로토타입</Subtitle>
+```js
+function makeGreeting(greeting) {
+  // greeting이 배낭에 담김
+  return function (name) {
+    // 이 함수가 어디서 실행되든 greeting을 기억
+    return `${greeting}, ${name}!`;
+  };
+}
 
-- <strong>프로토타입 체인</strong>: 프로퍼티 탐색 시 자신 → `[[Prototype]]` →
-  `Object.prototype` 순서
-- <strong>`prototype` vs `[[Prototype]]`</strong>: 함수만 `prototype` 프로퍼티를
-  가짐. `new`로 만든 인스턴스의 `[[Prototype]]`이 됨
-- <strong>메서드 공유</strong>: `Person.prototype.greet`처럼 prototype에
-  추가하면 모든 인스턴스가 공유 (복사 아님)
+const hello = makeGreeting("안녕하세요"); // greeting = "안녕하세요" 담김
+const bye = makeGreeting("잘 가요"); // greeting = "잘 가요" 담김
 
-<Subtitle level={3}>타입 체크</Subtitle>
+hello("철수"); // "안녕하세요, 철수!"
+bye("영희"); // "잘 가요, 영희!"
+```
 
-- <strong>`typeof`의 한계</strong>: `null`, 배열, Date 등 모두 `'object'` 반환
-- <strong>배열 확인</strong>: `Array.isArray()` 사용
-- <strong>정밀 확인</strong>: `Object.prototype.toString.call(value)` —
-  `'[object Array]'` 등 반환
+<Paragraph>
+  <strong>React에서의 클로저</strong>: `useState`의 상태값, 이벤트 핸들러 안의
+  변수가 모두 클로저로 동작합니다. 나중에 React를 배우면 이 개념이 바로
+  연결됩니다.
+</Paragraph>
+
+```js
+// React에서 클로저가 쓰이는 패턴 (미리보기)
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  const handleClick = () => {
+    // handleClick은 count를 클로저로 기억
+    setCount(count + 1);
+  };
+
+  return <button onClick={handleClick}>{count}</button>;
+}
+```
+
+<Subtitle level={3}>비동기 처리 — "주문하고 번호표 받기"</Subtitle>
+
+<Paragraph>
+  비동기를 비유하면 <strong>카페에서 주문하는 것</strong>과 같습니다.
+  주문(요청)을 넣고 번호표(Promise)를 받습니다. 음료가 나올 때까지 다른 일을
+  하다가, 번호가 불리면(fulfilled) 음료를 받습니다. 만약 재료가 없으면(rejected)
+  "죄송합니다"라는 답을 받습니다.
+</Paragraph>
+
+```js
+// Promise = 번호표
+const order = fetch("/api/coffee"); // 주문 접수 → 번호표(Promise) 반환
+
+// async/await = 번호표를 들고 기다리기
+async function getCoffee() {
+  try {
+    const response = await fetch("/api/coffee"); // 기다림
+    const data = await response.json(); // 음료 수령
+    return data;
+  } catch (err) {
+    console.error("주문 실패:", err); // 재료 없음
+  }
+}
+```
+
+<Subtitle level={3}>이벤트 루프 — 실행 순서 퀴즈</Subtitle>
+
+<Paragraph>
+  아래 코드의 실행 순서를 맞춰보세요.{" "}
+  <strong>콜 스택 → 마이크로태스크(Promise) → 매크로태스크(setTimeout)</strong>{" "}
+  순서를 기억하면 됩니다.
+</Paragraph>
+
+```js
+console.log("1"); // 콜 스택 — 즉시 실행
+
+setTimeout(() => console.log("2"), 0); // 매크로태스크 큐
+
+Promise.resolve().then(() => console.log("3")); // 마이크로태스크 큐
+
+console.log("4"); // 콜 스택 — 즉시 실행
+
+// 출력 순서: 1, 4, 3, 2
+```
 
 ---
 
@@ -51,115 +116,91 @@ description: 8주차 JS 복습과 과제 풀이, 그리고 이번 주 핵심인 
 
 <Paragraph>
   <strong>
-    Q1. 아래 코드에서 클로저가 만들어지는 위치를 찾고, `makeCounter()`를 두 번
-    호출했을 때 각 카운터가 독립적으로 동작하는 이유를 설명하세요.
-  </strong>
-</Paragraph>
-
-```js
-function makeCounter() {
-  let count = 0;
-  return function () {
-    count++;
-    return count;
-  };
-}
-
-const counterA = makeCounter();
-const counterB = makeCounter();
-
-console.log(counterA()); // ?
-console.log(counterA()); // ?
-console.log(counterB()); // ?
-```
-
-<Subtitle level={4}>정답: 1, 2, 1</Subtitle>
-
-<Paragraph>
-  클로저는 <strong>`return function() { ... }` 부분</strong>에서 만들어집니다.
-  `makeCounter()`를 호출할 때마다 새로운 렉시컬 환경(새로운 `count` 변수)이
-  생성됩니다. `counterA`와 `counterB`는 각각 별도의 렉시컬 환경을 기억하는
-  클로저이므로 독립적인 `count`를 가집니다.
-</Paragraph>
-
----
-
-<Paragraph>
-  <strong>
-    Q2. `async function foo() {"{"} return 1; {"}"}` 에서 `foo()`의 반환값
-    타입과 실제 값을 확인하고, 왜 그런지 설명하세요.
-  </strong>
-</Paragraph>
-
-```js
-async function foo() {
-  return 1;
-}
-
-const result = foo();
-console.log(result);
-console.log(result instanceof Promise);
-```
-
-<Subtitle level={4}>
-  정답: `result`는 `Promise` 객체, `instanceof Promise`는 `true`
-</Subtitle>
-
-<Paragraph>
-  `async` 함수는 반환값을 항상 `Promise`로 감쌉니다. `return 1`을 해도 자동으로
-  `Promise.resolve(1)`로 래핑됩니다. 이미 `Promise`를 반환하면 이중 래핑하지
-  않습니다. async 함수의 결과를 사용하려면{" "}
-  <strong>`await`를 쓰거나 `.then()`으로 받아야</strong> 합니다.
-</Paragraph>
-
----
-
-<Paragraph>
-  <strong>
-    Q3. `Promise.all()`로 병렬 실행할 때와 순차적으로 `await`를 연달아 쓸 때의
-    실행 시간 차이를 설명하세요. 각각 1초 걸리는 비동기 작업 2개라면 총 시간은
-    어떻게 다를까요?
+    Q1. React의 `useState`는 왜 객체가 아닌 배열을 반환할까요? 배열 구조 분해로
+    받으면 어떤 점이 편리한지 설명해보세요.
   </strong>
 </Paragraph>
 
 <Subtitle level={4}>정답</Subtitle>
 
-- <strong>순차 `await`</strong>: 약 2초 (1초 + 1초)
-- <strong>`Promise.all()`</strong>: 약 1초 (동시 시작, 가장 오래 걸리는
-  작업만큼만 소요)
+<Paragraph>
+  배열 구조 분해는 <strong>변수 이름을 자유롭게 지정</strong>할 수 있기
+  때문입니다. 객체 구조 분해는 프로퍼티 이름이 고정되어 있어 여러 `useState`를
+  사용할 때 이름 충돌이 발생합니다.
+</Paragraph>
 
 <Paragraph>
-  `const a = await fetchA(); const b = await fetchB();`는 `fetchA`가 완료된
-  후에야 `fetchB`를 시작합니다. 작업 간 의존성이 없다면{" "}
-  <strong>`Promise.all()`을 써야 합니다.</strong> 단, 하나라도 `reject`되면
-  전체가 `reject`되므로, 실패를 개별 처리해야 하면 `Promise.allSettled()`를
-  사용합니다.
+  `const [count, setCount] = useState(0)`처럼 원하는 이름을 바로 붙일 수
+  있습니다. 만약 객체였다면 `const {"{"} state: count, setState: setCount {"}"}{" "}
+  = useState(0)`처럼 매번 이름을 변경해야 합니다.
 </Paragraph>
 
 ---
 
 <Paragraph>
   <strong>
-    Q4. 아래 코드의 출력 순서를 예측하고, 이벤트 루프의 마이크로태스크 큐와
-    매크로태스크 큐의 우선순위를 사용해 설명하세요.
+    Q2. `setState(prev ={">"} ({"{"} ...prev, count: prev.count + 1 {"}"}))`
+    패턴에서 스프레드(`...`)를 사용하는 이유를 설명해보세요. 스프레드 없이 `
+    {"{"} count: prev.count + 1 {"}"}`만 쓰면 어떤 문제가 생길까요?
   </strong>
 </Paragraph>
 
-```js
-console.log("A");
-setTimeout(() => console.log("B"), 0);
-Promise.resolve().then(() => console.log("C"));
-console.log("D");
-```
-
-<Subtitle level={4}>정답: A → D → C → B</Subtitle>
+<Subtitle level={4}>정답</Subtitle>
 
 <Paragraph>
-  동기 코드인 `A`와 `D`가 먼저 실행됩니다. 이후 콜 스택이 비면{" "}
-  <strong>마이크로태스크 큐(Promise.then)가 먼저</strong> 처리되어 `C`가
-  출력되고, 그 다음 매크로태스크 큐(setTimeout)에서 `B`가 출력됩니다.
-  `setTimeout`의 지연 시간이 `0`이라도 매크로태스크이므로 마이크로태스크보다
-  늦게 실행됩니다.
+  스프레드를 사용하면{" "}
+  <strong>
+    기존 상태의 모든 프로퍼티를 유지하면서 특정 프로퍼티만 덮어쓸 수 있습니다.
+  </strong>{" "}
+  스프레드 없이 쓰면 나머지 프로퍼티가 모두 사라집니다.
+</Paragraph>
+
+<Paragraph>
+  예를 들어 상태가 `{"{"} name: '철수', count: 0 {"}"}`일 때 `{"{"} count: 1{" "}
+  {"}"}`만 쓰면 `name`이 사라져 `{"{"} count: 1 {"}"}`만 남습니다. React에서는
+  상태를 직접 수정(mutation)하지 않고 새 객체를 만드는{" "}
+  <strong>불변 업데이트</strong>를 원칙으로 합니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q3. `user?.address?.city`와 `user && user.address && user.address.city`의
+    동작이 완전히 같을까요? 차이가 있다면 어떤 경우에 다르게 동작하는지
+    설명하세요.
+  </strong>
+</Paragraph>
+
+<Subtitle level={4}>
+  정답: `user`가 `0`이나 `''`처럼 falsy 값일 때 다르게 동작합니다.
+</Subtitle>
+
+<Paragraph>
+  `&&`는 왼쪽이 falsy이면 그 값을 반환합니다. `user`가 `0`이면 `0 &&
+  0.address`는 `0`을 반환합니다. 하지만 `0?.address`는 `undefined`를 반환합니다.{" "}
+  <strong>`?.`는 오직 `null`과 `undefined`만 체크</strong>하기 때문입니다.
+</Paragraph>
+
+---
+
+<Paragraph>
+  <strong>
+    Q4. React 프로젝트에서 named export와 default export를 각각 어떤 상황에
+    사용하는지, 실제 프로젝트 관례를 기준으로 설명해보세요.
+  </strong>
+</Paragraph>
+
+<Subtitle level={4}>정답</Subtitle>
+
+- <strong>default export</strong>: React 컴포넌트 — 파일당 하나가 원칙이므로
+  자연스럽습니다.
+- <strong>named export</strong>: 유틸 함수, 상수, 타입 — 한 파일에 여러 개를
+  모아두므로 named export를 사용합니다.
+
+<Paragraph>
+  named export는 import 시 자동완성이 잘 되고, 오타를 에디터가 잡아주는 장점도
+  있습니다.
 </Paragraph>
 
 ---
@@ -167,105 +208,125 @@ console.log("D");
 <Subtitle level={2}>3. 면접 질문</Subtitle>
 
 <Paragraph>
-  이번 주 범위와 관련된 실제 면접 질문들입니다. 정답을 외우기보다는 자신만의
-  말로 설명하는 연습을 해보세요.
+  이번 주는 React로 넘어가기 전 마지막 JS 면접 질문입니다. ES6+ 문법은 React에서
+  매일 사용하므로, 자신만의 말로 설명하는 연습을 해보세요.
 </Paragraph>
 
 <Subtitle level={3}>
-  Q1. 클로저(Closure)란 무엇인가요? 어떤 경우에 활용하나요?
+  Q1. map과 filter의 차이는 무엇이고, 언제 사용하나요?
 </Subtitle>
 
 <Paragraph>
-  클로저는{" "}
-  <strong>
-    함수가 선언된 렉시컬 환경을 기억하여, 외부 함수가 종료된 후에도 그 환경의
-    변수에 접근할 수 있는 것
-  </strong>
-  입니다. 렉시컬 스코프의 자연스러운 결과물입니다.
+  둘 다 원본 배열을 변경하지 않고 <strong>새 배열을 반환</strong>하는 순수
+  함수입니다.
+</Paragraph>
+
+- <strong>`map`</strong>: 각 요소를 <strong>변환</strong>하여 같은 길이의 새
+  배열을 반환. "모든 요소에 같은 작업 적용"
+- <strong>`filter`</strong>: 조건에 맞는 요소만 <strong>걸러내서</strong> 더
+  짧거나 같은 길이의 새 배열을 반환. "조건에 맞는 것만 선택"
+
+```js
+const numbers = [1, 2, 3, 4, 5];
+
+// map — 변환: 모든 요소를 2배로
+numbers.map((n) => n * 2); // [2, 4, 6, 8, 10]
+
+// filter — 필터링: 짝수만 선택
+numbers.filter((n) => n % 2 === 0); // [2, 4]
+
+// 체이닝: filter 먼저 → map
+// 짝수만 골라서(2개) 2배 하기 vs 전체(5개) 2배 후 짝수 고르기
+numbers.filter((n) => n % 2 === 0).map((n) => n * 2); // [4, 8]
+```
+
+<Paragraph>
+  면접 팁: "React에서 `map`은 리스트 렌더링에, `filter`는 조건부 필터링에 매일
+  사용합니다. 체이닝할 때 `filter`를 먼저 하면 처리할 요소 수가 줄어들어 더
+  효율적입니다"라고 연결하면 좋습니다.
+</Paragraph>
+
+<Subtitle level={3}>Q2. 구조 분해 할당이 React에서 어떻게 쓰이나요?</Subtitle>
+
+<Paragraph>
+  구조 분해 할당은{" "}
+  <strong>배열이나 객체의 값을 개별 변수로 한 번에 추출</strong>하는 문법입니다.
+  React에서는 두 가지 핵심 패턴에 사용됩니다.
+</Paragraph>
+
+```jsx
+// 1. props 수신 — 객체 구조 분해
+function UserCard({ name, age, role = "user" }) {
+  return (
+    <div>
+      {name} ({age}) - {role}
+    </div>
+  );
+}
+
+// 2. useState — 배열 구조 분해
+const [count, setCount] = useState(0);
+// useState가 [현재값, 변경함수] 배열을 반환하고,
+// 구조 분해로 각각 변수에 할당
+
+// 3. API 응답에서 필요한 값만 추출
+const { data, error, isLoading } = useSWR("/api/user");
+```
+
+<Paragraph>
+  면접 팁: "기본값 지정(`role = 'user'`), 이름 변경(`data: userData`), Rest
+  파라미터(`{ name, ...others }`)까지 알고 있으면 코드가 훨씬 간결해집니다"라고
+  답하면 좋습니다.
+</Paragraph>
+
+<Subtitle level={3}>
+  Q3. 옵셔널 체이닝(?.)과 null 병합 연산자(??)를 설명해주세요. ||와 ??의 차이는?
+</Subtitle>
+
+<Paragraph>
+  <strong>옵셔널 체이닝(`?.`)</strong>: 앞의 값이 `null`이나 `undefined`이면
+  에러 없이 `undefined`를 반환합니다. 중첩 객체에 안전하게 접근할 때 사용합니다.
+</Paragraph>
+
+<Paragraph>
+  <strong>null 병합 연산자(`??`)</strong>: 왼쪽이 `null` 또는 `undefined`일 때만
+  오른쪽 값을 반환합니다.
 </Paragraph>
 
 ```js
-function makeCounter() {
-  let count = 0;
-  return function () {
-    return ++count;
-  };
-}
+const user = null;
 
-const counter = makeCounter(); // makeCounter 종료 후에도
-counter(); // 1 — count 변수를 기억
-counter(); // 2
-counter(); // 3
+// 옵셔널 체이닝 — TypeError 방지
+user?.address?.city; // undefined (에러 없음)
+
+// ?. + ?? 조합 — 안전한 접근 + 기본값
+user?.profile?.avatar ?? "/default.png"; // "/default.png"
+
+// ?? vs || — 핵심 차이
+const count = 0;
+count || "기본값"; // "기본값" — 0은 falsy라서 오른쪽 반환
+count ?? "기본값"; // 0 — 0은 null/undefined가 아니므로 왼쪽 유지
+
+const name = "";
+name || "익명"; // "익명" — 빈 문자열은 falsy
+name ?? "익명"; // "" — 빈 문자열은 null/undefined가 아님
 ```
 
-<Paragraph>주요 활용 사례는 세 가지입니다.</Paragraph>
-
-- <strong>데이터 은닉</strong>: 외부에서 직접 접근 불가능한 private 변수 구현
-- <strong>메모이제이션</strong>: 이전 계산 결과를 캐싱
-- <strong>함수 팩토리</strong>: 설정값을 기억하는 함수 생성 (`makeAdder(5)` 등)
-
 <Paragraph>
-  면접 팁: "React의 useState와 useEffect도 클로저를 기반으로 동작합니다.
-  useEffect 의존성 배열을 빠뜨리면 오래된 클로저(stale closure)를 참조하는
-  버그가 생기는데, 이것도 클로저의 특성 때문입니다"라고 연결하면 좋습니다.
-</Paragraph>
-
-<Subtitle level={3}>
-  Q2. 콜백 지옥이란 무엇이고, Promise는 어떻게 해결하나요?
-</Subtitle>
-
-<Paragraph>
-  콜백 지옥은 비동기 작업을 순차적으로 처리할 때{" "}
-  <strong>콜백이 중첩되어 코드가 오른쪽으로 계속 깊어지는 현상</strong>입니다.
-  가독성이 떨어지고 에러 처리도 어렵습니다.
-</Paragraph>
-
-<Paragraph>
-  Promise는 비동기 작업의 결과를 값(객체)으로 표현하여 `.then()` 체이닝으로
-  수평적으로 나열할 수 있게 합니다. `async/await`은 Promise를 기반으로 동기
-  코드처럼 읽히도록 한 문법적 설탕입니다.
-</Paragraph>
-
-<Paragraph>
-  면접 팁: "async/await을 쓴다고 Promise를 몰라도 되는 것은 아닙니다.
-  `Promise.all()`로 병렬 처리를 하거나, 에러 처리를 정확히 하려면 Promise 동작
-  원리를 이해해야 합니다"라고 답하면 깊이 있는 인상을 줄 수 있습니다.
-</Paragraph>
-
-<Subtitle level={3}>Q3. 이벤트 루프(Event Loop)란 무엇인가요?</Subtitle>
-
-<Paragraph>
-  JS는 <strong>단일 스레드</strong>로 한 번에 하나의 작업만 실행합니다. 그럼에도
-  비동기 처리가 가능한 이유는 <strong>이벤트 루프</strong> 덕분입니다.
-</Paragraph>
-
-- <strong>콜 스택(Call Stack)</strong>: 현재 실행 중인 함수들의 스택
-- <strong>Web API</strong>: `setTimeout`, `fetch` 등 브라우저가 처리하는 비동기
-  작업
-- <strong>태스크 큐(Macro)</strong>: `setTimeout`, `setInterval` 콜백이 대기
-- <strong>마이크로태스크 큐(Micro)</strong>: `Promise .then`, `queueMicrotask` —
-  항상 태스크 큐보다 먼저 실행
-
-<Paragraph>
-  이벤트 루프는 콜 스택이 비면 마이크로태스크 큐 → 태스크 큐 순서로 꺼내
-  실행합니다.
-</Paragraph>
-
-<Paragraph>
-  면접 팁: "Promise.resolve().then()은 setTimeout(fn, 0)보다 먼저 실행됩니다.
-  마이크로태스크 큐가 태스크 큐보다 우선순위가 높기 때문입니다"라고 예시를 들면
-  좋습니다.
+  면접 팁: "`||`는 0, 빈 문자열, false도 falsy로 처리합니다. 수량이나 금액처럼
+  0이 유효한 값인 경우 `??`를 써야 의도치 않게 기본값으로 바뀌지 않습니다"라고
+  설명하면 실무 감각이 있다는 인상을 줍니다.
 </Paragraph>
 
 ---
 
 <Subtitle level={2}>4. 관련 포스팅</Subtitle>
 
-- <Anchor href="/blog/study/clab-26-1/week8">
-    프론트엔드 스터디 8주차 학습 자료: 불변성, 프로토타입, 타입 체크
-  </Anchor>
 - <Anchor href="/blog/study/clab-26-1/week9">
     프론트엔드 스터디 9주차 학습 자료: 클로저, Promise, async/await
+  </Anchor>
+- <Anchor href="/blog/study/clab-26-1/week10">
+    프론트엔드 스터디 10주차 학습 자료: ES6+ 문법과 에러 처리
   </Anchor>
 
 ---
@@ -273,18 +334,38 @@ counter(); // 3
 <Subtitle level={2}>5. 다음 주 안내</Subtitle>
 
 <Paragraph>
-  다음 주에는 실무에서 가장 많이 쓰는 JS 문법들을 집중적으로 다룹니다.{" "}
-  <strong>배열 고차함수</strong>(`map`, `filter`, `reduce`)와{" "}
-  <strong>ES6+ 문법</strong>
-  (구조 분해 할당, 스프레드, 옵셔널 체이닝, 모듈)입니다. React 코드를 읽고 쓸 때
-  거의 매 줄 등장하는 문법들이라 실무 체감이 가장 빠른 주차입니다.
+  다음 주부터 드디어 <strong>React</strong>를 시작합니다! 지금까지 배운 JS
+  개념들 — 클로저, 비동기, 구조 분해, map/filter, 옵셔널 체이닝 — 이 React에서
+  어떻게 활용되는지 바로 체감할 수 있을 것입니다.
+</Paragraph>
+
+<Paragraph>
+  React는 <strong>컴포넌트</strong>라는 작은 UI 조각을 조합해서 화면을 만드는
+  라이브러리입니다. HTML을 JS 안에 쓰는 <strong>JSX</strong> 문법, 부모에서
+  자식으로 데이터를 전달하는 <strong>props</strong>, 컴포넌트가 자신의 값을
+  기억하는 <strong>useState</strong> 같은 개념을 배우게 됩니다. JS를 이미 알고
+  있으니 생각보다 빠르게 적응할 수 있습니다.
 </Paragraph>
 
 <Subtitle level={3}>다음 주 예습</Subtitle>
 
 <Paragraph>
-  <Anchor href="/blog/study/clab-26-1/week9">다음 주 학습 자료(week9)</Anchor>의
-  얄코 강의를 시청하거나, 스킵 진단 문제 10개를 풀어보세요. 다음 주부터 React를
-  시작하므로, map/filter/구조 분해/스프레드 문법에 익숙해지면 React 코드가 훨씬
-  편하게 느껴질 것입니다.
+  아래 챕터를 순서대로 읽어오세요. 코드 예제는 직접 따라 작성해보는 것을
+  권장합니다.
 </Paragraph>
+
+- <Anchor external="https://reactjs.winterlood.com/8c7c4423-01d2-4abc-9616-e95298522778">
+    컴포넌트
+  </Anchor>
+- <Anchor external="https://reactjs.winterlood.com/d60d9a2c-18ed-4488-9dc9-09a0cd205998">
+    JSX
+  </Anchor>
+- <Anchor external="https://reactjs.winterlood.com/c89cba30-39b6-4094-85f6-f87a16842028">
+    컴포넌트에 값 전달하기 (Props)
+  </Anchor>
+- <Anchor external="https://reactjs.winterlood.com/f5477777-a3f2-4fe2-8a80-4bb6142c679b">
+    이벤트 처리하기
+  </Anchor>
+- <Anchor external="https://reactjs.winterlood.com/c167aa87-b661-4d35-9bc3-2a5e5434d4ac">
+    컴포넌트와 상태 (useState)
+  </Anchor>

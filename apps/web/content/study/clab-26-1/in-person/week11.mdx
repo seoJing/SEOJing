@@ -1,70 +1,42 @@
 ---
-title: "프론트엔드 스터디 대면 11주차: React 첫 번째 — 컴포넌트, JSX, props"
-date: 2026-05-30
+title: "프론트엔드 스터디 대면 11주차: React 심화 — useState와 useEffect"
+date: 2026-06-06
 tags:
   - 프론트엔드
   - 스터디
   - React
-  - 컴포넌트
-  - JSX
-  - props
-description: React를 처음 시작합니다. 지난 주 ES6+ 브릿지 복습을 시작으로, 컴포넌트, JSX, props까지 직접 코드를 작성하며 배웁니다.
+  - useState
+  - useEffect
+  - 훅
+description: React의 핵심인 상태 관리(useState)와 사이드 이펙트(useEffect)를 다룹니다. 1학기를 마무리하며 2학기와 하계 스터디 방향도 함께 이야기합니다.
 ---
 
-<Subtitle level={2}>1. 저번 주 복습 — ES6+ 브릿지</Subtitle>
+<Subtitle level={2}>1. 저번 주 복습 — 컴포넌트, JSX, props</Subtitle>
 
 <Paragraph>
-  지난주에는 React에서 매일 쓰는 ES6+ 문법을 집중적으로 배웠습니다. 핵심만
+  지난주에는 React를 처음 시작하며 컴포넌트, JSX, props를 배웠습니다. 핵심만
   빠르게 짚어보겠습니다.
 </Paragraph>
 
-<Subtitle level={3}>배열 고차함수 — React의 리스트 렌더링 기반</Subtitle>
+<Subtitle level={3}>컴포넌트</Subtitle>
 
-- <strong>`map`</strong>: 각 요소를 변환 → 새 배열 반환. React에서 리스트
-  렌더링의 핵심
-- <strong>`filter`</strong>: 조건 충족 요소만 → 더 짧은 새 배열. 상품 목록
-  필터링 등
-- <strong>`reduce`</strong>: 배열 → 하나의 값. 합계, 그룹핑, 장바구니 금액 계산
-  등
+- <strong>함수형 컴포넌트</strong>: props를 받아 JSX를 반환하는 JS 함수
+- <strong>이름은 대문자</strong>: 소문자이면 HTML 태그로 처리됨
+- <strong>재사용 가능</strong>: 레고처럼 조합해서 복잡한 UI 구성
 
-```js
-const products = [
-  { name: "사과", price: 1000, inStock: true },
-  { name: "바나나", price: 500, inStock: false },
-  { name: "포도", price: 3000, inStock: true },
-];
+<Subtitle level={3}>JSX 핵심 규칙</Subtitle>
 
-// 재고 있는 상품만 → 이름만 추출
-products.filter((p) => p.inStock).map((p) => p.name); // ['사과', '포도']
-```
+- <strong>{} 안에 JS 표현식</strong>: `{name}`, `{1 + 1}`, `
+  {isAdmin && <Badge />}`
+- <strong>class → className</strong>: `class`는 JS 예약어
+- <strong>Fragment</strong>: `<>...</>`로 감싸면 불필요한 DOM 노드 없이 여러
+  요소 반환
 
-<Subtitle level={3}>구조 분해 — props 수신의 핵심</Subtitle>
+<Subtitle level={3}>props</Subtitle>
 
-- <strong>객체 구조 분해</strong>: `const { name, age } = user` — React props 수신
-시 매일 사용
-- <strong>배열 구조 분해</strong>: `const [count, setCount] = useState(0)` —
-  useState 반환값
-
-```js
-// React props 수신 패턴
-function UserCard({ name, age, isAdmin = false }) {
-  // 기본값 설정까지 한 번에
-  return (
-    <div>
-      {name} ({age}세) {isAdmin && "👑"}
-    </div>
-  );
-}
-```
-
-<Subtitle level={3}>스프레드 & 옵셔널 체이닝</Subtitle>
-
-- <strong>스프레드</strong>: `{ ...prev, age: 26 }` — 불변 패턴. `useState`에서
-객체 상태 업데이트 시 핵심
-- <strong>`?.`</strong>: `user?.address?.city` — null/undefined 안전 접근. API
-  응답 처리 시 필수
-- <strong>`??`</strong>: `user.age ?? "나이 미입력"` — null/undefined만 폴백.
-  `||`와 달리 0·''도 통과
+- <strong>부모 → 자식 단방향</strong>: 자식은 읽기만 가능, 수정 불가
+- <strong>구조 분해로 수신</strong>: `function Card({ title, desc }) {}`
+- <strong>key prop</strong>: 리스트 렌더링 시 필수 — 고유한 id 사용
 
 ---
 
@@ -73,197 +45,229 @@ function UserCard({ name, age, isAdmin = false }) {
 <Subtitle level={3}>대면 10주차 인증 미션</Subtitle>
 
 <Paragraph>
-  <strong>
-    Q1. 아래 코드에서 재고 있는 상품 이름 목록을 만들어보세요 — filter + map
-    체이닝
-  </strong>
+  <strong>Q1. JSX에서 JS 표현식 사용 방법과 조건부 렌더링 2가지</strong>
 </Paragraph>
-
-```js
-const products = [
-  { name: "사과", price: 1000, inStock: true },
-  { name: "바나나", price: 500, inStock: false },
-  { name: "포도", price: 3000, inStock: true },
-];
-
-// filter로 inStock이 true인 것만 → map으로 name만 추출
-const availableNames = products.filter((p) => p.inStock).map((p) => p.name);
-// ['사과', '포도']
-```
 
 <Paragraph>
-  <strong>Q2. 구조 분해 기본값 설정 — role이 없으면 'guest' 사용</strong>
+  JSX에서 JS 표현식은 `{}` 안에 작성합니다. 조건부 렌더링 방법: (1) `&&` 연산자:
+  조건이 `true`일 때만 렌더링합니다. `{isLoggedIn && <Dashboard />}` (2) 삼항
+  연산자: true/false에 따라 다른 것을 렌더링합니다. `
+  {isLoggedIn ? <Dashboard /> : <Login />}`
 </Paragraph>
-
-```js
-const user = { name: "철수", age: 25 };
-
-const { name, age, role = "guest" } = user;
-// role → 'guest' (user 객체에 role이 없으므로 기본값 적용)
-```
 
 <Paragraph>
-  <strong>Q3. `?.`와 `??` 조합 — user.profile이 없을 때 안전하게 처리</strong>
+  <strong>Q2. 컴포넌트 이름이 대문자여야 하는 이유</strong>
 </Paragraph>
 
-```js
-const user = { name: "영희" };
+<Paragraph>
+  소문자는 HTML 태그, 대문자는 컴포넌트로 구분합니다. JSX가
+  `React.createElement()`로 변환될 때 소문자는 문자열(`'button'`)로, 대문자는
+  함수 참조(`Button`)로 전달됩니다.
+</Paragraph>
 
-// user.profile이 없으면 안전하게 undefined 반환, ?? 로 기본값 적용
-const bio = user?.profile?.bio ?? "소개글이 없습니다";
-// "소개글이 없습니다"
-```
+<Paragraph>
+  <strong>Q3. props가 읽기 전용이어야 하는 이유</strong>
+</Paragraph>
+
+<Paragraph>
+  React는 <strong>단방향 데이터 흐름(부모 → 자식)</strong>을 원칙으로 합니다.
+  자식이 props를 수정하면 데이터 흐름이 깨지고, 어느 컴포넌트가 데이터를
+  변경했는지 추적하기 어려워집니다. 데이터 변경은 반드시 소유자(부모)에서만 해야
+  합니다.
+</Paragraph>
 
 ---
 
-<Subtitle level={2}>3. React란 무엇인가?</Subtitle>
+<Subtitle level={2}>3. useState — 컴포넌트가 기억하는 값</Subtitle>
 
 <Paragraph>
-  React는 Facebook이 만든{" "}
-  <strong>UI를 만들기 위한 JavaScript 라이브러리</strong>
-  입니다. 지금까지 배운 JS를 그대로 쓰되, UI를 <strong>컴포넌트 단위</strong>로
-  나눠서 만드는 방식을 따릅니다.
-</Paragraph>
-
-- <strong>선언적(Declarative)</strong>: "이렇게 보여라"라고 선언. 어떻게 DOM을
-  수정할지는 React가 알아서 처리
-- <strong>컴포넌트 기반</strong>: 레고처럼 작은 조각을 조합해서 복잡한 UI 구성
-- <strong>단방향 데이터 흐름</strong>: 부모 → 자식 방향. 예측 가능하고 디버깅
-  쉬움
-
----
-
-<Subtitle level={2}>4. 컴포넌트 — UI의 레고 블록</Subtitle>
-
-<Paragraph>
-  컴포넌트는 <strong>재사용 가능한 UI 조각</strong>입니다. 함수형 컴포넌트는
-  props를 입력받아 JSX(화면 구조)를 반환하는 JS 함수입니다.
+  일반 JS 변수는 컴포넌트가 리렌더링될 때마다 초기화됩니다.{" "}
+  <strong>useState</strong>는 렌더링 사이에도 값을 유지합니다.
 </Paragraph>
 
 ```jsx
-// 가장 단순한 컴포넌트
-function Greeting() {
-  return <h1>안녕하세요!</h1>;
-}
+import { useState } from "react";
 
-// 컴포넌트를 조합해서 사용
-function App() {
+function Counter() {
+  // [현재 값, 값을 바꾸는 함수]
+  const [count, setCount] = useState(0); // 초기값 0
+
   return (
     <div>
-      <Greeting />
-      <Greeting />
+      <p>현재 카운트: {count}</p>
+      <button onClick={() => setCount(count + 1)}>+1</button>
+      <button onClick={() => setCount(count - 1)}>-1</button>
     </div>
   );
 }
 ```
 
+<Subtitle level={3}>state를 직접 변경하면 안 되는 이유</Subtitle>
+
+```jsx
+// ❌ 잘못된 방법 — React가 변경을 감지하지 못함
+count++;
+count = count + 1;
+
+// ✅ 올바른 방법 — setState로만 변경
+setCount(count + 1);
+```
+
 <Paragraph>
-  컴포넌트 이름이 <strong>소문자</strong>이면 React는 HTML 태그로 인식합니다.
-  컴포넌트는 반드시 대문자로 시작해야 합니다.
+  React는 `setState`가 호출될 때 상태 변경을 감지하고 리렌더링합니다. 직접
+  변경하면 React가 모르기 때문에 화면이 업데이트되지 않습니다.
+</Paragraph>
+
+<Subtitle level={3}>이전 상태 기반 업데이트 — 함수형 업데이트</Subtitle>
+
+```jsx
+// ❌ 클로저 함정 — 오래된 count를 참조할 수 있음
+setCount(count + 1);
+
+// ✅ 함수형 업데이트 — 항상 최신 상태를 받음
+setCount((prev) => prev + 1);
+```
+
+<Paragraph>
+  버튼을 빠르게 여러 번 클릭하거나 비동기 처리에서 상태를 업데이트할 때는{" "}
+  <strong>함수형 업데이트</strong>를 사용해야 안전합니다.
+</Paragraph>
+
+<Subtitle level={3}>객체 상태 — 스프레드로 불변 업데이트</Subtitle>
+
+```jsx
+const [user, setUser] = useState({ name: "철수", age: 25 });
+
+// ❌ 직접 수정 — 안 됨
+user.age = 26;
+
+// ✅ 스프레드로 새 객체 생성
+setUser((prev) => ({ ...prev, age: prev.age + 1 }));
+// { name: '철수', age: 26 }
+```
+
+<Paragraph>
+  <strong>지난 주 클로저 + 불변성 개념이 여기서 만납니다.</strong> `prev =>`
+  패턴은 클로저를 통해 최신 상태를 받고, 스프레드로 불변 업데이트를 합니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>5. JSX — JS 안에 HTML처럼</Subtitle>
+<Subtitle level={2}>4. useEffect — 렌더링 이후 실행되는 사이드 이펙트</Subtitle>
 
 <Paragraph>
-  JSX는 JS 안에서 HTML처럼 작성하는 문법입니다. 실제로는{" "}
-  <strong>React.createElement() 호출</strong>로 변환됩니다. 바벨(Babel)이 이
-  변환을 담당합니다.
+  <strong>사이드 이펙트</strong>란 컴포넌트 외부에 영향을 주는 작업입니다 — API
+  호출, 타이머 설정, DOM 직접 조작 등. useEffect는 이런 작업을 렌더링 이후에
+  실행합니다.
 </Paragraph>
 
-```jsx
-// JSX 문법
-const element = <h1 className="title">안녕하세요</h1>;
-
-// 바벨이 변환하는 실제 코드
-const element = React.createElement("h1", { className: "title" }, "안녕하세요");
-```
-
-<Subtitle level={3}>JSX 주요 규칙</Subtitle>
+<Subtitle level={3}>기본 구조와 의존성 배열</Subtitle>
 
 ```jsx
-// 1. JS 표현식은 {} 안에 작성
-const name = "철수";
-<h1>안녕하세요, {name}님!</h1>;
-<p>1 + 1 = {1 + 1}</p>;
+import { useState, useEffect } from "react";
 
-// 2. class 대신 className (class는 JS 예약어)
-<div className="container">내용</div>;
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
 
-// 3. 반드시 하나의 루트 요소로 감싸야 함
-// 잘못된 예
-return (
-  <h1>제목</h1>
-  <p>내용</p>
-);
+  useEffect(() => {
+    // 렌더링 이후에 실행
+    fetch(`/api/users/${userId}`)
+      .then((res) => res.json())
+      .then((data) => setUser(data));
+  }, [userId]); // ← 의존성 배열: userId가 바뀔 때마다 재실행
 
-// 올바른 예 — Fragment로 감싸기 (실제 DOM 요소 없이)
-return (
-  <>
-    <h1>제목</h1>
-    <p>내용</p>
-  </>
-);
-
-// 4. 조건부 렌더링
-{isLoggedIn && <Dashboard />}           // 조건이 true일 때만 렌더링
-{isLoggedIn ? <Dashboard /> : <Login />} // 삼항 연산자
-```
-
----
-
-<Subtitle level={2}>6. props — 부모에서 자식으로 데이터 전달</Subtitle>
-
-<Paragraph>
-  props는 부모 컴포넌트에서 자식 컴포넌트로 데이터를 전달하는 방법입니다.{" "}
-  <strong>읽기 전용</strong>입니다 — 자식은 props를 수정할 수 없습니다.
-</Paragraph>
-
-```jsx
-// 부모 → 자식으로 데이터 전달
-function App() {
-  return <UserCard name="김철수" age={25} isAdmin={true} />;
-}
-
-// 자식 컴포넌트에서 props 수신 (구조 분해 권장)
-function UserCard({ name, age, isAdmin }) {
-  return (
-    <div>
-      <h2>
-        {name} ({age}세)
-      </h2>
-      {isAdmin && <span>관리자</span>}
-    </div>
-  );
+  return <div>{user?.name}</div>;
 }
 ```
 
-<Subtitle level={3}>props로 리스트 렌더링하기</Subtitle>
+<Subtitle level={3}>의존성 배열 3가지 패턴</Subtitle>
 
 ```jsx
-const users = [
-  { id: 1, name: "철수", role: "admin" },
-  { id: 2, name: "영희", role: "user" },
-];
+// 1. 빈 배열 [] — 마운트 시 한 번만 실행
+useEffect(() => {
+  console.log("컴포넌트가 처음 나타났을 때 한 번만");
+}, []);
 
-function App() {
-  return (
-    <ul>
-      {users.map((user) => (
-        // key는 React가 리스트를 효율적으로 업데이트하는 데 필요
-        <UserCard key={user.id} name={user.name} role={user.role} />
-      ))}
-    </ul>
-  );
-}
+// 2. 값이 있는 배열 [dep] — dep이 바뀔 때마다 실행
+useEffect(() => {
+  console.log("userId가 바뀔 때마다");
+}, [userId]);
+
+// 3. 배열 없음 — 매 렌더링마다 실행 (거의 안 씀)
+useEffect(() => {
+  console.log("렌더링할 때마다");
+});
+```
+
+<Subtitle level={3}>async/await + try/catch 패턴</Subtitle>
+
+```jsx
+// useEffect 안에서 async 직접 사용 불가
+// ❌ 잘못된 방법
+useEffect(async () => {
+  const data = await fetch("/api/data");
+});
+
+// ✅ 올바른 방법 — 내부에 async 함수 정의 후 호출
+useEffect(() => {
+  async function loadData() {
+    try {
+      const res = await fetch("/api/data");
+      const data = await res.json();
+      setData(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadData();
+}, []);
+```
+
+<Subtitle level={3}>클린업 함수 — 정리하기</Subtitle>
+
+```jsx
+useEffect(() => {
+  const timer = setInterval(() => {
+    setCount((prev) => prev + 1);
+  }, 1000);
+
+  // 클린업 함수 — 컴포넌트가 사라지거나 의존성이 바뀌기 전에 실행
+  return () => clearInterval(timer);
+}, []);
 ```
 
 <Paragraph>
-  리스트 렌더링 시 <strong>`key` prop</strong>이 필수입니다. key가 없으면 경고가
-  발생하고 성능 문제가 생깁니다. key는 리스트 안에서 고유한 값이어야 하며, 보통
-  데이터의 id를 사용합니다.
+  타이머, 이벤트 리스너 등을 설정했다면 반드시 클린업 함수에서 제거해야 메모리
+  누수를 방지할 수 있습니다.
 </Paragraph>
+
+<Subtitle level={3}>클로저와 stale closure 버그</Subtitle>
+
+<Paragraph>
+  useEffect와 클로저가 만나는 곳에서 버그가 자주 발생합니다. 의존성 배열에
+  사용하는 값을 빠뜨리면 오래된 클로저(stale closure)를 참조합니다.
+</Paragraph>
+
+```jsx
+// ❌ 버그 — count를 사용하지만 의존성에 없음
+useEffect(() => {
+  const timer = setInterval(() => {
+    console.log(count); // 항상 초기값(0)을 출력
+  }, 1000);
+  return () => clearInterval(timer);
+}, []); // count를 빠뜨림
+
+// ✅ 해결 — 함수형 업데이트로 의존성 회피
+useEffect(() => {
+  const timer = setInterval(() => {
+    setCount((prev) => prev + 1); // 함수형 업데이트로 count 의존성 제거
+  }, 1000);
+  return () => clearInterval(timer);
+}, []);
+```
 
 ---
 
@@ -273,147 +277,199 @@ function App() {
 
 <Paragraph>
   <strong>
-    Q1. 아래 요구사항을 만족하는 `Counter` 컴포넌트를 만들어보세요. (1) + 버튼을
-    누르면 숫자가 1 올라감 (2) - 버튼을 누르면 숫자가 1 내려감 (3) 초기값은 0
-    (4) 함수형 업데이트(`prev ={">"} ...`)를 사용할 것
+    Q1. `useEffect`를 사용하여 컴포넌트가 마운트될 때 `document.title`을 '내
+    앱'으로 바꾸고, `count` 상태가 변경될 때마다 '내 앱 (N)'으로 업데이트하는
+    컴포넌트를 만들어보세요.
   </strong>
 </Paragraph>
 
 ```jsx
-function Counter() {
+function App() {
   const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    document.title = count === 0 ? "내 앱" : `내 앱 (${count})`;
+  }, [count]);
+
   return (
     <div>
-      <p>{count}</p>
-      <button onClick={() => setCount((prev) => prev + 1)}>+</button>
-      <button onClick={() => setCount((prev) => prev - 1)}>-</button>
+      <p>클릭 횟수: {count}</p>
+      <button onClick={() => setCount((prev) => prev + 1)}>클릭</button>
     </div>
   );
 }
 ```
 
 <Paragraph>
-  `useState`로 `count` 상태를 관리하고, 버튼의 `onClick` 핸들러에서 `setCount`를
-  호출합니다. <strong>함수형 업데이트(`prev => prev + 1`)</strong>를 사용하면
-  항상 최신 상태를 기반으로 업데이트됩니다.
+  `useEffect`의 의존성 배열에 `count`를 넣으면 `count`가 바뀔 때마다 effect가
+  재실행됩니다. `document.title`을 변경하는 것은 DOM 직접 조작이므로{" "}
+  <strong>사이드 이펙트에 해당하며, `useEffect` 안에서 처리</strong>하는 것이
+  올바릅니다.
 </Paragraph>
 
 ---
 
 <Paragraph>
   <strong>
-    Q2. `users` 배열을 props로 받아 이름 목록을 렌더링하는 `UserList` 컴포넌트를
-    만들어보세요. `key` prop도 올바르게 사용해야 합니다.
+    Q2. 이메일과 메시지를 입력받는 문의하기 폼(`ContactForm`)을 만들어보세요.
+    조건: (1) Controlled Component 패턴, (2) 제출 시 `e.preventDefault()` 호출,
+    (3) 이메일에 `@`가 없으면 에러 메시지 표시, (4) 제출 성공 시 입력 필드
+    초기화
   </strong>
 </Paragraph>
 
 ```jsx
-function UserList({ users }) {
+function ContactForm() {
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (!email.includes("@")) {
+      setError("올바른 이메일을 입력하세요");
+      return;
+    }
+    setError("");
+    console.log({ email, message });
+    setEmail("");
+    setMessage("");
+  }
+
   return (
-    <ul>
-      {users.map((user) => (
-        <li key={user.id}>{user.name}</li>
-      ))}
-    </ul>
+    <form onSubmit={handleSubmit}>
+      <input
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="이메일"
+      />
+      <textarea
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder="메시지"
+      />
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <button type="submit">보내기</button>
+    </form>
   );
 }
 ```
 
 <Paragraph>
-  `map()`으로 배열을 순회하면서 각 요소를 `<li>`로 변환합니다.{" "}
-  <strong>`key`에는 배열 인덱스가 아닌 고유한 `id`</strong>를 사용합니다. 이
-  패턴은 React에서 가장 자주 사용하는 리스트 렌더링 방식입니다.
+  Controlled Component 패턴으로 각 input의 `value`를 state로 관리합니다.
+  `onSubmit`에서 `e.preventDefault()`로 새로고침을 방지하고, 유효성 검사 후
+  상태를 초기화합니다.
 </Paragraph>
 
 ---
 
 <Paragraph>
   <strong>
-    Q3. `isLoggedIn` boolean prop을 받아서 `true`이면 `<Dashboard />`
-    컴포넌트를, `false`이면 `<Login />` 컴포넌트를 렌더링하는 `AuthGate`
-    컴포넌트를 작성해보세요.
+    Q3. 1초마다 자동으로 숫자가 올라가는 타이머 컴포넌트를 만들어보세요. 조건:
+    (1) `useEffect`와 `setInterval` 사용, (2) 반드시 클린업 함수에서
+    `clearInterval` 호출, (3) 함수형 업데이트(`prev ={">"} ...`) 사용
   </strong>
 </Paragraph>
 
 ```jsx
-function Dashboard() {
-  return <h1>대시보드입니다</h1>;
-}
+function Timer() {
+  const [seconds, setSeconds] = useState(0);
 
-function Login() {
-  return <h1>로그인해주세요</h1>;
-}
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSeconds((prev) => prev + 1);
+    }, 1000);
 
-function AuthGate({ isLoggedIn }) {
-  return isLoggedIn ? <Dashboard /> : <Login />;
+    return () => clearInterval(timer);
+  }, []);
+
+  return <p>경과 시간: {seconds}초</p>;
 }
 ```
 
 <Paragraph>
-  삼항 연산자(`조건 ? A : B`)를 사용한 조건부 렌더링 패턴입니다. 실제
-  프로젝트에서 인증 상태에 따라 다른 화면을 보여줄 때 이 패턴을 자주 사용합니다.
+  빈 의존성 배열로 마운트 시 한 번만 타이머를 설정하고, 클린업 함수에서
+  `clearInterval`로 정리합니다. `setSeconds(prev ={">"} prev + 1)` 함수형
+  업데이트를 사용하여 <strong>stale closure 문제를 방지</strong>합니다. 클린업
+  없이 `setInterval`을 사용하면 컴포넌트가 사라져도 타이머가 계속 실행되어
+  메모리 누수가 발생합니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>7. 면접 질문</Subtitle>
+<Subtitle level={2}>5. 면접 질문</Subtitle>
 
-<Subtitle level={3}>Q1. React에서 컴포넌트란 무엇인가요?</Subtitle>
+<Subtitle level={3}>
+  Q1. useState에서 state를 직접 변경하면 안 되는 이유는?
+</Subtitle>
 
 <Paragraph>
-  컴포넌트는 <strong>재사용 가능한 UI 조각</strong>입니다. 함수형 컴포넌트는
-  props를 입력받아 JSX(화면 구조)를 반환하는 JS 함수입니다. 레고 블록처럼 작은
-  컴포넌트를 조합해서 복잡한 UI를 만듭니다.
+  React는 setState 호출을 감지해서 리렌더링합니다. 직접 변경하면 React가 변경을
+  모르기 때문에 화면이 업데이트되지 않습니다. 또한 불변성을 유지해야 이전
+  상태와의 비교가 가능하고 React의 최적화 기능(memo, useMemo 등)이 올바르게
+  동작합니다.
 </Paragraph>
 
+<Subtitle level={3}>Q2. useEffect의 의존성 배열은 왜 필요한가요?</Subtitle>
+
 <Paragraph>
-  면접 팁: "컴포넌트는 단일 책임 원칙을 따르는 것이 좋습니다. 한 컴포넌트가 너무
-  많은 역할을 하면 재사용성과 테스트 가능성이 떨어집니다"라고 더하면 좋습니다.
+  의존성 배열은 effect가 <strong>언제 재실행될지</strong>를 제어합니다. 배열이
+  없으면 매 렌더링마다, 빈 배열이면 마운트 시 한 번만, 값이 있으면 그 값이
+  변경될 때만 실행됩니다. 의존성을 잘못 명시하면 stale closure 버그가 발생할 수
+  있습니다.
 </Paragraph>
 
-<Subtitle level={3}>Q2. JSX란 무엇이고 왜 사용하나요?</Subtitle>
+<Subtitle level={3}>Q3. 빈 의존성 배열 []의 의미는?</Subtitle>
 
 <Paragraph>
-  JSX는 JS 안에서 HTML처럼 UI를 작성하는 문법 확장입니다. 내부적으로
-  React.createElement() 호출로 변환됩니다. UI 구조를 직관적으로 표현할 수 있고,
-  JS 표현식을 {}로 바로 삽입할 수 있어서 조건부 렌더링, 리스트 렌더링이
-  편합니다.
-</Paragraph>
-
-<Subtitle level={3}>Q3. props와 state의 차이는 무엇인가요?</Subtitle>
-
-<Paragraph>
-  <strong>props</strong>는 부모 컴포넌트가 자식에게 전달하는 데이터입니다.
-  자식은 읽을 수만 있고 수정할 수 없습니다. <strong>state</strong>는 컴포넌트
-  자신이 관리하는 내부 데이터입니다. state가 변경되면 컴포넌트가 리렌더링됩니다.
-  state는 다음 주에 자세히 다룹니다.
+  컴포넌트가 처음 화면에 나타날 때(마운트) 한 번만 실행됩니다. API 초기 데이터
+  로딩, 이벤트 리스너 등록 등에 주로 사용합니다. 컴포넌트가 화면에서 사라질
+  때(언마운트) 클린업 함수가 실행됩니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>8. 관련 포스팅</Subtitle>
+<Subtitle level={2}>6. 1학기 마무리</Subtitle>
+
+<Paragraph>
+  1학기를 돌아보면 HTML/CSS로 화면 구조와 스타일링을 배우고, JavaScript로 동작
+  원리를 이해했으며, 이번 주까지 React의 핵심을 맛봤습니다.
+</Paragraph>
+
+| 구간      | 주제                                              |
+| :-------- | :------------------------------------------------ |
+| 1~4주차   | HTML/CSS — 구조, 스타일, 레이아웃                 |
+| 5~8주차   | JS 기초 — 타입/스코프/클로저/비동기               |
+| 9~10주차  | JS 브릿지 — React를 위한 ES6+ 문법                |
+| 11~12주차 | React 입문 — 컴포넌트, props, useState, useEffect |
+
+<Subtitle level={3}>2학기 예고 — React 심화</Subtitle>
+
+- <strong>커스텀 훅(Custom Hook)</strong>: 상태 로직을 재사용 가능한 형태로 추출
+- <strong>상태 관리</strong>: Context API, Zustand, Recoil 등
+- <strong>라우팅</strong>: React Router로 SPA 멀티페이지 구현
+- <strong>TypeScript</strong>: 타입 안전성으로 대규모 앱 개발
+- <strong>Next.js</strong>: SSR, SSG, 파일 기반 라우팅
+
+<Subtitle level={3}>하계 TypeScript 스터디 안내</Subtitle>
+
+<Paragraph>
+  여름 방학 기간에 <strong>TypeScript 선택 스터디</strong>를 진행합니다. 2학기
+  React 심화를 위한 준비 과정으로, 타입 시스템과 기본 문법을 다룹니다. 관심
+  있으신 분은 별도 안내를 확인해주세요.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>7. 관련 포스팅</Subtitle>
 
 - <Anchor href="/blog/study/clab-26-1/week9">
-    프론트엔드 스터디 9주차 학습 자료: React 입문 전 필수 JS 문법
+    프론트엔드 스터디 9주차: React 입문 전 필수 JS 문법
   </Anchor>
 
 ---
 
-<Subtitle level={2}>9. 다음 주 안내</Subtitle>
-
 <Paragraph>
-  다음 주에는 React의 핵심인 <strong>상태 관리(useState)</strong>와{" "}
-  <strong>사이드 이펙트(useEffect)</strong>를 배웁니다. 컴포넌트가 어떻게 값을
-  기억하고, 데이터를 불러오는지를 배우면 진짜 앱을 만들 수 있게 됩니다.
+  1학기 동안 함께해 주셔서 감사합니다. 하계 스터디 혹은 2학기 React 심화에서 또
+  보면 좋겠습니다!
 </Paragraph>
-
-<Subtitle level={3}>다음 주 예습</Subtitle>
-
-<Paragraph>
-  아래 챕터를 읽어오세요. 이번 주에 배운 useState와 어떻게 연결되는지 생각하며
-  읽으면 좋습니다.
-</Paragraph>
-
-- <Anchor external="https://reactjs.winterlood.com/eb666fea-0170-4399-a1d0-5dbb77e8b12b">
-    useEffect
-  </Anchor>
