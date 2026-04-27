@@ -1,0 +1,381 @@
+---
+title: "점들이 모였다고 모임이 아니다 — 클러스터의 모양과 원인을 갈라낸 기록"
+date: 2026-04-24
+tags:
+  - Spot
+  - React
+  - Simulation
+  - UX
+  - Clustering
+description: 맵 위의 페르소나들을 묶는 방법에는 두 갈래가 있다. 기하학적으로 "가까이 있으면 묶기" 와, 원인 중심으로 "스팟이 있어서 모였기 때문에 묶기". 처음엔 전자를 짰고, 한참 뒤에 후자로 갈아엎었다. 같은 화면이어도 UX 의미가 다르다는 걸 그때 알았다.
+---
+
+<Subtitle level={2}>처음엔 모양이었다</Subtitle>
+
+<Paragraph>
+  Spot 의 `/map` 에는 수백 명의 페르소나가 돌아다닌다. 각자 "집" 근처에서
+  방황하고, 가끔 목적지를 잡고 이동한다. 이 풍경 위에{" "}
+  <strong>"지금 뭔가 일어나고 있는 장소"</strong>를 사용자에게 보여주고 싶었다.
+  눈에 띄는 클러스터 몇 개로.
+</Paragraph>
+
+<Paragraph>
+  가장 자연스러운 해결이 <strong>기하학적 클러스터링</strong>이었다. 반경 안에
+  같은 카테고리 페르소나가 2명 이상 있으면 묶는다. 이름은 `clusterPersonas`.
+  Haversine 거리 + transitive expansion, 그리고{" "}
+  <strong>100m 격자 기반의 안정 id</strong> 까지. 단위 테스트도 잘 통과했다.
+</Paragraph>
+
+```ts
+// cluster-personas.ts — 모양 기반 클러스터
+export function clusterPersonas(
+  input: ClusterInput[],
+  options?: ClusterOptions,
+): ActivityCluster[] {
+  // 1. category::intent 로 버킷 분할
+  // 2. seed 에서 80m 이내면 같은 클러스터
+  // 3. 2명 미만이면 폐기
+  // 4. id 는 "${category}-${intent}-${lat.toFixed(3)}-${lng.toFixed(3)}"
+}
+```
+
+<Paragraph>
+  센트로이드가 소폭 이동해도 id 가 유지되도록 좌표를 소수점 3자리로 양자화한
+  것까지는 나름 만족스러웠다. 약 <strong>100m 격자</strong> 단위로 id 가 잠기기
+  때문에 "같은 클러스터" 가 프레임 간 깜빡이지 않는다. 테스트로도 보장했다.
+</Paragraph>
+
+```ts
+it("7. identical input yields deterministic cluster id", () => {
+  const input = [
+    makeInput("a", BASE_LAT, BASE_LNG, "운동", "offer"),
+    makeInput("b", BASE_LAT + offsetLat(30), BASE_LNG, "운동", "offer"),
+  ];
+  const first = clusterPersonas(input);
+  const second = clusterPersonas(input);
+  expect(first[0].id).toBe(second[0].id);
+  expect(first[0].id).toMatch(/^운동-offer-\d+\.\d{3}-\d+\.\d{3}$/);
+});
+```
+
+<Paragraph>기술적으로 틀린 것도 없었다. 그런데 써보니 이상했다.</Paragraph>
+
+---
+
+<Subtitle level={2}>"뭔가 일어나고 있는" 감각이 안 났다</Subtitle>
+
+<Paragraph>
+  페르소나들이 지도 위를 돌아다니다가 <strong>우연히</strong> 한 지점에 5명이
+  겹친다. 클러스터가 생긴다. 잠시 후 한 명이 이동한다. 반경을 벗어난다.
+  클러스터가 깨진다. 또 몇 초 뒤 다른 곳에서
+  <strong>우연히</strong> 4명이 모인다. 새 클러스터.
+</Paragraph>
+
+<Paragraph>
+  이걸 본 첫인상은 "보글보글 끓는 수프" 였다. 점들이 끊임없이 뭉쳤다가 풀렸다
+  한다. 눈은 피로하고,
+  <strong>어느 클러스터에 주목해야 할지가 없다</strong>. 모든 클러스터가 똑같이
+  "우연히 겹쳐서 생긴 것" 이기 때문이다.
+</Paragraph>
+
+<Paragraph>
+  Spot 의 본질을 다시 떠올렸다. 이 서비스는 로컬 커뮤니티 마켓플레이스다.
+  누군가가
+  <strong>모임을 열고</strong>, 다른 사람들이{" "}
+  <strong>거기에 참여하러 온다</strong>. "모임이 있어서 모였다" 가 본질이지,
+  "사람들이 겹쳤다" 는 곁가지다. 내가 보여주고 있던 건 곁가지였다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>원인 중심으로 다시 생각했다</Subtitle>
+
+<Paragraph>
+  모양 기반에서 원인 기반으로 뒤집으면, 클러스터는 파생된 결과가 아니라{" "}
+  <strong>1급 객체</strong>가 된다. 시작은 "스팟 하나가 열렸다" 이고, 그 스팟이
+  자기 <strong>참여자들을 끌어온다</strong>. 사용자 관점에서는{" "}
+  <strong>"어떤 사람이 모임을 열었고, 누가 거기로 가고 있다"</strong> 가 되는
+  것이다.
+</Paragraph>
+
+<Paragraph>
+  이걸 담는 타입을 새로 짰다. 이름은 `SpotLifecycle`. 한 스팟의 전체 생애(생성 →
+  참여자 join/leave → 매칭 → 종료) 를 <strong>하나의 객체</strong>로 서술한다.
+</Paragraph>
+
+```ts
+type SpotLifecycle = {
+  spotId: string;
+  location: GeoCoord;
+  category: SpotCategory;
+  intent: "offer" | "request";
+  title: string;
+  createdAtMs: number;
+  matchedAtMs: number | null; // OPEN → MATCHED 전환 시각
+  closedAtMs: number;
+  participants: Array<{
+    personaId: string;
+    joinedAtMs: number;
+    leftAtMs: number | null;
+  }>;
+};
+```
+
+<Paragraph>
+  이 shape 는 의도적으로 <strong>BE 가 나중에 그대로 보낼 수 있는</strong>{" "}
+  형태다. 각 필드가 시각 타임스탬프를 담고 있어서, SSE 나 WebSocket 스트림으로
+  이 객체를 쏘기만 하면 프론트엔드는 현재 시각과 비교해 상태를 파생한다. mock
+  에서 실물로 넘어갈 때 <strong>훅의 내부만 교체하면 된다</strong>는 원칙을
+  여기서 처음 적용했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>스팟이 참여자를 끌어오는 방식</Subtitle>
+
+<Paragraph>
+  새 설계에서 특히 재미있었던 건{" "}
+  <strong>참여자가 실제로 스팟 좌표로 걸어간다</strong> 는 부분이다. 기하학적
+  버전에서는 있을 수 없었던 행동이다 — 거기선 "이미 모여있는 애들을 묶는 것"
+  이었기 때문이다.
+</Paragraph>
+
+<Paragraph>
+  구조는 이렇다. `useMockSpotLifecycles` 훅이 setInterval (800ms) 로 돌면서 현재
+  활성 스팟의 참여자들을 뽑아 <strong>assignment 맵</strong>을 만든다.
+  `personaId → spot.location` 이다. 이걸 outer hook 으로 노출하고, `MapClient`
+  가 이 값을 <strong>페르소나 스웜의 `setSpotTargets`</strong> 에 꽂는다.
+</Paragraph>
+
+```ts
+// MapClient.tsx (발췌)
+const lifecycleResult = useMockSpotLifecycles({
+  enabled: true,
+  personas: filteredPersonas,
+  positionsRef: swarmPositionsRef,
+  onAssignmentsChangeAction: swarmSetSpotTargets, // ← 이 줄이 핵심
+});
+```
+
+<Paragraph>
+  `setSpotTargets` 가 호출되면 스웜 루프가 각 페르소나의 motion state 를 읽어,
+  그 페르소나가 어느 스팟 좌표로 가야 하는지 확인한다. 타겟이 잡힌 페르소나는 홈
+  근처 방황을 <strong>중단하고 스팟 쪽으로 이동</strong>한다. lerp+easeInOut
+  보간이 끝날 무렵엔 실제로 스팟 좌표 근처에 도달한다.
+</Paragraph>
+
+```ts
+// use-mock-persona-swarm.ts — 타겟이 바뀐 경우에만 새 trip 시작
+if (spotTarget) {
+  if (s.mode !== "spot" || !coordClose(s.target, spotTarget, 0.00005)) {
+    s.origin = s.currentCoord;
+    s.target = spotTarget;
+    s.tripStartMs = now;
+    s.tripEndMs = now + rand(opts.tripMin, opts.tripMax) * 1.5;
+    s.dwellEndMs = SPOT_DWELL_SENTINEL; // 해제될 때까지 머무름
+    s.mode = "spot";
+  }
+}
+```
+
+<Paragraph>
+  dwell 에 <strong>`SPOT_DWELL_SENTINEL = Number.MAX_SAFE_INTEGER`</strong> 를
+  넣은 것도 의도다. 스팟에 도착한 참여자는 다음 wander 를 자동 선정하지 않는다 —
+  스팟 lifecycle 이 닫히거나 이 참여자의 `leftAtMs` 가 지나서 assignment 에서
+  빠질 때까지 <strong>그 자리에 머문다</strong>. "도착했으니 여기서 뭔가 하고
+  있다" 를 시뮬레이션으로 재현한 것이다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>"도착" 이라는 이벤트를 포착하는 55m 임계</Subtitle>
+
+<Paragraph>
+  원인 기반 설계가 준 또 하나의 보너스가 있었다.{" "}
+  <strong>"assigned" 와 "arrived" 가 달라졌다</strong>. 기하 버전엔 이 구분이
+  없었다 — 이미 근처에 있는 애들을 묶는 거니까. 원인 버전엔 `assigned = 목적지가
+  정해진 상태`, `arrived = 실제로 그 좌표에 도달한 상태` 두 단계가 생긴다.
+</Paragraph>
+
+<Paragraph>실제로 이걸 감지하는 로직은 훅 안에 들어있다.</Paragraph>
+
+```ts
+const ARRIVAL_THRESHOLD_DEG = 0.0005; // 약 55m
+for (const lc of lifecycles.values()) {
+  for (const p of lc.participants) {
+    // ... joinedAtMs / leftAtMs 필터링
+    assignments.set(p.personaId, lc.location);
+    const coord = posMap.get(p.personaId);
+    if (coord) {
+      const dLat = Math.abs(coord.lat - lc.location.lat);
+      const dLng = Math.abs(coord.lng - lc.location.lng);
+      if (dLat < ARRIVAL_THRESHOLD_DEG && dLng < ARRIVAL_THRESHOLD_DEG) {
+        arrivedParticipantIds.add(p.personaId);
+        // arrivedCountByCluster.get(lc.spotId) + 1 로 누적
+        arrivedCountByCluster.set(
+          lc.spotId,
+          (arrivedCountByCluster.get(lc.spotId) ?? 0) + 1,
+        );
+      }
+    }
+  }
+}
+```
+
+<Paragraph>
+  임계값을 <strong>약 55m (위경도 0.0005도)</strong> 로 잡은 이유는 clustering
+  radius (80m) 보다 작아야 하기 때문이다. 스팟이 끌어당기는 범위(80m) 안에
+  들어온 것만으로는 "도착" 으로 치지 않는다 — 그 안쪽 더 중심부에 들어왔을 때만
+  "실제로 여기 있다" 로 판정한다. 정확한 Haversine 거리 대신 lat/lng 의 절댓값
+  차이만 비교하는 박스 판정인데, 시뮬 좌표 스케일에서는 충분히 안전하고 매
+  프레임 도는 루프라 가벼운 게 우선이었다. 55m 는 시뮬 체감상 trip 의 마지막 한
+  걸음이 끝나는 지점이고, 여기 들어온 순간이 사용자에게 의미 있는 이벤트다.
+</Paragraph>
+
+<Subtitle level={3}>왜 이게 중요한가</Subtitle>
+
+<Paragraph>
+  이 차이가 UI 를 풍부하게 만든다. 이동 중인 참여자는{" "}
+  <strong>지도 위의 단독 dot</strong>으로 계속 보인다. 도착한 순간에만{" "}
+  <strong>클러스터에 흡수되고 dot 은 사라진다</strong>.
+</Paragraph>
+
+```ts
+// MapClient.tsx
+const clusteredPersonaIds = lifecycleResult.arrivedParticipantIds;
+// personaOverlays 생성 시
+if (clusteredPersonaIds.has(persona.id)) continue; // 도착한 애들은 dot 에서 빼기
+```
+
+<Paragraph>
+  만약 `assigned` 시점에 dot 을 숨겼다면 어떻게 보일까? 스팟이 열리자마자 근처
+  페르소나들이
+  <strong>화면에서 즉시 사라지고</strong>, 몇 초 뒤 스팟 주변에 클러스터가
+  부풀어오른다. 사용자 관점에선 "갑자기 사람들이 사라졌다가 저기서 뭉쳤네?" —
+  이동이 없었으면 우연처럼 보인다.
+</Paragraph>
+
+<Paragraph>
+  반면 `arrived` 시점에 숨기면 이야기가 이어진다. 스팟이 열린다. 근처
+  페르소나들이 <strong>그 쪽으로 걸어간다</strong>. 도착해서 클러스터에
+  흡수된다. "저기로 사람들이 모이고 있다" 가 시각적으로 재현된다. 내가 갖고
+  싶었던 감각이 이거였다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>도착 순간에만 터지는 burst 애니메이션</Subtitle>
+
+<Paragraph>
+  여기서 한 걸음 더. 도착이라는 <strong>이벤트</strong>를 시각적으로 강조하기
+  위해 클러스터에 `arrivedCount` 라는 필드를 더했다. 이 숫자가 증가할 때마다
+  `ClusterBlob` 가 링이 퍼지는
+  <strong>join burst</strong> 애니메이션을 재생한다.
+</Paragraph>
+
+<Paragraph>
+  burst 는 `AnimatePresence` 로 감싼 `motion.div` 의 key 를 바꿔야 재생된다.
+  그래서 클러스터 컴포넌트 안에{" "}
+  <strong>"arrivedCount 가 올라갈 때마다 증가하는 카운터"</strong> 가 필요했다.
+</Paragraph>
+
+```tsx
+const arrivedCount = cluster.arrivedCount ?? 0;
+const [joinBurstKey, bumpJoinBurst] = useReducer((n: number) => n + 1, 0);
+const prevArrivedRef = useRef(arrivedCount);
+
+useEffect(() => {
+  if (arrivedCount > prevArrivedRef.current && !dying) {
+    bumpJoinBurst();
+  }
+  prevArrivedRef.current = arrivedCount;
+}, [arrivedCount, dying]);
+```
+
+<Paragraph>
+  `useReducer` 로 짠 이유는 단순 숫자 증가 카운터에는 의도 표현이 더 명확해서다
+  — 이 결정의 세부 근거는{" "}
+  <strong>
+    <Link href="/blog/spot/persona-cluster-rendering-optimization">
+      60fps 페르소나가 맵을 뛰어다닐 때
+    </Link>
+  </strong>{" "}
+  글에 정리해뒀다. 여기서 핵심은{" "}
+  <strong>"arrivedCount 증가" 라는 파생 이벤트가 UI 의 직접적인 트리거</strong>
+  가 됐다는 것이다. 원인 기반 모델이 없었으면 "도착" 이라는 이벤트 자체가 정의될
+  수 없고, 따라서 burst 애니메이션도 불가능하다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>모양 버전은 왜 아직 코드에 남아있는가</Subtitle>
+
+<Paragraph>
+  흥미로운 건 `clusterPersonas` 가 <strong>아직 지워지지 않았다</strong>는
+  점이다. `MapClient` 는 이걸 안 쓴다. 대신 유닛테스트 7개가 붙어있고,
+  `features/map/model/cluster-personas.ts` 에 남아서 언젠가 쓰일 수도 있는
+  코드로 존재한다.
+</Paragraph>
+
+<Paragraph>
+  남겨둔 이유는 두 가지다. 첫째, <strong>두 모델이 서로 배타적이 아니다</strong>
+  . 지금은 스팟 lifecycle 만 쓰지만, 나중에 "스팟이 아닌 우연한 밀집" (예:
+  공연장 근처, 이벤트 시간대 카페 거리) 을 별도 시각화로 얹고 싶을 수 있다. 그땐
+  모양 기반이 맞다. 둘째, <strong>테스트가 설계 의도를 문서화</strong>한다. 100m
+  격자 안정 id, transitive expansion, 2명 미만 폐기 같은 규칙이 코드보다
+  테스트에서 더 명료하게 읽힌다.
+</Paragraph>
+
+<Paragraph>
+  "안 쓰는 코드는 지운다" 는 원칙이 있긴 하지만,{" "}
+  <strong>재사용 가능성이 명확하고 테스트가 붙어있는 순수 함수</strong>는 예외를
+  둬도 된다고 판단했다. 이 판단이 맞는지는 몇 달 뒤 다시 돌아봐야 안다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>두 모델을 나란히 세우면</Subtitle>
+
+| 축            | 모양 기반 (`clusterPersonas`) | 원인 기반 (`useMockSpotLifecycles`)                   |
+| :------------ | :---------------------------- | :---------------------------------------------------- |
+| 1급 객체      | 반경 안 페르소나 집합         | `SpotLifecycle` 객체                                  |
+| 입력          | 좌표 배열                     | 스팟 생성·종료 이벤트 스트림                          |
+| 클러스터 수명 | 겹침이 유지되는 한            | `createdAtMs` → `closedAtMs`                          |
+| 참여자 상태   | 묶임 / 안 묶임                | `OPEN` / `MATCHED` / `CLOSED` + join/leave 타임스탬프 |
+| "도착" 개념   | 없음                          | 있음 (55m 임계)                                       |
+| 사용자 서사   | "저기에 사람들이 몰려있네"    | "누가 모임을 열었고, 누가 거기로 가고 있네"           |
+| BE 연동       | 좌표만 있으면 재구현 가능     | SSE 이벤트 shape 그대로 흡수                          |
+
+<Paragraph>
+  같은 화면을 그릴 수도 있다. 점 7개 주변에 bubble 이 하나 떠있는 그림은 두
+  모델에서 시각적으로 동일하게 나올 수 있다. 차이는{" "}
+  <strong>거기 도달한 경로와 이야기</strong>에 있다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>배운 것</Subtitle>
+
+1. <strong>같은 결과 화면이라도 데이터 모델에 따라 UX 의미가 달라진다</strong>.
+   "점이 모였다" 와 "스팟이 있어서 모였다" 는 같은 그림을 내지만 전자는 우연이고
+   후자는 이야기다.
+2. <strong>시뮬레이션이 BE 스펙의 prototype 이 될 수 있다</strong>.
+   `SpotLifecycle` 이라는 shape 을 확정한 뒤로, BE 가 붙을 때 "이 객체를 그대로
+   SSE 로 보내주면 됨" 이 답이 됐다. mock 이 스펙 문서로 승격된 케이스다.
+3. <strong>
+     "assigned" 와 "arrived" 의 구분처럼 파생 이벤트가 UI 를 풍부하게 만든다
+   </strong>
+   . 타임스탬프 기반 lifecycle 이 있으면 "참여 중", "일찍 떠남", "막 도착함"
+   같은 파생 상태가 자연스럽게 나온다. 이런 게 인터랙션 표현의 재료다.
+4. <strong>
+     남겨둘 코드와 지울 코드의 기준은 "재사용 가능성 × 테스트 존재" 다
+   </strong>
+   . `clusterPersonas` 는 둘 다 해당해서 남겨뒀다. 한 쪽이라도 약하면 지웠을
+   것이다.
+
+<Paragraph>
+  이 변경 이후로 Spot 에서 맵 위의 클러스터는{" "}
+  <strong>이야기를 가진 객체</strong>다. 우연히 겹쳐 생기지 않고, 누군가의
+  결정("모임을 연다") 과 다른 누군가의 결정("거기로 간다") 이 만나서 나타난다.
+  지도를 보면서 내가 느끼고 싶었던 감각이 이 전환 뒤에야 생겼다.
+</Paragraph>

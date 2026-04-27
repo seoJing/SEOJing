@@ -1,0 +1,93 @@
+---
+title: "Spot — 지도 위에 만든 로컬 커뮤니티, 그 기록의 시작"
+date: 2026-04-24
+tags:
+  - Spot
+  - DevLog
+  - React
+  - Next.js
+  - FSD
+description: 탭 기반 서비스를 지도 중심으로 피봇한 로컬 커뮤니티 프로젝트 Spot. 그 과정에서 배운 개념과 기술 선택을 기록으로 남긴다.
+---
+
+<Subtitle level={2}>Spot이 어떤 서비스인가</Subtitle>
+
+<Paragraph>
+  Spot은 로컬 커뮤니티 마켓플레이스다. 동네에서 누군가가 "함께 할 사람"을
+  모집하거나 (OFFER), "해줄 사람"을 찾는 (REQUEST) 요청을 올린다. 매칭이
+  성사되면 Spot이라는 작업 공간이 열리고, 거기서 체크리스트와 일정, 정산까지
+  이어진다.
+</Paragraph>
+
+<Paragraph>
+  그런데 서비스의 본질은 <strong>"공간"</strong>이다. 어느 지역에서 무슨 일이
+  일어나고 있는지가 사용자가 가장 먼저 알고 싶은 정보다. 그래서 Spot은 탭 구조
+  대신 <strong>지도가 주 화면</strong>이고, 피드와 상세는 그 위에 얹히는
+  바텀시트로 설계됐다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>왜 블로그로 남기나</Subtitle>
+
+<Paragraph>
+  KD 팀의 HLMN 리팩토링이나 졸업 프로젝트 때도 느꼈지만, 개발을 해놓고 나면{" "}
+  <strong>"이걸 왜 이렇게 짰지?"</strong>에 대한 기록이 늘 빠져있다. 코드는
+  남지만 선택의 이유는 머릿속에서 휘발된다. Spot에선 그걸 미리 잡아두고 싶었다.
+</Paragraph>
+
+<Paragraph>
+  그리고 Spot은 <strong>백엔드 대부분이 아직 없다</strong>. 지금은 프론트엔드가
+  mock으로 서비스의 흐름을 먼저 만들고, 나중에 BE 팀이 붙을 때 그 mock이 스펙
+  문서가 된다. 이런 구조에서 설계 결정은 문서로 남겨두지 않으면 BE가 붙을 때
+  맥락이 증발한다.
+</Paragraph>
+
+<Paragraph>
+  이 섹션의 글들은 Spot을 만들면서 내가 실제로 부딪힌 문제와 선택을 정리한다.
+  순서대로 읽지 않아도 되고, 개념과 "왜 다른 방식이 아니었는지"를 중심으로 쓴다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>기술 스택 한 줄 요약</Subtitle>
+
+| 레이어     | 선택                             | 메모                                                     |
+| :--------- | :------------------------------- | :------------------------------------------------------- |
+| 프레임워크 | Next.js 16 App Router + React 19 | RSC와 Client 경계를 FSD의 `client/` 폴더로 고정          |
+| 스타일     | Tailwind CSS v4 (`@theme`)       | `tailwind.config.ts` 없음 — CSS가 1급 시민               |
+| 상태       | Zustand v5 + URL 쿼리 파라미터   | 맵 인터랙션 상태는 URL이 진실의 원천                     |
+| 서버 상태  | TanStack Query v5                | `isPending`, `gcTime` (v4 이름 금지)                     |
+| 애니메이션 | framer-motion 12                 | `motion.div` 직접, `AnimatePresence mode="wait"`         |
+| 지도       | Naver Maps JS v3                 | `react-kakao-maps-sdk` 아님 — 커스텀 오버레이 프로토타입 |
+| PWA        | Serwist                          | `next-pwa`가 Next.js 16과 호환이 깨져 전환               |
+| 아키텍처   | Feature-Sliced Design            | `app → features → entities → shared`, 단방향 import      |
+
+---
+
+<Subtitle level={2}>이 블로그 섹션에서 다룰 글들</Subtitle>
+
+<Paragraph>
+  지금까지 쓴 주제는 세 개다. 앞으로 FSD 마이그레이션 회고, Serwist 전환,
+  Tailwind v4 `@theme` 이야기가 따라 붙을 예정이다.
+</Paragraph>
+
+1. <strong>60fps 페르소나가 맵을 뛰어다닐 때, React를 어떻게 덜 깨우나</strong>
+   — ref + 외부 pub/sub 패턴, `React.memo` custom equality, framer-motion
+   `transformTemplate`로 transform 합성까지.
+2. <strong>지도가 회색 화면만 찍던 날</strong> — React StrictMode의
+   double-invoke와 async useEffect가 만났을 때 생기는 race condition. 그리고
+   동기 초기화라는 해법.
+3. <strong>탭을 버리고 지도를 남겼다</strong> — 탭 구조를 버리고
+   `/map?spot=...&sheet=half`로 피봇한 이유. URL이 상태의 진실이 된다는 게 무슨
+   뜻인지.
+
+---
+
+<Subtitle level={2}>앞으로</Subtitle>
+
+<Paragraph>
+  Spot은 여전히 개발 중이고 피봇 중이다. BE가 붙기 전에 FE가 먼저 만든 mock
+  세계가 어떻게 스펙 문서로 증발하지 않게 할지, 그리고 페르소나 시뮬레이션이라는
+  "가짜 실시간"을 어떻게 실제처럼 보이게 할지 — 앞으로의 주제가 거기에 있다.
+</Paragraph>

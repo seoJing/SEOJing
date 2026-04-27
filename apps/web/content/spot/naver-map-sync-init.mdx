@@ -1,0 +1,288 @@
+---
+title: "지도가 회색 화면만 찍던 날 — async useEffect 와 StrictMode 의 race"
+date: 2026-04-24
+tags:
+  - Spot
+  - React
+  - StrictMode
+  - useEffect
+  - Naver Maps
+  - 트러블슈팅
+description: 개발 서버를 띄울 때마다 절반의 확률로 지도 타일이 회색으로만 보였다. 원인은 React StrictMode 의 double-invoke 와 async 마운트 함수가 만든 race condition. async useEffect 의 함정과 동기 초기화라는 해법을 정리한다.
+---
+
+<Subtitle level={2}>증상: 새로고침을 할 때마다 달랐다</Subtitle>
+
+<Paragraph>
+  Spot 의 맵 화면을 개발 서버에서 열면 <strong>절반 정도의 확률</strong>로 지도
+  타일이 로드되지 않고 회색 배경만 남았다. 지도 컨트롤(줌 버튼 등)은 보이는데
+  타일 레이어만 비어있는 상태. 콘솔은 조용했고, 네트워크 탭에도 타일 요청이 안
+  찍혀 있었다. 새로고침하면 어떤 때는 정상, 어떤 때는 또 회색. 이게 가장
+  짜증나는 종류의 버그다 — <strong>재현이 확률적</strong>이다.
+</Paragraph>
+
+<Paragraph>
+  프로덕션 빌드로 띄우면 증상이 없었다. 개발 서버에서만 발생. 이 시점에서 거의
+  범인이 확정된다 —<strong>React StrictMode</strong>다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>StrictMode 의 double-invoke 가 뭔가</Subtitle>
+
+<Paragraph>
+  React 18 부터 개발 모드에서 StrictMode 안에 들어있는 컴포넌트는{" "}
+  <strong>의도적으로 두 번 마운트 된다</strong>. 정확히는 `mount → unmount →
+  mount` 패턴. 이유는 단순하다.{" "}
+  <strong>cleanup 이 올바르게 짜여있는지 검증</strong>하기 위해서다. 컴포넌트가
+  언마운트 후 재마운트되는 상황(예: 뒤로가기 후 돌아오기) 에서 메모리 누수 없이
+  동작하려면 effect 의 cleanup 이 제대로 돌아야 하는데, StrictMode 가 일부러 그
+  상황을 첫 마운트 때 재현해본다.
+</Paragraph>
+
+```
+StrictMode 없음:
+  mount  →  (앱 사용)  →  unmount
+
+StrictMode 개발 모드:
+  mount  →  unmount  →  mount  →  (앱 사용)  →  unmount
+```
+
+<Paragraph>
+  여기까지는 잘 알려진 이야기. 문제는{" "}
+  <strong>useEffect 안에서 async 함수를 돌릴 때</strong> 생긴다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>async useEffect 의 함정</Subtitle>
+
+<Paragraph>
+  지도 SDK 를 초기화하려면 "스크립트 로드 → `naver.maps.Map` 생성 → 타일 레이어
+  attach" 순서가 필요하다. 처음엔 이걸 이렇게 짰다.
+</Paragraph>
+
+```tsx
+useEffect(() => {
+    let mapInstance: naver.maps.Map | null = null;
+
+    async function mountMap() {
+        await loadNaverScript(); // 동적 스크립트 태그 로드
+        mapInstance = new naver.maps.Map(containerRef.current!, { ... });
+        setMap(mapInstance);
+    }
+
+    mountMap();
+
+    return () => {
+        mapInstance?.destroy();
+    };
+}, []);
+```
+
+<Paragraph>
+  겉보기엔 멀쩡하다. StrictMode 에서 돌리기 전까지는. 실행 순서를 풀어보면
+  문제가 보인다.
+</Paragraph>
+
+```
+[1st mount]   effect 실행 → mountMap() 호출됨. loadNaverScript() await 중...
+[cleanup]     return 함수 실행. mapInstance 는 아직 null. destroy 할 대상 없음.
+[2nd mount]   effect 재실행 → mountMap() 또 호출됨. await loadNaverScript()...
+              ↓ (잠시 후) 1차 await 이 resolve. new Map() 실행. setMap(instance1).
+              ↓ (잠시 후) 2차 await 이 resolve. new Map() 또 실행. setMap(instance2).
+```
+
+<Paragraph>
+  두 개의 지도 인스턴스가 같은 컨테이너 DOM 을 두고 싸운다. 어느 쪽이 이기느냐는
+  경합(race) 이다. 심한 경우엔 둘 다 뭔가 attach 하려다가 서로 덮어쓰면서{" "}
+  <strong>타일 레이어가 영영 초기화되지 않는다</strong>. 그래서 회색 화면이
+  남는다.
+</Paragraph>
+
+<Paragraph>
+  cleanup 에서 `mapInstance?.destroy()` 를 부르고 있으니 괜찮지 않냐고? 첫
+  cleanup 시점엔 `mapInstance` 가 아직 null 이다. await 이 돌아오기 전이라서.{" "}
+  <strong>
+    async 함수 안의 변수는 effect 의 cleanup 이 닫은 뒤에도 계속 쓰인다
+  </strong>
+  . 이 시간차가 race window 다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>대안들을 검토했다</Subtitle>
+
+<Subtitle level={3}>A. StrictMode 를 끈다</Subtitle>
+
+<Paragraph>
+  제일 유혹적이지만 <strong>근본 해결이 아니다</strong>. 다른 effect 의 cleanup
+  누락 문제까지 전부 덮어버린다. 게다가 프로덕션 배포 시점에는 자동으로
+  single-invoke 라{" "}
+  <strong>개발에서만 잡을 수 있던 버그를 프로덕션에서 만나게 된다</strong>.
+  사실상 진단 도구를 꺼버리는 행위다.
+</Paragraph>
+
+<Subtitle level={3}>B. `useRef` 플래그로 2차 마운트 때만 실행 스킵</Subtitle>
+
+```tsx
+const mountedRef = useRef(false);
+useEffect(() => {
+  if (mountedRef.current) return;
+  mountedRef.current = true;
+  mountMap();
+}, []);
+```
+
+<Paragraph>
+  작동은 한다. 그런데 <strong>race window 자체는 여전히 남는다</strong> — 의미상
+  초기화가 연속되지 않는 것일 뿐, cleanup 순서 이슈는 해결 안 된다. 게다가 이건
+  "StrictMode 를 의도적으로 우회" 한다는 신호라서 리뷰에서도 항상 찝찝하다.
+</Paragraph>
+
+<Subtitle level={3}>C. AbortController 기반 취소</Subtitle>
+
+```tsx
+useEffect(() => {
+  const controller = new AbortController();
+  async function mountMap() {
+    await loadNaverScript();
+    if (controller.signal.aborted) return;
+    // ... new Map() ...
+  }
+  mountMap();
+  return () => controller.abort();
+}, []);
+```
+
+<Paragraph>
+  정공법. 첫 마운트의 async 작업이 cleanup 때 abort 되므로 두 번째 인스턴스가 안
+  만들어진다. 이게
+  <strong>"async effect 를 쓰고 싶다면" 의 정답</strong>이다. 다만 지도
+  초기화처럼 "한 번만 만들고 영원히 유지될" 리소스에는 좀 무겁다. 매번
+  controller 달고 abort 체크를 넣는 보일러플레이트가 생긴다.
+</Paragraph>
+
+<Subtitle level={3}>
+  D. 스크립트 로딩과 Map 인스턴스 생성을 분리 — 채택
+</Subtitle>
+
+<Paragraph>
+  제일 중요한 관찰이 있었다.{" "}
+  <strong>"스크립트가 준비됐다" 와 "지도를 만든다"는 서로 다른 책임이다</strong>
+  . 스크립트는 앱 전역에 한 번 로드되면 끝이다. 그 뒤로 `naver.maps`
+  네임스페이스는 전역에 늘 존재한다. 그러면 스크립트 로딩은{" "}
+  <strong>React 바깥에서</strong> 관리하고, useEffect 는{" "}
+  <strong>스크립트가 이미 준비됐다는 걸 전제</strong>로{" "}
+  <strong>동기적으로 `new Map()` 만 호출</strong>하면 된다.
+</Paragraph>
+
+```tsx
+// 1) React 바깥: 스크립트 로더는 Promise 를 캐시. 앱 생애 동안 한 번만 호출.
+let naverScriptPromise: Promise<void> | null = null;
+export function ensureNaverScript(): Promise<void> {
+    if (naverScriptPromise) return naverScriptPromise;
+    naverScriptPromise = new Promise((resolve) => {
+        const s = document.createElement('script');
+        s.src = `https://oapi.map.naver.com/...`;
+        s.onload = () => resolve();
+        document.head.appendChild(s);
+    });
+    return naverScriptPromise;
+}
+
+// 2) React 쪽: "스크립트 준비됨" 을 ready 플래그로 구독.
+function useNaverReady(): boolean {
+    const [ready, setReady] = useState(() =>
+        typeof window !== 'undefined' && !!window.naver?.maps,
+    );
+    useEffect(() => {
+        if (ready) return;
+        ensureNaverScript().then(() => setReady(true));
+    }, [ready]);
+    return ready;
+}
+
+// 3) 컴포넌트: ready 가 true 일 때만 '동기적으로' Map 생성.
+function NaverMapCanvas() {
+    const ready = useNaverReady();
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [map, setMap] = useState<naver.maps.Map | null>(null);
+
+    useEffect(() => {
+        if (!ready) return;
+        if (!containerRef.current) return;
+        const instance = new naver.maps.Map(containerRef.current, { ... });
+        setMap(instance);
+        return () => instance.destroy();
+    }, [ready]);
+
+    return <div ref={containerRef} />;
+}
+```
+
+<Paragraph>차이를 보면 이렇다.</Paragraph>
+
+| 구조                | 스크립트 로드           | Map 생성                  | StrictMode 안전성                    |
+| :------------------ | :---------------------- | :------------------------ | :----------------------------------- |
+| 기존 (async effect) | useEffect 안 async      | await 이후 실행           | race 발생                            |
+| 채택 (분리)         | React 바깥 Promise 캐시 | useEffect 안에서 **동기** | cleanup 직전 instance 가 확정 — 안전 |
+
+<Paragraph>
+  핵심은 <strong>useEffect 안에서 `new Map()` 이 동기적으로 호출</strong>된다는
+  점이다. `ready` 가 true 인 시점엔 `naver.maps` 가 이미 전역에 존재하므로 await
+  이 필요 없다. 그러면 cleanup 이 실행되는 시점에 `instance` 변수는{" "}
+  <strong>항상 유효한 객체</strong>이고, `destroy()` 가 정확히 그걸 정리한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>왜 이게 맞는 설계인가</Subtitle>
+
+<Paragraph>
+  SDK 의 <strong>readiness</strong> 와 <strong>인스턴스 lifecycle</strong> 을
+  분리한다는 원칙은 이번 상황에 국한되지 않는다. 지도, 지불 SDK, 웹소켓
+  클라이언트, Analytics — 많은 외부 스크립트가 같은 패턴이다.
+</Paragraph>
+
+1. <strong>Readiness 는 싱글톤</strong>. 앱 생애에 한 번 로드하고, 이후엔
+   플래그로 구독만 한다. React 의 lifecycle 에 묶이면 안 된다.
+2. <strong>인스턴스는 컴포넌트 단위</strong>. 마운트될 때 만들고, 언마운트될 때
+   파괴한다. 이건 React lifecycle 위에서 돌아야 한다.
+3. <strong>둘 사이의 경계가 async/await 이다</strong>. 경계 바깥(= 스크립트)에서
+   async 를 끝내고, 경계 안(= useEffect 의 body)에서는 동기적으로 처리한다.
+
+<Paragraph>
+  이 규칙은 memory 에도 적어뒀다 — "Naver Map 초기화는 동기적으로". 다음에
+  비슷한 외부 SDK 를 붙일 때 첫 질문이 "이 SDK 의 readiness 를 React 바깥에서
+  어떻게 관리할 것인가" 가 될 거다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>StrictMode 가 재발견해준 것</Subtitle>
+
+<Paragraph>
+  처음엔 StrictMode 가 귀찮았다. "왜 자꾸 두 번 렌더되지?" 싶었다. 그런데 이번
+  경험으로 관점이 바뀌었다. StrictMode 가 <strong>내 코드의 잘못된 전제</strong>
+  를 잡아준 거다. 내가 쓴 전제는 "effect 는 한 번만 실행된다"였고, 그게 무너지는
+  순간 버그가 드러났다. 프로덕션에선 한 번 실행되니까 잘 돌아가지만,
+  <strong>뒤로가기 후 돌아오기 같은 사용자 동선</strong>에서 동일한
+  double-invoke 가 재현된다. 프로덕션에서 만나는 건 훨씬 비싸다.
+</Paragraph>
+
+<Paragraph>요약하면 이렇다.</Paragraph>
+
+1. <strong>async 를 useEffect 안에 통째로 넣지 말라</strong>. 경계에서 await 를
+   끝내고, 안에서는 동기 처리.
+2. <strong>외부 SDK 의 readiness 는 React 바깥에서 관리</strong>하라. 모듈
+   스코프 Promise 캐시가 가장 깔끔하다.
+3. <strong>cleanup 이 닫을 수 있는 대상이 effect body 끝 시점에 확정</strong>
+   돼야 한다. 확정 못 하면 race 다.
+4. <strong>StrictMode 는 끄지 말라</strong>. 그게 잡아주는 버그가 프로덕션으로
+   새어 나간다.
+
+<Paragraph>
+  회색 화면이 다시는 안 찍힌다. 이제 화면을 띄우면 타일이 항상 바로 뜬다. 그
+  "당연해 보이는" 상태로 돌아오기까지 꽤 많은 것을 이해해야 했다.
+</Paragraph>

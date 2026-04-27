@@ -1,0 +1,441 @@
+---
+title: "탭을 버리고 지도를 남겼다 — URL 이 상태의 진실이 된 이유"
+date: 2026-04-24
+tags:
+  - Spot
+  - Next.js
+  - App Router
+  - URL State
+  - UX
+description: 탭 기반 네비게이션을 버리고 Spot 을 지도 중심 서비스로 피봇한 기록. 왜 Zustand 만으로는 부족했고, 왜 useSearchParams 기반의 URL 상태를 택했는지. 그리고 URL, Zustand, useState, Ref 네 저장소를 어떤 기준으로 갈라 쓰게 됐는지.
+---
+
+<Subtitle level={2}>시작은 탭이었다</Subtitle>
+
+<Paragraph>
+  Spot 의 처음 와이어프레임은 평범했다. 하단 탭 바에{" "}
+  <strong>홈 · 피드 · 채팅 · 내 정보</strong>. 각 탭이 자기 라우트를 가진
+  전형적인 소셜 앱 구조. 홈에는 근처 인기 Spot, 피드에는 전체 요청/모집 리스트,
+  내 정보는 내가 연 Spot 과 참여 중인 Spot. 익숙한 형태라 당연한 선택처럼
+  보였다.
+</Paragraph>
+
+<Paragraph>
+  그런데 서비스 흐름을 따라가 보니 이상했다. 사용자가 피드에서 흥미로운 Spot 을
+  발견한다. 누르면 상세 페이지로 이동한다. 상세에서 "어디서 하는 건지" 가 제일
+  궁금하다. 지도를 연다. 그런데 그 순간
+  <strong>피드에서 보던 맥락이 사라진다</strong>. 뒤로가면 다시 지도에서 피드로,
+  그리고 또 상세로. 탭 전환이 <strong>context 이탈</strong>이었다.
+</Paragraph>
+
+<Paragraph>
+  결정적이었던 건 이거였다 —{" "}
+  <strong>"지도를 한 번 보면, 지도를 안 보는 상태로 돌아가고 싶지 않다"</strong>
+  . 로컬 커뮤니티 서비스의 본질은 <strong>공간</strong>이고, 공간이 주
+  화면이어야 했다. 그래서 탭을 버렸다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>피봇 이후 구조</Subtitle>
+
+<Paragraph>
+  `/` 는 `/map` 으로 redirect. 실질적인 홈이 지도가 됐다. 피드는 지도 위에
+  얹히는 <strong>바텀시트</strong>로, 채팅도 드로어로, 필터도 지도 상단의 chip
+  bar 로. 모든 주요 인터랙션이 <strong>지도 컨텍스트를 유지한 채</strong>{" "}
+  진행된다.
+</Paragraph>
+
+```text
+Before:
+  [tab: 홈] [tab: 피드] [tab: 채팅] [tab: 내 정보]
+  ── 각 탭이 완전히 다른 화면 ──
+
+After:
+  ┌───── /map 하나의 라우트 ─────┐
+  │  ┌── Naver Map (bg) ──┐      │
+  │  │ ●  ●    ●          │      │
+  │  │    ●   ▲           │      │
+  │  └────────────────────┘      │
+  │  [FeedBottomSheet ↑↓]        │
+  │  [ChatDrawer  ←]             │
+  │  [FilterChipBar  ⋯]          │
+  └──────────────────────────────┘
+```
+
+<Paragraph>
+  바텀시트는 펼친 상태(`half`, `full`) 와 접힌 상태(`peek`)를 넘나들고, 뒤에는
+  지도가 <strong>계속 살아있다</strong>. 상세를 열어도 지도는 그대로. 채팅을
+  열어도 지도는 그대로. 사용자는 한 번도 공간 감각을 잃지 않는다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>그런데 상태가 너무 많아졌다</Subtitle>
+
+<Paragraph>
+  한 라우트 안에 모든 게 들어오면서 새로운 문제가 생겼다.{" "}
+  <strong>상태 조합이 폭발</strong>한다.
+</Paragraph>
+
+- 어떤 Spot 이 선택됐나? (`selectedSpotId`)
+- 바텀시트가 얼만큼 열려있나? (`sheetSnap = 'peek' | 'half' | 'full'`)
+- 채팅 드로어는 열려있나? (`chat = 'open' | 'closed'`)
+- 어떤 페르소나를 따라가고 있나? (`followingPersonaId`)
+- 필터는 무슨 카테고리인가? (`categories`)
+
+<Paragraph>
+  이걸 전부 Zustand store 에 넣고 시작했다. 잘 돌아갔다. 잠깐은.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>Zustand 만 쓰다가 깨진 지점들</Subtitle>
+
+<Subtitle level={3}>1. 링크 공유가 안 됐다</Subtitle>
+
+<Paragraph>
+  "이 Spot 보내줄게" 하고 `/map` URL 을 복사해서 보내면, 받은 사람은{" "}
+  <strong>지도의 기본 상태</strong>를 본다. 내가 보고 있던 Spot 도 안 열려있고,
+  바텀시트는 peek. 로컬 커뮤니티 서비스에서{" "}
+  <strong>"지금 이 Spot" 을 공유할 수 없다는 건 치명적</strong>이다.
+</Paragraph>
+
+<Subtitle level={3}>2. 새로고침하면 상태가 증발했다</Subtitle>
+
+<Paragraph>
+  Zustand 는 메모리 기반이다. 새로고침하면 `selectedSpotId` 가 `null` 로.
+  localStorage 에 persist 할 수는 있는데, 그건{" "}
+  <strong>URL 에 있어야 할 상태를 storage 에 숨기는 것</strong>이다. 사용자가
+  URL 로 해당 페이지를 다시 열 방법이 없다.
+</Paragraph>
+
+<Subtitle level={3}>3. 뒤로가기 버튼이 무의미해졌다</Subtitle>
+
+<Paragraph>
+  사용자가 Spot A 를 열고, 닫고, Spot B 를 열었다. 뒤로가기 버튼을 누르면 "A 를
+  열었던 상태" 로 갔으면 좋겠다. 그런데 URL 이 `/map` 하나에 고정돼있으니
+  브라우저 history 에 아무 엔트리도 안 쌓인다. 뒤로가기 버튼이 그냥 이전
+  페이지로 튕겨나간다. <strong>브라우저가 주는 무료 UX 를 포기</strong>하는
+  셈이었다.
+</Paragraph>
+
+<Subtitle level={3}>4. 딥 링크가 안 됐다</Subtitle>
+
+<Paragraph>
+  푸시 알림이나 공지에서 "이 Spot 으로 바로 가기" 를 구현하려면 URL 만으로 특정
+  상태에 착지해야 한다. 스토어 기반이면 착지 뒤 별도 액션을 호출해야 한다.
+  복잡도만 올라간다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>그래서 URL 을 진실의 원천으로 만들었다</Subtitle>
+
+<Paragraph>
+  Next.js App Router 의 `useSearchParams` 가 이 결정의 실질적 기반이다. URL
+  쿼리를 읽고 쓰는 hook 을 만들고, 주요 UI 상태를 전부 쿼리에 올렸다.
+</Paragraph>
+
+```text
+/map?spot=<id>&sheet=half&chat=open
+/map?persona=<id>&sheet=peek
+/map?cluster=<id>&sheet=full
+```
+
+<Paragraph>
+  이걸 관리하는 hook 은 <strong>`useMapUrlState`</strong> 다. 두 가지 책임이
+  있다.
+</Paragraph>
+
+1. <strong>현재 URL 을 파싱해서 타입 있는 상태 객체로 반환</strong>한다.
+2. <strong>patch 를 받아 머지한 뒤 `router.replace` 로 URL 에 반영</strong>한다.
+
+```ts
+export function useMapUrlState() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const state = useMemo(
+    () => parseMapUrlState(new URLSearchParams(searchParams.toString())),
+    [searchParams],
+  );
+
+  const update = useCallback(
+    (patch: Partial<MapUrlState>) => {
+      const next: MapUrlState = { ...state, ...patch };
+      const nextMapQuery = serializeMapUrlState(next);
+
+      // MapUrlState 외 외부 쿼리(sim, n 등)는 보존.
+      const merged = new URLSearchParams(searchParams.toString());
+      merged.delete("spot");
+      merged.delete("persona");
+      merged.delete("cluster");
+      merged.delete("sheet");
+      merged.delete("chat");
+      for (const [key, value] of new URLSearchParams(nextMapQuery)) {
+        merged.set(key, value);
+      }
+
+      const finalQuery = merged.toString();
+      if (finalQuery === searchParams.toString()) return;
+      router.replace(`${pathname}${finalQuery ? `?${finalQuery}` : ""}`, {
+        scroll: false,
+      });
+    },
+    [state, pathname, router, searchParams],
+  );
+
+  return [state, update] as const;
+}
+```
+
+<Paragraph>이 짧은 hook 에 들어간 판단이 몇 개 있다.</Paragraph>
+
+<Subtitle level={3}>왜 `router.push` 가 아니라 `router.replace`?</Subtitle>
+
+<Paragraph>
+  `push` 는 브라우저 history 에 새 엔트리를 쌓는다. `replace` 는 현재 엔트리를
+  교체한다. Spot 에서는
+  <strong>바텀시트 스냅을 바꿀 때마다 history 가 쌓이면 안 된다</strong>.
+  뒤로가기를 다섯 번 눌러야 지도 탈출이 되는 사태. 그래서 기본은 `replace`.
+  "다른 Spot 으로 이동" 같이 논리적으로 <strong>새 화면 전환</strong>에 해당하는
+  경우에만 별도로 `push` 를 호출한다.
+</Paragraph>
+
+<Subtitle level={3}>왜 `scroll: false`?</Subtitle>
+
+<Paragraph>
+  App Router 의 기본값은 라우트 변경 시 스크롤을 맨 위로 올린다. 바텀시트를
+  열었는데 갑자기 지도가 스크롤되면 방해다. 우리는 URL 을 바꾸지만{" "}
+  <strong>시각적으론 한 페이지 안에서의 전환</strong>이므로 스크롤 리셋을
+  꺼둔다.
+</Paragraph>
+
+<Subtitle level={3}>왜 외부 쿼리를 보존하는 복잡한 머지?</Subtitle>
+
+<Paragraph>
+  `?sim=swarm&n=500` 같은 시뮬레이션 옵션이나, 나중에 A/B 테스트 변수가 붙을 수
+  있다. 이런 것까지 매번 덮어쓰면 안 된다. 그래서{" "}
+  <strong>우리가 관리하는 키들만 지우고, 나머지는 그대로 두고 덮어쓴다</strong>.
+  serialize 결과를 그대로 URL 에 박지 않고 기존 params 에 머지하는 이유다.
+</Paragraph>
+
+<Subtitle level={3}>왜 `finalQuery === searchParams.toString()` 체크?</Subtitle>
+
+<Paragraph>
+  같은 URL 로 `router.replace` 를 호출하면 React 가 이를 useSearchParams 의
+  변경으로 인식해 렌더가 한 번 더 돈다. <strong>Loop 걸릴 가능성</strong>이
+  있다. 문자열 비교로 동일하면 아예 호출을 스킵한다. 작은 디테일이지만 이게
+  없으면 인터랙션 중 가끔씩 발생하는 더블 커밋을 Profiler 로 발견하게 된다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>useSearchParams 의 한계와 그 대가</Subtitle>
+
+<Paragraph>
+  App Router 에서 `useSearchParams` 를 쓰는 컴포넌트는 반드시{" "}
+  <strong>`Suspense` 경계로 감싸야</strong>
+  한다. 안 그러면 빌드가 깨진다. 또한 이 hook 은{" "}
+  <strong>Client Component 전용</strong>이라, RSC 구조 이점을 일부 포기한다.
+  그래서 `/map` 의 루트는 얇은 서버 컴포넌트로 두고 그 안에 `<MapClient />` 를
+  `Suspense` 와 함께 들여놓는 구조다.
+</Paragraph>
+
+```tsx
+// src/app/(map)/map/page.tsx (대강)
+import { Suspense } from "react";
+import { MapClient } from "@/features/map/client/MapClient";
+
+export default function MapPage() {
+  return (
+    <Suspense>
+      <MapClient />
+    </Suspense>
+  );
+}
+```
+
+<Paragraph>
+  RSC 혜택을 못 가져오는 대가가 있긴 하지만,{" "}
+  <strong>`/map` 은 이미 거의 전부가 인터랙티브</strong>하다. 서버에서 할 일이
+  metadata 생성 정도밖에 없다. 현실적인 타협점이었다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>대안과의 비교를 다시 정리</Subtitle>
+
+| 선택지                    | 딥링크       | 뒤로가기          | 새로고침 복원    | 구현 복잡도          |
+| :------------------------ | :----------- | :---------------- | :--------------- | :------------------- |
+| Zustand only              | ❌           | ❌                | 부분적 (persist) | 낮음                 |
+| History API 직접 조작     | ⚠️ 파싱 지옥 | ✅                | ✅               | 높음 — 라우터와 충돌 |
+| useSearchParams + replace | ✅           | ✅ (push 선택 시) | ✅               | 중간                 |
+
+<Paragraph>
+  순수 History API 를 쓰면 Next.js 라우터와 상태가 꼬인다.
+  `window.history.pushState` 가 쏘는 `popstate` 는 Next 의 내부 router 가 보지
+  못하기 때문이다. useSearchParams 경로가{" "}
+  <strong>프레임워크와 가장 잘 섞이는 경로</strong>였다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>URL 을 갖고 난 뒤, 나머지 상태는 어디로 갔나</Subtitle>
+
+<Paragraph>
+  URL 이 상태의 진실이 된 뒤에 생긴 자연스러운 후속 질문이 있었다.{" "}
+  <strong>그럼 URL 에 안 올릴 상태들은 어디에 둬야 하나</strong>. 피봇 직전엔
+  모든 UI 상태가 Zustand 에 있었고, URL 을 도입한 뒤엔 "링크에 담을 것" 만 URL
+  로 올리고 나머지는 관성적으로 Zustand 에 남겨뒀다. 그런데 그렇게 두고 쓰다
+  보니 <strong>Zustand 도 과하게 쓰이고 있는 구간</strong>이 생겼다.
+</Paragraph>
+
+<Paragraph>
+  예를 들어 "레이어 토글 모달이 열려있나" 같은 boolean 은 `MapClient` 안에서만
+  의미가 있다. 다른 컴포넌트가 이걸 읽을 일이 없는데 전역 store 에 둘 이유도
+  없다. 다시 `useState` 로 내렸다. 반대로 페르소나들의 현재 좌표 같이{" "}
+  <strong>매 프레임 갱신되는 값</strong>을 state 로 두면 리렌더가 터진다. 이건
+  `useRef` 로 뺐다.
+</Paragraph>
+
+<Paragraph>
+  결국 네 가지 저장소가 공존한다. 각자{" "}
+  <strong>답해야 하는 질문이 다르다</strong>.
+</Paragraph>
+
+| 저장소                    | 답해야 하는 질문                                             | Spot 에서의 예시                                                                       |
+| :------------------------ | :----------------------------------------------------------- | :------------------------------------------------------------------------------------- |
+| <strong>URL 쿼리</strong> | "링크로 공유 가능해야 하나? 새로고침 후에도 복원돼야 하나?"  | `spot`, `persona`, `cluster`, `sheet`, `chat`                                          |
+| <strong>Zustand</strong>  | "여러 컴포넌트가 같이 읽고 쓰나? URL 에 담기엔 부피가 큰가?" | `feedType`, `categories`, `searchQuery`, `activeLayer`, `mySpots`                      |
+| <strong>useState</strong> | "이 컴포넌트 안에서만 의미 있는 로컬 UI 상태인가?"           | `layerToggleOpen`, `postTypeSheetOpen`, `center`, `viewportBbox`, `followingPersonaId` |
+| <strong>useRef</strong>   | "매 프레임 바뀌는데 리렌더는 필요 없나?"                     | `swarmPositionsRef` (페르소나 좌표 Map)                                                |
+
+<Subtitle level={3}>판단은 "공유 범위" 와 "렌더 비용" 두 축이다</Subtitle>
+
+<Paragraph>
+  처음엔 기준이 하나(Zustand 에 두느냐 URL 에 두느냐) 였다. 지금은 두 축이다.
+</Paragraph>
+
+```text
+                 공유 범위 ↑
+                  Zustand                    URL
+                (여러 컴포넌트 읽기)      (링크·새로고침 복원)
+                    │                         │
+  렌더 비용 ──────┼─────────────────────────┼──────
+    (낮음)        │                         │
+                  useState                   Ref
+                (컴포넌트 로컬)          (리렌더 없이 흐름)
+                 공유 범위 ↓
+```
+
+<Paragraph>
+  - 공유 범위가 넓고 / 링크 복원 필요 → URL - 공유 범위가 넓고 / 링크 복원
+  불필요 → Zustand - 공유 범위가 좁고 / 리렌더 필요 → useState - 공유 범위가
+  좁고 / 리렌더 불필요 → Ref
+</Paragraph>
+
+<Subtitle level={3}>Ref 가 "상태 저장소" 라는 게 어색할 수 있다</Subtitle>
+
+<Paragraph>
+  보통 Ref 는 DOM 참조나 "effect 안에서 쓰는 mutable slot" 정도로 배운다. 그런데
+  Spot 에서는 페르소나 좌표 수백 개가 매 200ms 마다 갱신되는데, 이걸 state 로
+  올리면 바텀시트와 필터 칩까지 리렌더된다. 드래그가 끊긴다. 결국 좌표는
+  `positionsRef.current` 라는 Map 에 저장하고, 변경 통지는 별도 `subscribe(cb)`
+  로 풀었다.
+</Paragraph>
+
+```ts
+// useMockPersonaSwarm 가 돌려주는 값
+{
+    personas: Persona[];                          // state (정책상 바뀔 때만)
+    positionsRef: RefObject<Map<string, GeoCoord>>; // ref (매 200ms)
+    subscribe: (cb: () => void) => () => void;      // 변경 통지
+}
+```
+
+<Paragraph>
+  이 관점에서 Ref 는 <strong>"React 렌더 사이클 밖에 사는 상태"</strong> 다.
+  state 와 비교하면 리렌더를 트리거하지 못하지만, 대신 값 자체는 항상 최신이다.
+  구독자가 필요한 시점에 ref 를 읽는다. 왜 이 경로가 `useSyncExternalStore` 나
+  일반 state 보다 나았는지는 다른 글 (
+  <strong>
+    <Link href="/blog/spot/persona-cluster-rendering-optimization">
+      60fps 페르소나가 맵을 뛰어다닐 때
+    </Link>
+  </strong>
+  ) 에 따로 정리했다.
+</Paragraph>
+
+<Subtitle level={3}>한 상태가 두 저장소에 걸리면 버그가 된다</Subtitle>
+
+<Paragraph>
+  이 네 저장소는 상호 배타적이어야 한다. 한 값이 두 곳에 동시에 있으면{" "}
+  <strong>어느 쪽이 master 인지</strong> 계속 신경 써야 하고, 동기화를 빠뜨린
+  순간 버그가 된다. 실제로 겪은 예가 있다. 페르소나 오버레이가 초기엔 props
+  `position` 으로 렌더되다가, 구독이 걸리면 rAF 가 같은 Ref 를 갱신한다. 렌더
+  시점에 `if (!positionSubscribe) positionRef.current = position` 으로 조건을
+  두지 않으면, 렌더마다{" "}
+  <strong>props 로 받은 과거 좌표가 rAF 가 방금 쓴 최신 좌표를 덮어쓴다</strong>
+  . 한참을 디버깅한 뒤 "ref 의 주인은 한 명이어야 한다" 로 규칙화했다.
+</Paragraph>
+
+<Subtitle level={3}>다시 첫 질문으로</Subtitle>
+
+<Paragraph>
+  피봇 초반의 질문 — <strong>"상태를 어디 둘지는 어떻게 정하나"</strong> — 은
+  이제 이렇게 답한다. 취향이 아니라 세 가지 기준이다.{" "}
+  <strong>링크 복원성, 공유 범위, 렌더 비용</strong>. 이 셋을 따라가면 저장소
+  하나가 자동으로 걸린다. "Zustand 에 일단 다 넣고 나중에 고민하자" 가 아니라,
+  파일을 만드는 순간에 어디 둘지가 결정된다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>바텀시트와 한 손 UX</Subtitle>
+
+<Paragraph>
+  한 가지 덤이 있었다. 지도가 주 화면이 되면서, 피드·필터·채팅이 전부{" "}
+  <strong>하단 또는 측면에서 슬라이드</strong>되는 형태로 통일됐다. 엄지 하나로
+  쓸 수 있는 범위에 주요 조작이 다 들어온다. 예전 탭 구조에서 화면 상단의
+  네비게이션 바 버튼까지 손가락이 올라가야 했던 것과 완전 달라졌다.
+</Paragraph>
+
+<Paragraph>
+  디자인 시스템 쪽에 `BottomSheet`, `Drawer`, `Modal` 을 깔끔하게 나눠둔 것도 이
+  결정 덕분에 의미가 생겼다. 예전엔 "이건 모달, 저건 시트 — 왜 구분하지?"
+  싶었는데, 피봇 후엔{" "}
+  <strong>"지도 컨텍스트를 덮어쓰느냐, 겹쳐서 얹느냐"</strong>로 명확히
+  구분된다. 모달은 덮어쓰기(진짜 새 화면), 바텀시트/드로어는 겹쳐 얹기(지도
+  살아있음).
+</Paragraph>
+
+---
+
+<Subtitle level={2}>배운 것</Subtitle>
+
+1. <strong>
+     상태를 어디 둘지는 링크 복원성 · 공유 범위 · 렌더 비용 세 축으로 쪼개
+     정한다
+   </strong>
+   . "취향" 으로 두지 않는다. URL / Zustand / useState / Ref 네 저장소가 각각
+   답해야 하는 질문이 다르다.
+2. <strong>브라우저가 주는 무료 UX 를 포기하지 않는다</strong>. 뒤로가기,
+   새로고침 복원, 딥링크 — 이 셋을 포기한 대가는 항상 나중에 비싸게 돌아온다.
+3. <strong>App Router 의 `useSearchParams` 는 항상 Suspense 경계</strong>. 피봇
+   초반에 이 제약 때문에 빌드 에러 많이 봤다. 이제는 "이 컴포넌트에
+   `useSearchParams` 있나?" 가 반사적으로 점검하는 항목이 됐다.
+4. <strong>Ref 도 상태 저장소 중 하나로 취급한다</strong>. "리렌더가 필요 없는
+   흐름" 을 위한 공간이 있다는 것만 알면, 성능 문제가 설계 단계에서 해결된다.
+5. <strong>탭 구조는 익숙하지만 모든 서비스에 맞는 게 아니다</strong>. 서비스의
+   본질이 "공간" 이나 "시간" 같이 강한 축이 있으면 그 축 자체를 주 화면으로 두는
+   게 맞을 때가 많다.
+
+<Paragraph>
+  Spot 은 여전히 피봇 중이다. URL 스키마가 더 풍부해질 수도 있고, 반대로
+  단순해질 수도 있다. 다만
+  <strong>"URL 이 상태의 진실" 이라는 원칙</strong>은 이제 바꾸기 어렵다. 서비스
+  전체가 그 전제 위에서 돌아간다.
+</Paragraph>

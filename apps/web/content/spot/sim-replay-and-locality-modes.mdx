@@ -1,0 +1,519 @@
+---
+title: "70만 줄짜리 시뮬레이터 로그를 지도에 띄우기 — 줄이고, 쪼개고, 줌 레벨로 가르기"
+date: 2026-04-26
+tags:
+  - Spot
+  - DevLog
+  - Simulation
+  - Data Pipeline
+  - Architecture
+  - SSE
+  - Mock
+description: '시뮬레이터가 만든 70만 줄짜리 이벤트 로그를 프론트에서 재생 가능한 데이터로 줄이는 과정. SSE 와 prefetch 청크 사이에서 헤맸고, 결국 "이동 명령"만 보내고 보간하는 모델로 갔다. 그리고 콜드스타트 문제는 "지역 특성" 이라는 별도 모드를 줌 아웃에 띄우는 걸로 풀었다.'
+---
+
+<Subtitle level={2}>
+  출발점: 페르소나 mock 을 진짜 데이터로 바꿀 차례가 됐다
+</Subtitle>
+
+<Paragraph>
+  이전 글에서 다룬 것처럼, Spot 의 `/map` 에는 페르소나 500명이 자기 집 근처를
+  떠다니는 가짜 실시간이 있었다. 좌표는 프론트가 합성했고, 행동은 단순한
+  wander↔dwell 이었다. 디자인 검증과 성능 최적화 용도로는 충분했지만,{" "}
+  <strong>"이 사람들이 *왜* 저기 있는지"</strong>는 비어 있었다.
+</Paragraph>
+
+<Paragraph>
+  그 빈자리를 채우려고 만든 게 <strong>spotContextBuilder</strong> 다. 카카오
+  Local API 로 POI 를 수집하고(local-context-builder), 에이전트 기반
+  시뮬레이션으로 "사람들이 어떤 spot 을 만들고 참여하는지"를
+  돌리고(spot-simulator), 그 로그를 LLM 으로 5종
+  콘텐츠(피드/상세/계획/메시지/리뷰)로 렌더링한 뒤 검증·publish 하는
+  파이프라인(synthetic-content-pipeline)이다. 백엔드 데이터 공급자가 세 단계로
+  나뉜 셈이다.
+</Paragraph>
+
+<Paragraph>
+  이번 라운드의 질문은 단순했다.{" "}
+  <strong>이 시뮬레이션을 프론트에서 어떻게 보여줄 것인가</strong>. 사람들이
+  진짜로 움직이는 것처럼 보여야 하고, 백엔드가 아직 다 안 붙었으니 mock 으로도
+  자립해야 하고, 콜드스타트(데이터가 비는 초반)에도 빈 화면이 뜨면 안 된다.
+</Paragraph>
+
+<Paragraph>
+  이 글은 그 질문을 푸는 동안 <strong>몇 번을 말 바꾼 의사결정의 기록</strong>
+  이다. SSE 로 매 틱 좌표를 흘리려다 말고, 청크 단위 prefetch 로 갔다가,
+  "이동에는 시간이 걸린다" 라는 단순한 사실 하나로 데이터 모델을 뒤집었고,
+  마지막에 가서는 시각화를 두 모드로 쪼갰다. 그 과정에서 무엇을 버렸고 왜
+  버렸는지를 남긴다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>처음엔 SSE 로 매 틱 좌표를 보낼 생각이었다</Subtitle>
+
+<Paragraph>
+  시뮬레이터는 tick 단위로 돈다. 1 tick 안에 모든 agent 가 의사결정과 행동을
+  한다. 이걸 그대로 생각하면 자연스러운 모델은 이거다.{" "}
+  <strong>매 tick 마다 모든 agent 의 위치를 SSE 로 push 한다.</strong>
+  프론트는 받은 좌표로 마커를 다시 찍는다.
+</Paragraph>
+
+<Paragraph>
+  그런데 잠깐 계산을 해봤다. agent 50명, 48 tick 데모용으로는 2,400 메시지. 별거
+  아니다. 그런데 실제 시뮬레이터 출력이 어땠냐면{" "}
+  <strong>1,974 agent, 336 tick, 70만 줄, 136MB</strong>. 매 tick 모든 agent
+  좌표를 보내면 단순히 곱해도 66만 좌표 메시지. 그것도 사람당 1초 안에. 그리고
+  이건
+  <em>한 화면당</em> 트래픽이다.
+</Paragraph>
+
+<Paragraph>
+  더 결정적인 문제가 있었다. <strong>로그에 좌표가 없다.</strong> 시뮬레이터는
+  region_id (예: "emd_sinchon") 단위로만 행동한다. 각 동네에 사람이 몇 명, 어떤
+  spot 이 만들어지고 누가 참여하는지는 찍히지만, "그 사람의 정확한 lat/lng" 는
+  애초에 없다. 그게 시뮬의 추상화 단위니까. SSE 로 좌표를 보내려면 좌표를
+  *만들어내야* 했다.
+</Paragraph>
+
+<Paragraph>
+  여기서 첫 번째 깨달음. <strong>로그를 그대로 흘리는 건 답이 아니다.</strong>{" "}
+  시각화에 필요한 형태로 가공해서 보내야 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>"이동 명령" 만 보내고 보간하기</Subtitle>
+
+<Paragraph>
+  진짜 비디오 게임은 어떻게 할까. 멀티플레이어 게임에서 다른 플레이어의 위치를
+  60Hz 로 받아오지 않는다. 받는 건{" "}
+  <strong>"A 가 좌표 X 에서 좌표 Y 로 N 초 동안 이동한다"</strong>는 *intent*
+  다. 클라이언트가 그 사이를 보간한다. 도착하면 멈춘 채로 다음 명령을 기다린다.
+</Paragraph>
+
+<Paragraph>
+  같은 모델을 시뮬 재생에 적용했다. 서버는 <code>Movement</code> 를 보낸다.
+</Paragraph>
+
+```ts
+type Movement = {
+  agent_id: string;
+  depart_tick: number; // 출발
+  arrive_tick: number; // 도착
+  from_place_id: string; // 출발지
+  to_place_id: string; // 도착지
+  reason: "create_spot" | "join_spot" | "go_home" | "wander";
+  spot_id?: string;
+};
+```
+
+<Paragraph>
+  agent 가 idle (아무 spot 에도 안 가고 dwell 중) 인 동안 서버는{" "}
+  <strong>아무것도 보내지 않는다</strong>. 프론트는 마지막 도착 좌표에 머물러
+  있다고 가정한다. 다음 movement 가 도착하면 그때 다시 움직이기 시작한다.
+</Paragraph>
+
+<Paragraph>
+  데이터 양 비교가 인상적이다. 70만 줄의 raw event 중 시각화에 쓸모 있는
+  *이동성* 이벤트는 약 22만 줄. 그 22만을 movement 로 정규화하면 더
+  줄어든다(NO_ACTION 같은 시스템 이벤트 제거, 페이로드 슬림화). 여전히 tick 당
+  평균 660 movement. 이걸 그냥 한 번에 다 내려주면 압축해도 1.5~2MB. 너무 큼.
+  쪼개기로 했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>SSE 가 아니라 청크 prefetch</Subtitle>
+
+<Paragraph>
+  여기서 두 번째 갈림길. SSE 와 청크 HTTP 사이에서 한참 고민했다.
+</Paragraph>
+
+<Subtitle level={3}>SSE 가 매력적인 이유</Subtitle>
+
+<Paragraph>
+  실시간성. 백엔드가 simulator 를 라이브로 돌리면 그 결과를 그대로 흘려보낼 수
+  있다. 클라이언트는
+  <code>EventSource</code> 하나로 연결을 유지한다.
+</Paragraph>
+
+<Subtitle level={3}>SSE 가 답이 아니었던 이유</Subtitle>
+
+<Paragraph>
+  Spot 의 시뮬레이터는 <strong>batch 잡</strong>이다. 한 번 돌리면 끝나고,
+  산출물은 정적 파일(<code>event_log.jsonl</code>)이다. 이걸 SSE 로 흘리는 건
+  본질적으로 <strong>"이미 끝난 데이터를 실시간인 척 흘리는 것"</strong>이다.
+  가짜 실시간이다. 그렇게 하려면 서버가 setInterval 로 SSE 메시지를 토해내야
+  하는데 — 그럴 거면 그냥 클라이언트가 정적 데이터를 받아 자체 timeline 으로
+  재생하는 게 더 단순하다.
+</Paragraph>
+
+<Paragraph>
+  결국 답은 <strong>청크 단위 정적 GET + 클라이언트 prefetch</strong>. 시간
+  윈도우(예: 24 tick) 단위로 movement 를 묶어서 endpoint 1 회 호출에 응답한다.
+  클라이언트는 첫 청크를 받자마자 재생을 시작하고, 현재 재생 위치가 청크 끝 6
+  tick 전에 도달하면 다음 청크를 백그라운드로 prefetch 한다. 응답은 immutable
+  이므로 영구 캐시 가능(<code>Cache-Control: max-age=31536000, immutable</code>
+  ).
+</Paragraph>
+
+```http
+GET /api/sim/runs/{run_id}/movements?from_tick=0&to_tick=24
+GET /api/sim/runs/{run_id}/movements?from_tick=24&to_tick=48
+...
+```
+
+<Paragraph>
+  SSE 의 장점인 <em>"서버 push"</em> 는 이 시나리오에선 의미가 없었다. 데이터는
+  이미 다 있고, 누가 먼저 알릴 필요도 없다. 라이브 시뮬레이션이 정말로
+  필요해지면 그때 같은 데이터 모델 위에 SSE 를 얹으면 된다 —{" "}
+  <strong>오늘 결정에서 제외해도 내일 추가가 안 막힌다</strong>는 게 중요했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>이동 시간을 어디서 가져올까</Subtitle>
+
+<Paragraph>
+  Movement 모델로 바꿨으니 <code>arrive_tick - depart_tick</code> 이 곧 이동
+  시간이다. 그런데 이 값을 어디서 가져오는가. 로그에는 좌표가 없다고 했다.
+</Paragraph>
+
+<Subtitle level={3}>
+  옵션 1 — 시뮬레이터에 이동 시간을 1급 개념으로 도입
+</Subtitle>
+
+<Paragraph>
+  agent 의 결정 함수가 "이 spot 까지 가는 데 N tick 걸린다"를 비용으로 고려하게
+  하는 길. 의미상 가장 정확하지만 시뮬레이터 코어를 다 손대야 한다. 그러면
+  분포가 흔들리고(매칭률, no-show 비율 등), 이미 검증된 §14 지표가 무너진다.
+  시각화 작업과 동시에 진행하면 양쪽이 다 흔들린다.
+</Paragraph>
+
+<Subtitle level={3}>옵션 2 — 후처리에서 가짜 이동 시간을 *덧입힌다*</Subtitle>
+
+<Paragraph>
+  시뮬레이터는 그대로 두고, ETL 단계에서 region 간 거리 매트릭스를 만들어
+  movement 에 이동 시간을 부여한다. 시뮬 통계는 그대로, 시각화만 더
+  매끄러워진다.
+</Paragraph>
+
+<Paragraph>
+  이걸 하려는데 함정이 있었다.{" "}
+  <strong>스팟 lifecycle 과 어긋나면 시각적으로 이상해진다.</strong>
+  예를 들어 tick 4 에 spot 이 시작했는데 참가자 C 는 이동 시간 5 tick 이라 tick
+  8 에 도착하면, 화면에선 "이미 시작된 spot 에 늦게 도착하는 사람" 이 보인다.
+  모순이다.
+</Paragraph>
+
+<Subtitle level={3}>
+  옵션 2-b — 거리에서 계산하지 말고 *시뮬 자체에서 추출*하자
+</Subtitle>
+
+<Paragraph>
+  여기서 한 발 더 갔다. 시뮬레이터 로그를 다시 봤더니{" "}
+  <strong>JOIN_TEACH_SPOT</strong> 와<strong>CHECK_IN</strong> 이라는 두
+  이벤트가 있었다. JOIN 은 "참가 의사 표시", CHECK_IN 은 "현장 체크인". 이 둘의
+  tick 차이가 곧 그 사람이 이동한 시간이다.
+</Paragraph>
+
+<Paragraph>
+  실측을 해봤다. JOIN→CHECK_IN tick 차이 분포는 mode = 8, 6~15 사이 균등 가중.
+  평균 약 9 tick.
+  <strong>시뮬레이터가 이미 이동 시간의 답을 갖고 있었다.</strong> 그게{" "}
+  <em>모든</em> 동네 간 이동에 적용되는 건 아니지만 — 매칭이 성사된 spot 한정 —
+  시각화 목적으로는 이게 진실이다. 거리 매트릭스를 따로 만들 필요가 없다.
+</Paragraph>
+
+<Paragraph>
+  이 결정이 묘하게 좋았던 건, 부수적으로{" "}
+  <strong>"멀리서 오는 사람을 기다려주는" 시나리오가 자동 표현된다</strong>는
+  점이었다. JOIN 은 일찍 했지만 CHECK_IN 이 늦은 사람이 있으면 SPOT_STARTED tick
+  이 자연히 늦춰져 있다. 시뮬레이터가 이미 그 결과를 만들어둔 거고, 시각화는
+  그걸 그대로 보여주면 된다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>그런데 보여줄 데이터가 비었다</Subtitle>
+
+<Paragraph>
+  여기까지 설계가 끝나고 실제 publish 된 데이터를 들여다봤다. 결과:{" "}
+  <strong>approved spot 3개</strong>. smoke test DB 라서 그렇긴 한데, 본격
+  publish 잡을 돌려도 이 정도 규모로는 한 화면이 텅 비어 있을 거다. 콜드스타트
+  문제다.
+</Paragraph>
+
+<Paragraph>
+  가장 안일한 해결책은 "다른 데이터로 화면을 채우는 것"이었다. 우리에겐 카카오
+  Local API 가 수집한 POI 약 2~3만 개가 있다. 그걸 마커로 박으면 화면이
+  채워진다.
+</Paragraph>
+
+<Paragraph>
+  그런데 곰곰이 생각해보면 이건{" "}
+  <strong>
+    두 종류의 *서로 다른 의미*를 가진 데이터를 한 캔버스에 섞는 짓
+  </strong>
+  이다. 하나는 "사람들의 행동" 이고, 다른 하나는 "건물 위치" 다. 같은 마커로
+  표현하면 사용자는 "여기 사람이 있는 줄 알았는데 카페 핀이었네" 같은 혼란을
+  겪는다. 그리고 카카오 POI 는 *행위 데이터가 아니다*. 거기서 무슨 모임이
+  일어났는지 같은 정보가 전혀 없다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>두 모드로 쪼갰다 — 줌 인은 사람, 줌 아웃은 동네</Subtitle>
+
+<Paragraph>
+  여기서 서비스의 의미를 다시 생각해봤다.{" "}
+  <strong>
+    사용자는 줌 인 했을 때와 줌 아웃 했을 때 서로 다른 질문을 한다.
+  </strong>{" "}
+  줌 인 상태에서는 "지금 여기서 무슨 일이 일어나고 있나?", 줌 아웃 상태에서는
+  "이 도시에서 어디가 어떤 동네인가?".
+</Paragraph>
+
+<Paragraph>
+  답이 자연스러웠다. <strong>두 데이터 소스를 두 모드로 분리한다</strong>. 같은
+  화면에 섞지 않고 줌 레벨에 따라 cross-fade 한다.
+</Paragraph>
+
+| 모드          | 데이터 출처                                                   | 시각 단위                   | 시간 차원          | 줌 레벨    |
+| :------------ | :------------------------------------------------------------ | :-------------------------- | :----------------- | :--------- |
+| A. 시뮬레이션 | synthetic-content-pipeline approved spot + simulator movement | 개체 (사람·spot 마커)       | 있음 (재생/스크럽) | 줌 14+     |
+| B. 지역 특성  | local-context-builder region_features + place_normalized 집계 | 집계 (region 폴리곤·밀집도) | 없음 (정적)        | 줌 12 이하 |
+
+<Paragraph>
+  중간 영역(줌 12~14)에서는 둘이 <em>옅게</em> 섞인다. 줌 인 할수록 region
+  폴리곤이 사라지고 agent 마커가 또렷해진다. Google Maps 의 places 와 heatmap
+  토글과 비슷한 UX.
+</Paragraph>
+
+<Subtitle level={3}>이 분리의 좋은 점</Subtitle>
+
+<Paragraph>
+  카카오 POI 의 "원래 의도" 를 살린다. POI 는 카탈로그지 행위 데이터가 아니다.
+  거기에 마커로 박는 대신, region 단위로 집계해서{" "}
+  <strong>"이 동네는 카페 밀집도가 높다"</strong>는 *맥락 정보* 로 쓴다. 데이터
+  양도 압축된다. 2~3만 행 → region 44행. JSON 65KB. 한 번에 다 내려도 무리 없다.
+</Paragraph>
+
+<Paragraph>
+  그리고 콜드스타트가 *줌 레벨로 자동 해결* 된다. 시각화 대상 spot 이 적어도 줌
+  아웃 상태에서는 도시 전체 풍경이 보인다. spot 데이터가 충분히 쌓이면 줌 인
+  상태에서도 풍성해진다.{" "}
+  <strong>두 모드는 데이터의 *양* 이 아니라 *해상도* 가 다르다</strong>는
+  자연스러운 사실을 그대로 따른다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>protagonist 와 background — agent 도 두 종류</Subtitle>
+
+<Paragraph>
+  모드 A 안에서도 한 가지 더 결정이 있었다. publish 된 spot 의 host/joiner 만
+  그리면 화면에 뜨는 agent 가 너무 적다. 콜드스타트의 미니어처 버전이다.
+</Paragraph>
+
+<Paragraph>해결 방법: agent 를 두 그룹으로 나눈다.</Paragraph>
+
+<Paragraph>
+  <strong>protagonist</strong> 는 approved spot 에 직접 관여(host 또는 joiner)
+  하는 agent. 서버 movement timeline 을 갖는다. 진짜 데이터를 따라 움직인다.
+</Paragraph>
+
+<Paragraph>
+  <strong>background</strong> 는 같은 region 거주, 화면 채움용.{" "}
+  <strong>movement 는 없다</strong>. home 좌표 주변에서 wander 만 한다 — 이
+  wander 는 서버 데이터가 아니라 <em>클라이언트가 합성</em>
+  한다. 기존 mock 의 <code>useMockPersonaSwarm</code> 알고리즘을 background 에
+  그대로 적용하면 된다.
+</Paragraph>
+
+<Paragraph>
+  의미상으로도 정직하다. background 는 "이 동네에 *살고 있는* 다른 사람들"
+  이라는 추상이고, 그 사람들의 정확한 행동은 우리도 모른다. 그저 거기 있다는
+  것만 안다. 시각화는 그 수준의 진실을 반영한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>인터페이스 한 가지를 끝까지 지켰다</Subtitle>
+
+<Paragraph>
+  이전 글에서 만든 <code>useMockPersonaSwarm</code> 의 반환 타입은 이랬다.
+</Paragraph>
+
+```ts
+type UseMockPersonaSwarmReturn = {
+  personas: Persona[];
+  positionsRef: React.RefObject<Map<string, GeoCoord>>;
+  subscribe: (cb: () => void) => () => void;
+  setSpotTargets: (targets: Map<string, GeoCoord>) => void;
+};
+```
+
+<Paragraph>
+  새로 만든 <code>useSimRun</code> 도 같은 <code>positionsRef</code> +{" "}
+  <code>subscribe</code>
+  시그니처를 유지했다. 마커 컴포넌트가 외부 store 처럼 구독하는 패턴은 그대로다.
+</Paragraph>
+
+```ts
+type UseSimRunResult = {
+  manifest: SimManifest | null;
+  isReady: boolean;
+  error: Error | null;
+  positionsRef: React.RefObject<Map<string, GeoCoord>>; // 동일
+  subscribe: (cb: () => void) => () => void; // 동일
+  currentTick: number;
+  currentLifecycleEvents: LifecycleEvent[];
+  isPlaying: boolean;
+  play: () => void;
+  pause: () => void;
+  seek: (tick: number) => void;
+};
+```
+
+<Paragraph>
+  이게 의도된 거다.{" "}
+  <strong>
+    마커 컴포넌트는 "어떤 데이터 소스에서 좌표가 오는지" 모르고, 알 필요도 없다.
+  </strong>{" "}
+  mock 좌표든, 시뮬 movement 든, 나중에 SSE 라이브 스트림이든 —{" "}
+  <code>positionsRef</code>를 구독하는 인터페이스만 같으면 된다. 60fps 최적화 때
+  만든 이 경계가 데이터 소스 교체에서도 배당금을 줬다.
+</Paragraph>
+
+<Paragraph>
+  데이터 계약(서버 응답 스키마)도 비슷한 원칙으로 잡았다.{" "}
+  <code>mock-sim-api.ts</code> 가 fetch 시그니처를 흉내내는 thin adapter 다.
+  백엔드 ETL 이 합류하면 이 파일의 세 함수 본문만 fetch 호출로 바꾸면 된다.
+  호출부는 무수정.
+</Paragraph>
+
+```ts
+// mock
+export async function fetchSimManifest(runId: string) {
+  return manifestJson as SimManifest;
+}
+
+// real (나중에)
+export async function fetchSimManifest(runId: string) {
+  const res = await fetch(`/api/sim/runs/${runId}/manifest`);
+  return res.json();
+}
+```
+
+---
+
+<Subtitle level={2}>200ms 의 정체</Subtitle>
+
+<Paragraph>
+  설계 도중에 한 가지 헷갈렸던 게 있다. 기존 mock 코드의 throttle 이 200ms 였다.
+  이게 "1 tick = 200ms" 라는 의미인 줄 알았다. 그래서 새 시스템도 1 tick = 200ms
+  로 환산하려 했는데 곧 어긋남을 발견했다.
+</Paragraph>
+
+<Paragraph>
+  코드 주석을 보니{" "}
+  <strong>
+    "200ms 주기(5Hz) notify — 400ms 에선 wander 이동폭 1m 미만이라 정지처럼
+    보임"
+  </strong>
+  . 200ms 는 *프레임 갱신 주기* 였다. 한 tick 의 길이가 아니라, 한 tick 내부에서
+  몇 번 다시 그리는지의 단위. 같은 파일 안에 trip 8~22초, dwell 3~10초로 모션
+  자체는 초 단위로 흘렀다.
+</Paragraph>
+
+<Paragraph>그래서 두 개념을 분리했다.</Paragraph>
+
+```text
+1 tick = tickDurationMs (재생 시간, default 1000ms)
+emit throttle = 200ms (프레임 갱신 주기, mock 그대로)
+tFloat = (now - playbackStartMs) / tickDurationMs
+```
+
+<Paragraph>
+  이러면 1 tick = 1초 재생일 때 한 tick 안에서 5번 다시 그리게 된다. mock 의
+  시각적 부드러움이 그대로 유지된다. 빠르게 보고 싶으면 tickDurationMs 를 500
+  으로 줄이면 된다.
+</Paragraph>
+
+<Paragraph>
+  사소해 보이는 시간 단위가{" "}
+  <strong>"개념상 두 가지가 우연히 같은 숫자였다"</strong>는 걸 알아채지 못하고
+  그대로 따라갔다면 데이터 모델이 비뚤어졌을 것이다. 코드 주석을 한 줄 읽고
+  넘어간 게 이번엔 운이 좋았다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>한 발씩 미뤄둔 것들</Subtitle>
+
+<Paragraph>
+  지금 해결하지 않고 명시적으로 미뤄둔 항목이 있다. 이 미룬 결정들을 어디에
+  적어두느냐가 중요하다. spotContextBuilder 쪽 plan 폴더에 두 개의 TODO 문서를
+  남겼다 —<code>sim-replay-backend-todo.md</code> 와{" "}
+  <code>locality-backend-todo.md</code>. 백엔드 합류 시 바로 시작할 수 있는
+  형태다.
+</Paragraph>
+
+<Paragraph>미뤄둔 것:</Paragraph>
+
+<Paragraph>
+  <strong>시뮬레이터 시간 모델 변경</strong>. 이동 시간을 시뮬에 1급 개념으로
+  도입하는 길은 분포가 흔들릴 위험 때문에 보류. 시각화는 후처리 ETL 에서 충분히
+  풀린다.
+</Paragraph>
+
+<Paragraph>
+  <strong>SSE 라이브 스트림</strong>. 현재 simulator 는 batch 잡이라 SSE 가 의미
+  없음. 라이브 진행 중인 run 시각화 요구가 *생기면* 그때 같은 데이터 모델 위에
+  얹는다.
+</Paragraph>
+
+<Paragraph>
+  <strong>multi-run 관리 UI</strong>. 단일 run 으로 시작. 하나가 잘 동작하면
+  그때 확장.
+</Paragraph>
+
+<Paragraph>
+  <strong>region polygon 정밀화</strong>. mock 단계는 bbox 사각형. 행정안전부
+  GeoJSON 합치기는 백엔드 합류 후. 그때 region_master 에 polygon_geojson 컬럼
+  추가.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>회고 — 같은 패턴이 한 번 더</Subtitle>
+
+<Paragraph>
+  이번 작업에서 같은 모양의 결정을 두 번 했다. 둘 다 처음엔 "데이터를 그대로
+  흘리자" 였고, 둘 다 "그 데이터의 *의미* 가 뭔지" 를 생각하고 나서 줄어들었다.
+</Paragraph>
+
+<Paragraph>
+  매 틱 좌표를 SSE 로 push 하는 대신 <strong>"이동 명령"</strong> 만 보낸다.
+  카카오 POI 2만 개를 마커로 박는 대신 <strong>"region 단위 밀집도"</strong> 로
+  집계한다. 둘 다 raw 데이터의 양을 10배~100배 줄이는데, 그게 가능했던 건{" "}
+  <strong>"사용자가 그 화면에서 무슨 질문을 하느냐"</strong>를 먼저 물었기
+  때문이다.
+</Paragraph>
+
+<Paragraph>
+  데이터 파이프라인 작업은 종종 "이 데이터를 어떻게 효율적으로 전송할까" 에서
+  시작하는데, 이번은 반대 순서가 통했다. <strong>"보여줄 의미"</strong> 를 먼저
+  정하고 거기에 맞는 *최소* 데이터를 서버가 만들도록 거꾸로 짜는 것. 이러면 SSE
+  같은 기술 선택은 마지막에 따라온다.
+</Paragraph>
+
+<Paragraph>
+  Spot 은 여전히 백엔드 대부분이 mock 이다. 이번 두 핸드오프 문서(
+  <code>HANDOFF_SIM_RUN.md</code>,<code>HANDOFF_LOCALITY.md</code>)가 그 mock 을
+  *스펙* 으로 굳혀준다. 백엔드 합류 시 이 문서들이 계약서가 된다. 다음 글은 —
+  아마도 — 그 합류가 일어났을 때 이 mock 이 얼마나 잘 *문서로 살아남았는지* 에
+  대한 검증이 될 것 같다.
+</Paragraph>

@@ -1,0 +1,207 @@
+---
+title: "Spot 을 만들며 반복해서 내린 판단 세 가지"
+date: 2026-04-24
+tags:
+  - Spot
+  - DevLog
+  - Architecture
+  - Decision Log
+description: 한 프로젝트에서 기술 결정은 생각보다 서로 닮아있다. Spot 을 만들면서 반복해서 되돌아간 판단 세 가지 — 상태를 어디에 둘지, 언제 React 를 우회할지, 데이터를 모양으로 묶을지 원인으로 묶을지. 각 판단을 개별 글로 정리했고, 이 글은 그 허브다.
+---
+
+<Subtitle level={2}>같은 질문이 반복된다</Subtitle>
+
+<Paragraph>
+  Spot 을 만들면서 내린 기술 결정들을 돌이켜보니, 결국 몇 개의 질문을 반복해서
+  답하고 있었다. "이 값은 어디에 두지?", "이건 React 에 맡겨도 되나?", "이
+  데이터를 어떤 모델로 쥐지?". 도메인이 다르고 파일이 다른데, 밑에 깔린 판단의
+  모양은 비슷했다.
+</Paragraph>
+
+<Paragraph>
+  이 글은 그 <strong>반복된 판단 세 가지</strong>를 허브로 묶는다. 각 판단의
+  세부는 개별 글에 있고, 여기서는 "왜 이 셋이 같은 가족인지" 를 짧게 보여준다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>판단 1 — 상태를 어디에 둘 것인가</Subtitle>
+
+<Paragraph>
+  처음엔 "Zustand 에 다 넣고 필요해지면 옮기자" 였다. 이 게으른 기본값이 피봇
+  초기에 금방 터졌다. 링크 공유가 안 됐고, 새로고침하면 상태가 증발했고,
+  뒤로가기 버튼이 무의미했다. URL 을 진실의 원천으로 올리면서 첫 축이 생겼다 —{" "}
+  <strong>링크 복원성</strong>.
+</Paragraph>
+
+<Paragraph>
+  그 다음 축이 <strong>공유 범위</strong>다. 여러 컴포넌트가 읽는 값이라면
+  Zustand, 한 컴포넌트 안에서만 의미 있으면 useState. 마지막 축은{" "}
+  <strong>렌더 비용</strong>이다. 매 프레임 갱신되는데 리렌더는 필요 없는
+  값(페르소나 좌표 같은) 은 Ref 로 내려야 한다. 세 축을 따라가면 네 저장소 — URL
+  / Zustand / useState / Ref — 중 하나가 자동으로 걸린다.
+</Paragraph>
+
+<Paragraph>
+  "상태는 취향으로 두는 게 아니라 기준으로 두는 것" 이라는 감각은 여기서
+  굳어졌다. 자세한 과정과 이유는{" "}
+  <strong>
+    <Link href="/blog/spot/map-centric-pivot-url-state">
+      탭을 버리고 지도를 남겼다 — URL 이 상태의 진실이 된 이유
+    </Link>
+  </strong>
+  에 정리했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>판단 2 — 언제 React 를 우회할 것인가</Subtitle>
+
+<Paragraph>
+  페르소나 500명이 지도 위를 돌아다니기 시작하자 드래그가 끊겼다. 매 프레임
+  `setState` 로 좌표 Map 을 갱신하던 초기 구조에서,{" "}
+  <strong>좌표가 바뀌는 것과 상관없는 컴포넌트들</strong>까지 전부 리렌더되고
+  있었다. Profiler 로 확인하니 바텀시트 헤더가 60Hz 로 깜빡이고 있었다 — 내용은
+  하나도 안 바뀌었는데.
+</Paragraph>
+
+<Paragraph>
+  정공법은 `useSyncExternalStore` 다. 써봤고, getSnapshot 이 매 프레임 새 Map 을
+  반환해야 해서 결국 리렌더가 발생했다. 해결이 아니라{" "}
+  <strong>React 의 렌더 사이클에 발을 담근 채로 문제를 숨긴 것</strong>에
+  가까웠다.
+</Paragraph>
+
+<Paragraph>
+  최종 해법은 단순했다. 좌표는{" "}
+  <strong>Ref 에 쓴다 — React 에게 아무 신호도 보내지 않는다</strong>. 변경
+  통지가 필요한 곳은 <strong>subscribe 콜백</strong>으로 푼다. 오버레이
+  컴포넌트는 구독에서 ref 를 읽어 <strong>`draw()` 를 명령형으로 호출</strong>
+  한다. React 의 render/commit 이 개입하지 않고, rAF 루프와 React 렌더 사이클이
+  완전히 분리된다.
+</Paragraph>
+
+<Paragraph>
+  이 판단의 핵심 관찰은{" "}
+  <strong>"좌표는 그리는 데만 쓰이지, 로직 분기에는 안 쓰인다"</strong> 였다.
+  state 가 감당할 일이 아니었다. 구현 디테일과 `React.memo` custom equality,
+  framer-motion `transformTemplate` 같은 후속 결정은{" "}
+  <strong>
+    <Link href="/blog/spot/persona-cluster-rendering-optimization">
+      60fps 페르소나가 맵을 뛰어다닐 때, React 를 어떻게 덜 깨우나
+    </Link>
+  </strong>
+  에 담았다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>
+  판단 3 — 데이터를 모양으로 묶을 것인가, 원인으로 묶을 것인가
+</Subtitle>
+
+<Paragraph>
+  맵 위의 페르소나들을 묶는 첫 시도는 <strong>기하학적 클러스터링</strong>
+  이었다. 반경 80m 안에 같은 카테고리가 2명 이상 있으면 묶는다. 테스트도
+  통과했고, 100m 격자 id 로 깜빡임도 없었다. 기술적으로 틀린 건 아무것도
+  없었는데, 써보니 "보글보글 끓는 수프" 처럼 보였다. 어느 클러스터를 주목해야
+  할지가 <strong>없었다</strong>.
+</Paragraph>
+
+<Paragraph>
+  문제는 모델이었다. "우연히 겹친 점" 을 보여주고 있는데, Spot 의 본질은 "모임이
+  열려서 사람이 모인 것" 이다. 같은 그림이어도 이야기가 다르다. 원인 기반으로
+  뒤집으면 클러스터는 파생된 결과가 아니라{" "}
+  <strong>`SpotLifecycle` 이라는 1급 객체</strong>가 된다. 스팟이 먼저 있고,
+  참여자들이 그리로 <strong>실제로 걸어간다</strong>. 도착하면 클러스터에
+  흡수된다. 사용자는 "저기로 사람들이 모이고 있다" 를 본다.
+</Paragraph>
+
+<Paragraph>
+  이 전환은 UX 만 바꾼 게 아니라 <strong>BE 스펙까지 바꿨다</strong>.
+  `SpotLifecycle` 의 shape 는 BE 가 SSE 로 그대로 보낼 수 있는 형태고,
+  프론트엔드는 현재 시각과 타임스탬프만 비교하면 상태가 나온다. mock 이 그대로
+  스펙 문서가 된 케이스다. 이 과정의 디테일과 두 모델을 나란히 세운 비교는{" "}
+  <strong>
+    <Link href="/blog/spot/spot-clustering-shape-vs-cause">
+      점들이 모였다고 모임이 아니다 — 클러스터의 모양과 원인을 갈라낸 기록
+    </Link>
+  </strong>
+  에 있다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>세 판단이 닮은 이유</Subtitle>
+
+<Paragraph>
+  이 셋은 도메인이 전부 다르다. 하나는 라우팅, 하나는 렌더링, 하나는 데이터
+  모델링. 그런데 각 결정이 공유하는 공통된 질문이 있다.
+</Paragraph>
+
+<Paragraph>
+  <strong>"이 값/이 흐름/이 객체의 진짜 역할이 뭔가"</strong>. 링크로 공유될
+  상태인가? 그리는 데만 쓰는 좌표인가? 클러스터가 우연의 산물인가 의도의
+  산물인가? 판단이 바뀐 계기는 언제나 기능이 틀어진 순간이 아니라,{" "}
+  <strong>역할을 잘못 잡고 있었다는 걸 알아챈 순간</strong>이었다.
+</Paragraph>
+
+<Paragraph>
+  피봇 이전의 Spot 이 막연해 보였던 이유도 결국 이거다. 탭 / Zustand / geometric
+  clustering 이 전부 "일단 되게 만드는" 선택이었지 "이 값의 역할이 뭔지" 를 묻지
+  않은 선택이었다. 세 번 반복해서 겪고 나서야{" "}
+  <strong>"역할을 먼저 정하고 구현은 그 뒤"</strong> 가 반사가 됐다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>개별 글들</Subtitle>
+
+- <strong>
+    <Link href="/blog/spot/map-centric-pivot-url-state">
+      탭을 버리고 지도를 남겼다
+    </Link>
+  </strong>
+  — URL / Zustand / useState / Ref 네 저장소를 나눠 쓰는 기준. 링크 복원성, 공유
+  범위, 렌더 비용이라는 세 축.
+- <strong>
+    <Link href="/blog/spot/persona-cluster-rendering-optimization">
+      60fps 페르소나가 맵을 뛰어다닐 때
+    </Link>
+  </strong>
+  — Ref + pub/sub + imperative draw 로 React 를 우회한 경로.
+  `useSyncExternalStore` 가 왜 답이 아니었는지도.
+- <strong>
+    <Link href="/blog/spot/spot-clustering-shape-vs-cause">
+      점들이 모였다고 모임이 아니다
+    </Link>
+  </strong>
+  — 기하학적 클러스터링에서 원인 기반 `SpotLifecycle` 로 갈아엎은 과정.
+  "assigned" 와 "arrived" 가 구분된 이유.
+
+<Paragraph>
+  곁에 놓고 같이 읽으면 좋은 글도 하나. StrictMode 와 async useEffect 가 만나
+  회색 화면을 만들어낸 이야기는{" "}
+  <strong>
+    <Link href="/blog/spot/naver-map-sync-init">
+      지도가 회색 화면만 찍던 날
+    </Link>
+  </strong>
+  에 있다. 위의 세 판단과는 결이 조금 다른 "트러블슈팅" 글이지만, 같은
+  프로젝트의 디버깅 감각을 보여준다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>다음에 올 판단</Subtitle>
+
+<Paragraph>
+  Spot 은 아직 피봇 중이고 BE 가 붙기 전이다. 다음 글감으로 올라와 있는 주제는
+  두 개다 —<strong>mock 이 스펙 문서로 승격되는 규율</strong>{" "}
+  (`BACKEND_HANDOFF*.md` 들의 유지 프로세스) 과,{" "}
+  <strong>
+    Tailwind v4 `@theme` 으로 디자인 토큰을 CSS 가 직접 소유하게 된 이야기
+  </strong>
+  . 둘 다 위의 세 판단과 닮은 축을 가졌을 것 같다. "역할을 먼저 정하고 구현은 그
+  뒤" 가 어디까지 일반화되는지 계속 밀어붙여볼 생각이다.
+</Paragraph>
