@@ -9,10 +9,10 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "next/font/google": ["./node_modules/vinext/dist/shims/font-google.d.ts"],
-      "next/font/local": ["./node_modules/vinext/dist/shims/font-local.d.ts"],
-      "next/link": ["./node_modules/vinext/dist/shims/link.d.ts"],
-      "next/navigation": ["./node_modules/vinext/dist/shims/navigation.d.ts"]
+      "next/font/google": ["./node_modules/vinext/dist/shims/font-google"],
+      "next/font/local": ["./node_modules/vinext/dist/shims/font-local"],
+      "next/link": ["./node_modules/vinext/dist/shims/link"],
+      "next/navigation": ["./node_modules/vinext/dist/shims/navigation"]
     }
   },
   "include": [
