@@ -1,511 +1,211 @@
 ---
-title: "프론트엔드 스터디 대면 7주차: 불변성·프로토타입 점검 + 렌더링 파이프라인"
+title: "프론트엔드 스터디 대면 7주차: 프로젝트가 복잡해지는 이유 — 구조와 책임 분리"
 date: 2026-05-11
 tags:
   - 프론트엔드
   - 스터디
-  - JavaScript
-  - 불변성
-  - 프로토타입
-  - 타입체크
-  - 렌더링 파이프라인
-  - Reflow
-  - Paint
-description: 불변성·프로토타입·타입 체크 사전학습 점검 후, 렌더링 파이프라인을 통해 reflow·paint·transform 감각과 React 리렌더까지 예습으로 짚는 대면입니다.
+  - 프로젝트 구조
+  - 책임 분리
+  - 상태 관리
+  - 컴포넌트 설계
+  - 아키텍처
+description: 7주차 비대면에서 불변성·프로토타입·타입 체크를 배운 뒤, 대면에서는 프론트엔드 프로젝트가 왜 복잡해지는지와 UI·상태·서버 데이터·비즈니스 규칙을 나누는 감각을 다룹니다.
 ---
 
-<Subtitle level={2}>1. 이번 주 사전학습 점검</Subtitle>
+<Subtitle level={2}>1. 이번 주 사전학습과 오늘 대면의 연결</Subtitle>
 
 <Paragraph>
-  이번 주 사전학습(비대면 week7)에서는 <strong>불변성</strong>,{" "}
-  <strong>프로토타입</strong>, <strong>타입 체크</strong> 세 축을 다뤘습니다.
-  다른 언어 경험자에게 JS가 가장 낯설게 느껴지는 구간이에요. 완전한 이해가
-  목표가 아니라, 오늘 대면 앞부분에서 구술 설명용으로 다시 짚어 "코드를 옆에
-  두고 말로 풀어낼 수 있는 상태"를 만드는 것이 목표입니다.
+  이번 주 비대면에서는 <strong>불변성</strong>, <strong>프로토타입</strong>,
+  <strong>타입 체크</strong>를 배웠습니다. 세 개 모두 처음에는 "JS가 왜 이렇게
+  이상하게 생겼지?" 싶은 개념입니다. 그런데 이 개념들은 프로젝트가 커질수록 실제
+  버그와 구조 문제로 이어집니다.
 </Paragraph>
 
-<Subtitle level={3}>핵심 리마인드</Subtitle>
+<Paragraph>
+  그래서 오늘 대면에서는 문법을 다시 설명하기보다, 프론트엔드 프로젝트가 왜
+  복잡해지는지 이야기해보겠습니다. 처음에는 HTML, CSS, JS 파일 몇 개면 될 것
+  같은데, 왜 React가 나오고, 컴포넌트가 나오고, 상태 관리가 나오고, 폴더 구조와
+  API 계층이 생기는지 큰 그림을 잡는 시간입니다.
+</Paragraph>
 
-<Subtitle level={4}>
-  불변성 — `const`는 리모컨 고정이지 채널 고정이 아니다
+---
+
+<Subtitle level={2}>2. 프론트엔드 프로젝트는 왜 복잡해지는가</Subtitle>
+
+<Paragraph>
+  작은 화면 하나를 만들 때는 간단합니다. 버튼을 누르면 텍스트가 바뀌고, CSS로
+  예쁘게 꾸미면 됩니다. 문제는 화면이 많아지고, 데이터가 많아지고, 여러 사람이
+  동시에 작업하기 시작할 때 생깁니다.
+</Paragraph>
+
+<Paragraph>
+  복잡도는 보통 코드 양보다 <strong>책임이 섞일 때</strong> 터집니다.
+</Paragraph>
+
+- 버튼 컴포넌트 안에 API 호출이 들어간다.
+- API 응답 가공 로직이 화면 여기저기에 흩어진다.
+- 로그인 여부 판단이 여러 파일에 복붙된다.
+- 서버에서 내려준 값을 화면마다 다르게 해석한다.
+- 디자이너가 바꾼 UI 하나 때문에 비즈니스 로직까지 같이 흔들린다.
+
+<Paragraph>
+  코드는 많아도 책임이 잘 나뉘어 있으면 고칠 수 있습니다. 반대로 코드가 적어도
+  책임이 섞여 있으면, 한 줄을 바꾸는 순간 어디가 깨질지 알 수 없습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. 나눠서 봐야 하는 네 가지 책임</Subtitle>
+
+<Subtitle level={3}>3-1. UI — 어떻게 보이는가</Subtitle>
+
+<Paragraph>
+  UI는 사용자에게 보이는 모양입니다. 버튼, 카드, 모달, 입력창, 리스트 같은
+  것들이 여기에 들어갑니다. 좋은 UI 컴포넌트는 가능하면 "어떻게 보여줄지"에
+  집중하고, 데이터를 어디서 가져오는지는 덜 알아야 합니다.
+</Paragraph>
+
+```tsx
+<UserCard name="진규" role="프론트엔드" isOnline={true} />
+```
+
+<Paragraph>
+  이 컴포넌트는 이름, 역할, 온라인 여부를 받아 보여주는 일만 하면 됩니다. 이
+  값이 API에서 왔는지, 임시 데이터인지, 로그인한 사용자 정보인지는 몰라도
+  됩니다.
+</Paragraph>
+
+<Subtitle level={3}>3-2. 상태 — 지금 화면이 기억해야 하는 값</Subtitle>
+
+<Paragraph>
+  상태는 화면이 기억해야 하는 값입니다. 모달이 열려 있는지, 어떤 탭이
+  선택됐는지, 입력창에 무슨 값이 들어있는지 같은 것들입니다.
+</Paragraph>
+
+<Paragraph>
+  상태가 무서운 이유는 시간이 지나며 바뀌기 때문입니다. 값이 바뀌면 화면도
+  바뀌고, 다른 컴포넌트에도 영향을 줄 수 있습니다. 그래서 상태는 "어디에 둘지"가
+  중요합니다.
+</Paragraph>
+
+- 한 컴포넌트에서만 쓰면 그 컴포넌트 안에 둡니다.
+- 부모와 자식이 같이 쓰면 공통 부모에 둡니다.
+- 여러 페이지에서 쓰면 전역 상태나 서버 상태 관리가 필요해질 수 있습니다.
+
+<Subtitle level={3}>
+  3-3. 서버 데이터 — 내가 만든 값이 아니라 받아온 값
 </Subtitle>
 
 <Paragraph>
-  `const`는 <strong>리모컨(참조)을 바꾸지 못하게</strong> 하는 것입니다.
-  리모컨이 가리키는 TV의 채널(객체 내부 값)은 얼마든지 바꿀 수 있어요. 이 감각이
-  이번 주 내내 따라다녔던 핵심이고, 오늘 대면 메인에서도 다시 만나게 됩니다.
+  서버 데이터는 프론트엔드가 소유한 값이 아닙니다. 사용자 목록, 게시글, 알림,
+  주문 내역처럼 서버가 진짜 원본을 가지고 있는 데이터입니다. 그래서 로딩, 실패,
+  재요청, 캐싱, 권한 같은 문제가 따라옵니다.
 </Paragraph>
 
-```js
-// const는 리모컨(참조)을 고정할 뿐
-const tv = { channel: 5 };
-tv.channel = 11; // 가능 — TV 채널(내부 값) 변경
-console.log(tv.channel); // 11
+<Paragraph>
+  이걸 일반 상태와 똑같이 다루면 점점 힘들어집니다. 화면 상태는 "내가 지금 어떤
+  탭을 보고 있나"에 가깝고, 서버 데이터는 "서버의 최신 값이 무엇인가"에
+  가깝습니다. 둘은 성격이 다릅니다.
+</Paragraph>
 
-tv = { channel: 3 }; // TypeError — 리모컨 자체를 바꾸려 하면 에러
+<Subtitle level={3}>3-4. 비즈니스 규칙 — 제품이 정한 판단</Subtitle>
+
+<Paragraph>
+  비즈니스 규칙은 제품이 정한 판단입니다. 예를 들어 "관리자만 승인 버튼을 볼 수
+  있다", "마감 시간이 지나면 신청할 수 없다", "무료 사용자는 3개까지만 만들 수
+  있다" 같은 규칙입니다.
+</Paragraph>
+
+<Paragraph>
+  이런 규칙이 화면 코드 곳곳에 흩어지면 나중에 정책이 바뀔 때 지옥이 열립니다.
+  그래서 규칙은 이름을 붙이고, 가능하면 한 곳에서 관리해야 합니다.
+</Paragraph>
+
+```ts
+function canApprove(user, item) {
+  return user.role === "ADMIN" && item.status === "PENDING";
+}
 ```
 
 <Paragraph>
-  한 단계 더 들어가면 `Object.freeze()`도{" "}
-  <strong>얕은 동결(shallow freeze)</strong>
-  이라는 한계가 있습니다. 최상위 프로퍼티는 동결되지만, 중첩된 객체 안쪽까지는
-  얼리지 못해요. "진짜 불변"을 원하면 재귀적으로 얼려야 한다는 감각만
-  기억해두세요.
+  중요한 건 함수 하나를 만들었다는 사실이 아니라, "승인 가능 여부"라는 판단에
+  이름을 붙였다는 점입니다. 좋은 구조는 이런 식으로 팀이 말하는 개념을 코드에
+  남깁니다.
 </Paragraph>
 
-<Subtitle level={4}>
-  프로토타입 — 내가 없으면 부모, 부모도 없으면 조부모를 본다
+---
+
+<Subtitle level={2}>
+  4. 좋은 구조는 예쁜 폴더가 아니라 변경에 강한 구조다
 </Subtitle>
 
 <Paragraph>
-  프로토타입 체인은 <strong>족보</strong>와 같습니다. 어떤 객체에서 프로퍼티나
-  메서드를 찾을 때, 자신에게 없으면 부모 프로토타입으로 올라가고, 부모도 없으면
-  조부모(`Object.prototype`)까지 올라갑니다. 최상단까지 없으면 `undefined`예요.
-</Paragraph>
-
-```js
-const obj = {};
-Object.getPrototypeOf(obj) === Object.prototype; // true
-obj.toString(); // Object.prototype에서 찾아서 실행됨
-```
-
-<Paragraph>
-  JS가 <strong>프로토타입 기반 상속</strong>을 쓴다는 얘기가 여기서 나옵니다.
-  ES6의 `class` 문법도 사실 이 프로토타입 체인을 감싸는 문법적 설탕(syntactic
-  sugar)이에요. "다른 언어와 달리 JS는 객체가 직접 다른 객체를 상속한다" 한 줄만
-  가져가도 충분합니다.
-</Paragraph>
-
-<Subtitle level={4}>타입 체크 — `typeof`의 한계와 상황별 선택</Subtitle>
-
-<Paragraph>
-  `typeof`는 원시값 구분엔 좋지만, 객체 세부 타입에선 한계가 있습니다.{" "}
-  <strong>`typeof null === 'object'`</strong>는 JS 초창기 엔진 구현의{" "}
-  <strong>역사적 버그</strong>로, 이제 와서 고치면 기존 코드가 전부 깨져서 못
-  고치는 상태예요. 배열도 결국 객체라 `typeof [] === 'object'`로 나옵니다.
-</Paragraph>
-
-```js
-typeof null; // 'object' — 역사적 버그
-typeof []; // 'object' — 배열도 객체
-Array.isArray([]); // true — 배열은 이걸로 확인
-new Date() instanceof Date; // true — 특정 생성자 체크
-Object.prototype.toString.call(null); // '[object Null]' — 가장 정밀
-```
-
-<Paragraph>
-  상황별로 다르게 씁니다. <strong>배열은 `Array.isArray`</strong>, 특정 클래스
-  인스턴스는 <strong>`instanceof`</strong>, 가장 정밀한 타입 문자열이 필요하면{" "}
-  <strong>`Object.prototype.toString.call()`</strong>이라는 방법이 있다는 것만.
-  마지막 것은 <strong>오늘 외울 필요 없고 "이런 게 있다"로 충분</strong>합니다.
-  TypeScript를 쓰면 이런 런타임 체크의 많은 부분이 컴파일 타임으로 옮겨간다는
-  점도 예습 수준에서 같이 기억해두세요.
-</Paragraph>
-
-<Subtitle level={3}>사전학습 인증 미션 풀이</Subtitle>
-
-<Paragraph>
-  인증 미션 Q1~Q4 중 오늘 대면에서는{" "}
-  <strong>Q1(`Object.freeze`와 `push`)</strong>와{" "}
-  <strong>Q2(`[] instanceof Array/Object`)</strong>만 함께 풀어봅니다.
-  Q3(`typeof []` vs `Array.isArray`)와 Q4(`class`의 문법적 설탕)는 위
-  리마인드에서 이미 맥락이 깔렸으니,{" "}
-  <strong>비대면 자료를 참고해 정리한 답을 댓글로 제출</strong>
-  해주세요. 궁금한 점은 아래 "막힌 사람 클리닉"에서 바로 꺼내도 됩니다.
+  프로젝트 구조 이야기를 하면 폴더 이름부터 떠올리기 쉽습니다. `components`,
+  `hooks`, `utils`, `api` 같은 폴더를 어떻게 나눌지 고민합니다. 물론 중요합니다.
+  하지만 폴더 이름보다 더 중요한 질문은 이겁니다.
 </Paragraph>
 
 <Paragraph>
   <strong>
-    Q1. 아래 코드의 실행 결과는 무엇인가요? `Object.freeze()`의 동작 방식을
-    설명하세요.
+    "요구사항이 바뀌었을 때, 어디를 고치면 되는지 바로 알 수 있는가?"
   </strong>
 </Paragraph>
 
-```js
-const arr = [1, 2, 3];
-Object.freeze(arr);
-arr.push(4);
-```
-
-<Subtitle level={4}>정답: `TypeError`</Subtitle>
-
 <Paragraph>
-  `Object.freeze()`는 객체(배열 포함)의 프로퍼티 추가·삭제·변경을 금지합니다.
-  `push()`는 배열에 새 요소를 추가하면서 `length`도 바꾸는 동작이라{" "}
-  <strong>동결된 배열에서는 `TypeError`</strong>가 발생합니다. 배열도 결국
-  객체이기 때문에 `freeze`가 그대로 적용된다는 점이 포인트예요.
+  좋은 구조는 변경이 들어왔을 때 흔들리는 범위가 작습니다. 디자인만 바뀌면 UI
+  컴포넌트만 바꾸고, API 응답만 바뀌면 데이터 변환 계층만 바꾸고, 정책만 바뀌면
+  비즈니스 규칙만 바꿀 수 있어야 합니다.
 </Paragraph>
 
-<Subtitle level={4}>놓치기 쉬운 지점</Subtitle>
-
 <Paragraph>
-  `Object.freeze`는 <strong>얕은 동결</strong>이라,{" "}
-  `Object.freeze({ nested: { x: 1 } })`에서 `nested.x = 99`는 막지 못합니다. "배열
-  안에 객체가 들어있다면 그 객체는 여전히 변경 가능하다"는 점을 덧붙여주면 완벽한
-  답이 됩니다.
+  처음부터 완벽한 구조를 만들 필요는 없습니다. 다만 코드가 조금만 커져도 "이
+  코드는 UI인가, 상태인가, 서버 데이터인가, 정책인가"를 묻는 습관이 중요합니다.
 </Paragraph>
 
 ---
 
+<Subtitle level={2}>5. AI 시대에는 구조 감각이 더 중요해진다</Subtitle>
+
 <Paragraph>
+  AI는 파일 하나 안에서 그럴듯한 코드를 빠르게 만들어줍니다. 하지만 프로젝트의
+  책임 경계를 자동으로 잘 지켜주지는 않습니다. "이 로직은 컴포넌트 안에 있으면
+  안 되고 hook으로 빼야 한다", "이건 서버 데이터라 캐싱 전략이 필요하다", "이건
+  정책 함수로 이름 붙여야 한다" 같은 판단은 사람이 해야 합니다.
+</Paragraph>
+
+<Paragraph>
+  그래서 앞으로는 코드를 많이 치는 사람보다,{" "}
   <strong>
-    Q2. `[] instanceof Array`는 `true`이고, `[] instanceof Object`도
-    `true`입니다. 왜 빈 배열이 `Object`의 인스턴스이기도 한지, 프로토타입
-    체인으로 설명하세요.
+    AI가 만든 코드를 프로젝트 구조 안에 제대로 배치할 수 있는 사람
   </strong>
-</Paragraph>
-
-<Subtitle level={4}>정답</Subtitle>
-
-<Paragraph>
-  `[]`의 프로토타입 체인은{" "}
-  <strong>`[] → Array.prototype → Object.prototype → null`</strong>입니다.
-  `instanceof`는{" "}
-  <strong>
-    오른쪽 생성자의 `prototype`이 왼쪽 객체의 프로토타입 체인 어딘가에
-    존재하는지
-  </strong>{" "}
-  확인하는 연산자예요. `Array.prototype`도, `Object.prototype`도 체인 위에
-  있으므로 둘 다 `true`가 됩니다.
-</Paragraph>
-
-<Subtitle level={4}>놓치기 쉬운 지점</Subtitle>
-
-<Paragraph>
-  JS에서{" "}
-  <strong>거의 모든 객체의 체인 최상단에 `Object.prototype`이 있다</strong>는
-  점이 핵심입니다. 그래서 배열·함수·`Date` 같은 대부분의 객체가 `instanceof
-  Object`를 만족해요. 이 구조가 곧 "JS의 상속 방식은 프로토타입" 이라는 말의
-  구체적 의미입니다.
-</Paragraph>
-
-<Subtitle level={3}>막힌 사람 클리닉 (상시)</Subtitle>
-
-<Paragraph>
-  사전학습에서 막힌 포인트를 자유롭게 공유합니다. 이 섹션은 매주 고정이며,{" "}
-  <strong>"이해 안 됐어요"라고 말하는 것이 스터디의 기본값</strong>입니다. 혼자
-  덮고 넘어가면 다음 주가 더 무거워집니다.
-</Paragraph>
-
-<Paragraph>
-  진행 방식: 말로 바로 해도 되고, 익명이 편하면 포스트잇이나 채팅에 적어 건네도
-  됩니다. 질문이 어색하면 "내가 비대면 자료 어디에서 몇 분 멈췄다" 한 줄도
-  충분해요.
+  이 더 중요해질 수 있습니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>2. [대면 메인] 렌더링 파이프라인</Subtitle>
+<Subtitle level={2}>6. 같이 이야기해볼 질문</Subtitle>
 
-<Paragraph>
-  오늘 본론은 JS 문법이 아니라 <strong>브라우저가 하는 일</strong> 얘기입니다.
-  우리가 쓴 HTML/CSS/JS는 결국 그냥 <strong>글자(문자열)</strong>인데, 이게
-  어떻게 네모·색·움직임으로 화면에 나타나는지. 그 과정이 바로 "렌더링
-  파이프라인" 이에요. React를 배우기 3주쯤 전인 지금,{" "}
-  <strong>감각을 예습</strong>해두는 시간입니다.
-</Paragraph>
-
-<Subtitle level={3}>2-1. 왜 이 얘기를 지금 하는가</Subtitle>
-
-<Paragraph>
-  이번 주 비대면에서 "객체 참조가 바뀌는지 아닌지"를 계속 얘기했습니다. 그게
-  실제로 <strong>화면이 다시 그려지는 타이밍</strong>과 직접 연결돼요. 3주 뒤
-  week10에서 React를 만날 때 "왜 `setState`에 새 객체를 넘기라고 하지?" 얘기가
-  반드시 나옵니다. 그 답을 오늘 감각으로 심어두면, 그때 "아, 그 reflow 얘기!"
-  싶어지는 순간이 옵니다.
-</Paragraph>
-
-<Paragraph>
-  오늘 미리 볼 키워드는 다섯 개입니다. 외울 필요는 없고, 이름과 윤곽만 머리에
-  들어오면 충분합니다.
-</Paragraph>
-
-- <strong>파이프라인 5단계</strong> — 이름 외우지 말고 "대략 5단계가 있다"만
-- <strong>reflow · paint</strong> — 오늘의 두 단어. 이것만 남아도 성공
-- <strong>`transform` / `opacity`</strong> — 왜 애니메이션에서 이걸 쓰라고
-  하는가
-- <strong>불변성과 리렌더</strong> — 비대면 week7과 오늘을 잇는 핵심 고리
-- <strong>Performance 탭</strong> — 실무에서는 감이 아니라 측정으로 본다
-
-<Paragraph>
-  지금 이 얘기를 꺼내는 이유는 분명합니다. React 진입 주차(week10)에서 "리렌더
-  최적화" 얘기가 나올 때, 왜 그게 필요한지 <strong>브라우저 관점</strong>이
-  없으면 공중에 뜨거든요. 오늘은 브라우저가 무슨 일을 하는지 한 번 깔아두는
-  자리입니다.
-</Paragraph>
-
-<Subtitle level={3}>
-  2-2. 파이프라인 5단계 개괄 — 두 단어만 머리에 넣기
-</Subtitle>
-
-<Paragraph>
-  브라우저가 우리가 쓴 코드를 받아서 화면에 픽셀을 찍기까지, 대략{" "}
-  <strong>5단계</strong>를 거칩니다. 단계 이름이 낯설 텐데, 전부 외울 필요는
-  없어요. 이름만 한 번 훑고 지나갑시다.
-</Paragraph>
-
-- <strong>Parsing (파싱)</strong> — HTML을 읽어서 DOM 트리를 만든다
-- <strong>CSSOM</strong> — CSS Object Model. DOM과 짝을 이루는 CSS 트리 구조로,
-  CSS를 읽어 브라우저가 "어떤 요소에 어떤 스타일이 적용되는지"를 아는 지도를
-  만든다
-- <strong>Layout (레이아웃)</strong> — 각 요소의 <strong>위치와 크기</strong>를
-  계산한다
-- <strong>Paint (페인트)</strong> — 픽셀에 <strong>색을 칠한다</strong>
-- <strong>Composite (합성)</strong> — 레이어들을 겹쳐서 최종 화면을 만든다
-
-<Paragraph>
-  비유로 풀면 "설계도(HTML)를 읽고 → 색칠표(CSS)를 읽고 → 도면을 합쳐
-  위치·크기를 계산하고 → 색을 칠하고 → 레이어를 합성해 화면에 뿌린다"는
-  흐름이에요. 쉼표가 네 개나 되는 문장이라 지금은 "대략 이런 순서가 있다"
-  정도로만 충분합니다.
-</Paragraph>
-
-<Paragraph>
-  오늘 진짜로 머리에 넣을 건 두 단어입니다 —{" "}
-  <strong>`reflow`(= Layout을 다시 하는 것)</strong>와{" "}
-  <strong>`paint`(= 색을 다시 칠하는 것)</strong>. 이 둘만 감각으로 들어와
-  있으면, 앞으로 성능 얘기가 나올 때마다 맥락이 잡힙니다.
-</Paragraph>
-
-<Subtitle level={3}>
-  2-3. Reflow vs Repaint — 다시 계산이냐 다시 칠하기냐
-</Subtitle>
-
-<Paragraph>
-  파이프라인에서 가장 비싼 두 단계가 Layout과 Paint입니다.{" "}
-  <strong>Reflow는 Layout을 다시 하는 것</strong>,{" "}
-  <strong>Repaint는 Paint만 다시 하는 것</strong>이에요. 책장 비유가
-  직관적입니다.
-</Paragraph>
-
-- <strong>Reflow</strong> = 책장 <strong>배치를 바꿈</strong> — 책을 빼서 다른
-  칸으로 옮기고 주변 책들도 밀어야 함. 손이 많이 감.
-- <strong>Repaint</strong> = 책 <strong>표지만 다시 칠함</strong> — 위치는
-  그대로, 색만 바뀜. 상대적으로 싸다.
-
-<Paragraph>
-  "애니메이션이 버벅여요"라는 문제가 처음 생기는 이유가 보통{" "}
-  <strong>매 프레임마다 reflow가 일어나서</strong>예요. 브라우저는 보통 초당
-  60번 프레임을 그리는데, 매번 책장 전체 배치를 다시 계산하면 당연히 느려집니다.
-</Paragraph>
-
-```css
-/* reflow를 매 프레임 유발 — 위치가 바뀌면 Layout 재계산 */
-.box {
-  top: 10px;
-  transition: top 0.3s;
-}
-
-/* Composite만 유발 — Layout·Paint 건너뜀 */
-.box {
-  transform: translateY(10px);
-  transition: transform 0.3s;
-}
-```
-
-<Paragraph>
-  두 코드는 눈에 보이는 결과가 거의 똑같습니다. 그런데 브라우저가 내부적으로
-  하는 일은 완전히 달라요. 위 코드는 매 프레임 Layout → Paint → Composite을 전부
-  다시 돌리고, 아래 코드는 <strong>Composite만</strong> 돌립니다. "이름은
-  비슷한데 비용이 다르다"가 오늘의 핵심 감각이에요.
-</Paragraph>
-
-<Subtitle level={3}>
-  2-4. 왜 `transform`/`opacity`가 좋은가 — Composite만 유발
-</Subtitle>
-
-<Paragraph>
-  CSS에는 <strong>reflow를 건너뛰는 속성</strong>이 몇 개 있습니다. 대표가{" "}
-  <strong>`transform`</strong>과 <strong>`opacity`</strong>예요. 이 둘은
-  브라우저가 "별도 레이어로 띄워놓고 GPU에서 겹치기만 하면 되는" 작업으로
-  처리합니다. Layout도 Paint도 건너뛰고 Composite만 일어나요.
-</Paragraph>
-
-```css
-/* Before — left 변경 → reflow + paint 매 프레임 */
-.ball {
-  left: 0;
-  transition: left 0.3s;
-}
-
-/* After — transform 변경 → composite만 */
-.ball {
-  transform: translateX(0);
-  transition: transform 0.3s;
-}
-```
-
-<Paragraph>
-  "이동은 `transform`, 투명도는 `opacity`로" — 이 한 줄이 애니메이션 최적화의
-  기본기입니다. `top`/`left`/`width`/`height` 같이{" "}
-  <strong>위치나 크기에 영향을 주는 속성</strong>으로 움직이면 reflow를
-  유발하고, <strong>`transform`/`opacity`</strong>로 움직이면 Composite만
-  일어나요.
-</Paragraph>
-
-<Paragraph>
-  실무 감각으로 덧붙이면, 라이브러리가 만들어주는 애니메이션(예: Framer
-  Motion)이 기본적으로 `transform`을 밑에 깔고 도는 것도 이 이유 때문입니다.
-  지금은 이름만 눈에 익혀두면 충분해요 — `transform`·`opacity`는 싸다.
-</Paragraph>
-
-<Subtitle level={3}>
-  2-5. 불변성과 리렌더 — 비대면 week7과 오늘의 다리 (핵심)
-</Subtitle>
-
-<Paragraph>
-  오늘 대면에서 <strong>가장 중요한 서브</strong>입니다. 비대면 week7의 불변성
-  얘기가 왜 렌더링 파이프라인과 만나는지.
-</Paragraph>
-
-<Paragraph>
-  React 같은 UI 라이브러리는 "state가 바뀌었으니 화면을 다시 그려야 한다"를
-  결정해야 해요. 그런데 state가 객체·배열이면 문제가 생깁니다. 값이 바뀌었는지
-  확인하려고 <strong>객체 안을 하나하나 비교</strong>하면 너무 느려요. 100개짜리
-  배열을 요소별로 비교하는 걸 매번 하면 화면이 뻑뻑해집니다.
-</Paragraph>
-
-<Paragraph>
-  그래서 React는 <strong>참조(주소)만 본다</strong>는 전략을 씁니다. 주소가
-  바뀌었으면 "뭐가 바뀌었구나" 간주하고 리렌더를 판단하고, 주소가 같으면 "안
-  바뀐 걸로" 간주하고 건너뜁니다. 싸고 빠른 비교예요. 대신 개발자 쪽에서 맞춰야
-  할 게 하나 있습니다 —{" "}
-  <strong>바뀔 때는 반드시 새 객체·새 배열로 바꿔야 한다</strong>.
-</Paragraph>
-
-<Paragraph>
-  여기서 비대면 week7의 불변성이 바로 이어집니다. 기존 배열에 `push`로 요소를
-  추가하면 <strong>참조는 그대로</strong>라서 React 입장에서는 "안 바뀐 걸로"
-  보입니다. 화면이 안 갱신돼요. 반면 `[...list, newItem]`처럼{" "}
-  <strong>새 배열</strong>을 만들어 넘기면 참조가 바뀌어서 React가 변화를
-  감지합니다.
-</Paragraph>
-
-<Paragraph>
-  아래 코드는 <strong>React 문법이라 지금 당장 이해 안 해도 됩니다</strong>.
-  `setList`는 "React가 화면을 다시 그리게 신호 보내는 함수" 정도로 생각하고,{" "}
-  <strong>참조가 바뀌는지 안 바뀌는지만 눈으로</strong> 확인해보세요.
-</Paragraph>
-
-```js
-// 나쁜 예 — 참조 그대로, React가 변화를 못 알아챔
-list.push(newItem);
-setList(list);
-
-// 좋은 예 — 새 배열을 만들어 넘김
-setList([...list, newItem]);
-```
-
-<Paragraph>
-  <strong>`setList([...list, newItem])`</strong> 이 한 줄만 눈에 익혀두세요.
-  week10에서 React를 만날 때 "왜 이런 식으로 써야 해?"라는 질문이 반드시
-  나옵니다. 그때 "아, 참조가 바뀌어야 React가 알아본댔지"가 떠오르면 오늘 대면은
-  성공한 거예요.
-</Paragraph>
-
-<Paragraph>
-  한 발짝 더 나가면, 이 "불필요한 리렌더를 줄인다"는 게 곧{" "}
-  <strong>불필요한 reflow·paint를 줄인다</strong>는 뜻입니다. 참조 비교는 싸고,
-  화면을 다시 그리는 건 비싸요. React의 불변성 패턴은 비싼 작업을 덜 하려고 싼
-  비교를 먼저 통과시키는 구조인 거죠. 오늘의 파이프라인 얘기와 비대면 불변성이
-  여기서 하나의 감각으로 묶입니다.
-</Paragraph>
-
-<Subtitle level={3}>2-6. 개발자 도구 Performance 탭 맛보기</Subtitle>
-
-<Paragraph>
-  마지막으로 실무 감각 한 가지. "이 페이지 왜 느리지?"를{" "}
-  <strong>감으로 판단하지 않고 측정한다</strong>는 얘기입니다. 브라우저 개발자
-  도구에 내장된 <strong>Performance 탭</strong>이 그 도구예요.
-</Paragraph>
-
-<Paragraph>
-  <strong>이 부분은 오늘 대면에서 같이 열어보며 진행합니다</strong>. 지금 혼자
-  따라 켤 필요는 없고, 흐름만 눈으로 훑어두세요. — <strong>F12</strong>로 개발자
-  도구를 열고, <strong>Performance 탭</strong>으로 간 다음, Record 버튼을 누르고
-  페이지에서 몇 초 동안 상호작용한 뒤 Stop을 누릅니다. 타임라인에 긴 막대들이
-  뜨는데, 그 안에 "Layout"·"Paint"·"Composite Layers" 같은 항목이 색깔별로
-  보여요. 이게 뭔지 지금 알 필요는 없습니다. <strong>"이런 게 있다"</strong>만
-  기억하세요.
-</Paragraph>
-
-<Paragraph>
-  취업 시장 감각으로 덧붙이면, 주니어가 성능 얘기를 할 때 "감으로 느린 것
-  같아요"와 "Performance 탭으로 재봤더니 Layout이 이만큼 찍혀서요"는 완전히 다른
-  말로 들립니다. 실무에서는 항상 후자예요. 비슷한 맥락으로 배포 환경에서는{" "}
-  <strong>Lighthouse</strong> 같은 자동 측정 도구도 있는데, 이건 week11 배포
-  주차에서 다시 만납니다.
-</Paragraph>
-
-<Subtitle level={3}>2-7. 앞으로 스터디에서 어떻게 연결되는가</Subtitle>
-
-<Paragraph>
-  오늘 미리 본 키워드를 한 장에 정리합니다. 키워드만 가져가세요. 몇 주 뒤 해당
-  주차에서 "아, 그때 그 얘기!" 싶으면 오늘 대면은 제 역할을 한 거예요.
-</Paragraph>
-
-- <strong>reflow · paint</strong> → <strong>week10 React</strong>에서 리렌더
-  최적화 얘기로 다시. "state를 불변하게 관리하라"가 곧 "불필요한 reflow를
-  줄여라" 와 같은 말이라는 걸 그때 깨닫게 됩니다.
-- <strong>`transform` / `opacity`</strong> → 면접·실무에서 자주 묻는 CSS 최적화
-  감각. week10 이후 스타일링 얘기할 때도 다시 올라옵니다.
-- <strong>불변성 → 참조 변경 → 리렌더</strong> (2-5의 핵심) →
-  <strong>week10 React</strong>에서 "왜 `setState`에 새 객체를 넘기는가"로 직접
-  회수. 오늘 대면의 심장이 이 자리예요.
-- <strong>Performance 탭</strong> → <strong>week11 배포</strong>에서 Vercel ·
-  Lighthouse 같은 측정 도구로 확장. "감이 아니라 측정" 감각이 배포 환경으로
-  옮겨갑니다.
-
-<Paragraph>
-  반복하지만, 오늘 전부 외우지 마세요. 이 단어들이 week10·week11에서 다시 올라올
-  때 "아, 그때 그 얘기!" 싶으면 충분합니다. 그게 예습의 기준이에요.
-</Paragraph>
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="essay"
+    question="버튼 컴포넌트 안에서 직접 API를 호출하면 어떤 문제가 생길 수 있을까요?"
+    answer="UI 컴포넌트가 데이터 fetching 책임까지 가지게 되어 재사용성이 떨어지고 테스트와 수정이 어려워질 수 있습니다."
+    explanation="UI, 서버 데이터, 비즈니스 로직을 분리하는 감각이 중요합니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="화면 상태와 서버 데이터는 왜 다르게 다뤄야 할까요?"
+    answer="화면 상태는 클라이언트가 임시로 기억하는 값이고, 서버 데이터는 서버가 원본을 가진 값입니다. 서버 데이터에는 로딩, 실패, 캐싱, 재요청 문제가 함께 따라옵니다."
+    explanation="React Query 같은 도구가 등장한 이유도 이 차이와 연결됩니다."
+  />
+</ArticleQuiz>
 
 ---
 
-<Subtitle level={2}>3. 다음 주 안내</Subtitle>
+<Subtitle level={2}>7. 다음 주 안내</Subtitle>
 
 <Paragraph>
-  다음 주(week8)에는 JS에서 실무에서 가장 자주 마주치는 두 축을 다룹니다 —{" "}
-  <strong>클로저(Closure)</strong>와{" "}
-  <strong>비동기 처리(Promise, async/await)</strong>. 클로저는 이번 주
-  사전학습에서 잠깐 언급했던 "함수가 자신이 선언된 환경을 기억한다"는 감각에서
-  출발하는 개념이에요. JS 면접에서 가장 자주 나오는 주제 중 하나입니다.
+  다음 대면에서는 프론트엔드와 백엔드가 만나는 지점인{" "}
+  <strong>API와 통신</strong>을 다룹니다. API는 그냥 데이터를 받는 수단이
+  아니라, 팀 사이의 계약입니다.
 </Paragraph>
-
-<Paragraph>
-  비동기 처리는 <strong>콜백 → Promise → async/await</strong>으로 이어지는 발전
-  흐름을 따라갑니다. 서버에서 데이터를 가져오는 `fetch`, 타이머 `setTimeout`처럼
-  "결과가 나중에 오는" 작업을 JS가 어떻게 다루는지를 이해하는 주차예요.
-</Paragraph>
-
-<Paragraph>
-  오늘 대면과의 연결도 한 줄.{" "}
-  <strong>오늘 2-5에서 얘기한 "변경을 언제 감지하나"</strong>가 다음 주
-  클로저(React `useState`가 돌아가는 기반) · Promise (비동기 결과가 언제
-  도착하나)와 직접 이어집니다. 오늘의 "참조와 리렌더" 감각이 다음 주 "시간과
-  실행 순서" 감각으로 확장되는 거예요.
-</Paragraph>
-
-<Subtitle level={3}>다음 주 예습</Subtitle>
-
-- <Anchor href="/blog/study/clab-26-1/week8">다음 주 학습 자료(week8)</Anchor>의
-  얄코 강의 시청 또는 스킵 진단 문제 10개 도전
-- 콘솔에서{" "}
-  `function makeCounter() { let c = 0; return () => ++c; } const counter = makeCounter(); counter(); counter();`
-  실행해보고 숫자가 어떻게 이어지는지 확인 (클로저 감 잡기)
-- 콘솔에서{" "}
-  `Promise.resolve().then(() => console.log("A")); console.log("B");` 실행해서
-  출력 순서가 B → A인지 확인 (비동기 실행 순서 감 잡기)
-
-<Subtitle level={3}>관련 포스팅</Subtitle>
-
-- <Anchor href="/blog/study/clab-26-1/week6">
-    지난 주 학습 자료(week6) — 객체, 함수, 그리고 스코프
-  </Anchor>
-- <Anchor href="/blog/study/clab-26-1/week7">
-    이번 주 학습 자료(week7) — 불변성, 프로토타입, 타입 체크
-  </Anchor>
-- <Anchor href="/blog/study/clab-26-1/week8">
-    다음 주 학습 자료(week8) — 클로저, Promise, async/await
-  </Anchor>

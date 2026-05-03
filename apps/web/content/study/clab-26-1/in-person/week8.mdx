@@ -1,718 +1,181 @@
 ---
-title: "프론트엔드 스터디 대면 8주차: 클로저·Promise·async/await 점검 + 통신과 API"
+title: "프론트엔드 스터디 대면 8주차: API와 통신 — 프론트엔드와 백엔드의 계약"
 date: 2026-05-18
 tags:
   - 프론트엔드
   - 스터디
-  - JavaScript
-  - 클로저
-  - Promise
-  - 비동기
-  - 통신
   - API
   - HTTP
+  - REST
   - CORS
-  - fetch
-description: 클로저·Promise·async/await 사전학습 점검 후, HTTP·fetch·CORS·REST 감각과 토큰 저장 보안까지 예습으로 짚는 대면입니다. week9 보안 본편으로 이어집니다.
+  - 백엔드 협업
+  - 데이터 계약
+description: 비동기와 async/await를 배운 뒤, 대면에서는 API를 단순 호출 방법이 아니라 프론트엔드와 백엔드 사이의 계약으로 바라봅니다. HTTP, REST, CORS, 에러 응답, API 문서와 협업 방식을 다룹니다.
 ---
 
-<Subtitle level={2}>1. 이번 주 사전학습 점검</Subtitle>
+<Subtitle level={2}>1. 이번 주 사전학습과 오늘 대면의 연결</Subtitle>
 
 <Paragraph>
-  이번 주 사전학습(비대면 week8)에서는 <strong>클로저</strong>,{" "}
-  <strong>Promise</strong>, <strong>async/await</strong> 세 축을 다뤘습니다. 이
-  세 개는 JS 면접에서도 실무에서도 가장 자주 올라오는 주제이고, 오늘 대면 메인인{" "}
-  <strong>통신·API</strong>로 바로 이어지는 발판이에요. 완전한 이해를 목표로
-  하기 보다는, 옆에 코드를 두고 구술로 풀어낼 수 있는 상태를 만드는 시간입니다.
-</Paragraph>
-
-<Subtitle level={3}>핵심 리마인드</Subtitle>
-
-<Subtitle level={4}>
-  클로저 — 함수가 자기가 태어난 곳의 환경을 기억한다
-</Subtitle>
-
-<Paragraph>
-  클로저는 한 줄로{" "}
-  <strong>
-    "외부 함수가 종료돼도 내부 함수가 외부 변수를 계속 쓸 수 있는 것"
-  </strong>
-  입니다. "함수가 자기가 태어난 곳의 환경을 기억한다"는 감각으로 가져가면
-  충분해요. `makeCounter`를 호출할 때마다 `count`라는 메모지를 한 장 새로
-  발급하고, 반환된 내부 함수는 그 메모지를 손에 쥔 채 돌아다니는 그림입니다.
-</Paragraph>
-
-```js
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-```
-
-<Paragraph>
-  호출할 때마다 `count`가 <strong>함수 호출마다 독립적으로 새로 생긴다</strong>
-  는 감각이 핵심이에요. 3주 뒤 week10에서 React `useState`를 만날 때 "각
-  컴포넌트가 자기만의 state를 갖는다"는 얘기가 나오는데, 그 기반이 바로 오늘의
-  클로저입니다. 지금은 이름만 넣어두세요.
-</Paragraph>
-
-<Subtitle level={4}>Promise — 비동기 결과를 값(객체)으로 다룬다</Subtitle>
-
-<Paragraph>
-  Promise는 배달 주문서 같은 도구입니다. 주문을 넣으면 "지금은 준비 중(pending),
-  다 되면 이 주소로 보내줄게(`.then`), 중간에 문제 생기면 이 번호로
-  전화(`.catch`)" 라는 <strong>송장</strong>이 먼저 내 손에 들어옵니다.
-  콜백으로는 이 송장을 계속 사람이 들고 다니며 전해야 했다면, Promise는{" "}
-  <strong>송장 그 자체가 도구</strong>
-  예요. 그래서 가로로 깊어지던 콜백 지옥이 `.then()` 체이닝으로 수평하게
-  펴집니다.
-</Paragraph>
-
-```js
-fetch("/api/users/1")
-  .then((res) => res.json())
-  .then((user) => console.log(user))
-  .catch((err) => console.error(err));
-```
-
-<Paragraph>
-  Promise는 세 가지 상태(`pending` / `fulfilled` / `rejected`)를 갖는다 정도만
-  이름으로 기억하면 됩니다. 에러는 체인 어디서 나든{" "}
-  <strong>마지막 `.catch()`</strong>
-  하나에서 받는다는 점이 편리한 포인트예요.
-</Paragraph>
-
-<Subtitle level={4}>async/await — Promise를 동기처럼 읽는 설탕</Subtitle>
-
-<Paragraph>
-  `async/await`는{" "}
-  <strong>Promise를 동기 코드처럼 읽게 해주는 문법적 설탕</strong>
-  입니다. `async` 함수는 무조건 Promise를 반환하고, `await`는 Promise 앞에서만
-  의미가 있어요. 에러 처리는 일반 JS처럼 `try/catch`로 잡습니다.
-</Paragraph>
-
-```js
-async function getUser(id) {
-  try {
-    const res = await fetch(`/api/users/${id}`);
-    return await res.json();
-  } catch (e) {
-    console.error(e);
-  }
-}
-```
-
-<Paragraph>
-  <strong>오늘 대면 메인에 바로 이어지는 포인트</strong>는 이거예요 — `fetch`는
-  Promise를 반환한다. 그래서 `await fetch(...)`가 자연스럽게 된다. 오늘 이후로는
-  "비동기 = Promise = await로 기다림"이라는 감각이 한 몸이 되어야 합니다.
-</Paragraph>
-
-<Subtitle level={3}>사전학습 인증 미션 풀이</Subtitle>
-
-<Paragraph>
-  인증 미션 Q1~Q4 중 오늘 대면에서는{" "}
-  <strong>Q1(makeCounter 독립 클로저)</strong>와{" "}
-  <strong>Q3(Promise.all vs 순차 await 시간)</strong>만 함께 풀어봅니다.
-  Q2(async 반환값 타입)와 Q4(이벤트 루프 출력 순서)는 위 리마인드에서 맥락이
-  깔렸으니, <strong>비대면 자료를 참고해 정리한 답을 댓글로 제출</strong>
-  해주세요. 막히면 아래 "막힌 사람 클리닉"에서 바로 꺼내도 됩니다.
-</Paragraph>
-
-<Paragraph>
-  <strong>
-    Q1. `makeCounter()`를 두 번 호출했을 때 각 카운터가 독립적으로 동작하는
-    이유를 설명하세요.
-  </strong>
-</Paragraph>
-
-```js
-function makeCounter() {
-  let count = 0;
-  return function () {
-    count++;
-    return count;
-  };
-}
-
-const counterA = makeCounter();
-const counterB = makeCounter();
-
-console.log(counterA()); // ?
-console.log(counterA()); // ?
-console.log(counterB()); // ?
-```
-
-<Subtitle level={4}>정답: 1, 2, 1</Subtitle>
-
-<Paragraph>
-  `makeCounter()`를 호출할 때마다 <strong>새로운 렉시컬 환경</strong>(새로운
-  `count` 변수)이 생성됩니다. 반환된 내부 함수는 자기가 태어난 그 환경을 손에
-  쥐고 있어요. `counterA`와 `counterB`는 각각{" "}
-  <strong>별도의 `count` 메모지</strong>를 쥔 두 개의 클로저라, 값이 서로 섞이지
-  않습니다.
-</Paragraph>
-
-<Subtitle level={4}>놓치기 쉬운 지점</Subtitle>
-
-<Paragraph>
-  같은 `makeCounter` 함수 정의를 쓰지만,{" "}
-  <strong>호출할 때마다 환경은 새로 만들어진다</strong>는 감각이 핵심입니다.
-  이게 3주 뒤 React `useState`에서 "같은 컴포넌트 함수 정의를 여러 번 그려도 각
-  인스턴스가 독립적인 state를 갖는다"는 얘기와 정확히 같은 구조예요.
+  이번 주 비대면에서는 클로저, Promise, async/await를 배웠습니다. 이 문법들이
+  실제 웹에서 가장 많이 쓰이는 곳은 <strong>서버와 통신할 때</strong>입니다.
+  오늘은 `fetch` 문법을 다시 외우는 시간이 아니라, API를 팀 사이의 계약으로 보는
+  감각을 잡아보겠습니다.
 </Paragraph>
 
 ---
 
+<Subtitle level={2}>2. API는 함수 호출이 아니라 계약이다</Subtitle>
+
 <Paragraph>
-  <strong>
-    Q3. `Promise.all()`로 병렬 실행할 때와 순차적으로 `await`를 연달아 쓸 때의
-    실행 시간 차이를 설명하세요. 각각 1초 걸리는 비동기 작업 2개라면 총 시간은
-    어떻게 다를까요?
-  </strong>
+  프론트엔드 입장에서 API는 "서버에서 데이터를 받아오는 주소"처럼 보입니다.
+  하지만 팀 관점에서 API는 훨씬 중요합니다. 프론트엔드와 백엔드가 서로 기대하는
+  데이터의 모양, 에러의 형태, 권한 규칙, 페이지네이션 방식이 모두 API에
+  담깁니다.
 </Paragraph>
 
-<Subtitle level={4}>정답</Subtitle>
-
-- <strong>순차 `await`</strong>: 약 2초 (1초 + 1초)
-- <strong>`Promise.all()`</strong>: 약 1초 (동시 시작, 가장 오래 걸리는
-  작업만큼만 소요)
-
-```js
-// 순차 — 2초 (A가 끝나야 B 시작)
-async function sequential() {
-  const a = await fetchA();
-  const b = await fetchB();
-  return [a, b];
-}
-
-// 병렬 — 1초 (동시 시작)
-async function parallel() {
-  const [a, b] = await Promise.all([fetchA(), fetchB()]);
-  return [a, b];
-}
+```http
+GET /api/studies?page=1&size=20
 ```
 
 <Paragraph>
-  작업 간 <strong>의존성이 없다면</strong>{" "}
-  <strong>`Promise.all()`을 써야 합니다</strong>. "`await`를 두 번 쓸 것 같은데
-  둘이 관계 없다" 싶으면 바로 `Promise.all` 반사가 들어와야 해요. 단, 하나라도
-  `reject`되면 전체가 `reject`되므로, 개별 실패 처리가 필요하면
-  `Promise.allSettled()`를 씁니다.
-</Paragraph>
-
-<Subtitle level={4}>놓치기 쉬운 지점</Subtitle>
-
-<Paragraph>
-  이 감각이 <strong>오늘 대면 메인의 2-3 fetch</strong>로 바로 이어집니다. "여러
-  API를 동시에 부를 수 있다면 `Promise.all`"이 API 호출 최적화의 첫 번째 감각이
-  에요. 순차로 짜면 체감 로딩 시간이 배수로 늘어납니다.
-</Paragraph>
-
-<Subtitle level={3}>막힌 사람 클리닉 (상시)</Subtitle>
-
-<Paragraph>
-  사전학습에서 막힌 포인트를 자유롭게 공유합니다. 이 섹션은 매주 고정이며,{" "}
-  <strong>"이해 안 됐어요"라고 말하는 것이 스터디의 기본값</strong>입니다. 혼자
-  덮고 넘어가면 다음 주가 더 무거워집니다.
-</Paragraph>
-
-<Paragraph>
-  진행 방식: 말로 바로 해도 되고, 익명이 편하면 포스트잇이나 채팅에 적어 건네도
-  됩니다. 질문이 어색하면 "내가 비대면 자료 어디에서 몇 분 멈췄다" 한 줄도
-  충분해요. 특히 비동기는 "말로 설명이 안 된다"가 가장 흔한 막힘 지점이라,
-  어디가 걸리는지만 짚어도 오늘 대면에서 풀 수 있습니다.
+  이 요청 하나에도 많은 약속이 들어있습니다. page는 0부터 시작하는지 1부터
+  시작하는지, size 최대값은 얼마인지, 로그인이 필요할지, 실패하면 어떤 에러가
+  올지, 빈 목록이면 어떤 응답이 올지 정해야 합니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>2. [대면 메인] 통신 + API 사용</Subtitle>
+<Subtitle level={2}>3. 좋은 API 협업에서 꼭 맞춰야 하는 것들</Subtitle>
 
-<Paragraph>
-  오늘 본론은 <strong>웹 앱이 서버와 어떻게 대화하는가</strong>입니다.
-  비대면에서 `async/await`로 `fetch`를 감싸는 문법을 봤는데, 대면에서는{" "}
-  <strong>fetch가 실제로 무엇을 주고받는가</strong>를 한 층 내려가서 들여다
-  봅니다. 비대면이 "어떻게 기다리는가"였다면, 대면은 "뭘 기다리는가"예요.
-  React를 배우기 2주쯤 전인 지금, <strong>감각을 예습</strong>해두는 시간입니다.
-</Paragraph>
+<Subtitle level={3}>3-1. 응답 데이터의 모양</Subtitle>
 
-<Subtitle level={3}>2-1. 웹 앱은 왜 서버와 통신해야 하는가</Subtitle>
-
-<Paragraph>
-  우리가 지금 보는 네이버 메인의 뉴스 목록은 HTML에 박제된 게 아닙니다.
-  브라우저가 HTML을 먼저 받아 뼈대를 그리고, 그 다음 JS가{" "}
-  <strong>별도 요청</strong>을 서버에 보내 최신 뉴스를 받아와 화면에 꽂아요. 이{" "}
-  <strong>별도 요청</strong>이 오늘의 주제입니다.
-</Paragraph>
-
-<Paragraph>
-  현대 웹앱은 "첫 HTML(뼈대) + JS가 찍어내는 수많은 API 요청(살)" 구조로 굴러
-  갑니다. 이런 구조의 이름이 <strong>SPA(Single Page Application)</strong>
-  예요. 지금은 이름만 들어두세요 — week10에서 React를 만나며 다시 정식으로
-  소개됩니다.
-</Paragraph>
-
-<Paragraph>
-  오늘 미리 볼 키워드는 다음과 같습니다. 외울 필요는 없고, 이름과 윤곽만
-  머릿속에 놓이면 충분합니다.
-</Paragraph>
-
-- <strong>HTTP의 요청/응답</strong> 쌍 감각
-- <strong>메서드(GET/POST/PUT/DELETE)</strong> 4개 이름
-- <strong>상태 코드 2xx/4xx/5xx</strong> 대역
-- <strong>fetch 기본 패턴</strong> — 비대면 async/await와 자연 연결
-- <strong>CORS</strong> — 한 단어만
-- <strong>토큰은 어디에 저장?</strong> — 오늘 미리 짚을 핵심, week9 보안
-  본편으로 이어짐
-- <strong>Network 탭</strong> — 실무 측정 감각
-
-<Paragraph>
-  마지막 2-8 "연결 지도"에서 이 키워드들이 week9·week10·week11에서 어떻게
-  본편으로 이어지는지 한 번 더 정리할 거예요.
-</Paragraph>
-
-<Subtitle level={3}>
-  2-2. HTTP 기초 감각 — 요청·응답, 메서드, 상태 코드
-</Subtitle>
-
-<Paragraph>
-  API 통신의 문법이 바로 <strong>HTTP</strong>입니다. 메서드와 상태 코드 몇 개만
-  이름으로 알아도 앞으로 `axios` · React Query · MDN 문서를 읽을 때 눈에 확
-  붙어요.
-</Paragraph>
-
-<Subtitle level={4}>요청과 응답 — 편지 비유</Subtitle>
-
-<Paragraph>
-  내가 서버에 편지(<strong>요청, request</strong>)를 보내면 서버가 답장(
-  <strong>응답, response</strong>)을 돌려주는 그림입니다. 편지 봉투에는{" "}
-  <strong>주소(URL)</strong>, <strong>용건(메서드)</strong>,{" "}
-  <strong>내용물(body)</strong>, <strong>동봉 서류(headers)</strong>가 들어가고,
-  답장에도 <strong>우체국 도장(상태 코드)</strong>과{" "}
-  <strong>내용물(body)</strong>이 찍혀서 돌아옵니다. 이 다섯 요소가 HTTP의 전부
-  예요.
-</Paragraph>
-
-<Subtitle level={4}>메서드 4개 — 용건</Subtitle>
-
-- <strong>`GET`</strong> — 읽기. 주소만 있으면 된다. 주소창에 URL 치면 거의 다
-  GET이에요.
-- <strong>`POST`</strong> — 쓰기/만들기. 새 게시글 작성, 로그인 요청.
-- <strong>`PUT` / `PATCH`</strong> — 수정. 둘 구분은 지금 안 해도 OK. "수정"이라
-  기억하면 충분합니다.
-- <strong>`DELETE`</strong> — 삭제.
-
-<Paragraph>
-  실무 감각 한 줄: <strong>`GET`으로 서버 상태를 바꾸면 안 됩니다.</strong>{" "}
-  `/delete?id=1`을 GET으로 만들면 다음 주 week9 보안 본편에서{" "}
-  <strong>CSRF 즉사 패턴</strong>으로 다시 만납니다. 지금은 "읽기는 GET,
-  바꾸기는 POST/PUT/DELETE" 감만.
-</Paragraph>
-
-<Subtitle level={4}>상태 코드 — 답장의 도장</Subtitle>
-
-<Paragraph>
-  실무에서 체감 빈도 순으로 나열합니다. 번호를 외우지 말고{" "}
-  <strong>대역(2xx/4xx/5xx)</strong>의 느낌만 가져가세요.
-</Paragraph>
-
-- <strong>`200 OK`</strong> — 성공. 매일 봅니다.
-- <strong>`201 Created`</strong> — POST로 리소스 생성 성공.
-- <strong>`400 Bad Request`</strong> — 요청이 잘못됨 (내가 보낸 JSON이 이상할
-  때).
-- <strong>`401 Unauthorized`</strong> — <strong>로그인 안 됨</strong>. 토큰이
-  없거나 만료.
-- <strong>`403 Forbidden`</strong> — 로그인은 됐는데 <strong>권한 없음</strong>.
-- <strong>`404 Not Found`</strong> — 주소 자체가 없음.
-- <strong>`500 Internal Server Error`</strong> — <strong>서버 쪽 문제</strong>.
-  내 잘못 아님.
-
-<Paragraph>
-  대역 감각만 한 줄로:{" "}
-  <strong>4xx는 보낸 쪽(나) 잘못, 5xx는 받은 쪽(서버) 잘못</strong>. 이 구분이
-  디버깅의 첫걸음이에요. 콘솔에 빨간 에러 떴을 때 이 한 줄로 "내 코드를 봐야
-  할지, 백엔드에 말해야 할지"가 바로 갈립니다.
-</Paragraph>
-
-<Subtitle level={3}>
-  2-3. fetch 기본 패턴 — 비대면 async/await와 자연 연결
-</Subtitle>
-
-<Paragraph>
-  비대면에서 봤던 <strong>`fetch`</strong>를 이번에는 제대로 펼쳐봅시다. 10줄
-  안에 들어가는 예습용 코드 두 개만 보면 충분해요.
-</Paragraph>
-
-<Subtitle level={4}>GET — 데이터 읽어오기</Subtitle>
-
-<Paragraph>
-  중간의 <code>if (!res.ok) throw ...</code>가 낯설 수 있어요. 이유를 먼저
-  얘기하면 —{" "}
-  <strong>
-    fetch는 404나 500 같은 에러 상태 코드에도 자동으로 에러를 던지지 않습니다
-  </strong>
-  . 그래서 개발자가 직접 <code>res.ok</code>(2xx면 true)를 확인해 에러를
-  던져줘야 catch로 흘러가요. 이 성질은 바로 아래 문단에서 좀 더 자세히 봅니다.
-</Paragraph>
-
-```js
-async function getUser(id) {
-  const res = await fetch(`/api/users/${id}`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const user = await res.json();
-  return user;
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "title": "프론트엔드 스터디",
+      "status": "OPEN"
+    }
+  ],
+  "page": 1,
+  "totalCount": 42
 }
 ```
 
 <Paragraph>
-  `await`를 두 번 쓰는 게 자연스럽게 느껴지면 오늘 대면 절반 성공이에요.{" "}
-  <strong>첫 번째 `await`</strong>는 응답의 "도장과 헤더"까지만 받는 것,{" "}
-  <strong>두 번째 `await`</strong>는 응답 본문을 JSON으로 파싱하는 것입니다. 둘
-  다 Promise라 둘 다 기다려야 해요.
+  프론트엔드는 이 응답을 화면으로 바꿉니다. 그래서 백엔드가 내려주는 필드 이름과
+  화면에서 필요한 정보가 맞아야 합니다. `status: "OPEN"`을 "모집 중"으로
+  보여줄지, 버튼 노출 조건으로 쓸지 같은 판단도 필요합니다.
 </Paragraph>
+
+<Subtitle level={3}>3-2. 에러 응답의 형태</Subtitle>
 
 <Paragraph>
-  함정 하나 미리 — <strong>`fetch`는 4xx/5xx에도 reject되지 않습니다</strong>.
-  그래서 개발자가 직접 `res.ok`(2xx면 true)를 체크해야 해요. 반면 `axios`라는
-  라이브러리는 4xx/5xx를 자동으로 reject해줍니다. "그래서 실무에서 axios나
-  TanStack Query를 쓰더라"는 얘기가 나오는 이유가 이겁니다. 지금은 이름만 —
-  week10 React 주차에서 다시 만납니다.
+  성공 응답보다 더 중요한 것이 에러 응답입니다. 실제 서비스에서는 실패가 자주
+  일어납니다. 네트워크가 끊기고, 권한이 없고, 입력값이 틀리고, 서버가 죽습니다.
 </Paragraph>
 
-<Subtitle level={4}>POST — 데이터 보내기</Subtitle>
-
-```js
-await fetch("/api/posts", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ title: "hi" }),
-});
+```json
+{
+  "code": "STUDY_ALREADY_CLOSED",
+  "message": "이미 마감된 스터디입니다."
+}
 ```
 
 <Paragraph>
-  실무 함정 1번 —{" "}
-  <strong>`Content-Type: application/json` 헤더를 빠뜨리면</strong> 서버가 "이게
-  JSON인지 몰라서" 파싱에 실패해요. 400이 뜨고 "분명 잘 보냈는데 왜 안 되지?"로
-  한 시간 날립니다. 이건 <strong>몇 번 당해봐야 몸에 붙는 감각</strong>
-  이라, 지금은 이 코드를 눈에 익혀두는 걸로 충분합니다.
+  에러가 이렇게 내려오면 프론트엔드는 사용자에게 적절한 메시지를 보여줄 수
+  있습니다. 반대로 모든 에러가 그냥 500으로만 내려오면, 화면에서는 "알 수 없는
+  오류" 말고 할 수 있는 게 없습니다.
 </Paragraph>
 
-<Subtitle level={3}>2-4. CORS — 다른 도메인 API는 기본 차단</Subtitle>
+<Subtitle level={3}>3-3. 빈 데이터와 로딩 상태</Subtitle>
 
 <Paragraph>
-  <strong>CORS</strong>(Cross-Origin Resource Sharing)는 입문자 3대 좌절 요소 중
-  하나예요. 이름만 심어두면 나중에 실제로 마주쳤을 때 "아, 그 얘기!"가 됩니다.
-  지금은 깊이 가지 않고 감만.
+  API 협업에서 자주 빠지는 것이 빈 상태입니다. 데이터가 없을 때 빈 배열을 줄지,
+  null을 줄지, 404로 볼지, 정상 응답으로 볼지 합의해야 합니다.
 </Paragraph>
 
+- 검색 결과 없음
+- 알림 없음
+- 아직 작성한 글 없음
+- 권한은 있지만 볼 데이터 없음
+- 권한이 없어서 볼 수 없음
+
 <Paragraph>
-  브라우저는 기본적으로{" "}
-  <strong>내 도메인이 아닌 곳에 보낸 요청의 응답을 못 뜯게</strong> 막습니다.
-  악성 사이트가 내 뱅킹 계정에 몰래 접근하는 걸 막기 위한 안전장치예요. 이 규칙
-  이름이 <strong>동일 출처 정책(Same-Origin Policy)</strong>이고, 여기에 "이
-  도메인은 예외로 허용"을 구멍 내는 규약이 CORS입니다.
+  이들은 모두 화면이 다릅니다. 그래서 API 응답과 UI 상태를 함께 설계해야 합니다.
 </Paragraph>
 
-<Paragraph>
-  언제 CORS 에러를 보나 — 프론트 `localhost:3000`이 백엔드 `localhost:8000`에
-  요청을 보낼 때. <strong>포트가 달라도 다른 출처로 간주</strong>돼서 CORS
-  에러가 납니다. 콘솔에 이런 메시지가 찍혀요.
-</Paragraph>
-
-```bash
-Access to fetch at 'http://localhost:8000/api/users'
-from origin 'http://localhost:3000' has been blocked
-by CORS policy
-```
+<Subtitle level={3}>3-4. 페이지네이션과 정렬</Subtitle>
 
 <Paragraph>
-  이 메시지를 언젠가 반드시 봅니다. 그때 "아 이거!"라고 떠오르기만 하면 오늘은
-  성공이에요. 해결은 두 줄로만:
-</Paragraph>
-
-- <strong>정석</strong>: 서버가 `Access-Control-Allow-Origin` 헤더로 허용
-  도메인을 찍어준다. <strong>프론트가 할 일 아님</strong>.
-- <strong>개발 환경</strong>: Next.js · Vite의 <strong>dev proxy</strong>로
-  우회. 이름만, week10에서 다시.
-
-<Paragraph>
-  중요한 감각 한 줄 — <strong>CORS는 브라우저가 막는 것</strong>이에요.
-  Postman/curl에서는 에러가 안 납니다.{" "}
-  <strong>
-    주의: "Postman으로 하면 되겠네"가 아니라 단지 테스트 도구가 브라우저 보안
-    정책을 따르지 않기 때문
-  </strong>
-  일 뿐입니다. 실제 사용자는 브라우저로 접근하니 해결책은 아니에요. 이 점이
-  week9 보안 본편에서 <strong>"프론트 검증은 무의미하다"</strong>로 이어지는
-  복선이고, CORS와 CSRF는 전혀 다른 문제라는 얘기도 week9에서 정식으로 구분해서
-  다룹니다.
-</Paragraph>
-
-<Subtitle level={3}>2-5. REST 감 — 자원과 메서드의 조합</Subtitle>
-
-<Paragraph>
-  <strong>REST</strong>의 정확한 정의는 복잡한데, 실무에서 읽고 쓰는 API 주소 대
-  부분이 "대충 REST 스타일"로 생겼어요. 직관만 심습니다.
+  목록 API에서는 페이지네이션이 거의 항상 등장합니다. 이때 offset 방식인지
+  cursor 방식인지, 정렬 기준은 무엇인지, 다음 페이지가 있는지 어떻게 알려줄지
+  정해야 합니다.
 </Paragraph>
 
 <Paragraph>
-  REST의 핵심은{" "}
-  <strong>URL이 자원(명사)을 가리키고, 동작은 메서드가 맡는다</strong>는
-  감각입니다.
-</Paragraph>
-
-- `GET /users` — 유저 목록 읽기
-- `GET /users/123` — 123번 유저 읽기
-- `POST /users` — 유저 새로 만들기
-- `PUT /users/123` — 123번 유저 수정
-- `DELETE /users/123` — 123번 유저 삭제
-
-<Paragraph>
-  <strong>동사를 URL에 넣지 않는다</strong>가 포인트예요. `/getUser?id=123`처럼
-  짜지 않고, `GET /users/123`로 짭니다. 한 단계 더 — `GET /users/123/posts`처럼{" "}
-  <strong>자원이 자원을 소유하는 중첩 구조</strong>도 흔합니다. 이건 week10에서
-  React API 호출을 설계할 때 다시.
-</Paragraph>
-
-<Paragraph>
-  실무 감각 한 줄 — <strong>완벽한 RESTful은 드물어요</strong>. 대부분 "대충
-  REST 스타일"이고, 팀마다 관행이 다릅니다. 팀 컨벤션이 있으면 그걸 따르는 게
-  기본이에요 (week6 대면에서 얘기한 "팀 컨벤션" 감각이 여기서 회수됩니다).
-</Paragraph>
-
-<Paragraph>
-  마지막으로 이름만 — React 커뮤니티에선 REST 말고 <strong>GraphQL</strong>도
-  쓴다는 걸 한 번 들어두세요. 하나의 엔드포인트에 "필요한 데이터 형태를 쿼리로
-  보낸다"는 발상이 다른 방식입니다. 지금은 이름만, week10 생태계에서 다시.
-</Paragraph>
-
-<Subtitle level={3}>
-  2-6. [핵심 예습] 토큰은 어디에 저장? — 오늘 미리 짚을 가장 중요한 것
-</Subtitle>
-
-<Paragraph>
-  REST로 <strong>API 주소 구조</strong>를 이해했다면, 이제 그 요청에{" "}
-  <strong>"내가 누구인지"를 증명</strong>하는 방법이 필요합니다. 그게 토큰이고,
-  토큰을 <strong>어디에 저장하느냐</strong>가 오늘 이야기의 꼭짓점이에요.
-</Paragraph>
-
-<Paragraph>
-  오늘 대면의 <strong>심장</strong>입니다. 다음 주 week9 "바이브코더가 모르는 웹
-  보안" 본편에서 직접 회수되는, 가장 중요한 한 줄을 심는 자리예요. 지금 외울
-  필요는 없고, <strong>"토큰 저장 위치가 보안의 갈림길"</strong>이라는 감각만
-  가져가면 됩니다.
-</Paragraph>
-
-<Subtitle level={4}>먼저, 로그인 흐름 3줄</Subtitle>
-
-<Paragraph>
-  유저가 ID/PW로 로그인 요청을 보내면 → 서버가 검증하고 →{" "}
-  <strong>토큰(JWT 같은 문자열)</strong>을 발급해줍니다. 이후 모든 요청마다 이
-  토큰을 동봉해서 "나 맞아요" 증명하는 구조예요. 문제는 이 토큰을 브라우저
-  어디에 두느냐입니다.
-</Paragraph>
-
-<Subtitle level={4}>두 가지 선택지</Subtitle>
-
-- <strong>localStorage</strong> — JS로 쉽게 읽고 쓸 수 있는 저장소. AI가 짜는
-  튜토리얼 코드의 대부분이 여기에 토큰을 넣습니다.
-- <strong>HttpOnly 쿠키</strong> — JS에서 <strong>읽을 수 없게</strong> 설정된
-  쿠키. 브라우저가 자동으로 요청에 동봉해줍니다.
-
-<Subtitle level={4}>왜 그렇게 위험한가</Subtitle>
-
-> **localStorage에 토큰을 넣으면 XSS 한 방에 계정이 넘어갑니다.**
-
-<Paragraph>
-  <strong>XSS</strong>는 남이 심은 JS가 내 페이지에서 실행되는 공격인데요,
-  "어떻게 남의 JS가 내 페이지에서 실행될 수 있나?"는 week9 대면에서 자세히
-  봅니다. 지금은 결론만 기억해두면 돼요 —{" "}
-  <strong>
-    남이 내 페이지에서 JS 한 줄을 실행할 수 있으면 localStorage는 통째로 열린다
-  </strong>
-  는 것. 토큰이 넘어가는 순간, 공격자가 내 계정으로 할 수 있는 일은 사실상 다
-  열려버립니다.
-</Paragraph>
-
-<Paragraph>
-  HttpOnly 쿠키는 JS가 읽지 못하게 브라우저가 막아놓은 저장소입니다. XSS 공격
-  JS가 실행돼도 <strong>토큰 자체는 가져갈 수 없어요</strong>. 한 단계 더
-  버팁니다. 이 쿠키에 `Secure`(HTTPS만), `SameSite=Lax`(다른 사이트에서 보낸
-  요청엔 자동 동봉 안 함)까지 붙이면 "쿠키 3종 세트"가 되고, week9에서 정식으로
-  다룹니다.
-</Paragraph>
-
-<Subtitle level={4}>모범답 감각</Subtitle>
-
-<Paragraph>
-  현업에서는 토큰을 두 종류로 쪼개 관리합니다 — <strong>access token</strong>
-  (서버에 "나는 누구다"를 증명하는 짧은 수명의 열쇠)과{" "}
-  <strong>refresh token</strong>(access token이 만료되면 재발급받기 위한 긴
-  수명의 열쇠). 이 둘을 어디에 어떻게 보관하는지가 보안의 절반이에요. 표준
-  패턴은 한 번 듣고 넘기세요 —{" "}
-  <strong>
-    access token은 짧게 메모리에, refresh token은 HttpOnly 쿠키에 길게
-  </strong>
-  . "왜 이렇게 찢어놓는지"의 그림은 week9 대면에서 정리합니다.
-</Paragraph>
-
-<Subtitle level={4}>AI 코딩 경고 한 줄</Subtitle>
-
-<Paragraph>
-  <strong>
-    AI가 만드는 로그인 코드의 90%는 `localStorage.setItem('token', ...)` 입니다.
-  </strong>{" "}
-  이유는 단순해요 — AI의 학습 데이터에 그 문법을 쓰는 입문 튜토리얼 비중이
-  압도적이기 때문입니다. 그래서 "AI가 짜준 코드가 멀쩡해 보인다"가 절대 "
-  안전하다"를 뜻하지 않아요. 이 감각이 다음 주 대면의 오프닝 훅으로 연결됩니다.
-</Paragraph>
-
-<Paragraph>
-  <strong>지금 외울 필요 없습니다.</strong> "토큰 저장 위치에 따라 공격 난이도가
-  달라지더라" 한 줄만 머리에 남으면 충분해요.{" "}
-  <strong>다음 주 week9 본편이 오늘 이 예습을 바로 이어받습니다</strong>.
-</Paragraph>
-
-<Subtitle level={3}>2-7. 실무 감각 — Network 탭에서 요청·응답을 본다</Subtitle>
-
-<Paragraph>
-  "API가 뭘 주고받는지"를 <strong>눈으로 본 적 없으면</strong> 앞선 얘기가 전부
-  공중에 뜹니다. week7 대면에서 Performance 탭을 같이 열어봤던 것처럼,{" "}
-  <strong>이 부분도 오늘 대면에서 같이 엽니다</strong>. 지금 혼자 따라 켤 필요는
-  없고 흐름만 눈으로 훑어두세요.
-</Paragraph>
-
-<Paragraph>진행 순서는 이렇습니다.</Paragraph>
-
-1. `F12`로 개발자 도구 열기 → <strong>Network 탭</strong>으로 이동
-2. 아무 사이트(예: GitHub 메인)를 새로고침
-3. 타임라인에 요청이 쭉 뜹니다 — "이 한 페이지를 위해 브라우저가 수십 번 서버에
-   다녀왔다"는 감이 잡혀요.
-4. 요청 하나를 클릭하면 <strong>Headers / Payload / Response / Timing</strong>{" "}
-   4개 탭을 볼 수 있습니다.
-5. 각각 "요청·응답 헤더", "내가 보낸 본문", "서버가 준 본문", "각 단계 ms"예요.
-
-<Paragraph>
-  실무 감각 한 줄 — 주니어가 API 에러를 "왜 안 돼요"로 물으면 시니어는{" "}
-  <strong>"Network 탭 캡쳐 보여주세요"</strong> 한 줄로 답합니다. 이 도구 없이는
-  대화 자체가 성립하지 않아요. 오늘 이후로는 API 관련 질문이 있을 때{" "}
-  <strong>Network 탭을 먼저 열고</strong>, request URL · Status · Response
-  body를 먼저 확인하는 습관을 들이세요.
-</Paragraph>
-
-<Paragraph>
-  보안 예습 한 줄 — 인증이 필요한 API 요청은 보통{" "}
-  <strong>Authorization 헤더</strong>에 토큰을 실어 보냅니다(예: `Authorization:
-  Bearer eyJ...`). Network 탭의 Headers 영역을 열면 이 토큰이{" "}
-  <strong>그대로 보여요</strong>. HTTPS라 네트워크 중간에서는 암호화돼
-  안전하지만, <strong>내 브라우저 안에서는 다 보인다</strong>는 뜻입니다. 이게
-  week9에서 "프론트에 숨긴 로직은 없다"로 이어지는 복선입니다.
-</Paragraph>
-
-<Subtitle level={3}>2-8. 앞으로 스터디에서 어떻게 연결되는가</Subtitle>
-
-<Paragraph>
-  오늘 미리 본 키워드를 한 장에 정리합니다. 키워드만 가져가세요. 몇 주 뒤 해당
-  주차에서 "아, 그때 그 얘기!" 하는 감각이 돌아오면 오늘 자리의 역할은 다한
-  거예요.
-</Paragraph>
-
-- <strong>fetch · async/await · 4xx 함정</strong> →<strong>week10 React</strong>
-  에서 `axios`, <strong>TanStack Query</strong>, `swr` 같은 라이브러리 이름으로
-  다시 만남. "왜 이 라이브러리들이 필요한가"의 답이 오늘 fetch의 함정(4xx reject
-  안 됨 · 로딩/에러 상태 수동 관리)에서 나옵니다.
-- <strong>상태 코드 401/403 · 토큰 저장 · CORS vs CSRF</strong> →
-  <strong>week9 대면 웹 보안 본편</strong>에서 전면 회수. 오늘 2-6의 "XSS = Game
-  Over" 한 줄이 실제 사례와 숫자로 다시 올라옵니다. 5주 전 week5 대면의
-  <strong>"친구가 AI로 만든 게임이 5분 만에 뚫림"</strong> 사례도 여기서 구체화
-  돼요.
-- <strong>CORS dev proxy · API URL 환경변수</strong> →
-  <strong>week11 배포</strong>에서 "로컬에선 되는데 배포하면 안 되는" 단골
-  이슈로 회수. `.env` 파일과 환경변수 감각이 배포 환경에서 본격적으로 붙습니다.
-- <strong>REST 스타일 · 팀 API 컨벤션</strong> →<strong>week6 팀 컨벤션</strong>
-  회수 + week10 React API 호출 구조 설계로 이어짐.
-- <strong>Network 탭 측정 감각</strong> →
-  <strong>week11 Lighthouse · Vercel</strong>. week7의 Performance 탭과 오늘의
-  Network 탭이 "감이 아니라 측정"이라는 같은 축으로 묶이고, 배포 환경으로
-  확장됩니다.
-
-<Paragraph>
-  오늘 심은 이름들을 외울 필요 없어요. 다음 주 week9에서{" "}
-  <strong>토큰 · XSS · 쿠키</strong> 같은 단어가 튀어나올 때 "오늘 그 얘기!"
-  하고 자연스럽게 붙으면 됩니다.
+  작은 프로젝트에서는 별것 아닌 것처럼 보여도, 무한 스크롤이나 검색 필터가
+  붙으면 이 결정이 사용자 경험과 성능을 크게 좌우합니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>3. 다음 주 안내</Subtitle>
+<Subtitle level={2}>4. CORS — 브라우저가 끼어드는 보안 규칙</Subtitle>
 
 <Paragraph>
-  다음 주(week9)는 두 개의 주제가 나란히 갑니다 —{" "}
-  <strong>비대면은 "React 입문 전 필수 JS 문법"</strong>,{" "}
-  <strong>대면은 "바이브코더가 모르는 웹 보안"</strong>이에요. 둘 다 오늘 대면과
-  직접 이어집니다.
-</Paragraph>
-
-<Subtitle level={3}>비대면 week9 예고 — React 입문 전 필수 JS 문법</Subtitle>
-
-<Paragraph>
-  비대면 week9는 <strong>React 코드의 매 줄에 등장하는 JS 문법</strong>을 한
-  번에 정리하는 주차입니다. 다다음 주 week10부터 React를 정식으로 시작하기
-  때문에, 그 전에 막히지 않도록 깔아두는 자리예요. 다룰 문법은 이렇습니다 —{" "}
-  <strong>배열 고차함수(`map` · `filter` · `reduce`)</strong>,{" "}
-  <strong>구조 분해 할당</strong>, <strong>스프레드 · Rest(`...`)</strong>,{" "}
-  <strong>옵셔널 체이닝(`?.`) · null 병합(`??`)</strong>,{" "}
-  <strong>모듈(`import` / `export`)</strong>, <strong>`try/catch`</strong>.
+  CORS는 처음 보면 백엔드 에러처럼 보이지만, 사실 브라우저의 보안 정책입니다.
+  다른 출처의 API를 마음대로 호출하지 못하게 막는 규칙입니다.
 </Paragraph>
 
 <Paragraph>
-  오늘 대면과의 연결 한 줄 —{" "}
-  <strong>오늘의 `await fetch` + `try/catch` 패턴</strong>이 비대면 week9의
-  `try/catch` 섹션에서 정식으로 다뤄집니다. "오늘 본 코드랑 똑같이 생겼네?"가
-  오는 순간이 있을 거예요.
+  프론트엔드 개발자가 CORS를 알아야 하는 이유는, 이 문제가 생겼을 때 "프론트에서
+  코드 조금 바꾸면 되겠지"가 아니라 서버의 응답 헤더와 배포 환경을 함께 봐야
+  하기 때문입니다.
 </Paragraph>
 
-<Subtitle level={3}>대면 week9 예고 — 바이브코더가 모르는 웹 보안</Subtitle>
+---
+
+<Subtitle level={2}>5. API 문서는 협업 도구다</Subtitle>
 
 <Paragraph>
-  대면 week9는 <strong>"바이브코더가 모르는 웹 보안"</strong>입니다. 오늘 미리
-  본 키워드를 <strong>대부분 회수</strong>하는 주차예요. 2-6에서 미리 짚은
-  "토큰은 어디에 저장?" 한 줄 공포의 본편이 여기입니다.
+  Swagger, Postman, Notion 문서 같은 API 문서는 단순 참고 자료가 아닙니다.
+  프론트와 백엔드가 같은 그림을 보고 있는지 확인하는 협업 도구입니다.
 </Paragraph>
+
+<Paragraph>좋은 API 문서에는 적어도 다음이 있어야 합니다.</Paragraph>
+
+- 요청 URL과 메서드
+- 요청 파라미터와 body
+- 성공 응답 예시
+- 에러 응답 예시
+- 인증 필요 여부
+- 빈 데이터 예시
+- 필드 설명과 가능한 enum 값
+
+---
+
+<Subtitle level={2}>6. 프론트엔드가 백엔드에게 잘 질문하는 법</Subtitle>
+
+<Paragraph>"API 언제 돼요?"보다 좋은 질문은 구체적입니다.</Paragraph>
+
+```text
+스터디 목록 화면에서 모집 중/마감 상태에 따라 버튼이 달라집니다.
+응답에 status 필드를 OPEN/CLOSED 형태로 받을 수 있을까요?
+빈 목록일 때는 items: []와 totalCount: 0으로 내려오는지 확인 부탁드립니다.
+```
 
 <Paragraph>
-  다룰 주제는 이렇습니다 —{" "}
-  <strong>XSS 한 방에 계정이 통째로 털리는 경로</strong>, AI가 짜주는 코드의
-  90%가 만드는 <strong>보안 허점</strong>, <strong>CSRF</strong>와 GET으로
-  상태를 바꾸면 안 되는 이유, localStorage vs HttpOnly 쿠키의 정식 비교,{" "}
-  <strong>
-    `npm install` 한 번에 낯선 사람 수백 명의 코드를 실행하는 공급망 공격
-  </strong>
-  까지.{" "}
-  <strong>
-    5주 전 week5 대면에서 얘기한 "친구가 AI로 만든 게임이 5분 만에 뚫림" 사례가
-    여기서 숫자와 함께 모두 회수 됩니다
-  </strong>
-  .
+  이렇게 질문하면 백엔드도 무엇을 맞춰야 하는지 명확해집니다. 좋은 프론트엔드
+  개발자는 화면 요구사항을 API 계약 언어로 바꿔 말할 수 있어야 합니다.
 </Paragraph>
 
-<Subtitle level={3}>다음 주 예습</Subtitle>
+---
 
-- <Anchor href="/blog/study/clab-26-1/week9">다음 주 학습 자료(week9)</Anchor>의
-  얄코 강의(6:25:21~) 시청 또는 스킵 진단 10개 도전
-- 콘솔에서 `[1,2,3].map(n => n * 2)` 실행 → `[2,4,6]` 확인 (map 감)
-- 콘솔에서 `const { a, b } = { a: 1, b: 2, c: 3 }` 실행 → `a`, `b` 추출 확인
-  (구조 분해 감)
-- 콘솔에서 `null?.foo` 실행 → `undefined` (에러 없음) 확인 (옵셔널 체이닝 감)
+<Subtitle level={2}>7. 다음 주 안내</Subtitle>
 
-<Subtitle level={3}>관련 포스팅</Subtitle>
-
-- <Anchor href="/blog/study/clab-26-1/week7">
-    지난 주 학습 자료(week7) — 불변성, 프로토타입, 타입 체크
-  </Anchor>
-- <Anchor href="/blog/study/clab-26-1/week8">
-    이번 주 학습 자료(week8) — 클로저, Promise, async/await
-  </Anchor>
-- <Anchor href="/blog/study/clab-26-1/week9">
-    다음 주 학습 자료(week9) — React 입문 전 필수 JS 문법
-  </Anchor>
+<Paragraph>
+  다음 대면에서는 웹 보안을 다룹니다. 특히 브라우저에 있는 코드는 사용자가 볼 수
+  있고 조작할 수 있다는 전제에서, 프론트엔드가 어디까지 믿어도 되는지
+  이야기합니다.
+</Paragraph>

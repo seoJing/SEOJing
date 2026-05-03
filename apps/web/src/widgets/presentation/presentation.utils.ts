@@ -8,12 +8,22 @@ export function getFillRatio(viewH: number): number {
   return 0.7;
 }
 
+export interface ExtractSlidesOptions {
+  fontSize?: string;
+  chapterLevels?: number[];
+  codeBlockSplitRatio?: number;
+}
+
 export function extractSlides(
   article: HTMLElement,
   availableHeight: number,
   slideWidth: number,
-  options?: { fontSize?: string },
+  options?: ExtractSlidesOptions,
 ): HTMLDivElement[] {
+  const chapterLevels = options?.chapterLevels ?? [2, 3, 4];
+  const codeBlockSplitRatio = options?.codeBlockSplitRatio ?? 0.5;
+  const chapterTagSet = new Set(chapterLevels.map((l) => `h${l}`));
+
   const allChildren = Array.from(article.children);
 
   const chapters: Element[][] = [];
@@ -30,7 +40,15 @@ export function extractSlides(
       continue;
     }
 
-    if (tag === "h2") {
+    if (child.getAttribute("data-presentation-slide") != null) {
+      if (currentChapter.length > 0) {
+        chapters.push(currentChapter);
+        currentChapter = [];
+      }
+      continue;
+    }
+
+    if (chapterTagSet.has(tag)) {
       if (currentChapter.length > 0) chapters.push(currentChapter);
       chapters.push([child]);
       currentChapter = [];
@@ -116,33 +134,48 @@ export function extractSlides(
         continue;
       }
 
-      // 코드블록: 항상 새 페이지로 넘기고, 빈 페이지에서도 안 들어가면 전체보기 버튼
+      // 코드블록: 큰 코드는 항상 새 페이지, 작은 코드는 주변 콘텐츠와 함께 페이지네이션
       if (cloned.hasAttribute("data-code-block")) {
-        if (currentSlide.children.length > 0) {
+        const codeIsLarge =
+          elementHeight > availableHeight * codeBlockSplitRatio;
+
+        if (codeIsLarge) {
+          if (currentSlide.children.length > 0) {
+            [currentSlide, currentHeight] = flush(currentSlide);
+          }
+
+          if (elementHeight > availableHeight) {
+            const preEl = cloned.querySelector("pre");
+            const codeEl = preEl?.querySelector("code");
+            const codeHtml = codeEl?.innerHTML ?? preEl?.innerHTML ?? "";
+            const langEl = cloned.querySelector(".uppercase");
+            const language = langEl?.textContent ?? "";
+
+            cloned.innerHTML = "";
+            cloned.className = "my-8 flex items-center justify-center";
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className =
+              "inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-gray-100 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700";
+            btn.textContent = "코드 전체 보기";
+            btn.setAttribute("data-presentation-code-fullscreen", "");
+            btn.setAttribute("data-code-html", codeHtml);
+            btn.setAttribute("data-code-language", language);
+            cloned.appendChild(btn);
+            elementHeight = measure(cloned);
+          }
+
+          currentSlide.appendChild(cloned);
+          currentHeight += elementHeight;
+          continue;
+        }
+
+        if (
+          currentHeight + elementHeight > availableHeight &&
+          currentSlide.children.length > 0
+        ) {
           [currentSlide, currentHeight] = flush(currentSlide);
         }
-
-        if (elementHeight > availableHeight) {
-          const preEl = cloned.querySelector("pre");
-          const codeEl = preEl?.querySelector("code");
-          const codeHtml = codeEl?.innerHTML ?? preEl?.innerHTML ?? "";
-          const langEl = cloned.querySelector(".uppercase");
-          const language = langEl?.textContent ?? "";
-
-          cloned.innerHTML = "";
-          cloned.className = "my-8 flex items-center justify-center";
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className =
-            "inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-gray-100 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700";
-          btn.textContent = "코드 전체 보기";
-          btn.setAttribute("data-presentation-code-fullscreen", "");
-          btn.setAttribute("data-code-html", codeHtml);
-          btn.setAttribute("data-code-language", language);
-          cloned.appendChild(btn);
-          elementHeight = measure(cloned);
-        }
-
         currentSlide.appendChild(cloned);
         currentHeight += elementHeight;
         continue;

