@@ -35,6 +35,15 @@ description: JS 비동기 처리의 흐름을 배웁니다. 클로저가 왜 중
   async/await으로 이어지는 발전 흐름을 이해하는 것이 목표입니다.
 </Paragraph>
 
+<Paragraph>
+  이번 주 비대면 자료는 대면 8주차의 <strong>API와 통신</strong> 주제와 바로
+  이어집니다. Promise와 async/await은 문법 자체보다, 서버에 요청하고 응답을 받아
+  화면 상태로 연결할 때 가장 많이 쓰입니다. 그래서 이번 주는 "비동기 문법을
+  안다" 에서 끝내지 말고,{" "}
+  <strong>요청 성공·실패·로딩 상태를 어떻게 다룰지</strong>까지 같이 생각해보면
+  좋습니다.
+</Paragraph>
+
 ---
 
 <Subtitle level={2}>스킵 진단 문제</Subtitle>
@@ -380,6 +389,77 @@ useEffect(() => {
   fetchData();
 }, []);
 ```
+
+<Subtitle level={3}>fetch 실전 패턴 — 성공, 실패, 로딩을 나눠서 보기</Subtitle>
+
+<Paragraph>
+  `fetch()`를 사용할 때 가장 많이 하는 실수는 "응답이 왔으니 성공"이라고
+  생각하는 것입니다. `fetch()`는 네트워크 자체가 실패한 경우에는 reject되지만,
+  <strong>
+    404나 500 같은 HTTP 에러 응답은 Promise reject로 처리하지 않습니다
+  </strong>
+  . 서버가 응답을 보내긴 했기 때문입니다. 그래서 `res.ok`나 `res.status`를 직접
+  확인해야 합니다.
+</Paragraph>
+
+```js
+async function fetchUser(userId) {
+  const res = await fetch(`/api/users/${userId}`);
+
+  if (!res.ok) {
+    throw new Error(`HTTP error: ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data;
+}
+```
+
+<Paragraph>
+  화면에서는 보통 데이터를 가져오는 동안의 <strong>로딩 상태</strong>, 실패했을
+  때의 <strong>에러 상태</strong>, 성공했을 때의 <strong>데이터 상태</strong>를
+  나눠서 다룹니다. 아직 React를 배우기 전이라도 이 세 가지 이름은 꼭
+  기억해두세요.
+</Paragraph>
+
+```js
+let loading = true;
+let error = null;
+let data = null;
+
+try {
+  data = await fetchUser(1);
+} catch (err) {
+  error = err;
+} finally {
+  loading = false;
+}
+```
+
+<Paragraph>
+  요청끼리 서로 의존하지 않는다면 `Promise.all()`로 병렬 실행할 수 있습니다.
+  예를 들어 사용자 정보와 알림 개수는 동시에 가져와도 됩니다. 반대로 두 번째
+  요청이 첫 번째 요청 결과에 의존한다면 순차적으로 `await`해야 합니다.
+</Paragraph>
+
+```js
+// 서로 독립적인 요청 — 병렬 가능
+const [user, notifications] = await Promise.all([
+  fetchUser(userId),
+  fetchNotifications(userId),
+]);
+
+// 앞 요청 결과가 뒤 요청에 필요 — 순차 실행
+const user = await fetchUser(userId);
+const posts = await fetchPostsByUser(user.id);
+```
+
+<Paragraph>
+  이 패턴들이 대면 8주차의 API 계약 이야기와 연결됩니다. 프론트엔드 개발자는
+  단순히 요청을 보내는 것에서 끝나지 않고, 실패 응답이 어떤 형태로 오는지, 빈
+  데이터는 어떻게 오는지, 어떤 요청을 병렬로 묶을 수 있는지까지 백엔드와 맞춰야
+  합니다.
+</Paragraph>
 
 ---
 

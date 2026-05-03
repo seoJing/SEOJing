@@ -341,10 +341,47 @@ describe("extractSlides — code block handling", () => {
     return article;
   }
 
-  it("forces code block to a new slide even when space remains", () => {
-    // p = 100px, code block = 200px, available = 500px
-    // 기존이라면 p(100) + codeblock(200) = 300 < 500 이므로 같은 슬라이드
-    // 하지만 코드블록은 항상 새 페이지
+  it("forces large code block to a new slide even when space remains", () => {
+    // 코드블록(300) > availableHeight(500) * 0.5 = 250 → large → 별도 페이지
+    Element.prototype.getBoundingClientRect = function () {
+      if (this.hasAttribute?.("data-code-block")) {
+        return {
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 300,
+          top: 0,
+          right: 800,
+          bottom: 300,
+          left: 0,
+          toJSON: () => ({}),
+        };
+      }
+      return {
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 100,
+        top: 0,
+        right: 800,
+        bottom: 100,
+        left: 0,
+        toJSON: () => ({}),
+      };
+    };
+
+    const article = makeArticle(`
+      <p>Text before</p>
+      <div data-code-block><pre><code>const x = 1;</code></pre></div>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    expect(slides.length).toBe(2);
+    expect(slides[0]!.textContent).toContain("Text before");
+    expect(slides[1]!.querySelector("[data-code-block]")).not.toBeNull();
+  });
+
+  it("packs small code block onto the same slide as preceding short text", () => {
+    // 코드블록(200) <= availableHeight(500) * 0.5 = 250 → small → 같은 페이지
     Element.prototype.getBoundingClientRect = function () {
       if (this.hasAttribute?.("data-code-block")) {
         return {
@@ -377,9 +414,48 @@ describe("extractSlides — code block handling", () => {
       <div data-code-block><pre><code>const x = 1;</code></pre></div>
     `);
     const slides = extractSlides(article, 500, 800);
-    expect(slides.length).toBe(2);
+    expect(slides).toHaveLength(1);
     expect(slides[0]!.textContent).toContain("Text before");
-    expect(slides[1]!.querySelector("[data-code-block]")).not.toBeNull();
+    expect(slides[0]!.querySelector("[data-code-block]")).not.toBeNull();
+  });
+
+  it("respects codeBlockSplitRatio override to keep small code on its own slide", () => {
+    // 코드블록(200), availableHeight(500). split ratio=0.3 → threshold=150 → 200>150 → large
+    Element.prototype.getBoundingClientRect = function () {
+      if (this.hasAttribute?.("data-code-block")) {
+        return {
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 200,
+          top: 0,
+          right: 800,
+          bottom: 200,
+          left: 0,
+          toJSON: () => ({}),
+        };
+      }
+      return {
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 100,
+        top: 0,
+        right: 800,
+        bottom: 100,
+        left: 0,
+        toJSON: () => ({}),
+      };
+    };
+
+    const article = makeArticle(`
+      <p>Text before</p>
+      <div data-code-block><pre><code>const x = 1;</code></pre></div>
+    `);
+    const slides = extractSlides(article, 500, 800, {
+      codeBlockSplitRatio: 0.3,
+    });
+    expect(slides).toHaveLength(2);
   });
 
   it("shows code block normally when it fits in a full slide", () => {
@@ -782,5 +858,98 @@ describe("extractSlides — image handling", () => {
     const slides = extractSlides(article, 500, 800);
     // figure without img은 일반 요소처럼 취급 → 같은 슬라이드
     expect(slides).toHaveLength(1);
+  });
+});
+
+describe("extractSlides — chapterLevels", () => {
+  function makeArticle(html: string): HTMLElement {
+    const article = document.createElement("article");
+    article.innerHTML = html;
+    return article;
+  }
+
+  it("breaks chapters at h2, h3, and h4 by default", () => {
+    const article = makeArticle(`
+      <h2>H2 title</h2>
+      <p>After h2</p>
+      <h3>H3 title</h3>
+      <p>After h3</p>
+      <h4>H4 title</h4>
+      <p>After h4</p>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    // 6개 챕터 (h2,p,h3,p,h4,p) → 각각 슬라이드
+    expect(slides).toHaveLength(6);
+    expect(slides[0]!.querySelector("h2")).not.toBeNull();
+    expect(slides[1]!.textContent).toContain("After h2");
+    expect(slides[2]!.querySelector("h3")).not.toBeNull();
+    expect(slides[3]!.textContent).toContain("After h3");
+    expect(slides[4]!.querySelector("h4")).not.toBeNull();
+    expect(slides[5]!.textContent).toContain("After h4");
+  });
+
+  it("only breaks at h2 when chapterLevels is overridden to [2]", () => {
+    const article = makeArticle(`
+      <h2>H2 title</h2>
+      <p>After h2</p>
+      <h3>H3 title</h3>
+      <p>After h3</p>
+      <h4>H4 title</h4>
+      <p>After h4</p>
+    `);
+    const slides = extractSlides(article, 500, 800, { chapterLevels: [2] });
+    // h3/h4가 챕터를 끊지 않으므로: [h2], [p,h3,p,h4,p] → 2 챕터 → 2 슬라이드
+    expect(slides).toHaveLength(2);
+    expect(slides[0]!.querySelector("h2")).not.toBeNull();
+    expect(slides[1]!.querySelector("h3")).not.toBeNull();
+    expect(slides[1]!.querySelector("h4")).not.toBeNull();
+    expect(slides[1]!.textContent).toContain("After h3");
+    expect(slides[1]!.textContent).toContain("After h4");
+  });
+
+  it("includes h3/h4 chapter heading as its own slide (title-slide behavior)", () => {
+    const article = makeArticle(`
+      <h3>Standalone H3</h3>
+      <p>Body</p>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    expect(slides).toHaveLength(2);
+    expect(slides[0]!.querySelector("h3")?.textContent).toBe("Standalone H3");
+    expect(slides[0]!.querySelector("p")).toBeNull();
+    expect(slides[1]!.textContent).toContain("Body");
+  });
+});
+
+describe("extractSlides — data-presentation-slide marker", () => {
+  function makeArticle(html: string): HTMLElement {
+    const article = document.createElement("article");
+    article.innerHTML = html;
+    return article;
+  }
+
+  it("creates a chapter break and removes the marker element from output", () => {
+    const article = makeArticle(`
+      <p>Before</p>
+      <div data-presentation-slide></div>
+      <p>After</p>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    expect(slides).toHaveLength(2);
+    expect(slides[0]!.textContent).toContain("Before");
+    expect(slides[1]!.textContent).toContain("After");
+    for (const slide of slides) {
+      expect(slide.querySelector("[data-presentation-slide]")).toBeNull();
+    }
+  });
+
+  it("ignores leading marker with no preceding content", () => {
+    const article = makeArticle(`
+      <div data-presentation-slide></div>
+      <p>First</p>
+    `);
+    const slides = extractSlides(article, 500, 800);
+    expect(slides).toHaveLength(1);
+    expect(slides[0]!.textContent).toContain("First");
+    expect(slides[0]!.querySelector("[data-presentation-slide]")).toBeNull();
   });
 });

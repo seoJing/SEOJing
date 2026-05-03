@@ -1,419 +1,154 @@
 ---
-title: "프론트엔드 스터디 대면 10주차: React 첫 번째 — 컴포넌트, JSX, props"
-date: 2026-05-30
+title: "프론트엔드 스터디 대면 10주차: 팀 협업 — Git, PR, 컨벤션, 리뷰 문화"
+date: 2026-06-01
 tags:
   - 프론트엔드
   - 스터디
-  - React
-  - 컴포넌트
-  - JSX
-  - props
-description: React를 처음 시작합니다. 지난 주 ES6+ 브릿지 복습을 시작으로, 컴포넌트, JSX, props까지 직접 코드를 작성하며 배웁니다.
+  - Git
+  - GitHub
+  - PR
+  - 코드 리뷰
+  - 컨벤션
+  - 협업
+description: React 문법은 비대면에서 익히고, 대면에서는 팀 프로젝트를 시작하기 전 필요한 Git, PR, 컨벤션, 리뷰 문화, AI 생성 코드 협업 매너를 다룹니다.
 ---
 
-<Subtitle level={2}>1. 저번 주 복습 — ES6+ 브릿지</Subtitle>
+<Subtitle level={2}>1. 왜 React 문법 대신 협업을 이야기하는가</Subtitle>
 
 <Paragraph>
-  지난주에는 React에서 매일 쓰는 ES6+ 문법을 집중적으로 배웠습니다. 핵심만
-  빠르게 짚어보겠습니다.
+  React 문법은 비대면 자료를 따라가며 익힐 수 있습니다. 하지만 팀 프로젝트에서
+  진짜로 막히는 지점은 문법만이 아닙니다. 브랜치를 어떻게 나누는지, PR을 어떻게
+  올리는지, 리뷰를 어떻게 주고받는지, 코드 스타일을 어떻게 맞추는지에서 많이
+  막힙니다.
 </Paragraph>
 
-<Subtitle level={3}>배열 고차함수 — React의 리스트 렌더링 기반</Subtitle>
-
-- <strong>`map`</strong>: 각 요소를 변환 → 새 배열 반환. React에서 리스트
-  렌더링의 핵심
-- <strong>`filter`</strong>: 조건 충족 요소만 → 더 짧은 새 배열. 상품 목록
-  필터링 등
-- <strong>`reduce`</strong>: 배열 → 하나의 값. 합계, 그룹핑, 장바구니 금액 계산
-  등
-
-```js
-const products = [
-  { name: "사과", price: 1000, inStock: true },
-  { name: "바나나", price: 500, inStock: false },
-  { name: "포도", price: 3000, inStock: true },
-];
-
-// 재고 있는 상품만 → 이름만 추출
-products.filter((p) => p.inStock).map((p) => p.name); // ['사과', '포도']
-```
-
-<Subtitle level={3}>구조 분해 — props 수신의 핵심</Subtitle>
-
-- <strong>객체 구조 분해</strong>: `const { name, age } = user` — React props 수신
-시 매일 사용
-- <strong>배열 구조 분해</strong>: `const [count, setCount] = useState(0)` —
-  useState 반환값
-
-```js
-// React props 수신 패턴
-function UserCard({ name, age, isAdmin = false }) {
-  // 기본값 설정까지 한 번에
-  return (
-    <div>
-      {name} ({age}세) {isAdmin && "👑"}
-    </div>
-  );
-}
-```
-
-<Subtitle level={3}>스프레드 & 옵셔널 체이닝</Subtitle>
-
-- <strong>스프레드</strong>: `{ ...prev, age: 26 }` — 불변 패턴. `useState`에서
-객체 상태 업데이트 시 핵심
-- <strong>`?.`</strong>: `user?.address?.city` — null/undefined 안전 접근. API
-  응답 처리 시 필수
-- <strong>`??`</strong>: `user.age ?? "나이 미입력"` — null/undefined만 폴백.
-  `||`와 달리 0·''도 통과
-
----
-
-<Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
-
-<Subtitle level={3}>대면 9주차 인증 미션</Subtitle>
-
 <Paragraph>
-  <strong>
-    Q1. 아래 코드에서 재고 있는 상품 이름 목록을 만들어보세요 — filter + map
-    체이닝
-  </strong>
-</Paragraph>
-
-```js
-const products = [
-  { name: "사과", price: 1000, inStock: true },
-  { name: "바나나", price: 500, inStock: false },
-  { name: "포도", price: 3000, inStock: true },
-];
-
-// filter로 inStock이 true인 것만 → map으로 name만 추출
-const availableNames = products.filter((p) => p.inStock).map((p) => p.name);
-// ['사과', '포도']
-```
-
-<Paragraph>
-  <strong>Q2. 구조 분해 기본값 설정 — role이 없으면 'guest' 사용</strong>
-</Paragraph>
-
-```js
-const user = { name: "철수", age: 25 };
-
-const { name, age, role = "guest" } = user;
-// role → 'guest' (user 객체에 role이 없으므로 기본값 적용)
-```
-
-<Paragraph>
-  <strong>Q3. `?.`와 `??` 조합 — user.profile이 없을 때 안전하게 처리</strong>
-</Paragraph>
-
-```js
-const user = { name: "영희" };
-
-// user.profile이 없으면 안전하게 undefined 반환, ?? 로 기본값 적용
-const bio = user?.profile?.bio ?? "소개글이 없습니다";
-// "소개글이 없습니다"
-```
-
----
-
-<Subtitle level={2}>3. React란 무엇인가?</Subtitle>
-
-<Paragraph>
-  React는 Facebook이 만든{" "}
-  <strong>UI를 만들기 위한 JavaScript 라이브러리</strong>
-  입니다. 지금까지 배운 JS를 그대로 쓰되, UI를 <strong>컴포넌트 단위</strong>로
-  나눠서 만드는 방식을 따릅니다.
-</Paragraph>
-
-- <strong>선언적(Declarative)</strong>: "이렇게 보여라"라고 선언. 어떻게 DOM을
-  수정할지는 React가 알아서 처리
-- <strong>컴포넌트 기반</strong>: 레고처럼 작은 조각을 조합해서 복잡한 UI 구성
-- <strong>단방향 데이터 흐름</strong>: 부모 → 자식 방향. 예측 가능하고 디버깅
-  쉬움
-
----
-
-<Subtitle level={2}>4. 컴포넌트 — UI의 레고 블록</Subtitle>
-
-<Paragraph>
-  컴포넌트는 <strong>재사용 가능한 UI 조각</strong>입니다. 함수형 컴포넌트는
-  props를 입력받아 JSX(화면 구조)를 반환하는 JS 함수입니다.
-</Paragraph>
-
-```jsx
-// 가장 단순한 컴포넌트
-function Greeting() {
-  return <h1>안녕하세요!</h1>;
-}
-
-// 컴포넌트를 조합해서 사용
-function App() {
-  return (
-    <div>
-      <Greeting />
-      <Greeting />
-    </div>
-  );
-}
-```
-
-<Paragraph>
-  컴포넌트 이름이 <strong>소문자</strong>이면 React는 HTML 태그로 인식합니다.
-  컴포넌트는 반드시 대문자로 시작해야 합니다.
+  오늘은 React 컴포넌트를 하나 더 만드는 시간보다, 팀으로 코드를 만들기 위해
+  필요한 운영 방식을 봅니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>5. JSX — JS 안에 HTML처럼</Subtitle>
+<Subtitle level={2}>2. Git은 세이브 파일이 아니라 협업 시스템이다</Subtitle>
+
+<Subtitle level={3}>2-1. commit — 의미 있는 세이브 포인트</Subtitle>
 
 <Paragraph>
-  JSX는 JS 안에서 HTML처럼 작성하는 문법입니다. 실제로는{" "}
-  <strong>React.createElement() 호출</strong>로 변환됩니다. 바벨(Babel)이 이
-  변환을 담당합니다.
+  commit은 단순 저장이 아닙니다. "어떤 변경을 왜 했는지" 남기는 기록입니다. 좋은
+  commit은 나중에 문제를 추적할 때 도움이 됩니다.
 </Paragraph>
 
-```jsx
-// JSX 문법
-const element = <h1 className="title">안녕하세요</h1>;
-
-// 바벨이 변환하는 실제 코드
-const element = React.createElement("h1", { className: "title" }, "안녕하세요");
+```text
+feat: 스터디 목록 필터 추가
+fix: 마감된 스터디 신청 버튼 비활성화
+refactor: 카드 컴포넌트 props 이름 정리
 ```
 
-<Subtitle level={3}>JSX 주요 규칙</Subtitle>
+<Subtitle level={3}>2-2. branch — 안전한 평행우주</Subtitle>
 
-```jsx
-// 1. JS 표현식은 {} 안에 작성
-const name = "철수";
-<h1>안녕하세요, {name}님!</h1>;
-<p>1 + 1 = {1 + 1}</p>;
+<Paragraph>
+  `main`에서 바로 작업하면 팀 전체가 위험해집니다. branch는 기능별로 안전한 작업
+  공간을 만드는 방식입니다. 각자 다른 branch에서 작업하고, 완성되면 PR로
+  합칩니다.
+</Paragraph>
 
-// 2. class 대신 className (class는 JS 예약어)
-<div className="container">내용</div>;
+<Subtitle level={3}>2-3. PR — 합쳐달라는 제안서</Subtitle>
 
-// 3. 반드시 하나의 루트 요소로 감싸야 함
-// 잘못된 예
-return (
-  <h1>제목</h1>
-  <p>내용</p>
-);
+<Paragraph>
+  PR은 "코드 다 짰으니 봐주세요"가 아니라, 팀에게 맥락을 공유하고 합의를
+  요청하는 문서입니다. 좋은 PR은 리뷰어가 어디를 봐야 하는지 알려줍니다.
+</Paragraph>
 
-// 올바른 예 — Fragment로 감싸기 (실제 DOM 요소 없이)
-return (
-  <>
-    <h1>제목</h1>
-    <p>내용</p>
-  </>
-);
+```md
+## 무엇을
 
-// 4. 조건부 렌더링
-{isLoggedIn && <Dashboard />}           // 조건이 true일 때만 렌더링
-{isLoggedIn ? <Dashboard /> : <Login />} // 삼항 연산자
+- 스터디 목록에 모집 상태 필터를 추가했습니다.
+
+## 왜
+
+- 마감된 스터디를 숨겨 보고 싶다는 요구가 있었습니다.
+
+## 리뷰 포인트
+
+- 필터 이름이 이해하기 쉬운지
+- 빈 결과 상태 문구가 적절한지
 ```
 
 ---
 
-<Subtitle level={2}>6. props — 부모에서 자식으로 데이터 전달</Subtitle>
+<Subtitle level={2}>3. 컨벤션은 취향이 아니라 팀의 공통어다</Subtitle>
 
 <Paragraph>
-  props는 부모 컴포넌트에서 자식 컴포넌트로 데이터를 전달하는 방법입니다.{" "}
-  <strong>읽기 전용</strong>입니다 — 자식은 props를 수정할 수 없습니다.
+  컨벤션은 "누가 맞고 틀리냐"의 문제가 아니라, 팀이 같은 방식으로 생각하기 위한
+  약속입니다. 이름 짓기, 폴더 구조, 커밋 메시지, 컴포넌트 분리 기준이 모두
+  여기에 들어갑니다.
 </Paragraph>
 
-```jsx
-// 부모 → 자식으로 데이터 전달
-function App() {
-  return <UserCard name="김철수" age={25} isAdmin={true} />;
-}
+<Subtitle level={3}>3-1. 네이밍 컨벤션</Subtitle>
 
-// 자식 컴포넌트에서 props 수신 (구조 분해 권장)
-function UserCard({ name, age, isAdmin }) {
-  return (
-    <div>
-      <h2>
-        {name} ({age}세)
-      </h2>
-      {isAdmin && <span>관리자</span>}
-    </div>
-  );
-}
-```
+- 불리언은 `is`, `has`, `can`으로 시작합니다.
+- 이벤트 핸들러는 `handleClick`, `handleSubmit`처럼 동사로 시작합니다.
+- 단위가 있으면 `timeoutMs`, `widthPx`처럼 이름에 드러냅니다.
+- 약어는 줄이고, 읽는 사람이 바로 이해할 수 있게 씁니다.
 
-<Subtitle level={3}>props로 리스트 렌더링하기</Subtitle>
+<Subtitle level={3}>3-2. 컴포넌트 분리 기준</Subtitle>
 
-```jsx
-const users = [
-  { id: 1, name: "철수", role: "admin" },
-  { id: 2, name: "영희", role: "user" },
-];
+<Paragraph>
+  컴포넌트를 무조건 작게 쪼개는 게 정답은 아닙니다. 다음 질문을 기준으로 봅니다.
+</Paragraph>
 
-function App() {
-  return (
-    <ul>
-      {users.map((user) => (
-        // key는 React가 리스트를 효율적으로 업데이트하는 데 필요
-        <UserCard key={user.id} name={user.name} role={user.role} />
-      ))}
-    </ul>
-  );
-}
+- 이 UI가 다른 곳에서도 재사용되는가?
+- 이 코드에 이름을 붙이면 읽기 쉬워지는가?
+- 상태를 가진 부분과 단순히 보여주는 부분을 나눌 수 있는가?
+- 테스트하거나 리뷰하기 쉬워지는가?
+
+---
+
+<Subtitle level={2}>4. 리뷰 문화 — 리뷰는 공격이 아니라 품질 합의다</Subtitle>
+
+<Paragraph>
+  코드 리뷰는 사람을 평가하는 자리가 아니라, 코드의 품질을 같이 맞추는
+  자리입니다. 좋은 리뷰는 구체적이고, 코드에 초점을 맞추고, 가능하면 대안을
+  제시합니다.
+</Paragraph>
+
+```text
+나쁜 리뷰: 이거 이상한데요.
+좋은 리뷰: 이 함수는 getUser보다 fetchUserById가 더 명확해 보이는데 어떠세요?
 ```
 
 <Paragraph>
-  리스트 렌더링 시 <strong>`key` prop</strong>이 필수입니다. key가 없으면 경고가
-  발생하고 성능 문제가 생깁니다. key는 리스트 안에서 고유한 값이어야 하며, 보통
-  데이터의 id를 사용합니다.
+  리뷰를 받는 사람도 방어적으로만 반응할 필요는 없습니다. 리뷰어가 모르는 맥락이
+  있으면 설명하고, 더 나은 제안이면 받아들이면 됩니다. 좋은 팀은 리뷰를 통해
+  서로의 기준을 맞춰갑니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>2. 저번 주 과제 정답 및 풀이</Subtitle>
-
-<Subtitle level={3}>인증 미션 과제</Subtitle>
+<Subtitle level={2}>5. AI 생성 코드를 PR에 올릴 때의 매너</Subtitle>
 
 <Paragraph>
-  <strong>
-    Q1. 아래 요구사항을 만족하는 `Counter` 컴포넌트를 만들어보세요. (1) + 버튼을
-    누르면 숫자가 1 올라감 (2) - 버튼을 누르면 숫자가 1 내려감 (3) 초기값은 0
-    (4) 함수형 업데이트(`prev ={">"} ...`)를 사용할 것
-  </strong>
+  AI가 만든 코드를 그대로 올리는 것은 위험합니다. 최소한 다음은 확인해야 합니다.
 </Paragraph>
 
-```jsx
-function Counter() {
-  const [count, setCount] = useState(0);
-  return (
-    <div>
-      <p>{count}</p>
-      <button onClick={() => setCount((prev) => prev + 1)}>+</button>
-      <button onClick={() => setCount((prev) => prev - 1)}>-</button>
-    </div>
-  );
-}
-```
+- 요구사항을 정확히 만족하는가?
+- 팀 컨벤션과 맞는가?
+- 불필요하게 복잡하거나 중복된 코드는 없는가?
+- 보안상 위험한 부분은 없는가?
+- 직접 실행해봤는가?
+- PR 설명에 AI가 만든 부분과 직접 검토한 부분을 설명할 수 있는가?
 
 <Paragraph>
-  `useState`로 `count` 상태를 관리하고, 버튼의 `onClick` 핸들러에서 `setCount`를
-  호출합니다. <strong>함수형 업데이트(`prev => prev + 1`)</strong>를 사용하면
-  항상 최신 상태를 기반으로 업데이트됩니다.
+  AI를 썼다는 사실보다 중요한 건{" "}
+  <strong>어디까지 믿고, 어디를 직접 검토했는지</strong>
+  입니다. 이걸 설명할 수 있어야 협업에서 신뢰를 얻습니다.
 </Paragraph>
 
 ---
 
-<Paragraph>
-  <strong>
-    Q2. `users` 배열을 props로 받아 이름 목록을 렌더링하는 `UserList` 컴포넌트를
-    만들어보세요. `key` prop도 올바르게 사용해야 합니다.
-  </strong>
-</Paragraph>
-
-```jsx
-function UserList({ users }) {
-  return (
-    <ul>
-      {users.map((user) => (
-        <li key={user.id}>{user.name}</li>
-      ))}
-    </ul>
-  );
-}
-```
+<Subtitle level={2}>6. 다음 주 안내</Subtitle>
 
 <Paragraph>
-  `map()`으로 배열을 순회하면서 각 요소를 `<li>`로 변환합니다.{" "}
-  <strong>`key`에는 배열 인덱스가 아닌 고유한 `id`</strong>를 사용합니다. 이
-  패턴은 React에서 가장 자주 사용하는 리스트 렌더링 방식입니다.
+  다음 대면에서는 배포와 운영을 다룹니다. localhost에서 잘 되는 코드가 실제
+  사용자에게 전달되기까지 어떤 일이 필요한지 봅니다.
 </Paragraph>
-
----
-
-<Paragraph>
-  <strong>
-    Q3. `isLoggedIn` boolean prop을 받아서 `true`이면 `<Dashboard />`
-    컴포넌트를, `false`이면 `<Login />` 컴포넌트를 렌더링하는 `AuthGate`
-    컴포넌트를 작성해보세요.
-  </strong>
-</Paragraph>
-
-```jsx
-function Dashboard() {
-  return <h1>대시보드입니다</h1>;
-}
-
-function Login() {
-  return <h1>로그인해주세요</h1>;
-}
-
-function AuthGate({ isLoggedIn }) {
-  return isLoggedIn ? <Dashboard /> : <Login />;
-}
-```
-
-<Paragraph>
-  삼항 연산자(`조건 ? A : B`)를 사용한 조건부 렌더링 패턴입니다. 실제
-  프로젝트에서 인증 상태에 따라 다른 화면을 보여줄 때 이 패턴을 자주 사용합니다.
-</Paragraph>
-
----
-
-<Subtitle level={2}>7. 면접 질문</Subtitle>
-
-<Subtitle level={3}>Q1. React에서 컴포넌트란 무엇인가요?</Subtitle>
-
-<Paragraph>
-  컴포넌트는 <strong>재사용 가능한 UI 조각</strong>입니다. 함수형 컴포넌트는
-  props를 입력받아 JSX(화면 구조)를 반환하는 JS 함수입니다. 레고 블록처럼 작은
-  컴포넌트를 조합해서 복잡한 UI를 만듭니다.
-</Paragraph>
-
-<Paragraph>
-  면접 팁: "컴포넌트는 단일 책임 원칙을 따르는 것이 좋습니다. 한 컴포넌트가 너무
-  많은 역할을 하면 재사용성과 테스트 가능성이 떨어집니다"라고 더하면 좋습니다.
-</Paragraph>
-
-<Subtitle level={3}>Q2. JSX란 무엇이고 왜 사용하나요?</Subtitle>
-
-<Paragraph>
-  JSX는 JS 안에서 HTML처럼 UI를 작성하는 문법 확장입니다. 내부적으로
-  React.createElement() 호출로 변환됩니다. UI 구조를 직관적으로 표현할 수 있고,
-  JS 표현식을 {}로 바로 삽입할 수 있어서 조건부 렌더링, 리스트 렌더링이
-  편합니다.
-</Paragraph>
-
-<Subtitle level={3}>Q3. props와 state의 차이는 무엇인가요?</Subtitle>
-
-<Paragraph>
-  <strong>props</strong>는 부모 컴포넌트가 자식에게 전달하는 데이터입니다.
-  자식은 읽을 수만 있고 수정할 수 없습니다. <strong>state</strong>는 컴포넌트
-  자신이 관리하는 내부 데이터입니다. state가 변경되면 컴포넌트가 리렌더링됩니다.
-  state는 다음 주에 자세히 다룹니다.
-</Paragraph>
-
----
-
-<Subtitle level={2}>8. 관련 포스팅</Subtitle>
-
-- <Anchor href="/blog/study/clab-26-1/week9">
-    프론트엔드 스터디 9주차 학습 자료: React 입문 전 필수 JS 문법
-  </Anchor>
-
----
-
-<Subtitle level={2}>9. 다음 주 안내</Subtitle>
-
-<Paragraph>
-  다음 주에는 React의 핵심인 <strong>상태 관리(useState)</strong>와{" "}
-  <strong>사이드 이펙트(useEffect)</strong>를 배웁니다. 컴포넌트가 어떻게 값을
-  기억하고, 데이터를 불러오는지를 배우면 진짜 앱을 만들 수 있게 됩니다.
-</Paragraph>
-
-<Subtitle level={3}>다음 주 예습</Subtitle>
-
-<Paragraph>
-  아래 챕터를 읽어오세요. 이번 주에 배운 useState와 어떻게 연결되는지 생각하며
-  읽으면 좋습니다.
-</Paragraph>
-
-- <Anchor external="https://reactjs.winterlood.com/eb666fea-0170-4399-a1d0-5dbb77e8b12b">
-    useEffect
-  </Anchor>
