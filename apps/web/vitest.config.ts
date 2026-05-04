@@ -23,6 +23,7 @@ export default defineConfig({
         "src/generated/**",
         "src/shared/config/**",
         "src/widgets/header/header.constants.ts",
+        "src/widgets/mdx-renderer/MdxRenderer.tsx",
         "src/shared/lib/cn.ts",
       ],
       thresholds: {
