@@ -10,6 +10,7 @@ import {
   CodeBlock,
 } from "@app/ui";
 import { cn } from "@app/utils";
+import Link from "next/link";
 import type { ComponentPropsWithoutRef } from "react";
 
 /**
@@ -28,6 +29,7 @@ export const mdxComponents: Record<string, unknown> = {
   Subtitle,
   Paragraph,
   Anchor,
+  Link,
   table: (props: ComponentPropsWithoutRef<"table">) => (
     <ArticleTable {...props} />
   ),

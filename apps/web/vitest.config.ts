@@ -36,6 +36,24 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // tsconfig.json 의 paths 에 정의된 vinext 쉼들. vitest 는 vinext 플러그인
+      // 없이 동작하므로 동일한 매핑을 vite 리졸버에 직접 깔아 둔다.
+      "next/font/google": path.resolve(
+        __dirname,
+        "./node_modules/vinext/dist/shims/font-google.js",
+      ),
+      "next/font/local": path.resolve(
+        __dirname,
+        "./node_modules/vinext/dist/shims/font-local.js",
+      ),
+      "next/link": path.resolve(
+        __dirname,
+        "./node_modules/vinext/dist/shims/link.js",
+      ),
+      "next/navigation": path.resolve(
+        __dirname,
+        "./node_modules/vinext/dist/shims/navigation.js",
+      ),
     },
   },
 });
