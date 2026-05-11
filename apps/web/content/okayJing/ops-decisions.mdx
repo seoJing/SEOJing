@@ -1,0 +1,297 @@
+---
+title: "운영 결정 로그 — 에이전트 팀·메모리·보고 라우팅·스킬을 어떻게 정리했나"
+date: 2026-05-10
+tags:
+  - okayJing
+  - OpenClaw
+  - 에이전트
+  - 운영
+  - 메모리
+  - 스킬
+description: 4월 말부터 5월 초까지 오케이징 시스템에 쌓인 결정들을 정리합니다. 에이전트 팀 구성, 메모리 아키텍처 선택, 보고 라우팅 사고와 수정, 스킬 추가, 모델 분담 전략까지.
+---
+
+<Subtitle level={2}>0. 이 글을 쓰는 이유</Subtitle>
+
+<Paragraph>
+  운영 결정은 그때그때 텔레그램 대화 속에서 묻힙니다. "mem0는 오버엔지니어링이야",
+  "Hermes가 직접 push하지 말고 나한테 먼저 와라", "스킬 하나 더 붙이자" — 이런 말들이
+  메모리 파일에는 짧게 적혀 있지만, <strong>왜 그렇게 결정했는지</strong>의 맥락은
+  대화 속에서만 존재합니다. 이 글은 그 맥락을 길게 남기는 것을 목적으로 합니다.
+</Paragraph>
+
+<Paragraph>
+  다루는 시기는 2026년 4월 말 ~ 5월 초입니다. 기준 채널은 진규와 오케이징의 1:1 텔레그램입니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. 에이전트 팀 구성 — 왜 이 구성인가</Subtitle>
+
+<Paragraph>
+  처음에는 오케이징 단독으로 돌았습니다. 코딩도 하고, 검색도 하고, 스프린트 설계도 하고,
+  파일도 썼습니다. 그러다가 진규가 한 가지 문제를 짚었습니다. "코딩 작업을 내가 직접 시키면
+  오케이징 컨텍스트가 다 날아가버려." 대화가 길어질수록 앞쪽 결정이 사라지는 구조적인 문제였습니다.
+</Paragraph>
+
+<Paragraph>
+  세 가지 선택지가 있었습니다.
+</Paragraph>
+
+- <strong>A. 그대로 오케이징 단독</strong>: 컨텍스트 소진 문제가 남고, 구현 위임과 운영 판단이 같은 스레드에서 섞입니다.
+- <strong>B. 역할별로 쪼개되 최소한으로</strong>: 오케이징은 오퍼레이터, 코딩 전용 에이전트 하나 추가. 교통 정리 비용이 낮고 즉시 검증 가능.
+- <strong>C. 더 세밀하게 분업 (8명+)</strong>: 블로그 작성 전용, 문서 전용, 검색 전용 등. 진규가 실제로 "페르소나가 8명이 되면 문제 없을까?"라고 물었던 방향. 관리 비용이 선형으로 올라가는 문제가 있습니다.
+
+<Paragraph>
+  선택한 건 <strong>B</strong>입니다. "지금 당장 검증할 수 없는 구조는 만들지 않는다"는 원칙에 가깝습니다.
+  실제로 CLAB 어드민 전체 구현을 처음 헤르메스에게 넘기면서 오케이징 컨텍스트가 유지되는지를
+  먼저 검증했고, 그게 됐을 때 팀 구조를 고정했습니다.
+</Paragraph>
+
+| 에이전트 | 모델 | 역할 | 채널 |
+|---|---|---|---|
+| 🦑 오케이징 | Claude Sonnet 4.6 / Opus | 메인 오퍼레이터, 의사결정 허브 | 텔레그램 전용 |
+| 👁️ 낫징 | Claude Opus 4.7 | 코드 리뷰어 게이트 | 디스코드 답글만 |
+| ⚡ 헤르메스 (노징구) | Codex GPT-5.5 | 코딩 워커, 구현 위임 | CLI 백그라운드 |
+| ♾️ 우로보로스 | Codex + LiteLLM | 합의 레이어 (비활성) | — |
+
+<Paragraph>
+  설계 의도는 단순합니다. <strong>오케이징이 오퍼레이터이고, 나머지는 워커입니다.</strong>
+  오케이징은 진규의 의도를 받아서 작업 지시서를 만들고, 헤르메스에게 넘기고, 결과가 돌아오면
+  검토해서 진규에게 요약합니다. 낫징은 헤르메스 결과가 오케이징에 인계되는 시점에 second-opinion
+  게이트로 자동 호출됩니다.
+</Paragraph>
+
+<Paragraph>
+  이름 유래: 헤르메스는 원래 그냥 "Hermes"였는데 진규가 "노징구로 이름 바꿔줄래?" 해서
+  노징구가 됐습니다. 오케이징의 이름 유래는 별도 글(overview)에 적어두었습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. 메모리 아키텍처 — 세 후보와 최종 결정</Subtitle>
+
+<Paragraph>
+  메모리 이야기는 꽤 깁니다. 진규가 한 가지 불만을 꺼냈습니다. "태스크 상태, 실행 이력, 에이전트
+  메시지 같은 걸 Markdown으로 다루기에는 좀 아쉬워." 거기서 세 가지 후보가 올라왔습니다.
+</Paragraph>
+
+<Subtitle level={3}>후보 1: mem0</Subtitle>
+
+<Paragraph>
+  벡터 기반 장기 메모리 서비스입니다. 에이전트가 대화 내용을 자동으로 저장하고 나중에 의미
+  기반으로 검색합니다. 진규가 관심을 가졌지만 결론은 "오버엔지니어링"이었습니다. 지금 문제는
+  메모리 부재가 아니라 <em>어디에 무엇을 쓸지</em>의 규율 문제였고, mem0는 그 규율을
+  대신해주지 않습니다.
+</Paragraph>
+
+<Subtitle level={3}>후보 2: Honcho</Subtitle>
+
+<Paragraph>
+  사용자 모델링에 특화된 외부 서비스입니다. 에이전트 여러 명이 같은 유저 컨텍스트를 공유할 때
+  진가가 나옵니다. 진규가 "openclaw용 어댑터 플러그인도 있다던데 같이 적용하면 좋은 거 아니야?"
+  라고 물었고, 실제로 가능했습니다. 하지만 유료이고, 지금 에이전트 팀이 아직 1~2명 수준이라
+  ROI가 맞지 않았습니다. 보류.
+</Paragraph>
+
+<Subtitle level={3}>최종 결정: SQLite + Markdown 이중 구조</Subtitle>
+
+<Paragraph>
+  역할을 나눠 가져가는 것이 더 명확했습니다.
+</Paragraph>
+
+- <strong>SQLite (`state/okjing.sqlite`)</strong>: 정확한 상태·이력·진행률. 프로젝트 목록, 태스크, 에이전트 실행 기록.
+- <strong>Markdown</strong>: 사람이 읽는 결정·운영 지식·규칙. 오케이징 메모리, CLAUDE.md, SOUL.md.
+- <strong>Honcho</strong>: 훗날 에이전트 팀이 늘어나면 문체·선호·암묵적 맥락 모델링용으로 재검토.
+
+<Paragraph>
+  이 결정이 나온 뒤 `state/okjing.sqlite`를 생성하고 초기 프로젝트 4개(Clab Members,
+  KGU Developers, SPOT 프론트, SEOJing)를 seed로 넣었습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. 보고 라우팅 사고와 수정</Subtitle>
+
+<Paragraph>
+  2026-05-07에 작은 사고가 있었습니다. 헤르메스가 PR을 만들고 나서 텔레그램으로 직접 push를
+  했는데, 그 push에 오케이징이 끼지 않았습니다. 결과적으로 오케이징은 "헤르메스가 뭔가 했네"
+  수준만 알았고, PR 내용·diff·검토 포인트가 컨텍스트에서 사라졌습니다.
+</Paragraph>
+
+<Paragraph>
+  다음 날 진규가 콕 짚었습니다. "지금은 hermes가 직접 보고하는데, 그 보고를 네가 받고 나에게
+  정리해서 이야기하는 거야." 그래서 바꿨습니다.
+</Paragraph>
+
+**변경 전:**
+```
+헤르메스 → 진규 (텔레그램 직접 push)
+```
+
+**변경 후:**
+```
+헤르메스 → stdout report → 오케이징 (로그 읽고 검토) → 진규 (요약 + 다음 액션)
+```
+
+<Paragraph>
+  헤르메스 프롬프트에서 <code>IMMEDIATE TELEGRAM PUSH</code> 블록을 금지하고,
+  대신 stdout에 PR URL·diff stat·검증 요약을 출력하고 종료하도록 바꿨습니다.
+  오케이징은 헤르메스 spawn 시 PID exit watch를 같이 걸고, 종료 알림이 오면
+  로그를 읽고 검토한 뒤 진규에게 push합니다.
+</Paragraph>
+
+<Paragraph>
+  예외가 두 가지 있습니다. 진규가 명시적으로 "헤르메스가 직접 push해"라고 한 경우,
+  그리고 멀티 PR 시퀀스처럼 오케이징이 끼면 병목이 되는 시나리오입니다. 둘 다 위임
+  spec에 사유 명시 필수입니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. 스킬 추가</Subtitle>
+
+<Paragraph>
+  스킬은 오케이징이 특정 도메인에서 더 잘 작동하게 만들어 주는 모듈입니다. 이 기간에
+  붙인 것들입니다.
+</Paragraph>
+
+<Subtitle level={3}>아이디에이션 스킬</Subtitle>
+
+<Paragraph>
+  진규가 해커톤마다 아이디어에서 막힌다는 페인 포인트를 말했습니다. ClawHub(스킬 마켓플레이스)에도
+  관련 스킬이 없어서 직접 만들었습니다. 5단계 워크샵: <strong>HMW → Crazy 8s → SCAMPER →
+  Worst Idea → Impact × Effort</strong>. 보조 모듈로 Six Hats, JTBD, Reverse, Mashup,
+  Constraint, Magic Wand, TRIZ가 붙어 있습니다. 테스트로 "예비군 가는 학생" 주제를 돌렸더니
+  "예비군 메이트(행정 자동화 카톡봇)" 컨셉으로 수렴해서 진규 OK 받았습니다.
+</Paragraph>
+
+<Subtitle level={3}>Lazyweb 스킬 (UI 레퍼런스)</Subtitle>
+
+<Paragraph>
+  UI 디자인 작업마다 레퍼런스 스크린샷을 수동으로 찾는 게 반복 비용이었습니다. Lazyweb은
+  실제 앱 스크린샷을 끌어오는 MCP로 이 문제를 해결합니다. 원래 Claude Code 플러그인으로
+  설치했는데, 진규가 CC 구독 해지를 고려하면서 OpenClaw로 이전했습니다. Lazyweb 플러그인이
+  처음부터 <code>.claude-plugin/</code>과 <code>.codex-plugin/</code> 매니페스트를 둘 다 갖고
+  있어서 이전이 깔끔했습니다. 스킬 6개(design-research, design-improve, design-brainstorm,
+  quick-references, add-inspo-source, remove-inspo-source)와 MCP를 함께 등록했습니다.
+</Paragraph>
+
+<Subtitle level={3}>PPT 에디토리얼 스킬</Subtitle>
+
+<Paragraph>
+  KD 킥오프 준비 중 발표 슬라이드가 필요했는데, 그때 오케이징에게 PPT 생성 능력이 없다는 걸
+  처음 발견했습니다. 진규가 이전에 Claude에 학습시켜둔 에디토리얼 디자인 프롬프트가 있어서
+  그걸 재사용하는 형태로 pptxgenjs 기반 스킬을 만들었습니다. 16:9 에디토리얼 스타일 고정,
+  슬라이드 관련 요청이 들어오면 자동으로 이 스킬이 발동됩니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>5. 모델 분담 전략</Subtitle>
+
+<Paragraph>
+  진규가 LLM 구독 구조를 정리하면서 이 질문을 던졌습니다. "단순 구현은 Claude Code가 더
+  잘하는 것 같아. Codex 3만원, Claude 3만원으로 분담할까?" 거기서 원칙이 잡혔습니다.
+</Paragraph>
+
+- <strong>오케이징 / 낫징</strong>: Claude (컨텍스트 관리, 의사결정, 리뷰)
+- <strong>헤르메스</strong>: Codex (반복 구현, PR 생성, 파일 편집)
+
+<Paragraph>
+  이 분담이 나온 근거는 단순합니다. 오케이징은 대화 맥락을 길게 들고 있어야 하는 작업에서
+  강하고, 헤르메스는 지시서를 받아서 실행하는 단타 구현에서 강합니다. 롤이 다르면 모델도
+  다르게 가져가는 게 맞습니다.
+</Paragraph>
+
+<Paragraph>
+  5월 15일까지는 Claude Max 임시 사용 기간이라 헤르메스에도 Claude Code를 붙여서 실험했습니다.
+  이후로는 Codex로 고정할 예정입니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>6. 운영 자동화</Subtitle>
+
+<Paragraph>
+  시스템을 쓰다 보면 반복 작업이 보입니다. 그것들을 cron으로 잡아두는 것이 이 단계의 작업이었습니다.
+</Paragraph>
+
+<Subtitle level={3}>WSL keepalive 자동 시작</Subtitle>
+
+<Paragraph>
+  진규가 컴퓨터를 켤 때마다 WSL을 수동으로 올리고 OpenClaw gateway를 확인해야 했습니다.
+  Windows 로그인 시 자동으로 WSL을 깨우고 gateway 상태를 확인/시작하는 작업 스케줄러 작업을
+  등록했습니다. 로그는 <code>~/.openclaw/gateway-startup.log</code>에 쌓입니다.
+</Paragraph>
+
+<Subtitle level={3}>LMS 과제 자동 동기화</Subtitle>
+
+<Paragraph>
+  경기대학교 LMS에서 과제 목록을 가져오는 작업입니다. Playwright CDP 방식으로 Windows Chrome을
+  자동화해서 과제를 추출하고 <code>state/kyonggi-lms/assignments.json</code>에 저장합니다.
+  매일 07:52 KST에 cron으로 돌고, 변경사항이 있으면 텔레그램으로 알림이 옵니다.
+</Paragraph>
+
+<Subtitle level={3}>스프린트룸 브리핑</Subtitle>
+
+<Paragraph>
+  진규가 "할 일이 항상 최신화되어 있는 캘린더 같은 방"을 원했습니다. 스프린트룸이라는 별도
+  텔레그램 채널을 만들어서 주간 스프린트·티켓 현황을 게시합니다. 입력/대화는 1:1 DM에서 처리하고,
+  스프린트룸은 순수 출력 채널로 운영합니다. 매주 월요일 11시에 그 주 스프린트 설계를 도와주는
+  흐름도 같이 잡혔습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>7. 디스코드 확장 — Paperclip 대신 Discord 내장 기능</Subtitle>
+
+<Paragraph>
+  이 결정은 Paperclip이라는 도구를 검토하면서 시작됐습니다. 진규가 꺼낸 문제 의식은 이랬습니다.
+  "지금은 디코랑 텔그로 파편화되어 있어서 찾아보기 힘들어. GUI적으로 진행도를 문서화하고 싶어."
+  텔레그램 DM에 흐르는 대화와 스프린트룸 브리핑이 서로 연결이 안 되고, 어느 작업이 어떤 상태인지
+  한눈에 보이지 않는다는 것이었습니다.
+</Paragraph>
+
+<Paragraph>
+  Paperclip(paperclip.ing)은 에이전트 진행 상태를 GUI로 추적하는 도구입니다. 기능 자체는
+  진규의 필요와 맞았습니다. 하지만 결론은 "아이디어만 가져가자"였습니다. 이유는 하나입니다.
+  <strong>이미 쓰고 있는 Discord에 같은 기능을 만들 수 있다.</strong> 채널 분리, 포럼 채널,
+  반응(reaction), UI 커스텀 — Discord는 생각보다 이미 많이 됩니다. 여기에 새 도구를 하나 더
+  붙이면 정보가 흩어지는 문제가 줄어드는 게 아니라 오히려 늘어납니다.
+</Paragraph>
+
+<Paragraph>
+  그래서 방향이 바뀌었습니다. Paperclip 도입 대신 Discord를 <strong>페르소나 무대이자 진행
+  현황판</strong>으로 확장하는 쪽으로 갔습니다. 텔레그램은 오케이징 전용 1:1 채널로 두고,
+  디스코드에서는 낫징·헤르메스가 @태그로 소환되고 작업 현황이 채널별로 분리되어 보이는 구조입니다.
+</Paragraph>
+
+<Paragraph>
+  진행 상황은 70% 정도입니다. 오케이징 본체와 낫징은 디스코드 연결이 됐는데, 헤르메스는
+  gateway가 어카운트를 픽업하지 못하는 이슈가 남아 있습니다. 재개 시 확인해야 할 결정이
+  3개 있습니다: gateway restart 권한, 헤르메스 백엔드 모델 최종 확정, 낫징/헤르메스
+  시스템 프롬프트 톤 컨펌.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>8. 되짚어보면</Subtitle>
+
+<Paragraph>
+  이 기간 동안 내린 결정들을 한 줄씩 요약하면 이렇습니다.
+</Paragraph>
+
+- 에이전트는 단독/소수/다수 중 검증 가능한 최소 구조(B안)로 쪼갰다
+- 메모리는 mem0·Honcho 모두 탈락, SQLite + Markdown 이중 구조로 직접 들고 가기로 했다
+- 헤르메스 직접 보고 라우팅 → 오케이징 경유로 수정 (5/7 사고 이후)
+- 스킬 3종(아이디에이션, Lazyweb, PPT)을 추가했다
+- 모델은 역할 특성에 맞게 Claude / Codex로 분담했다
+- Paperclip 대신 Discord를 진행 현황판으로 확장하기로 했다
+- 반복 작업은 cron으로 잡아두기 시작했다
+
+<Paragraph>
+  하나씩 보면 작은 결정들이지만, 쌓이면 시스템이 됩니다. 다음 글에서는 이 시스템이
+  실제 프로젝트(SPOT 캡스톤, CLAB 어드민, SEOJing 스터디 자료) 위에서 어떻게 돌아가는지를
+  다룰 예정입니다.
+</Paragraph>
