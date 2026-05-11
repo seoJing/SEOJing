@@ -66,8 +66,8 @@ badge.classList.toggle("hidden", n === 0);
 ```
 
 <Paragraph>
-  React는 <strong>선언형(declarative)</strong>입니다. 화면이 어떻게 보여야 하는지를
-  작성하면, 상태가 바뀔 때 React가 화면을 알아서 맞춥니다.
+  React는 <strong>선언형(declarative)</strong>입니다. 화면이 어떻게 보여야
+  하는지를 작성하면, 상태가 바뀔 때 React가 화면을 알아서 맞춥니다.
 </Paragraph>
 
 ```tsx
@@ -157,8 +157,8 @@ function StudyPage() {
 
 <Paragraph>
   컴포넌트는 <strong>상태(state)</strong>가 바뀌거나 <strong>props</strong>가
-  바뀌면 다시 실행됩니다. 다시 실행되면 새로운 화면을 반환하고, React가 그 결과를
-  실제 화면에 반영합니다.
+  바뀌면 다시 실행됩니다. 다시 실행되면 새로운 화면을 반환하고, React가 그
+  결과를 실제 화면에 반영합니다.
 </Paragraph>
 
 ```tsx
@@ -176,16 +176,16 @@ function Counter() {
 
 <Paragraph>
   버튼을 누르면 <code>setCount</code>가 호출됩니다. 상태가 바뀌었으니 React는
-  Counter를 다시 실행해서 새로운 화면을 만들고, <code>&lt;p&gt;</code> 안의 숫자만
-  바꿔줍니다.
+  Counter를 다시 실행해서 새로운 화면을 만들고, <code>&lt;p&gt;</code> 안의
+  숫자만 바꿔줍니다.
 </Paragraph>
 
 <Subtitle level={3}>Virtual DOM — 왜 빠른가</Subtitle>
 
 <Paragraph>
   React는 실제 DOM을 바로 바꾸지 않습니다. 대신 메모리 안에{" "}
-  <strong>가상 DOM(Virtual DOM)</strong>을 만들어서 이전 상태와 비교한 뒤, 달라진
-  부분만 실제 DOM에 반영합니다.
+  <strong>가상 DOM(Virtual DOM)</strong>을 만들어서 이전 상태와 비교한 뒤,
+  달라진 부분만 실제 DOM에 반영합니다.
 </Paragraph>
 
 - 전체를 다시 그리지 않고, 변경된 부분만 업데이트합니다.
@@ -563,19 +563,19 @@ apps/member/src
 }
 ```
 
-| 영역          | 왜 필요하나                               | CLAB member app       |
-| :------------ | :---------------------------------------- | :-------------------- |
-| 패키지 매니저 | 의존성 설치와 버전 고정                   | pnpm                  |
-| 빌드          | 개발 코드를 브라우저용 결과물로 변환      | Vite                  |
-| 모노레포      | 여러 앱/패키지를 한 저장소에서 관리       | Turbo + workspace     |
-| 언어          | 타입으로 실수를 미리 잡음                 | TypeScript            |
-| 스타일링      | UI를 일관되게 표현                        | Tailwind CSS v4       |
-| HTTP          | 서버와 통신                               | ky                    |
-| 서버 상태     | 서버 데이터 캐싱·로딩·에러 관리           | React Query           |
-| 전역 상태     | 여러 화면이 공유하는 클라이언트 상태 관리 | Jotai + Zustand       |
-| 라우팅        | URL과 화면을 연결                         | React Router          |
-| 린트/포맷     | 코드 스타일과 실수를 자동 점검            | ESLint + Prettier     |
-| 테스트        | 변경 후 기존 동작 확인                    | Vitest + Playwright   |
+| 영역          | 왜 필요하나                               | CLAB member app     |
+| :------------ | :---------------------------------------- | :------------------ |
+| 패키지 매니저 | 의존성 설치와 버전 고정                   | pnpm                |
+| 빌드          | 개발 코드를 브라우저용 결과물로 변환      | Vite                |
+| 모노레포      | 여러 앱/패키지를 한 저장소에서 관리       | Turbo + workspace   |
+| 언어          | 타입으로 실수를 미리 잡음                 | TypeScript          |
+| 스타일링      | UI를 일관되게 표현                        | Tailwind CSS v4     |
+| HTTP          | 서버와 통신                               | ky                  |
+| 서버 상태     | 서버 데이터 캐싱·로딩·에러 관리           | React Query         |
+| 전역 상태     | 여러 화면이 공유하는 클라이언트 상태 관리 | Jotai + Zustand     |
+| 라우팅        | URL과 화면을 연결                         | React Router        |
+| 린트/포맷     | 코드 스타일과 실수를 자동 점검            | ESLint + Prettier   |
+| 테스트        | 변경 후 기존 동작 확인                    | Vitest + Playwright |
 
 <Paragraph>
   각 도구가 <strong>어떤 책임을 대신 맡고 있는지</strong>를 보는 것입니다.
@@ -668,9 +668,9 @@ function StudyPage() {
 
 <Paragraph>
   "서버에서 뭘 그리고, 클라이언트에서 뭘 그리냐"는 질문은 앞으로 점점 중요해지는
-  감각입니다. 자세한 내용은 나중에 웹 퍼포먼스를 다루는 편에서 제대로 볼 예정이고,
-  지금은 <strong>"React를 더 편하게 쓰기 위한 틀"</strong> 정도로 이해해두면
-  충분합니다.
+  감각입니다. 자세한 내용은 나중에 웹 퍼포먼스를 다루는 편에서 제대로 볼
+  예정이고, 지금은 <strong>"React를 더 편하게 쓰기 위한 틀"</strong> 정도로
+  이해해두면 충분합니다.
 </Paragraph>
 
 ---
