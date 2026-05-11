@@ -1,211 +1,710 @@
 ---
-title: "프론트엔드 스터디 대면 7주차: 프로젝트가 복잡해지는 이유 — 구조와 책임 분리"
+title: "프론트엔드 스터디 대면 7주차: React 입문과 프로젝트 구조"
 date: 2026-05-11
 tags:
   - 프론트엔드
   - 스터디
+  - React
+  - 컴포넌트
+  - Virtual DOM
   - 프로젝트 구조
   - 책임 분리
+  - 폴더 구조
   - 상태 관리
-  - 컴포넌트 설계
-  - 아키텍처
-description: 7주차 비대면에서 불변성·프로토타입·타입 체크를 배운 뒤, 대면에서는 프론트엔드 프로젝트가 왜 복잡해지는지와 UI·상태·서버 데이터·비즈니스 규칙을 나누는 감각을 다룹니다.
+description: 바닐라 JS의 한계에서 React가 등장한 이유까지, 컴포넌트와 렌더링 방식을 이해하고 프로젝트 구조 감각을 만들어가는 대면입니다.
 ---
 
-<Subtitle level={2}>1. 이번 주 사전학습과 오늘 대면의 연결</Subtitle>
+<Subtitle level={2}>1\. 저번 주 연결 — 바닐라 JS로 화면 그리기의 한계</Subtitle>
 
 <Paragraph>
-  이번 주 비대면에서는 <strong>불변성</strong>, <strong>프로토타입</strong>,
-  <strong>타입 체크</strong>를 배웠습니다. 세 개 모두 처음에는 "JS가 왜 이렇게
-  이상하게 생겼지?" 싶은 개념입니다. 그런데 이 개념들은 프로젝트가 커질수록 실제
-  버그와 구조 문제로 이어집니다.
+  저번 주에는 바닐라 JS로 화면을 직접 그리는 방법을 봤습니다.{" "}
+  <strong>document.querySelector</strong>, <strong>innerHTML</strong>,{" "}
+  <strong>addEventListener</strong> 같은 DOM API를 써서 화면을 제어했죠.
 </Paragraph>
 
-<Paragraph>
-  그래서 오늘 대면에서는 문법을 다시 설명하기보다, 프론트엔드 프로젝트가 왜
-  복잡해지는지 이야기해보겠습니다. 처음에는 HTML, CSS, JS 파일 몇 개면 될 것
-  같은데, 왜 React가 나오고, 컴포넌트가 나오고, 상태 관리가 나오고, 폴더 구조와
-  API 계층이 생기는지 큰 그림을 잡는 시간입니다.
-</Paragraph>
+```js
+const button = document.querySelector("#submit");
+const countEl = document.querySelector("#count");
+let n = 0;
 
----
-
-<Subtitle level={2}>2. 프론트엔드 프로젝트는 왜 복잡해지는가</Subtitle>
-
-<Paragraph>
-  작은 화면 하나를 만들 때는 간단합니다. 버튼을 누르면 텍스트가 바뀌고, CSS로
-  예쁘게 꾸미면 됩니다. 문제는 화면이 많아지고, 데이터가 많아지고, 여러 사람이
-  동시에 작업하기 시작할 때 생깁니다.
-</Paragraph>
-
-<Paragraph>
-  복잡도는 보통 코드 양보다 <strong>책임이 섞일 때</strong> 터집니다.
-</Paragraph>
-
-- 버튼 컴포넌트 안에 API 호출이 들어간다.
-- API 응답 가공 로직이 화면 여기저기에 흩어진다.
-- 로그인 여부 판단이 여러 파일에 복붙된다.
-- 서버에서 내려준 값을 화면마다 다르게 해석한다.
-- 디자이너가 바꾼 UI 하나 때문에 비즈니스 로직까지 같이 흔들린다.
-
-<Paragraph>
-  코드는 많아도 책임이 잘 나뉘어 있으면 고칠 수 있습니다. 반대로 코드가 적어도
-  책임이 섞여 있으면, 한 줄을 바꾸는 순간 어디가 깨질지 알 수 없습니다.
-</Paragraph>
-
----
-
-<Subtitle level={2}>3. 나눠서 봐야 하는 네 가지 책임</Subtitle>
-
-<Subtitle level={3}>3-1. UI — 어떻게 보이는가</Subtitle>
-
-<Paragraph>
-  UI는 사용자에게 보이는 모양입니다. 버튼, 카드, 모달, 입력창, 리스트 같은
-  것들이 여기에 들어갑니다. 좋은 UI 컴포넌트는 가능하면 "어떻게 보여줄지"에
-  집중하고, 데이터를 어디서 가져오는지는 덜 알아야 합니다.
-</Paragraph>
-
-```tsx
-<UserCard name="진규" role="프론트엔드" isOnline={true} />
+button.addEventListener("click", () => {
+  n++;
+  countEl.textContent = n;
+  if (n >= 10) button.disabled = true;
+});
 ```
 
 <Paragraph>
-  이 컴포넌트는 이름, 역할, 온라인 여부를 받아 보여주는 일만 하면 됩니다. 이
-  값이 API에서 왔는지, 임시 데이터인지, 로그인한 사용자 정보인지는 몰라도
-  됩니다.
+  간단한 경우에는 잘 동작합니다. 그런데 화면이 복잡해지고 상태가 여러 개 생기면
+  어떻게 될까요?
 </Paragraph>
 
-<Subtitle level={3}>3-2. 상태 — 지금 화면이 기억해야 하는 값</Subtitle>
+- 상태(`n`)가 바뀔 때마다 영향받는 DOM 요소를 <strong>직접 찾아서</strong> 바꿔야
+  합니다.
+- 같은 UI 조각을 여러 곳에 쓰려면 코드를 복사해야 합니다.
+- 상태가 어디서 어떻게 바뀌는지 코드를 전부 읽어야만 알 수 있습니다.
 
 <Paragraph>
-  상태는 화면이 기억해야 하는 값입니다. 모달이 열려 있는지, 어떤 탭이
-  선택됐는지, 입력창에 무슨 값이 들어있는지 같은 것들입니다.
+  이 문제를 해결하려고 나온 것이 React입니다. React는 "상태가 바뀌면 화면도
+  알아서 바뀐다"는 약속을 가지고 있습니다.
 </Paragraph>
+
+---
+
+<Subtitle level={2}>2\. React가 등장한 이유 — UI를 선언적으로</Subtitle>
 
 <Paragraph>
-  상태가 무서운 이유는 시간이 지나며 바뀌기 때문입니다. 값이 바뀌면 화면도
-  바뀌고, 다른 컴포넌트에도 영향을 줄 수 있습니다. 그래서 상태는 "어디에 둘지"가
-  중요합니다.
+  바닐라 JS 방식은 <strong>명령형(imperative)</strong>입니다. 화면을 어떻게
+  바꿀지, 단계별로 지시해야 합니다.
 </Paragraph>
 
-- 한 컴포넌트에서만 쓰면 그 컴포넌트 안에 둡니다.
-- 부모와 자식이 같이 쓰면 공통 부모에 둡니다.
-- 여러 페이지에서 쓰면 전역 상태나 서버 상태 관리가 필요해질 수 있습니다.
-
-<Subtitle level={3}>
-  3-3. 서버 데이터 — 내가 만든 값이 아니라 받아온 값
-</Subtitle>
+```js
+// 명령형: 어떻게 바꿀지 직접 지시
+countEl.textContent = n;
+button.disabled = n >= 10;
+badge.classList.toggle("hidden", n === 0);
+```
 
 <Paragraph>
-  서버 데이터는 프론트엔드가 소유한 값이 아닙니다. 사용자 목록, 게시글, 알림,
-  주문 내역처럼 서버가 진짜 원본을 가지고 있는 데이터입니다. 그래서 로딩, 실패,
-  재요청, 캐싱, 권한 같은 문제가 따라옵니다.
+  React는 <strong>선언형(declarative)</strong>입니다. 화면이 어떻게 보여야 하는지를
+  작성하면, 상태가 바뀔 때 React가 화면을 알아서 맞춥니다.
 </Paragraph>
 
-<Paragraph>
-  이걸 일반 상태와 똑같이 다루면 점점 힘들어집니다. 화면 상태는 "내가 지금 어떤
-  탭을 보고 있나"에 가깝고, 서버 데이터는 "서버의 최신 값이 무엇인가"에
-  가깝습니다. 둘은 성격이 다릅니다.
-</Paragraph>
+```tsx
+// 선언형: 상태에 따라 화면이 어떻게 보여야 하는지 작성
+function Counter() {
+  const [n, setN] = useState(0);
 
-<Subtitle level={3}>3-4. 비즈니스 규칙 — 제품이 정한 판단</Subtitle>
-
-<Paragraph>
-  비즈니스 규칙은 제품이 정한 판단입니다. 예를 들어 "관리자만 승인 버튼을 볼 수
-  있다", "마감 시간이 지나면 신청할 수 없다", "무료 사용자는 3개까지만 만들 수
-  있다" 같은 규칙입니다.
-</Paragraph>
-
-<Paragraph>
-  이런 규칙이 화면 코드 곳곳에 흩어지면 나중에 정책이 바뀔 때 지옥이 열립니다.
-  그래서 규칙은 이름을 붙이고, 가능하면 한 곳에서 관리해야 합니다.
-</Paragraph>
-
-```ts
-function canApprove(user, item) {
-  return user.role === "ADMIN" && item.status === "PENDING";
+  return (
+    <div>
+      {n > 0 && <Badge count={n} />}
+      <p>{n}</p>
+      <button onClick={() => setN(n + 1)} disabled={n >= 10}>
+        +1
+      </button>
+    </div>
+  );
 }
 ```
 
 <Paragraph>
-  중요한 건 함수 하나를 만들었다는 사실이 아니라, "승인 가능 여부"라는 판단에
-  이름을 붙였다는 점입니다. 좋은 구조는 이런 식으로 팀이 말하는 개념을 코드에
-  남깁니다.
+  개발자는 "지금 상태가 이렇다면 화면은 이렇게 보여야 한다"만 작성하면 됩니다.
+  상태를 어떻게 DOM에 반영할지는 React가 담당합니다.
+</Paragraph>
+
+> 명령형은 "어떻게 바꿀지"를 써야 하고, 선언형은 "어떻게 보여야 하는지"를 씁니다.
+
+---
+
+<Subtitle level={2}>3\. 컴포넌트란 무엇인가 — UI 조각을 함수로 만들기</Subtitle>
+
+<Paragraph>
+  React에서 UI는 <strong>컴포넌트(Component)</strong> 단위로 만들어집니다.
+  컴포넌트는 간단하게 말하면 <strong>UI 조각을 반환하는 함수</strong>입니다.
+</Paragraph>
+
+```tsx
+function Button({ label, onClick, disabled }) {
+  return (
+    <button onClick={onClick} disabled={disabled}>
+      {label}
+    </button>
+  );
+}
+```
+
+<Paragraph>
+  함수처럼 <strong>props</strong>(매개변수)로 데이터를 받고, JSX로 화면을
+  반환합니다. 그리고 함수를 호출하듯이 화면에서 사용합니다.
+</Paragraph>
+
+```tsx
+<Button label="신청하기" onClick={handleApply} disabled={!canApply} />
+```
+
+<Paragraph>컴포넌트를 쓰면 세 가지가 좋아집니다.</Paragraph>
+
+- <strong>재사용</strong> — 버튼, 카드, 입력창 같은 UI 조각을 여러 화면에서 꺼내
+  씁니다.
+- <strong>조합</strong> — 작은 컴포넌트를 쌓아서 더 큰 화면을 만듭니다.
+- <strong>책임 분리</strong> — 버튼은 버튼처럼 생긴 것만 신경 씁니다. 나머지는
+  다른 곳에서 담당합니다.
+
+<Subtitle level={3}>컴포넌트 트리</Subtitle>
+
+<Paragraph>
+  화면은 컴포넌트를 트리처럼 쌓아서 만들어집니다. 부모 컴포넌트가 자식
+  컴포넌트에게 props를 내려줍니다.
+</Paragraph>
+
+```tsx
+function StudyPage() {
+  return (
+    <Layout>
+      <Header title="스터디 목록" />
+      <StudyList>
+        <StudyCard title="React 스터디" status="OPEN" />
+        <StudyCard title="알고리즘 스터디" status="CLOSED" />
+      </StudyList>
+    </Layout>
+  );
+}
+```
+
+---
+
+<Subtitle level={2}>4\. React의 렌더링 방식 — 언제 다시 그리나</Subtitle>
+
+<Paragraph>
+  컴포넌트는 <strong>상태(state)</strong>가 바뀌거나 <strong>props</strong>가
+  바뀌면 다시 실행됩니다. 다시 실행되면 새로운 화면을 반환하고, React가 그 결과를
+  실제 화면에 반영합니다.
+</Paragraph>
+
+```tsx
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>{count}</p>
+      <button onClick={() => setCount(count + 1)}>+1</button>
+    </div>
+  );
+}
+```
+
+<Paragraph>
+  버튼을 누르면 <code>setCount</code>가 호출됩니다. 상태가 바뀌었으니 React는
+  Counter를 다시 실행해서 새로운 화면을 만들고, <code>&lt;p&gt;</code> 안의 숫자만
+  바꿔줍니다.
+</Paragraph>
+
+<Subtitle level={3}>Virtual DOM — 왜 빠른가</Subtitle>
+
+<Paragraph>
+  React는 실제 DOM을 바로 바꾸지 않습니다. 대신 메모리 안에{" "}
+  <strong>가상 DOM(Virtual DOM)</strong>을 만들어서 이전 상태와 비교한 뒤, 달라진
+  부분만 실제 DOM에 반영합니다.
+</Paragraph>
+
+- 전체를 다시 그리지 않고, 변경된 부분만 업데이트합니다.
+- DOM 조작은 비용이 비쌉니다. 필요한 만큼만 건드리는 것이 빠릅니다.
+- 개발자는 이 과정을 직접 제어하지 않아도 됩니다. React가 처리합니다.
+
+<Paragraph>
+  이것이 바닐라 JS와의 핵심 차이입니다. 바닐라 JS에서는 DOM을 개발자가 직접
+  찾아서 바꿔야 했지만, React에서는 상태를 바꾸면 화면은 따라옵니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>
-  4. 좋은 구조는 예쁜 폴더가 아니라 변경에 강한 구조다
+<Subtitle level={2}>5\. 프론트엔드 프로젝트는 왜 복잡해지는가</Subtitle>
+
+<Paragraph>
+  React를 써도 프로젝트는 복잡해집니다. 코드 양이 많아서가 아니라,{" "}
+  <strong>책임이 섞일 때</strong> 터집니다.
+</Paragraph>
+
+<Paragraph>
+  예를 들어 버튼 하나가 있다고 해볼게요. 버튼은 화면에 보여야 하고, 클릭되면
+  상태가 바뀌어야 하고, 서버에 요청을 보내야 하고, 로그인한 사용자 권한에 따라
+  막히기도 해야 합니다. 여기까지는 자연스럽습니다. 그런데 이 모든 판단이 버튼
+  컴포넌트 하나 안에 들어가면, 그때부터 문제가 시작돼요.
+</Paragraph>
+
+```tsx
+function ApplyButton() {
+  // UI도 있고, 서버 요청도 있고, 권한 규칙도 있고, 상태 변경도 있음
+  // 버튼 하나를 고치려 했는데 서비스 전체 규칙을 건드리게 됩니다.
+}
+```
+
+<Paragraph>
+  처음에는 빠릅니다. 파일 하나에 다 있으니까요. 하지만 조금만 지나면 "버튼 색만
+  바꾸고 싶었는데 API가 깨지고", "문구만 바꾸고 싶었는데 권한 조건이 바뀌고",
+  "서버 응답 구조가 바뀌었는데 화면 파일 20개를 고쳐야 하는" 상황이 옵니다.
+</Paragraph>
+
+> 코드 양이 아니라, 책임이 섞일 때 프로젝트가 터집니다.
+
+---
+
+<Subtitle level={2}>6\. 나눠서 봐야 하는 4가지 책임</Subtitle>
+
+<Paragraph>
+  프론트엔드 코드를 볼 때 처음부터 완벽한 폴더 구조를 떠올리려고 하면
+  어렵습니다. 대신 먼저 책임을 네 가지로 나눠보면 훨씬 쉬워집니다.
+</Paragraph>
+
+- <strong>UI</strong> — 무엇을 어떻게 보여줄 것인가
+- <strong>상태</strong> — 지금 화면이나 앱이 어떤 상태인가
+- <strong>서버 데이터</strong> — 서버에서 무엇을 가져오고, 어떻게 캐시하고, 언제
+  다시 가져올 것인가
+- <strong>비즈니스 규칙</strong> — 우리 서비스에서만 성립하는 판단 기준은
+  무엇인가
+
+<Subtitle level={3}>6-1\. UI — 보여주는 책임</Subtitle>
+
+<Paragraph>
+  UI 컴포넌트의 첫 번째 책임은 <strong>보여주는 것</strong>입니다. 버튼이면
+  버튼처럼 보이고, 카드면 카드처럼 보이고, 리스트면 리스트처럼 보이면 됩니다.
+  문제는 UI가 서비스 규칙까지 알기 시작할 때 생깁니다.
+</Paragraph>
+
+<Subtitle level={4}>Bad</Subtitle>
+
+```tsx
+function StudyApplyButton({ study, user }) {
+  const disabled =
+    !user ||
+    user.role !== "member" ||
+    study.status !== "OPEN" ||
+    study.appliedUserIds.includes(user.id) ||
+    study.currentCount >= study.maxCount;
+
+  return (
+    <button
+      disabled={disabled}
+      className={disabled ? "bg-gray-300" : "bg-blue-500"}
+    >
+      신청하기
+    </button>
+  );
+}
+```
+
+<Subtitle level={4}>왜 깨지나</Subtitle>
+
+<Paragraph>
+  이 버튼은 단순히 버튼이 아니라 <strong>스터디 신청 정책</strong>까지 알고
+  있습니다. 나중에 "운영진은 마감 후에도 신청 가능" 같은 규칙이 추가되면 버튼
+  컴포넌트를 수정해야 합니다. 같은 규칙을 다른 화면에서도 써야 하면
+  복사·붙여넣기가 생기고, 어느 한쪽만 고치면서 버그가 납니다.
+</Paragraph>
+
+<Subtitle level={4}>Good</Subtitle>
+
+```tsx
+function StudyApplyButton({ disabled }: { disabled: boolean }) {
+  return (
+    <button
+      disabled={disabled}
+      className={disabled ? "bg-gray-300" : "bg-blue-500"}
+    >
+      신청하기
+    </button>
+  );
+}
+
+const disabled = !canApplyStudy({ study, user });
+
+<StudyApplyButton disabled={disabled} />;
+```
+
+<Paragraph>
+  UI는 "비활성화 여부"만 받아서 그립니다. "왜 비활성화인지"는 다른 책임으로
+  분리합니다. 이렇게 하면 버튼은 재사용 가능해지고, 신청 규칙은 따로 테스트할 수
+  있습니다.
+</Paragraph>
+
+<Subtitle level={3}>6-2\. 상태 — 지금 무엇이 선택되어 있는가</Subtitle>
+
+<Paragraph>
+  상태는 서버에 영구 저장된 데이터가 아니라,{" "}
+  <strong>지금 화면에서 사용자가 보고 있거나 조작 중인 값</strong>입니다. 예를
+  들면 모달이 열려 있는지, 어떤 탭이 선택되어 있는지, 검색어 입력값이 무엇인지
+  같은 것들이에요.
+</Paragraph>
+
+<Subtitle level={4}>Bad</Subtitle>
+
+```tsx
+function MemberPage() {
+  const [members, setMembers] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/members")
+      .then((res) => res.json())
+      .then(setMembers);
+  }, []);
+
+  const selectedMember = members.find((member) => member.id === selectedId);
+
+  return <MemberProfile member={selectedMember} />;
+}
+```
+
+<Subtitle level={4}>왜 깨지나</Subtitle>
+
+<Paragraph>
+  여기서 `members`는 서버 데이터이고, `selectedId`는 화면 상태입니다. 둘이 같은
+  컴포넌트 안에 있으면 처음엔 괜찮지만, 캐싱·로딩·에러·재요청이 붙는 순간
+  복잡해져요. 서버 데이터가 비어 있을 때 선택된 ID를 어떻게 처리할지, 재요청
+  중에는 어떻게 할지 같은 문제가 화면 컴포넌트에 계속 쌓입니다.
+</Paragraph>
+
+<Subtitle level={4}>Good</Subtitle>
+
+```tsx
+function MemberPage() {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { data: members = [] } = useMembersQuery();
+
+  const selectedMember = members.find((member) => member.id === selectedId);
+
+  return <MemberProfile member={selectedMember} onSelect={setSelectedId} />;
+}
+```
+
+<Paragraph>
+  서버 데이터는 `useMembersQuery` 같은 훅으로 빼고, 화면은 "무엇이 선택되어
+  있는가"만 관리합니다. 상태를 바꿀 때는 직접 수정하지 말고,{" "}
+  <strong>새 상태를 만들어 넘기는 패턴</strong>을 기본으로 가져가야 합니다.
+</Paragraph>
+
+<Subtitle level={3}>
+  6-3\. 서버 데이터 — 가져오고, 캐시하고, 다시 가져오는 책임
 </Subtitle>
 
 <Paragraph>
-  프로젝트 구조 이야기를 하면 폴더 이름부터 떠올리기 쉽습니다. `components`,
-  `hooks`, `utils`, `api` 같은 폴더를 어떻게 나눌지 고민합니다. 물론 중요합니다.
-  하지만 폴더 이름보다 더 중요한 질문은 이겁니다.
+  서버 데이터는 화면 상태와 다릅니다. 서버 데이터는 내가 만든 값이 아니라{" "}
+  <strong>서버가 소유한 값의 프론트엔드 복사본</strong>입니다. 그래서 로딩,
+  에러, 캐시, 재요청, 만료 시간이 같이 따라옵니다.
 </Paragraph>
 
-<Paragraph>
-  <strong>
-    "요구사항이 바뀌었을 때, 어디를 고치면 되는지 바로 알 수 있는가?"
-  </strong>
-</Paragraph>
+<Subtitle level={4}>Bad</Subtitle>
+
+```tsx
+function NoticeList() {
+  const [notices, setNotices] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("/api/notices")
+      .then((res) => res.json())
+      .then(setNotices)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, []);
+
+  // ...
+}
+```
+
+<Subtitle level={4}>왜 깨지나</Subtitle>
 
 <Paragraph>
-  좋은 구조는 변경이 들어왔을 때 흔들리는 범위가 작습니다. 디자인만 바뀌면 UI
-  컴포넌트만 바꾸고, API 응답만 바뀌면 데이터 변환 계층만 바꾸고, 정책만 바뀌면
-  비즈니스 규칙만 바꿀 수 있어야 합니다.
+  화면마다 이 패턴을 반복하면 로딩·에러·재시도·캐시 규칙이 전부 흩어집니다. A
+  화면에서는 새로고침하면 다시 가져오고, B 화면에서는 캐시가 남고, C 화면에서는
+  에러 메시지가 다르게 나오는 식으로 서비스 경험이 흔들립니다.
 </Paragraph>
 
+<Subtitle level={4}>Good</Subtitle>
+
+```tsx
+function NoticeList() {
+  const { data: notices = [], isLoading, error } = useNoticesQuery();
+
+  if (isLoading) return <NoticeSkeleton />;
+  if (error) return <ErrorMessage />;
+
+  return <NoticeCards notices={notices} />;
+}
+```
+
+```tsx
+function useNoticesQuery() {
+  return useQuery({
+    queryKey: ["notices"],
+    queryFn: () => noticeApi.getNotices(),
+  });
+}
+```
+
 <Paragraph>
-  처음부터 완벽한 구조를 만들 필요는 없습니다. 다만 코드가 조금만 커져도 "이
-  코드는 UI인가, 상태인가, 서버 데이터인가, 정책인가"를 묻는 습관이 중요합니다.
+  서버 데이터 책임은 React Query, SWR 같은 도구가 잘 맡아줍니다. CLAB member
+  app도 `@tanstack/react-query`를 사용합니다. 핵심은 "서버에서 가져온 값"과
+  "화면에서 잠깐 쓰는 값"을 같은 상태로 취급하지 않는 것입니다.
+</Paragraph>
+
+<Subtitle level={3}>6-4\. 비즈니스 규칙 — 우리 서비스의 판단 기준</Subtitle>
+
+<Paragraph>
+  비즈니스 규칙은 서비스마다 다른 판단입니다. "누가 신청할 수 있는가", "마감된
+  모집을 보여줄 것인가", "어떤 상태에서 버튼을 숨길 것인가" 같은 규칙이에요.
+</Paragraph>
+
+<Subtitle level={4}>Bad</Subtitle>
+
+```tsx
+function RecruitmentCard({ recruitment, user }) {
+  return (
+    <Card>
+      {recruitment.status === "OPEN" &&
+        user?.role === "member" &&
+        !recruitment.applicants.includes(user.id) && <button>지원하기</button>}
+    </Card>
+  );
+}
+```
+
+<Subtitle level={4}>왜 깨지나</Subtitle>
+
+<Paragraph>
+  이 조건은 화면 코드 안에 숨어 있습니다. 같은 "지원 가능 여부"를 상세 페이지,
+  목록 페이지, 관리자 페이지에서 모두 써야 하면 조건이 퍼집니다. 나중에 규칙이
+  바뀌면 어디를 고쳐야 하는지 찾기 어려워져요.
+</Paragraph>
+
+<Subtitle level={4}>Good</Subtitle>
+
+```ts
+export function canApplyRecruitment({ recruitment, user }) {
+  if (!user) return false;
+  if (user.role !== "member") return false;
+  if (recruitment.status !== "OPEN") return false;
+  if (recruitment.applicants.includes(user.id)) return false;
+
+  return true;
+}
+```
+
+```tsx
+function RecruitmentCard({ recruitment, user }) {
+  const canApply = canApplyRecruitment({ recruitment, user });
+
+  return <Card>{canApply && <button>지원하기</button>}</Card>;
+}
+```
+
+<Paragraph>
+  규칙을 함수로 빼면 이름이 생깁니다. 이름이 생기면 토론할 수 있고, 테스트할 수
+  있고, 바뀔 때 한 군데를 고치기 쉬워집니다. 구조를 잘 잡는다는 건 결국{" "}
+  <strong>바뀔 가능성이 큰 판단에 이름을 붙이는 일</strong>이기도 합니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>5. AI 시대에는 구조 감각이 더 중요해진다</Subtitle>
+<Subtitle level={2}>7\. 폴더 구조의 종류 — 책임을 어디에 둘 것인가</Subtitle>
 
 <Paragraph>
-  AI는 파일 하나 안에서 그럴듯한 코드를 빠르게 만들어줍니다. 하지만 프로젝트의
-  책임 경계를 자동으로 잘 지켜주지는 않습니다. "이 로직은 컴포넌트 안에 있으면
-  안 되고 hook으로 빼야 한다", "이건 서버 데이터라 캐싱 전략이 필요하다", "이건
-  정책 함수로 이름 붙여야 한다" 같은 판단은 사람이 해야 합니다.
+  폴더 구조는 정답 맞히기 문제가 아닙니다. "책임을 어디에 둘 것인가"에 대한 팀의
+  합의입니다. 아래 이름들은 외우기보다, 어떤 상황에서 어울리는지 감으로 가져가면
+  됩니다.
 </Paragraph>
 
+| 구조    | 한 줄 정의                                                           | 어울리는 상황                                          |
+| :------ | :------------------------------------------------------------------- | :----------------------------------------------------- |
+| flat    | 파일을 얕게 나열하는 구조                                            | 작은 과제, 페이지 수가 적은 토이 프로젝트              |
+| feature | 기능 단위로 관련 파일을 묶는 구조                                    | 도메인/기능이 분명한 서비스형 프로젝트                 |
+| layered | `components`, `hooks`, `api`, `utils`처럼 기술 계층별로 나누는 구조  | 초반 학습용, 팀원이 구조를 빨리 이해해야 하는 프로젝트 |
+| atomic  | atoms/molecules/organisms처럼 UI 조립 단위로 나누는 구조             | 디자인 시스템, 공통 UI 컴포넌트가 중요한 프로젝트      |
+| FSD     | app/pages/widgets/features/entities/shared로 책임 레벨을 나누는 구조 | 큰 규모, 여러 기능 팀이 같이 만지는 프로젝트           |
+
 <Paragraph>
-  그래서 앞으로는 코드를 많이 치는 사람보다,{" "}
-  <strong>
-    AI가 만든 코드를 프로젝트 구조 안에 제대로 배치할 수 있는 사람
-  </strong>
-  이 더 중요해질 수 있습니다.
+  CLAB member app은 완전한 FSD라기보다는 <strong>layered + feature 혼합</strong>
+  에 가깝습니다. `api`, `components`, `pages`, `hooks`, `model` 같은 계층이
+  있고, 그 안에서 `community`, `activity`, `library`, `auth`처럼 기능별
+  디렉터리가 다시 나뉩니다.
+</Paragraph>
+
+```txt
+apps/member/src
+├─ api
+│  ├─ member
+│  ├─ community
+│  ├─ recruitment
+│  └─ auth
+├─ components
+│  ├─ home
+│  ├─ community
+│  ├─ activity
+│  ├─ library
+│  └─ common
+├─ pages
+│  ├─ home
+│  ├─ community
+│  ├─ activity
+│  └─ my
+├─ app
+│  ├─ layout
+│  └─ route
+├─ hooks
+├─ model
+├─ types
+└─ utils
+```
+
+---
+
+<Subtitle level={2}>8\. CLAB platforms로 보는 프론트 영역 지도</Subtitle>
+
+<Paragraph>
+  이번 장은 한 페이지짜리 지도처럼 보면 됩니다. 프론트엔드 프로젝트는 코드만
+  있는 게 아니라, 패키지 매니저·빌드 도구·스타일링·상태 관리·테스트 같은 여러
+  영역이 함께 움직입니다.
+</Paragraph>
+
+```json
+{
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.21",
+    "jotai": "^2.18.0",
+    "ky": "^1.7.3",
+    "react": "^19.2.0",
+    "react-router": "^7.1.5",
+    "tailwindcss": "^4.1.18",
+    "zustand": "^5.0.11"
+  }
+}
+```
+
+| 영역          | 왜 필요하나                               | CLAB member app       |
+| :------------ | :---------------------------------------- | :-------------------- |
+| 패키지 매니저 | 의존성 설치와 버전 고정                   | pnpm                  |
+| 빌드          | 개발 코드를 브라우저용 결과물로 변환      | Vite                  |
+| 모노레포      | 여러 앱/패키지를 한 저장소에서 관리       | Turbo + workspace     |
+| 언어          | 타입으로 실수를 미리 잡음                 | TypeScript            |
+| 스타일링      | UI를 일관되게 표현                        | Tailwind CSS v4       |
+| HTTP          | 서버와 통신                               | ky                    |
+| 서버 상태     | 서버 데이터 캐싱·로딩·에러 관리           | React Query           |
+| 전역 상태     | 여러 화면이 공유하는 클라이언트 상태 관리 | Jotai + Zustand       |
+| 라우팅        | URL과 화면을 연결                         | React Router          |
+| 린트/포맷     | 코드 스타일과 실수를 자동 점검            | ESLint + Prettier     |
+| 테스트        | 변경 후 기존 동작 확인                    | Vitest + Playwright   |
+
+<Paragraph>
+  각 도구가 <strong>어떤 책임을 대신 맡고 있는지</strong>를 보는 것입니다.
+  프로젝트 구조는 폴더만이 아니라, 이런 도구 선택까지 포함합니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>6. 같이 이야기해볼 질문</Subtitle>
+<Subtitle level={2}>9\. 페어 워크 — Bad → Good 리팩터</Subtitle>
 
-<ArticleQuiz>
-  <ArticleQuizItem
-    mode="essay"
-    question="버튼 컴포넌트 안에서 직접 API를 호출하면 어떤 문제가 생길 수 있을까요?"
-    answer="UI 컴포넌트가 데이터 fetching 책임까지 가지게 되어 재사용성이 떨어지고 테스트와 수정이 어려워질 수 있습니다."
-    explanation="UI, 서버 데이터, 비즈니스 로직을 분리하는 감각이 중요합니다."
-  />
-  <ArticleQuizItem
-    mode="essay"
-    question="화면 상태와 서버 데이터는 왜 다르게 다뤄야 할까요?"
-    answer="화면 상태는 클라이언트가 임시로 기억하는 값이고, 서버 데이터는 서버가 원본을 가진 값입니다. 서버 데이터에는 로딩, 실패, 캐싱, 재요청 문제가 함께 따라옵니다."
-    explanation="React Query 같은 도구가 등장한 이유도 이 차이와 연결됩니다."
-  />
-</ArticleQuiz>
+<Paragraph>
+  이제 6장에서 본 Bad 코드 중 하나를 골라 페어로 리팩터해보겠습니다. 목표는
+  완벽한 정답을 만드는 것이 아니라,{" "}
+  <strong>책임을 어디까지 나눌지 토론하는 것</strong>입니다.
+</Paragraph>
+
+<Subtitle level={3}>진행 방식</Subtitle>
+
+1. 6장의 Bad 코드 중 하나를 고릅니다.
+2. 이 코드 안에 섞여 있는 책임을 표시합니다.
+   - UI
+   - 화면 상태
+   - 서버 데이터
+   - 비즈니스 규칙
+3. 최소 2개 이상의 책임을 분리합니다.
+4. 특히 <strong>서버 상태 vs 화면 상태</strong>를 구분해봅니다.
+5. 리팩터 후 "바뀌기 쉬운 지점"이 어디로 이동했는지 설명합니다.
+
+<Subtitle level={3}>예시 미션</Subtitle>
+
+```tsx
+function StudyPage() {
+  const [studies, setStudies] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("ALL");
+
+  useEffect(() => {
+    fetch("/api/studies")
+      .then((res) => res.json())
+      .then(setStudies);
+  }, []);
+
+  const visibleStudies = studies.filter((study) => {
+    if (selectedCategory !== "ALL" && study.category !== selectedCategory)
+      return false;
+    if (study.status !== "OPEN") return false;
+    return true;
+  });
+
+  return (
+    <div>
+      <CategoryTabs value={selectedCategory} onChange={setSelectedCategory} />
+      {visibleStudies.map((study) => (
+        <StudyCard key={study.id} study={study} />
+      ))}
+    </div>
+  );
+}
+```
+
+<Paragraph>
+  이 코드에는 서버 데이터 가져오기, 화면 상태, 필터링 규칙, UI 렌더링이 섞여
+  있습니다. 페어로 아래처럼 나눠보세요.
+</Paragraph>
+
+- `useStudiesQuery()` — 서버 데이터 책임
+- `selectedCategory` — 화면 상태 책임
+- `getVisibleStudies()` — 비즈니스/필터 규칙 책임
+- `StudyCard`, `CategoryTabs` — UI 책임
+
+<Paragraph>
+  리팩터 후에는 서로에게 설명해보세요. "이제 카테고리 정책이 바뀌면 어디를
+  고치면 되나요?" "API 경로가 바뀌면 어디를 고치면 되나요?" 이 질문에 바로 답할
+  수 있으면 좋은 방향입니다.
+</Paragraph>
 
 ---
 
-<Subtitle level={2}>7. 다음 주 안내</Subtitle>
+<Subtitle level={2}>10\. Next.js — React로 만든 프레임워크</Subtitle>
 
 <Paragraph>
-  다음 대면에서는 프론트엔드와 백엔드가 만나는 지점인{" "}
-  <strong>API와 통신</strong>을 다룹니다. API는 그냥 데이터를 받는 수단이
-  아니라, 팀 사이의 계약입니다.
+  오늘 다룬 React는 UI를 만드는 라이브러리입니다. React만으로는 라우팅, 서버
+  렌더링, 파일 기반 페이지 구성 같은 것들을 직접 세팅해야 합니다.{" "}
+  <strong>Next.js</strong>는 이 위에 쌓인 프레임워크입니다.
 </Paragraph>
+
+- React를 기반으로, 라우팅·빌드·배포·렌더링 방식까지 미리 구성해줍니다.
+- 페이지를 <strong>서버에서 렌더할지, 클라이언트에서 렌더할지</strong> 선택할 수
+  있습니다.
+- 지금 이 사이트도 Next.js로 만들어져 있습니다.
+
+<Paragraph>
+  "서버에서 뭘 그리고, 클라이언트에서 뭘 그리냐"는 질문은 앞으로 점점 중요해지는
+  감각입니다. 자세한 내용은 나중에 웹 퍼포먼스를 다루는 편에서 제대로 볼 예정이고,
+  지금은 <strong>"React를 더 편하게 쓰기 위한 틀"</strong> 정도로 이해해두면
+  충분합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>11\. 다음 주 안내 — 8주차 "API와 통신"</Subtitle>
+
+<Paragraph>
+  다음 주에는 오늘 살짝 본 <strong>HTTP</strong>와 <strong>서버 상태</strong>{" "}
+  영역을 메인으로 다룹니다. 오늘은 "서버 데이터는 화면 상태와 다르게 봐야
+  한다"는 감각을 잡았다면, 다음 주에는 실제로{" "}
+  <strong>API를 호출하고 응답을 다루는 방법</strong>을 더 깊게 보게 됩니다.
+</Paragraph>
+
+<Paragraph>
+  특히 `fetch`, `axios`, `ky` 같은 HTTP 클라이언트 선택지와, Promise/async-await
+  흐름이 자연스럽게 연결됩니다. 서버에서 데이터가 "나중에" 오기 때문에 비동기가
+  필요하고, 그 데이터를 화면에서 안전하게 쓰기 위해 서버 상태 관리가 필요해지는
+  구조입니다.
+</Paragraph>
+
+<Subtitle level={3}>다음 주 예습</Subtitle>
+
+- <Anchor href="/blog/study/clab-26-1/week8">다음 주 학습 자료(week8)</Anchor>의
+  API/비동기 관련 구간 읽기
+- 콘솔에서 `fetch("https://jsonplaceholder.typicode.com/todos/1")`를 실행해보고
+  Promise가 어떻게 보이는지 확인하기
+- 오늘 자료에서 <strong>서버 상태와 화면 상태</strong>를 구분한 예시를 하나 다시
+  읽어오기
+
+<Subtitle level={3}>관련 포스팅</Subtitle>
+
+- <Anchor href="/blog/study/clab-26-1/week7">
+    이번 주 학습 자료(week7) — 불변성, 프로토타입, 타입 체크
+  </Anchor>
+- <Anchor href="/blog/study/clab-26-1/week8">
+    다음 주 학습 자료(week8) — API와 통신
+  </Anchor>
