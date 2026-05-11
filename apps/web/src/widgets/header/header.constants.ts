@@ -3,6 +3,7 @@ import type { DropdownItem } from "@app/ui";
 export const blogNavItems: DropdownItem[] = [
   { label: "All Posts", href: "/blog" },
   { label: "SEO Jing", href: "/blog/SEOJing" },
+  { label: "okayJing", href: "/blog/okayJing" },
   { label: "KD Team", href: "/blog/kd-team" },
   { label: "CLab CoreTeam", href: "/blog/clab-coreteam" },
   { label: "Study", href: "/blog/study" },

@@ -1,0 +1,375 @@
+---
+title: "Layer 1 — Runtime 코어: gateway, sessions, tools"
+date: 2026-05-08
+tags:
+  - okayJing
+  - OpenClaw
+  - 인프라
+  - 아키텍처
+description: Layer 0의 좌표 위에서 가장 무거운 한 점인 gateway를 분해합니다. config·hot-reload·세션 라이프사이클·도구 정책까지, 운영하면서 자주 부딪히는 디테일을 한 번에 정리합니다.
+---
+
+<Subtitle level={2}>0. 오늘의 목적</Subtitle>
+
+<Paragraph>
+  Layer 0에서 잡은 좌표계 위에서, 오늘은 가장 무거운 한 점인{" "}
+  <strong>gateway</strong>를 분해합니다. 운영하면서 자주 부딪히는 디테일들이 다
+  여기 모여 있어서, Layer 1을 한 번 정리해두면 이후 글들이 짧아집니다.
+</Paragraph>
+
+<Paragraph>오늘 잡을 세 가지를 미리 말씀드리면 다음과 같습니다.</Paragraph>
+
+- <strong>Gateway</strong>: 무엇을 잡고 있고 어떻게 reload되는가
+- <strong>Sessions</strong>: 한 메시지가 어떤 키로 어디로 들어가는가, 언제
+  죽는가
+- <strong>Tools</strong>: 도구·스킬·플러그인 3분 구조와 정책
+
+<Paragraph>
+  Layer 1을 끝내고 나면, "지금 내 gateway는 어떤 상태인가"를 진규 머신뿐 아니라
+  남의 머신에서도 즉시 진단할 수 있는 머리가 만들어집니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. Gateway는 무엇을 잡고 있는가</Subtitle>
+
+<Paragraph>
+  Gateway는 한 마디로 <strong>OpenClaw의 커널</strong>입니다. 다른 모든
+  컴포넌트는 결국 gateway를 거쳐 일을 합니다. 진규 머신에서는 systemd로 띄워져
+  있고 (<code>pid 313</code>), 로컬 루프백 <code>ws://127.0.0.1:18789</code>에서
+  WebSocket을 듣고 있습니다. UI·CLI·다른 도구들은 모두 이 포트를 통해 gateway에
+  말을 겁니다.
+</Paragraph>
+
+<Paragraph>Gateway가 잡고 있는 책임을 셋으로 나누면 이렇게 됩니다.</Paragraph>
+
+| 책임                | 내용                                                                |
+| :------------------ | :------------------------------------------------------------------ |
+| **Config 보관소**   | `~/.openclaw/openclaw.json`을 읽고, 검증하고, 변경 감시까지 합니다. |
+| **이벤트 라우터**   | 채널에서 들어온 메시지를 적절한 에이전트·세션으로 라우팅합니다.     |
+| **세션 store 주인** | 모든 세션 상태(`sessions.json`, transcripts)는 gateway 소유입니다.  |
+
+<Paragraph>
+  UI 클라이언트나 CLI도 자기가 직접 세션을 관리하지 않고{" "}
+  <strong>gateway에게 묻습니다</strong>. 이 한 가지 원칙을 기억해두면 디버깅
+  방향이 단순해집니다 — 무언가 이상하면 우선 gateway에게 물어보고, gateway가
+  뭐라고 답하는지 확인합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. Config의 단일 진실과 strict validation</Subtitle>
+
+<Paragraph>
+  Gateway 설정은 <strong>한 파일</strong>이 진실입니다.
+</Paragraph>
+
+```
+~/.openclaw/openclaw.json   ← JSON5 형식 (주석·trailing comma 가능)
+~/.openclaw/openclaw.json.last-good   ← 마지막 성공 적용본
+~/.openclaw/openclaw.json.bak{,.1,.2,.3,.4}   ← 자동 백업 시리즈
+```
+
+<Paragraph>
+  JSON 자체는 흔하지만, 여기에 두 가지 중요한 규칙이 따라옵니다.
+</Paragraph>
+
+<Subtitle level={3}>2-1. Strict validation — 부분만 맞으면 부팅 거부</Subtitle>
+
+<Paragraph>
+  OpenClaw는 스키마와 <strong>완전히 일치하는 config만</strong> 받아들입니다. 알
+  수 없는 키, 잘못된 타입, 유효하지 않은 값이 있으면 gateway는 부팅 자체를
+  거부합니다. 부분 적용 같은 것은 없습니다. 예외는 단 하나, 루트 레벨의{" "}
+  <code>$schema</code> 문자열뿐입니다 (에디터 IntelliSense용).
+</Paragraph>
+
+<Paragraph>
+  이 규칙이 까다로워 보이지만, 실제로는 디버깅을 단순하게 만듭니다. 부팅이 안
+  되면 다음 명령들로 진단합니다.
+</Paragraph>
+
+```
+openclaw doctor          # 정확한 문제 위치 출력
+openclaw doctor --fix    # 자동 복구 시도
+openclaw doctor --yes    # 복구 + 확인 자동 yes
+openclaw config validate # 스키마 검증만 따로
+```
+
+<Subtitle level={3}>2-2. Last-known-good 자동 복원</Subtitle>
+
+<Paragraph>
+  여기가 OpenClaw의 안전망입니다. 매 성공 부팅마다 gateway는 그 config 사본을
+  <code>openclaw.json.last-good</code>으로 복사해 둡니다. 이후에 직접 편집하다
+  스키마를 깨뜨리거나, <code>gateway.mode</code>를 빠뜨리거나, 파일이 절반 이상
+  쪼그라드는 등 의심스러운 변경이 들어오면, OpenClaw는:
+</Paragraph>
+
+- 깨진 파일을 <code>.clobbered.\*</code>로 따로 보존하고
+- last-known-good을 자동으로 복원하고
+- 다음 에이전트 턴에 system event로 "복구했다"고 알려줍니다
+
+<Paragraph>
+  덕분에 진규(또는 오케이징)가 모르고 config을 망가뜨려도 머신이 통째로 죽지
+  않습니다. 망가진 사본이 디스크에 남아 있으니 침착하게 들여다보면 됩니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. Hot-reload — 어떤 변경이 즉시 적용되는가</Subtitle>
+
+<Paragraph>
+  Config을 바꿀 때마다 gateway를 죽여야 한다면 운영이 너무 느립니다. 그래서
+  OpenClaw는 <strong>가능한 한 hot-apply</strong>합니다. 정확히 어떻게 동작하는
+  지가 4가지 모드로 나뉩니다.
+</Paragraph>
+
+| Mode                  | 동작                                                                      |
+| :-------------------- | :------------------------------------------------------------------------ |
+| **`hybrid`** (기본값) | 안전한 변경은 즉시 적용, 위험한 변경은 자동으로 재시작                    |
+| **`hot`**             | 안전한 변경만 즉시 적용. 재시작이 필요한 변경은 경고만 띄우고 사람이 처리 |
+| **`restart`**         | 어떤 변경이든 무조건 재시작                                               |
+| **`off`**             | 파일 감시 자체를 끔. 다음 수동 재시작 때까지 변경 안 잡음                 |
+
+<Paragraph>
+  진규 환경은 기본값인 <code>hybrid</code>에 가깝게 굴립니다. 그러면 무엇이{" "}
+  hot-apply되고 무엇이 restart를 트리거하는지 한 번 외워두면 좋습니다.
+</Paragraph>
+
+| 분류               | 필드                                                        | 재시작 필요? |
+| :----------------- | :---------------------------------------------------------- | :----------- |
+| 채널               | `channels.*`, `web` (whatsapp 등 모든 빌트인·플러그인 채널) | No           |
+| 에이전트·모델      | `agent`, `agents`, `models`, `routing`                      | No           |
+| 자동화             | `hooks`, `cron`, `agent.heartbeat`                          | No           |
+| 세션·메시지        | `session`, `messages`                                       | No           |
+| 도구·미디어        | `tools`, `browser`, `skills`, `mcp`, `audio`, `talk`        | No           |
+| UI·기타            | `ui`, `logging`, `identity`, `bindings`                     | No           |
+| **Gateway 서버**   | `gateway.*` (port, bind, auth, tailscale, TLS, HTTP)        | **Yes**      |
+| **Infrastructure** | `discovery`, `canvasHost`, `plugins`                        | **Yes**      |
+
+<Paragraph>
+  쉽게 말하면 <strong>"네트워크 바인딩을 바꾸는 것"</strong>과{" "}
+  <strong>"플러그인 / 디스커버리 같은 인프라 자체를 갈아끼우는 것"</strong>만
+  재시작이 필요합니다. 그 외 거의 모든 것 — 채널 추가, 모델 변경, 도구 정책
+  조정, 스킬 켜기/끄기 — 은 즉시 적용됩니다.
+</Paragraph>
+
+<Paragraph>
+  예외 한 가지를 외워두시면 좋습니다. <code>gateway.reload</code>와{" "}
+  <code>gateway.remote</code> 자체를 바꾸는 것은{" "}
+  <strong>재시작을 트리거하지 않습니다</strong>. 즉 reload 모드를 hybrid에서
+  hot으로 바꾸는 것은 즉시 효과가 나타납니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. Config을 바꾸는 4가지 방법</Subtitle>
+
+<Paragraph>
+  실무에서 config을 만지는 방법은 네 가지입니다. 상황에 따라 골라 쓰면 됩니다.
+</Paragraph>
+
+| 방법              | 언제 쓰는가                                                               |
+| :---------------- | :------------------------------------------------------------------------ |
+| 인터랙티브 위저드 | 처음 설정하거나 큰 흐름을 통째로 바꿀 때 (`openclaw onboard / configure`) |
+| CLI 한 줄         | 한 키만 빠르게 set/unset 할 때 (`openclaw config get/set/unset`)          |
+| Control UI        | 폼으로 보면서 만질 때 (`http://127.0.0.1:18789` Config 탭)                |
+| 직접 편집         | 구조적으로 통째로 손보고 싶을 때 (편집기로 `openclaw.json` 열기)          |
+
+<Paragraph>
+  자동화나 다른 도구가 config을 쓸 때는 RPC API 쪽이 안전합니다. 패치 흐름은
+  이렇게 잡으시면 됩니다.
+</Paragraph>
+
+- <strong>config.schema.lookup</strong>으로 한 subtree의 스키마 + 자식 요약을
+  먼저 봄
+- <strong>config.get</strong>으로 현재 스냅샷과 hash를 받음
+- <strong>config.patch</strong>로 부분 업데이트 (JSON merge patch — 객체는 머지,
+  `null`은 삭제, 배열은 교체)
+- <strong>config.apply</strong>는 전체 교체용. 부분 변경에 쓰지 않음.
+
+<Paragraph>
+  이게 진규 환경에서 오케이징이 config을 만질 때 쓰는 표준 흐름입니다. 직접 파일
+  편집은 사람 손에 맡기고, 에이전트는 RPC를 거칩니다 — 검증·롤백·이벤트 훅이
+  자동으로 같이 돌기 때문입니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>5. Sessions — 메시지가 어디로 가는가</Subtitle>
+
+<Paragraph>
+  세션은 OpenClaw에서 가장 자주 들여다보는 추상화입니다. 한 메시지가 들어오면
+  gateway가 (channel, sender) 같은 정보로 <strong>세션 키</strong>를 만들고, 그
+  키에 해당하는 세션이 있으면 거기 이어 붙이고, 없으면 새로 시작합니다.
+</Paragraph>
+
+<Subtitle level={3}>5-1. 라우팅 표 — 종류별로 어떻게 격리되나</Subtitle>
+
+| 들어온 곳        | 동작                |
+| :--------------- | :------------------ |
+| Direct messages  | 기본은 한 세션 공유 |
+| Group chats      | 그룹마다 세션 격리  |
+| Rooms / channels | 룸마다 세션 격리    |
+| Cron jobs        | 매 실행마다 새 세션 |
+| Webhooks         | 훅마다 세션 격리    |
+
+<Paragraph>
+  여기서 <strong>한 가지 큰 함정</strong>이 있습니다. 기본값은 모든 DM이 한
+  세션을 공유합니다. 진규처럼 혼자 쓰는 환경은 무방하지만, 여러 사람이 같은
+  봇에게 DM을 보낼 수 있는 환경이라면 위험합니다 — 다른 사람의 메시지가 같은
+  컨텍스트에 누적됩니다. 그래서 멀티유저 환경은 <strong>DM 격리</strong>를
+  켭니다.
+</Paragraph>
+
+```json5
+{
+  session: {
+    dmScope: "per-channel-peer", // 채널 + 발신자별로 격리
+  },
+}
+```
+
+<Paragraph>
+  <code>dmScope</code>의 4가지 옵션 중 멀티유저 환경에서는{" "}
+  <strong>per-channel-peer</strong>가 일반적인 권장값입니다.
+</Paragraph>
+
+| 옵션                       | 의미                        |
+| :------------------------- | :-------------------------- |
+| `main` (기본)              | 모든 DM이 한 세션 공유      |
+| `per-peer`                 | 발신자별 격리 (채널 무관)   |
+| `per-channel-peer`         | 채널 + 발신자별 격리 (권장) |
+| `per-account-channel-peer` | 계정 + 채널 + 발신자별 격리 |
+
+<Subtitle level={3}>5-2. 라이프사이클 — 세션은 언제 죽는가</Subtitle>
+
+<Paragraph>세션이 사라지는 트리거는 셋입니다.</Paragraph>
+
+- <strong>Daily reset</strong> (기본): gateway 호스트의 로컬 시간으로 매일 새벽
+  4시. 기준은 현재 <code>sessionId</code>의 시작 시각이지, 마지막 메타
+  업데이트가 아닙니다.
+- <strong>Idle reset</strong> (옵션): <code>session.reset.idleMinutes</code>로
+  설정. 기준은 <strong>실제 user/channel 인터랙션</strong>의 마지막 시각.
+  heartbeat·cron·exec 같은 system event는 idle freshness를 연장하지 않습니다.
+- <strong>Manual reset</strong>: 채팅창에 <code>/new</code> 또는
+  <code>/reset</code>. <code>/new &lt;model&gt;</code>은 모델까지 동시에 교체.
+
+<Paragraph>
+  Daily와 idle이 모두 켜져 있으면 먼저 만료되는 쪽이 이깁니다. 이 디테일 하나가
+  진규 환경에서 자주 보이는 "왜 이전 대화 컨텍스트가 사라졌지?"의 답이 됩니다 —
+  새벽 4시를 넘겼거나 idle이 만료됐거나 둘 중 하나입니다.
+</Paragraph>
+
+<Subtitle level={3}>5-3. 세션 상태가 사는 곳</Subtitle>
+
+```
+~/.openclaw/agents/<agentId>/sessions/
+├── sessions.json              ← 세션 인덱스 (key, 시각, 모델, …)
+└── <sessionId>.jsonl          ← 세션별 transcript (한 줄 = 한 이벤트)
+```
+
+<Paragraph>
+  <code>sessions.json</code>의 시각 필드 셋은 헷갈리기 쉬워서 한 번 짚고
+  넘어갑니다.
+</Paragraph>
+
+| 필드                | 의미                             | 무엇의 기준인가           |
+| :------------------ | :------------------------------- | :------------------------ |
+| `sessionStartedAt`  | 현재 sessionId가 시작된 시각     | Daily reset의 기준        |
+| `lastInteractionAt` | 마지막 user/channel 인터랙션     | Idle reset의 기준         |
+| `updatedAt`         | 세션 행이 마지막으로 수정된 시각 | 정렬·정리용 (resets 무관) |
+
+<Paragraph>
+  즉 "이 세션 왜 안 죽지?"를 디버깅할 때는 <code>updatedAt</code>이 아니라{" "}
+  <code>sessionStartedAt</code>·<code>lastInteractionAt</code>을 봐야 합니다.
+  background heartbeat가 <code>updatedAt</code>을 계속 갱신해도 idle reset에는
+  영향이 없습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>6. Tools — 에이전트가 일을 하는 손</Subtitle>
+
+<Paragraph>
+  Tools는 에이전트가 텍스트 생성을 넘어선 모든 행동을 하는 통로입니다. 도구가
+  없으면 에이전트는 단순 챗봇이 됩니다. OpenClaw는 도구·스킬·플러그인 3분 구조로
+  도구를 다룹니다.
+</Paragraph>
+
+<Subtitle level={3}>6-1. 3분 구조</Subtitle>
+
+| 층         | 무엇인가                                                                                 |
+| :--------- | :--------------------------------------------------------------------------------------- |
+| **Tool**   | 에이전트가 호출하는 타입 있는 함수. 모델 API에는 함수 정의로 들어갑니다.                 |
+| **Skill**  | SKILL.md 한 개로 정의된 작업 가이드. 도구를 언제·어떻게 쓰는지를 시스템 프롬프트에 주입. |
+| **Plugin** | 채널·모델 프로바이더·도구·스킬을 한 패키지로 묶는 단위. core 또는 외부 npm.              |
+
+<Paragraph>
+  실무 감각으로는 이렇게 외워두시면 편합니다.{" "}
+  <strong>"도구는 손, 스킬은 매뉴얼, 플러그인은 도구상자"</strong>. 손은 항상
+  있고, 매뉴얼이 있어야 잘 쓰고, 새 손을 추가하려면 도구상자를 갈아끼웁니다.
+</Paragraph>
+
+<Subtitle level={3}>6-2. 빌트인 도구 카탈로그</Subtitle>
+
+<Paragraph>
+  플러그인을 깔지 않아도 항상 동작하는 도구들입니다. 진규 환경에서 자주 쓰는
+  것을 굵게 표시합니다.
+</Paragraph>
+
+| 도구                                        | 무엇을 하나                                                |
+| :------------------------------------------ | :--------------------------------------------------------- |
+| **`exec` / `process`**                      | 셸 명령 실행, 백그라운드 프로세스 관리                     |
+| `code_execution`                            | 샌드박스 원격 Python 분석                                  |
+| **`browser`**                               | Chromium 브라우저 제어 (탐색, 클릭, 스크린샷)              |
+| `web_search` / `x_search` / `web_fetch`     | 웹·X 검색, 페이지 가져오기                                 |
+| `read` / `write` / `edit`                   | 워크스페이스 파일 입출력                                   |
+| `apply_patch`                               | 다중-hunk 파일 패치                                        |
+| **`message`**                               | 모든 채널로 메시지 전송 (`openclaw message send`의 백엔드) |
+| `canvas`                                    | Canvas 노드 제어 (present, eval, snapshot)                 |
+| `nodes`                                     | 페어링된 디바이스 탐색·타게팅                              |
+| **`cron` / `gateway`**                      | 스케줄 잡 관리, gateway config 조회·패치·재시작·업데이트   |
+| `image` / `image_generate`                  | 이미지 분석·생성                                           |
+| `music_generate` / `video_generate` / `tts` | 음악·영상·TTS                                              |
+| **`sessions_*` / `subagents`**              | 세션·서브에이전트 오케스트레이션                           |
+| `session_status`                            | `/status` 스타일 readback, 세션 모델 override              |
+
+<Subtitle level={3}>6-3. 정책으로 켜고 끄기</Subtitle>
+
+<Paragraph>
+  도구는 기본적으로 다 켜져 있지만, 에이전트별로 화이트리스트를 둘 수 있고
+  민감한 도구는 사용자 승인이 필요한 모드로 잠글 수 있습니다. 가장 자주 만지는
+  것이 <code>tools.exec.ask</code>입니다 — 이 값이 켜져 있으면 셸 명령을 실행
+  하기 전 사용자에게 확인을 묻습니다. (gateway 도구는 의도적으로 이 키의 직접
+  변경을 거부합니다 — 안전 가드입니다.)
+</Paragraph>
+
+---
+
+<Subtitle level={2}>7. 정리 — 머리에 남기면 좋은 것</Subtitle>
+
+<Paragraph>오늘 좌표 위에 새로 찍은 점을 한 번 모아봅니다.</Paragraph>
+
+- Gateway는 <strong>config 보관소 + 이벤트 라우터 + 세션 store 주인</strong>의 세 역할을 합니다.
+- Config은 한 파일이 진실이고, <strong>strict validation</strong>이라 부분 일치는 부팅 거부. 하지만{" "}
+  <strong>last-known-good 자동 복원</strong>이 안전망입니다.
+- Reload 모드는 4가지(<code>hybrid</code>/<code>hot</code>/<code>restart</code>/<code>off</code>).
+  네트워크 바인딩과 인프라(`plugins`, `discovery`)만 재시작이 필요합니다.
+- 세션은 (channel, sender) 키로 라우팅되고, 라이프사이클은 daily(4 AM) /
+  idle / manual의 세 트리거로 만료됩니다.
+- 도구는 <strong>손</strong>, 스킬은 <strong>매뉴얼</strong>, 플러그인은{" "}
+  <strong>도구상자</strong>. 빌트인 도구만 잘 익혀도 운영의 80%는 됩니다.
+
+<Subtitle level={3}>다음 글로 가기 전에 해보면 좋은 것</Subtitle>
+
+| 할 일                                                      | 한 줄 이유                                    |
+| :--------------------------------------------------------- | :-------------------------------------------- |
+| `openclaw config get session.dmScope` 출력 보기            | 지금 DM 격리 정책이 무엇인지 확인합니다       |
+| `~/.openclaw/agents/main/sessions/sessions.json` 열어 보기 | 세션 키·시각 필드의 실제 모양을 눈에 익힙니다 |
+| `openclaw doctor`를 한 번 그냥 돌려 보기                   | 정상 상태일 때의 출력을 알아둡니다 (대조군)   |
+
+<Paragraph>
+  Layer 2에서는 워크스페이스로 옮겨갑니다. SOUL.md / IDENTITY.md / USER.md /
+  MEMORY.md / HEARTBEAT.md / TOOLS.md 같은 자아 파일들이 어떻게 시작 시퀀스에
+  엮여 있고, 메모리가 어떤 모델로 영속화되는지를 봅니다.
+</Paragraph>
