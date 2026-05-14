@@ -51,8 +51,8 @@ GET /api/studies?page=1&size=20
 </Paragraph>
 
 <Paragraph>
-  그래서 API를 잘 다룬다는 것은 단순히 요청을 보낼 수 있다는 뜻이 아닙니다.
-  화면 요구사항을 요청과 응답의 언어로 바꾸고, 백엔드와 합의한 내용을 코드에
+  그래서 API를 잘 다룬다는 것은 단순히 요청을 보낼 수 있다는 뜻이 아닙니다. 화면
+  요구사항을 요청과 응답의 언어로 바꾸고, 백엔드와 합의한 내용을 코드에
   안정적으로 반영할 수 있다는 뜻입니다.
 </Paragraph>
 
@@ -137,10 +137,10 @@ GET /api/studies?page=1&size=20
 <Subtitle level={2}>4. CORS — 서버 에러처럼 보이는 브라우저 규칙</Subtitle>
 
 <Paragraph>
-  CORS는 처음 보면 백엔드 에러처럼 보이지만, 사실 브라우저의 보안 정책과
-  관련이 있습니다. 브라우저는 기본적으로 같은 출처의 리소스만 자유롭게 읽을 수
-  있게 하는 SOP를 가지고 있고, CORS는 다른 출처의 리소스를 안전하게 공유하기
-  위한 예외 규칙입니다.
+  CORS는 처음 보면 백엔드 에러처럼 보이지만, 사실 브라우저의 보안 정책과 관련이
+  있습니다. 브라우저는 기본적으로 같은 출처의 리소스만 자유롭게 읽을 수 있게
+  하는 SOP를 가지고 있고, CORS는 다른 출처의 리소스를 안전하게 공유하기 위한
+  예외 규칙입니다.
 </Paragraph>
 
 <Paragraph>
@@ -155,8 +155,8 @@ http://localhost:8080
 
 <Paragraph>
   두 주소는 둘 다 localhost지만 포트가 다릅니다. 브라우저 입장에서는 다른
-  출처입니다. 그래서 프론트 개발 서버에서 백엔드 개발 서버로 요청을 보낼 때
-  CORS 에러를 자주 만나게 됩니다.
+  출처입니다. 그래서 프론트 개발 서버에서 백엔드 개발 서버로 요청을 보낼 때 CORS
+  에러를 자주 만나게 됩니다.
 </Paragraph>
 
 <Paragraph>
@@ -190,16 +190,16 @@ Access-Control-Allow-Origin: http://localhost:5173
 ```
 
 <Paragraph>
-  값이 맞으면 브라우저는 응답을 JavaScript에 넘깁니다. 맞지 않으면 네트워크
-  요청 자체가 성공했더라도 프론트엔드 코드에서는 응답을 사용할 수 없습니다.
+  값이 맞으면 브라우저는 응답을 JavaScript에 넘깁니다. 맞지 않으면 네트워크 요청
+  자체가 성공했더라도 프론트엔드 코드에서는 응답을 사용할 수 없습니다.
 </Paragraph>
 
 <Subtitle level={3}>5-2. Preflight 요청</Subtitle>
 
 <Paragraph>
   실제 요청 전에 브라우저가 OPTIONS 요청을 먼저 보내는 경우가 있습니다. 이것을
-  Preflight라고 부릅니다. "이 메서드와 이 헤더로 요청해도 되는지"를 미리 물어보는
-  절차입니다.
+  Preflight라고 부릅니다. "이 메서드와 이 헤더로 요청해도 되는지"를 미리
+  물어보는 절차입니다.
 </Paragraph>
 
 ```http
@@ -252,9 +252,9 @@ Access-Control-Allow-Credentials: true
 <Subtitle level={3}>6-2. 프론트 개발 서버 프록시</Subtitle>
 
 <Paragraph>
-  개발 환경에서는 프론트 개발 서버가 백엔드로 요청을 대신 전달하는 프록시를
-  자주 씁니다. 브라우저는 같은 출처인 프론트 개발 서버에 요청한다고 느끼고,
-  프론트 개발 서버가 뒤에서 백엔드 서버로 요청을 넘깁니다.
+  개발 환경에서는 프론트 개발 서버가 백엔드로 요청을 대신 전달하는 프록시를 자주
+  씁니다. 브라우저는 같은 출처인 프론트 개발 서버에 요청한다고 느끼고, 프론트
+  개발 서버가 뒤에서 백엔드 서버로 요청을 넘깁니다.
 </Paragraph>
 
 ```ts
@@ -297,7 +297,9 @@ await fetch("/api/studies");
 
 <Paragraph>
   따라서 프록시는 "CORS를 없애는 마법"이 아니라{" "}
-  <strong>브라우저가 보는 요청 경로를 같은 출처처럼 만들어주는 개발/배포 구조</strong>
+  <strong>
+    브라우저가 보는 요청 경로를 같은 출처처럼 만들어주는 개발/배포 구조
+  </strong>
   입니다. 운영에서는 Nginx, Next.js Route Handler, BFF, API Gateway 같은 계층이
   비슷한 역할을 맡을 수 있습니다.
 </Paragraph>
@@ -390,8 +392,8 @@ async function loadUserOrderInfo(userId: number) {
 <Subtitle level={3}>7-4. Fetch API — 브라우저 내장 HTTP 클라이언트</Subtitle>
 
 <Paragraph>
-  fetch는 Promise 기반의 브라우저 내장 HTTP 클라이언트입니다. 별도 라이브러리 없이
-  사용할 수 있고, XMLHttpRequest보다 문법이 훨씬 직관적입니다.
+  fetch는 Promise 기반의 브라우저 내장 HTTP 클라이언트입니다. 별도 라이브러리
+  없이 사용할 수 있고, XMLHttpRequest보다 문법이 훨씬 직관적입니다.
 </Paragraph>
 
 ```ts
@@ -416,7 +418,9 @@ if (!response.ok) {
 const data = await response.json();
 ```
 
-<Subtitle level={3}>7-5. Axios — 실무 편의 기능을 모은 HTTP 클라이언트</Subtitle>
+<Subtitle level={3}>
+  7-5. Axios — 실무 편의 기능을 모은 HTTP 클라이언트
+</Subtitle>
 
 <Paragraph>
   axios는 fetch의 부족한 부분을 보완하기 위해 많이 사용됩니다. 자동 JSON 변환,
@@ -482,10 +486,10 @@ apiClient.interceptors.request.use((config) => {
 <Paragraph>
   다만 위 코드는 인터셉터 개념을 설명하기 위한 단순 예시입니다. 실무에서는
   access token을 localStorage에 오래 보관하는 방식을 기본값으로 두면 안 됩니다.
-  localStorage는 JavaScript로 읽을 수 있기 때문에 XSS가 발생했을 때 토큰이 탈취될
-  수 있습니다. 보안이 중요한 서비스라면 서버가 설정하는 <strong>HttpOnly</strong>,
-  <strong>Secure</strong>, <strong>SameSite</strong> 쿠키 기반 인증이나 그에 준하는
-  안전한 저장 전략을 함께 검토해야 합니다.
+  localStorage는 JavaScript로 읽을 수 있기 때문에 XSS가 발생했을 때 토큰이
+  탈취될 수 있습니다. 보안이 중요한 서비스라면 서버가 설정하는{" "}
+  <strong>HttpOnly</strong>,<strong>Secure</strong>, <strong>SameSite</strong>{" "}
+  쿠키 기반 인증이나 그에 준하는 안전한 저장 전략을 함께 검토해야 합니다.
 </Paragraph>
 
 <Subtitle level={3}>7-7. 토큰 인증 — HTTP의 무상태성을 보완하기</Subtitle>
@@ -504,8 +508,8 @@ apiClient.interceptors.request.use((config) => {
 
 <Paragraph>
   백엔드와 맞춰야 할 약속은 구체적이어야 합니다. 토큰을 어느 헤더에 넣는지,
-  `Bearer`를 붙이는지, 만료되면 어떤 상태 코드가 오는지, refresh API는 어떤 응답을
-  주는지 확인해야 합니다.
+  `Bearer`를 붙이는지, 만료되면 어떤 상태 코드가 오는지, refresh API는 어떤
+  응답을 주는지 확인해야 합니다.
 </Paragraph>
 
 ```http
@@ -519,14 +523,16 @@ Authorization: Bearer {accessToken}
 </Paragraph>
 
 <Paragraph>
-  Refresh Token은 특히 더 조심해야 합니다. 브라우저 JavaScript가 직접 읽는 저장소에
-  두기보다, 서버가 내려주는 HttpOnly + Secure 쿠키로 보관하는 방식을 많이
-  사용합니다. 이 경우 프론트엔드는 토큰 문자열을 직접 다루지 않고, 브라우저가
-  쿠키를 요청에 함께 보내도록 둡니다. 대신 쿠키 기반 인증에서는 SameSite 설정,
-  CSRF 대응, CORS credentials 설정을 백엔드와 함께 맞춰야 합니다.
+  Refresh Token은 특히 더 조심해야 합니다. 브라우저 JavaScript가 직접 읽는
+  저장소에 두기보다, 서버가 내려주는 HttpOnly + Secure 쿠키로 보관하는 방식을
+  많이 사용합니다. 이 경우 프론트엔드는 토큰 문자열을 직접 다루지 않고,
+  브라우저가 쿠키를 요청에 함께 보내도록 둡니다. 대신 쿠키 기반 인증에서는
+  SameSite 설정, CSRF 대응, CORS credentials 설정을 백엔드와 함께 맞춰야 합니다.
 </Paragraph>
 
-<Subtitle level={3}>7-8. TanStack Query — HTTP 통신이 아니라 서버 상태 관리</Subtitle>
+<Subtitle level={3}>
+  7-8. TanStack Query — HTTP 통신이 아니라 서버 상태 관리
+</Subtitle>
 
 <Paragraph>
   어느 순간부터 프론트엔드 개발자들은 HTTP 요청 자체보다 서버 데이터 상태 관리에
@@ -550,9 +556,10 @@ useEffect(() => {
 ```
 
 <Paragraph>
-  TanStack Query는 이런 반복을 줄여주는 서버 상태 관리 도구입니다. axios가 서버에
-  요청을 보내고 응답을 받아오는 역할이라면, TanStack Query는 받아온 데이터를
-  캐시에 저장하고, 언제 새로 가져올지, 어떤 컴포넌트에 전달할지를 관리합니다.
+  TanStack Query는 이런 반복을 줄여주는 서버 상태 관리 도구입니다. axios가
+  서버에 요청을 보내고 응답을 받아오는 역할이라면, TanStack Query는 받아온
+  데이터를 캐시에 저장하고, 언제 새로 가져올지, 어떤 컴포넌트에 전달할지를
+  관리합니다.
 </Paragraph>
 
 ```tsx
@@ -564,8 +571,9 @@ const { data, isLoading, error } = useQuery({
 ```
 
 <Paragraph>
-  핵심은 역할 구분입니다. axios는 <strong>택배 기사</strong>처럼 데이터를 가져오고,
-  TanStack Query는 <strong>창고 관리자</strong>처럼 그 데이터를 보관하고 갱신합니다.
+  핵심은 역할 구분입니다. axios는 <strong>택배 기사</strong>처럼 데이터를
+  가져오고, TanStack Query는 <strong>창고 관리자</strong>처럼 그 데이터를
+  보관하고 갱신합니다.
 </Paragraph>
 
 <Subtitle level={3}>7-9. Query와 Mutation</Subtitle>
@@ -576,12 +584,12 @@ const { data, isLoading, error } = useQuery({
   작업입니다.
 </Paragraph>
 
-| 구분 | Query | Mutation |
-| --- | --- | --- |
-| 용도 | 데이터 읽기 | 데이터 생성/수정/삭제 |
-| 주로 쓰는 HTTP | GET | POST, PUT, PATCH, DELETE |
-| 실행 시점 | 컴포넌트 마운트 시 자동 | `mutate` 호출 시 수동 |
-| 캐싱 | 자동 캐싱 | 직접 무효화/갱신 필요 |
+| 구분           | Query                   | Mutation                 |
+| -------------- | ----------------------- | ------------------------ |
+| 용도           | 데이터 읽기             | 데이터 생성/수정/삭제    |
+| 주로 쓰는 HTTP | GET                     | POST, PUT, PATCH, DELETE |
+| 실행 시점      | 컴포넌트 마운트 시 자동 | `mutate` 호출 시 수동    |
+| 캐싱           | 자동 캐싱               | 직접 무효화/갱신 필요    |
 
 ```tsx
 const queryClient = useQueryClient();
@@ -595,9 +603,9 @@ const createUser = useMutation({
 ```
 
 <Paragraph>
-  새 사용자를 만든 뒤 사용자 목록 query를 무효화하면, TanStack Query가 목록을 다시
-  가져옵니다. 직접 `setUsers`로 상태를 여기저기 수정하지 않아도 서버 데이터와
-  화면을 다시 맞출 수 있습니다.
+  새 사용자를 만든 뒤 사용자 목록 query를 무효화하면, TanStack Query가 목록을
+  다시 가져옵니다. 직접 `setUsers`로 상태를 여기저기 수정하지 않아도 서버
+  데이터와 화면을 다시 맞출 수 있습니다.
 </Paragraph>
 
 ---
@@ -605,9 +613,9 @@ const createUser = useMutation({
 <Subtitle level={2}>8. 7주차 파일 구조와 API 파일 배치 연결하기</Subtitle>
 
 <Paragraph>
-  지난 대면에서 UI, 상태, 서버 데이터, 비즈니스 규칙을 나눠서 봤습니다. API
-  관련 파일도 같은 기준으로 배치하면 됩니다. 핵심은 "서버와 통신하는 코드"와
-  "화면을 그리는 코드"를 섞지 않는 것입니다.
+  지난 대면에서 UI, 상태, 서버 데이터, 비즈니스 규칙을 나눠서 봤습니다. API 관련
+  파일도 같은 기준으로 배치하면 됩니다. 핵심은 "서버와 통신하는 코드"와 "화면을
+  그리는 코드"를 섞지 않는 것입니다.
 </Paragraph>
 
 <Paragraph>작은 프로젝트에서는 아래처럼 시작할 수 있습니다.</Paragraph>
@@ -638,7 +646,9 @@ export async function getStudies(params: GetStudiesParams) {
 }
 ```
 
-<Paragraph>프로젝트가 커지면 기능 단위로 가까이 두는 방식도 좋습니다.</Paragraph>
+<Paragraph>
+  프로젝트가 커지면 기능 단위로 가까이 두는 방식도 좋습니다.
+</Paragraph>
 
 ```text
 src/
@@ -676,8 +686,8 @@ src/
 ```
 
 <Paragraph>
-  `studyApi.ts`는 실제 HTTP 요청 함수, `studyQueries.ts`는 TanStack Query의 query
-  key와 query option을 담는 식으로 나누면 역할이 선명해집니다.
+  `studyApi.ts`는 실제 HTTP 요청 함수, `studyQueries.ts`는 TanStack Query의
+  query key와 query option을 담는 식으로 나누면 역할이 선명해집니다.
 </Paragraph>
 
 ```ts
@@ -692,8 +702,8 @@ export const studyQueries = {
 ```
 
 <Paragraph>
-  이렇게 해두면 화면 컴포넌트는 "스터디 목록을 가져온다"는 의도만 드러내고,
-  HTTP 세부사항과 query key 규칙은 API 계층에 남습니다.
+  이렇게 해두면 화면 컴포넌트는 "스터디 목록을 가져온다"는 의도만 드러내고, HTTP
+  세부사항과 query key 규칙은 API 계층에 남습니다.
 </Paragraph>
 
 ---
@@ -727,8 +737,8 @@ export const studyQueries = {
 
 <Paragraph>
   API는 데이터를 가져오는 기술이면서 동시에 팀 사이의 약속입니다. CORS는 그
-  약속이 브라우저 보안 규칙과 만나는 지점이고, HTTP 클라이언트와 TanStack Query는
-  API 코드를 프로젝트 구조 안에 안정적으로 배치하기 위한 도구입니다.
+  약속이 브라우저 보안 규칙과 만나는 지점이고, HTTP 클라이언트와 TanStack
+  Query는 API 코드를 프로젝트 구조 안에 안정적으로 배치하기 위한 도구입니다.
 </Paragraph>
 
 <Paragraph>
@@ -742,7 +752,7 @@ export const studyQueries = {
 <Subtitle level={2}>11. 다음 주 안내</Subtitle>
 
 <Paragraph>
-  다음 대면에서는 <strong>Next.js와 웹 렌더링</strong>을 다룹니다. React로 화면을
-  만드는 것에서 한 걸음 더 나아가, 브라우저 렌더링, 서버 렌더링, 정적 생성,
-  하이드레이션이 왜 등장했는지 큰 흐름을 봅니다.
+  다음 대면에서는 <strong>Next.js와 웹 렌더링</strong>을 다룹니다. React로
+  화면을 만드는 것에서 한 걸음 더 나아가, 브라우저 렌더링, 서버 렌더링, 정적
+  생성, 하이드레이션이 왜 등장했는지 큰 흐름을 봅니다.
 </Paragraph>
