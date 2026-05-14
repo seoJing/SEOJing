@@ -461,6 +461,8 @@ const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
+  // 학습을 위한 단순 예시입니다.
+  // localStorage에 토큰을 저장하면 XSS 공격에 노출될 수 있습니다.
   const token = localStorage.getItem("accessToken");
 
   if (token) {
@@ -475,6 +477,15 @@ apiClient.interceptors.request.use((config) => {
   인터셉터를 쓰면 모든 API 함수에서 토큰을 반복해서 꺼내 붙이지 않아도 됩니다.
   공통 로직은 한 곳에 모이고, 개별 API 함수는 "무슨 요청을 보낼지"에 집중할 수
   있습니다.
+</Paragraph>
+
+<Paragraph>
+  다만 위 코드는 인터셉터 개념을 설명하기 위한 단순 예시입니다. 실무에서는
+  access token을 localStorage에 오래 보관하는 방식을 기본값으로 두면 안 됩니다.
+  localStorage는 JavaScript로 읽을 수 있기 때문에 XSS가 발생했을 때 토큰이 탈취될
+  수 있습니다. 보안이 중요한 서비스라면 서버가 설정하는 <strong>HttpOnly</strong>,
+  <strong>Secure</strong>, <strong>SameSite</strong> 쿠키 기반 인증이나 그에 준하는
+  안전한 저장 전략을 함께 검토해야 합니다.
 </Paragraph>
 
 <Subtitle level={3}>7-7. 토큰 인증 — HTTP의 무상태성을 보완하기</Subtitle>
@@ -505,6 +516,14 @@ Authorization: Bearer {accessToken}
   401 응답이 왔을 때 인터셉터에서 토큰을 갱신하고 원래 요청을 다시 보내는 패턴도
   자주 사용됩니다. 다만 동시에 여러 요청이 401을 받으면 refresh 요청이 중복될 수
   있으므로, 실무에서는 중복 갱신을 막는 설계도 필요합니다.
+</Paragraph>
+
+<Paragraph>
+  Refresh Token은 특히 더 조심해야 합니다. 브라우저 JavaScript가 직접 읽는 저장소에
+  두기보다, 서버가 내려주는 HttpOnly + Secure 쿠키로 보관하는 방식을 많이
+  사용합니다. 이 경우 프론트엔드는 토큰 문자열을 직접 다루지 않고, 브라우저가
+  쿠키를 요청에 함께 보내도록 둡니다. 대신 쿠키 기반 인증에서는 SameSite 설정,
+  CSRF 대응, CORS credentials 설정을 백엔드와 함께 맞춰야 합니다.
 </Paragraph>
 
 <Subtitle level={3}>7-8. TanStack Query — HTTP 통신이 아니라 서버 상태 관리</Subtitle>
