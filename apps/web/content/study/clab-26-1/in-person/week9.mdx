@@ -11,15 +11,15 @@ tags:
   - ISR
   - Web Vitals
   - 웹 퍼포먼스
-description: Next.js가 제공하는 렌더링 전략의 진화를 CSR, SSR, SSG, ISR, Streaming SSR, PPR 흐름으로 정리하고, Web Vitals로 웹 퍼포먼스를 측정하는 방법을 다룹니다.
+description: CSR부터 SSR, SSG, ISR, PPR까지 Next.js 렌더링 전략의 진화를 이해하고, Web Vitals로 웹 퍼포먼스를 숫자로 측정하는 방법을 다룹니다.
 ---
 
-<Subtitle level={2}>1. 화면은 어디서 만들어지는가</Subtitle>
+<Subtitle level={2}>1\. 화면은 어디서 만들어지는가</Subtitle>
 
 <Paragraph>
-  지금까지 React로 화면을 만드는 방법을 배웠습니다. 그런데 React로 만든 화면은
-  어디서 실제로 그려질까요? 브라우저일 수도 있고, 서버일 수도 있습니다. 이
-  차이가 사용자가 첫 화면을 보는 속도에 직접 영향을 줍니다.
+  지금까지 React로 화면을 만드는 방법을 배웠습니다. 그런데 React로 만든 화면은{" "}
+  <strong>어디서</strong> 실제로 그려질까요? 브라우저일 수도 있고, 서버일 수도
+  있습니다. 이 차이가 사용자가 첫 화면을 보는 속도에 직접 영향을 줍니다.
 </Paragraph>
 
 <Paragraph>
@@ -30,15 +30,16 @@ description: Next.js가 제공하는 렌더링 전략의 진화를 CSR, SSR, SSG
 
 ---
 
-<Subtitle level={2}>2. CSR — 브라우저가 직접 그리는 방식</Subtitle>
+<Subtitle level={2}>2\. CSR — 브라우저가 직접 그리는 방식</Subtitle>
 
 <Paragraph>
-  React로 만든 앱을 아무 설정 없이 배포하면 CSR(Client-Side Rendering) 방식으로
-  동작합니다. 서버는 빈 HTML과 JS 파일만 보내고, 브라우저가 JS를 실행해서 직접
-  화면을 만듭니다.
+  React로 만든 앱을 아무 설정 없이 배포하면{" "}
+  <strong>CSR(Client-Side Rendering)</strong>
+  방식으로 동작합니다. 서버는 빈 HTML과 JS 파일만 보내고, 브라우저가 JS를
+  실행해서 직접 화면을 만듭니다.
 </Paragraph>
 
-```text
+```
 서버 → 빈 HTML 전송 → JS 다운로드 → JS 실행 → DOM 생성 → 화면 표시
 ```
 
@@ -57,88 +58,95 @@ description: Next.js가 제공하는 렌더링 전략의 진화를 CSR, SSR, SSG
   인터넷이 느릴수록, 화면이 늦게 뜹니다.
 </Paragraph>
 
-- 장점: 첫 로딩 후 페이지 이동이 빠르고, 서버 부하가 적음
-- 단점: 첫 화면이 늦게 뜸, 검색 엔진이 내용을 읽기 어려움(SEO)
+- <strong>장점</strong>: 첫 로딩 후 페이지 이동이 빠르고, 서버 부하가 적음
+- <strong>단점</strong>: 첫 화면이 늦게 뜸, 검색 엔진이 내용을 읽기 어려움(SEO)
 
 ---
 
-<Subtitle level={2}>3. SSR — 서버가 먼저 그려주는 방식</Subtitle>
+<Subtitle level={2}>3\. SSR — 서버가 먼저 그려주는 방식</Subtitle>
 
 <Paragraph>
-  SSR(Server-Side Rendering)은 서버가 HTML을 미리 완성해서 보내줍니다. 사용자는
-  JS가 로드되기 전에 이미 화면 내용을 볼 수 있습니다.
+  <strong>SSR(Server-Side Rendering)</strong>은 서버가 HTML을 미리 완성해서
+  보내줍니다. 사용자는 JS가 로드되기 전에 이미 화면 내용을 볼 수 있습니다.
 </Paragraph>
 
-```text
+```
 서버에서 HTML 완성 → 완성된 HTML 전송 → 화면 즉시 표시 → JS 다운로드 → Hydration
 ```
 
-| 지표 | CSR | SSR |
-| --- | --- | --- |
+| 지표                          | CSR               | SSR                   |
+| :---------------------------- | :---------------- | :-------------------- |
 | FCP (첫 콘텐츠가 보이는 시점) | 느림 (JS 실행 후) | 빠름 (HTML 도착 즉시) |
-| SEO | 불리 (빈 HTML) | 유리 (완성된 HTML) |
-| 서버 부하 | 없음 | 매 요청마다 생성 |
+| SEO                           | 불리 (빈 HTML)    | 유리 (완성된 HTML)    |
+| 서버 부하                     | 없음              | 매 요청마다 생성      |
 
 <Paragraph>
-  SSR이 "빠르다"는 건 정확히는 사용자가 화면을 처음 보는 시점이 빠르다는
-  뜻입니다. 클릭이나 입력 같은 인터랙션이 되려면 Hydration이 끝나야 합니다.
+  SSR이 "빠르다"는 건 정확히는{" "}
+  <strong>사용자가 화면을 처음 보는 시점이 빠르다</strong>는 뜻입니다. 클릭이나
+  입력 같은 인터랙션이 되려면 Hydration이 끝나야 합니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>4. Hydration — 정적 HTML에 생명 불어넣기</Subtitle>
+<Subtitle level={2}>4\. Hydration — 정적 HTML에 생명 불어넣기</Subtitle>
 
 <Paragraph>
-  서버가 보낸 HTML은 그림처럼 보이기만 합니다. 클릭해도 반응이 없습니다.
-  Hydration은 이 정적 HTML에 JS 이벤트 핸들러를 붙여서 실제로 동작하게 만드는
-  과정입니다.
+  서버가 보낸 HTML은 그림처럼 보이기만 합니다. 클릭해도 반응이 없습니다.{" "}
+  <strong>Hydration</strong>은 이 정적 HTML에 JS 이벤트 핸들러를 붙여서 실제로
+  동작하게 만드는 과정입니다.
 </Paragraph>
 
-```text
+```
 정적 HTML (보이지만 클릭해도 반응 없음)
         ↓ JS 다운로드 + Hydration
 동적 HTML (클릭, 입력 등 가능)
 ```
 
 <Paragraph>
-  Hydration이 진행되는 동안 사용자는 화면은 보지만 인터랙션이 안 되는 어색한
+  Hydration이 진행되는 동안 사용자는 화면은 보이지만 인터랙션이 안 되는 어색한
   구간을 경험할 수 있습니다. 이 구간을 줄이는 것이 현대 렌더링 최적화의 핵심 중
   하나입니다.
 </Paragraph>
 
 ---
 
-<Subtitle level={2}>5. Next.js 렌더링 전략의 진화</Subtitle>
+<Subtitle level={2}>5\. Next.js 렌더링 전략의 진화</Subtitle>
 
 <Paragraph>
   Next.js는 SSR만 하는 게 아닙니다. 페이지마다 다른 렌더링 전략을 선택할 수
   있고, 그 전략들이 이렇게 진화해왔습니다.
 </Paragraph>
 
-```text
+```
 CSR → SSR → SSG → ISR → Streaming SSR → PPR
 ```
 
-<Subtitle level={3}>SSG (Static Site Generation) — 빌드 시 미리 만들기</Subtitle>
+<Subtitle level={3}>
+  SSG (Static Site Generation) — 빌드 시 미리 만들기
+</Subtitle>
 
 <Paragraph>
-  서버가 요청마다 HTML을 만드는 SSR과 달리, SSG는 빌드할 때 HTML을 미리
-  만들어둡니다. 요청이 오면 서버가 만들 필요 없이 미리 만든 파일을 바로 보냅니다.
+  서버가 요청마다 HTML을 만드는 SSR과 달리, SSG는{" "}
+  <strong>빌드할 때 HTML을 미리 만들어둡니다</strong>. 요청이 오면 서버가 만들
+  필요 없이 미리 만든 파일을 바로 보냅니다.
 </Paragraph>
 
-```text
+```
 [SSR] 요청 → 서버가 HTML 생성 → 전송 (매번)
 [SSG] 빌드 → HTML 생성 → CDN에 올림 → 요청 → 바로 전송 (빠름)
 ```
 
-- 장점: 가장 빠름, 서버 부하 없음
-- 단점: 데이터가 바뀌면 전체를 다시 빌드해야 함
+- <strong>장점</strong>: 가장 빠름, 서버 부하 없음
+- <strong>단점</strong>: 데이터가 바뀌면 전체를 다시 빌드해야 함
 
-<Subtitle level={3}>ISR (Incremental Static Regeneration) — 필요할 때만 갱신</Subtitle>
+<Subtitle level={3}>
+  ISR (Incremental Static Regeneration) — 필요할 때만 갱신
+</Subtitle>
 
 <Paragraph>
-  SSG의 단점을 해결합니다. 일정 시간마다 그 페이지만 조용히 재생성합니다. 1000페이지
-  중 요청이 온 1페이지만 갱신되는 식입니다.
+  SSG의 단점을 해결합니다.{" "}
+  <strong>일정 시간마다 그 페이지만 조용히 재생성</strong>합니다. 1000페이지 중
+  요청이 온 1페이지만 갱신되는 식입니다.
 </Paragraph>
 
 ```tsx
@@ -146,7 +154,7 @@ CSR → SSR → SSG → ISR → Streaming SSR → PPR
 export const revalidate = 60; // 60초마다 재생성
 ```
 
-```text
+```
 0~60초:   캐시 그대로 반환 (SSG처럼 빠름)
 60초 후:  요청이 오면 기존 캐시 반환 + 백그라운드에서 새 HTML 생성
           → 다음 요청부터 새 HTML 서빙
@@ -156,8 +164,8 @@ export const revalidate = 60; // 60초마다 재생성
 
 <Paragraph>
   일반 SSR은 페이지 전체가 준비될 때까지 기다렸다가 한번에 보냅니다. DB 조회가
-  느린 경우 사용자는 그만큼 기다려야 합니다. Streaming SSR은 준비된 부분부터 먼저
-  보내고, 느린 부분은 나중에 채워줍니다.
+  느린 경우 사용자는 그만큼 기다려야 합니다. Streaming SSR은{" "}
+  <strong>준비된 부분부터 먼저 보내고</strong>, 느린 부분은 나중에 채워줍니다.
 </Paragraph>
 
 ```tsx
@@ -170,16 +178,19 @@ export const revalidate = 60; // 60초마다 재생성
 ```
 
 <Paragraph>
-  `Suspense`는 "아직 준비 안 됐으면 대신 이걸 보여줘"를 선언하는 React
-  컴포넌트입니다. Skeleton은 콘텐츠가 들어올 자리를 미리 잡아두는 빈 뼈대 UI입니다.
+  <code>Suspense</code>는 "아직 준비 안 됐으면 대신 이걸 보여줘"를 선언하는
+  React 컴포넌트입니다. Skeleton은 콘텐츠가 들어올 자리를 미리 잡아두는 빈 뼈대
+  UI입니다.
 </Paragraph>
 
-<Subtitle level={3}>PPR (Partial Prerendering) — 컴포넌트별로 정적/동적 분리</Subtitle>
+<Subtitle level={3}>
+  PPR (Partial Prerendering) — 컴포넌트별로 정적/동적 분리
+</Subtitle>
 
 <Paragraph>
-  ISR은 페이지 전체를 정적 또는 동적으로 취급합니다. PPR은 한 페이지 안에서
-  컴포넌트 단위로 정적/동적을 나눕니다. 상품 이름·이미지는 정적으로, 가격·재고는
-  동적으로 처리할 수 있습니다.
+  ISR은 페이지 전체를 정적 또는 동적으로 취급합니다. PPR은 한 페이지 안에서{" "}
+  <strong>컴포넌트 단위로 정적/동적을 나눕니다</strong>. 상품 이름·이미지는
+  정적으로, 가격·재고는 동적으로.
 </Paragraph>
 
 ```tsx
@@ -201,20 +212,20 @@ export default function ProductPage() {
 
 <Subtitle level={3}>전략 비교</Subtitle>
 
-| 전략 | 속도 | 데이터 신선함 | 어울리는 콘텐츠 |
-| --- | --- | --- | --- |
-| SSG | 가장 빠름 | 빌드 시점 고정 | 블로그, 문서, 변경 없는 페이지 |
-| SSR | 느림 | 항상 최신 | 로그인 필요, 실시간 데이터 |
-| ISR | SSG와 동일 | 약간의 지연 | 블로그, 상품 목록 |
-| PPR | SSG급 | 컴포넌트별 분리 | 상품 상세, 대시보드 |
+|     | 속도       | 데이터 신선함  | 어울리는 콘텐츠                |
+| :-- | :--------- | :------------- | :----------------------------- |
+| SSG | 가장 빠름  | 빌드 시점 고정 | 블로그, 문서, 변경 없는 페이지 |
+| SSR | 느림       | 항상 최신      | 로그인 필요, 실시간 데이터     |
+| ISR | SSG와 동일 | 약간의 지연    | 블로그, 상품 목록              |
+| PPR | SSG급      | 컴포넌트별     | 상품 상세, 대시보드            |
 
 ---
 
-<Subtitle level={2}>6. 서버 컴포넌트 vs 클라이언트 컴포넌트</Subtitle>
+<Subtitle level={2}>6\. 서버 컴포넌트 vs 클라이언트 컴포넌트</Subtitle>
 
 <Paragraph>
-  Next.js App Router에서는 컴포넌트가 어디서 실행되는지를 직접 선택할 수 있습니다.
-  이것이 RSC(React Server Components)입니다.
+  Next.js App Router에서는 컴포넌트가 <strong>어디서 실행되는지</strong>를 직접
+  선택할 수 있습니다. 이것이 RSC(React Server Components)입니다.
 </Paragraph>
 
 ```tsx
@@ -222,7 +233,6 @@ export default function ProductPage() {
 // 서버에서만 실행됨. 브라우저로 JS가 안 감.
 async function PostList() {
   const posts = await db.query("SELECT * FROM posts");
-
   return (
     <ul>
       {posts.map((p) => (
@@ -231,13 +241,10 @@ async function PostList() {
     </ul>
   );
 }
-```
 
-```tsx
 // Client Component ('use client' 선언 필요)
 // 브라우저에서 실행됨. onClick, useState 사용 가능.
-"use client";
-
+("use client");
 function LikeButton() {
   const [liked, setLiked] = useState(false);
   return <button onClick={() => setLiked(true)}>좋아요</button>;
@@ -245,34 +252,36 @@ function LikeButton() {
 ```
 
 <Paragraph>
-  판단 기준은 하나입니다. 이 컴포넌트가 클릭, 입력, 상태 변화를 다루는가? 그렇지
-  않다면 Server Component로 두는 게 낫습니다. JS 번들에 포함되지 않으니 번들
-  크기가 줄고, Hydration 대상도 줄어 성능이 좋아집니다.
+  판단 기준은 하나입니다.{" "}
+  <strong>이 컴포넌트가 클릭, 입력, 상태 변화를 다루는가?</strong> 그렇지 않다면
+  Server Component로 두는 게 낫습니다. JS 번들에 포함되지 않으니 번들 크기가
+  줄고, Hydration 대상도 줄어 성능이 좋아집니다.
 </Paragraph>
 
-| 구분 | Server Component | Client Component |
-| --- | --- | --- |
-| 실행 위치 | 서버 | 브라우저 |
-| useState, onClick | 불가 | 가능 |
-| DB 직접 접근 | 가능 | 불가 |
-| JS 번들 포함 | 포함 안 됨 | 포함됨 |
+| 구분              | Server Component | Client Component |
+| :---------------- | :--------------- | :--------------- |
+| 실행 위치         | 서버             | 브라우저         |
+| useState, onClick | ❌ 불가          | ✅ 가능          |
+| DB 직접 접근      | ✅ 가능          | ❌ 불가          |
+| JS 번들 포함      | ❌ 포함 안 됨    | ✅ 포함됨        |
 
 ---
 
-<Subtitle level={2}>7. Web Vitals — "빠르다"를 숫자로 말하기</Subtitle>
+<Subtitle level={2}>7\. Web Vitals — "빠르다"를 숫자로 말하기</Subtitle>
 
 <Paragraph>
-  Google이 정한 사용자 체감 성능의 3가지 핵심 지표입니다. 검색 순위(SEO)에도 실제로
-  영향을 줍니다.
+  Google이 정한 사용자 체감 성능의 3가지 핵심 지표입니다. 검색 순위(SEO)에도
+  실제로 영향을 줍니다.
 </Paragraph>
 
 <Subtitle level={3}>LCP (Largest Contentful Paint)</Subtitle>
 
 <Paragraph>
-  가장 큰 콘텐츠가 화면에 나타나는 시간. 메인 이미지, 큰 텍스트 블록이 해당합니다.
+  <strong>가장 큰 콘텐츠가 화면에 나타나는 시간.</strong> 메인 이미지, 큰 텍스트
+  블록이 해당합니다.
 </Paragraph>
 
-```text
+```
 페이지 요청
   │  0.5s  헤더, 네비게이션 표시
   │  1.2s  메인 이미지 표시 ← 이게 LCP
@@ -285,9 +294,11 @@ function LikeButton() {
 
 <Subtitle level={3}>INP (Interaction to Next Paint)</Subtitle>
 
-<Paragraph>사용자가 클릭·입력한 뒤 화면이 반응하기까지의 시간.</Paragraph>
+<Paragraph>
+  <strong>사용자가 클릭·입력한 뒤 화면이 반응하기까지의 시간.</strong>
+</Paragraph>
 
-```text
+```
 사용자가 버튼 클릭
   │  JS 이벤트 핸들러 실행
   │  상태 업데이트
@@ -302,26 +313,26 @@ function LikeButton() {
 <Subtitle level={3}>CLS (Cumulative Layout Shift)</Subtitle>
 
 <Paragraph>
-  페이지 로딩 중 레이아웃이 얼마나 흔들리는가. 광고가 갑자기 끼어들어서 읽던
-  텍스트가 밀리는 경험이 대표적입니다.
+  <strong>페이지 로딩 중 레이아웃이 얼마나 흔들리는가.</strong> 광고가 갑자기
+  끼어들어서 읽던 텍스트가 밀리는 경험이 대표적입니다.
 </Paragraph>
 
-```text
+```
 좋음: ≤ 0.1 / 나쁨: > 0.25
 ```
 
 - 흔한 원인: 이미지 크기 미지정, 폰트 로딩 후 텍스트 크기 변화
 - 해결: `width`/`height` 명시, Skeleton으로 공간 미리 확보
 
-| 지표 | 측정하는 것 | 좋음 기준 | 주요 영향 요소 |
-| --- | --- | --- | --- |
-| LCP | 콘텐츠 표시 속도 | ≤ 2.5s | 렌더링 방식, 이미지 크기 |
-| INP | 인터랙션 반응 속도 | ≤ 200ms | JS 번들 크기, Hydration 무게 |
-| CLS | 레이아웃 안정성 | ≤ 0.1 | 이미지 크기, Skeleton, 폰트 |
+| 지표 | 측정하는 것        | 좋음 기준 | 주요 영향 요소                           |
+| :--- | :----------------- | :-------- | :--------------------------------------- |
+| LCP  | 콘텐츠 표시 속도   | ≤ 2.5s    | 렌더링 방식(SSG/SSR vs CSR), 이미지 크기 |
+| INP  | 인터랙션 반응 속도 | ≤ 200ms   | JS 번들 크기, Hydration 무게             |
+| CLS  | 레이아웃 안정성    | ≤ 0.1     | 이미지 크기, Skeleton, 폰트              |
 
 ---
 
-<Subtitle level={2}>8. 퍼포먼스 측정하는 방법</Subtitle>
+<Subtitle level={2}>8\. 퍼포먼스 측정하는 방법</Subtitle>
 
 <Paragraph>
   Web Vitals는 실제로 어떻게 측정할까요? Chrome DevTools에 이미 다 있습니다.
@@ -330,18 +341,19 @@ function LikeButton() {
 <Subtitle level={3}>Lighthouse</Subtitle>
 
 <Paragraph>
-  Chrome DevTools → Lighthouse 탭 → "Analyze page load" 버튼. LCP, INP, CLS를
-  포함한 퍼포먼스 점수와 개선 제안을 한번에 볼 수 있습니다.
+  Chrome DevTools → <strong>Lighthouse 탭</strong> → "Analyze page load" 버튼.
+  LCP, INP, CLS를 포함한 퍼포먼스 점수와 개선 제안을 한번에 볼 수 있습니다.
 </Paragraph>
 
-- Mode: Navigation — 페이지 첫 로딩 시 측정 (가장 일반적)
-- Device: Mobile 로 체크하면 더 엄격하게 측정됨
+- <strong>Mode: Navigation</strong> — 페이지 첫 로딩 시 측정 (가장 일반적)
+- <strong>Device: Mobile</strong>로 체크하면 더 엄격하게 측정됨
 
 <Subtitle level={3}>Performance 탭</Subtitle>
 
 <Paragraph>
-  Chrome DevTools → Performance 탭 → 녹화 버튼 후 페이지 조작. 타임라인에서 어느
-  시점에 뭐가 실행됐는지, 어디서 병목이 생겼는지 볼 수 있습니다.
+  Chrome DevTools → <strong>Performance 탭</strong> → 녹화 버튼 후 페이지 조작.
+  타임라인에서 어느 시점에 뭐가 실행됐는지, 어디서 병목이 생겼는지 볼 수
+  있습니다.
 </Paragraph>
 
 <Subtitle level={3}>Network 탭으로 렌더링 방식 확인하기</Subtitle>
@@ -350,8 +362,8 @@ function LikeButton() {
   Network 탭에서 첫 HTML 응답을 열어보면 렌더링 방식을 가늠할 수 있습니다.
 </Paragraph>
 
-- HTML 응답에 내용이 가득 → SSR 또는 SSG
-- HTML 응답에 빈 div만 → CSR
+- HTML 응답에 <strong>내용이 가득</strong> → SSR 또는 SSG
+- HTML 응답에 <strong>빈 div만</strong> → CSR
 
 <Subtitle level={3}>실제로 해보기</Subtitle>
 
@@ -362,37 +374,31 @@ function LikeButton() {
 
 ---
 
-<Subtitle level={2}>9. 정리 — 렌더링 선택의 기준</Subtitle>
+<Subtitle level={2}>9\. 정리 — 렌더링 선택의 기준</Subtitle>
 
 <Paragraph>
   어떤 렌더링 방식을 쓸지는 "이 페이지의 데이터가 얼마나 자주 바뀌는가"와
   "인터랙션이 중요한가"로 판단합니다.
 </Paragraph>
 
-- 데이터가 거의 안 바뀐다 → SSG
-- 실시간 데이터가 필요하다 → SSR
-- 가끔 바뀌는 데이터 → ISR
-- 페이지 일부만 실시간 → PPR + Streaming
-- 클릭·입력이 필요한 컴포넌트만 → Client Component
+- 데이터가 거의 안 바뀐다 → <strong>SSG</strong>
+- 실시간 데이터가 필요하다 → <strong>SSR</strong>
+- 가끔 바뀌는 데이터 → <strong>ISR</strong>
+- 페이지 일부만 실시간 → <strong>PPR + Streaming</strong>
+- 클릭·입력이 필요한 컴포넌트만 → <strong>Client Component</strong>
 
-<Paragraph>
-  <strong>
-    렌더링 방식을 잘 선택하는 것 자체가 프론트엔드 성능 최적화의 절반입니다.
-  </strong>
-</Paragraph>
+> 렌더링 방식을 잘 선택하는 것 자체가 프론트엔드 성능 최적화의 절반입니다.
 
 ---
 
-<Subtitle level={2}>10. 다음 주 안내 — 10주차 "팀 협업"</Subtitle>
+<Subtitle level={2}>10\. 다음 주 안내 — 10주차 "팀 협업"</Subtitle>
 
 <Paragraph>
-  다음 주에는 팀 협업을 다룹니다. Git, PR, 컨벤션, 리뷰 문화처럼 혼자 공부할 때는
-  잘 와닿지 않지만, 팀 프로젝트에서 바로 필요한 것들입니다.
+  다음 주에는 팀 협업을 다룹니다. Git, PR, 컨벤션, 리뷰 문화처럼 혼자 공부할
+  때는 잘 와닿지 않지만, 팀 프로젝트에서 바로 필요한 것들입니다.
 </Paragraph>
 
----
-
-<Subtitle level={2}>관련 포스팅</Subtitle>
+<Subtitle level={3}>관련 포스팅</Subtitle>
 
 - <Anchor href="/blog/study/clab-26-1/week9">이번 주 학습 자료(week9)</Anchor>
 - <Anchor href="/blog/SEOJing/web-rendering-performance-fundamentals">
