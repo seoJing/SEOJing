@@ -1,0 +1,122 @@
+---
+title: "죽은 OpenClaw가 계속 재시작되던 이유 — gateway migration에서 배운 것"
+date: 2026-05-23
+tags:
+  - okayJing
+  - OpenClaw
+  - Hermes
+  - systemd
+  - gateway
+description: Hermes 단일 체계로 넘어온 뒤에도 남아 있던 OpenClaw systemd service와 watchdog 흔적을 추적하며, migration에서 잔재 제거가 왜 중요한지 정리합니다.
+---
+
+<Subtitle level={2}>0. 시스템을 바꿨는데 예전 시스템이 계속 움직였다</Subtitle>
+
+<Paragraph>
+  OpenClaw에서 Hermes 단일 체계로 넘어오면서 가장 먼저 정리한 건 개념이었습니다.
+  오케이징은 Hermes의 user-facing 이름이고, 우로보로스와 낫징은 별도 인격이
+  아니라 skill discipline으로 다룬다. 프로젝트 경로도
+  `.hermes/workspace/projects` 쪽으로 옮긴다. 말로 정리하면 꽤 깔끔했습니다.
+</Paragraph>
+
+<Paragraph>
+  그런데 실제 머신은 말처럼 바로 정리되지 않았습니다. OpenClaw home은 사라졌고
+  active gateway는 Hermes 쪽으로 넘어왔는데, user systemd에는 아직 OpenClaw
+  service와 watchdog 흔적이 남아 있었습니다. 죽은 gateway를 계속 살리려는 구조가
+  남아 있었던 것입니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. 겉으로는 Hermes가 맞았다</Subtitle>
+
+<Paragraph>
+  당시 확인한 active 구조만 보면 Hermes로 넘어온 게 맞았습니다. Hermes gateway는
+  Discord 세션을 받고 있었고, 프로젝트 repo도 `.hermes/workspace/projects`
+  아래에 있었습니다. `openclaw` 명령도 더 이상 잡히지 않았습니다. 표면적으로는
+  전환이 끝난 것처럼 보였습니다.
+</Paragraph>
+
+<Paragraph>
+  문제는 systemd였습니다. 서비스는 사람이 쓰는 명령어와 별개로 계속 살아
+  있습니다. 예전 gateway를 `systemctl --user`에 등록해두면, 패키지나 경로를
+  지워도 unit 파일은 남습니다. 그리고 timer나 watchdog이 있으면, 사라진
+  프로그램을 계속 실행하려고 합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. 실패 로그가 말해준 것</Subtitle>
+
+<Paragraph>
+  OpenClaw gateway journal에는 반복적인 실패가 남아 있었습니다. 핵심은 Node
+  module을 찾을 수 없다는 에러였습니다.
+</Paragraph>
+
+```text
+Error: Cannot find module '/home/seojingyu/.local/share/fnm/node-versions/v22.22.2/installation/lib/node_modules/openclaw/dist/index.js'
+code: 'MODULE_NOT_FOUND'
+openclaw-gateway.service: Main process exited, code=exited, status=1/FAILURE
+Start request repeated too quickly
+```
+
+<Paragraph>
+  이 로그는 코드 버그가 아니라 운영 잔재를 가리켰습니다. OpenClaw 실행 파일은
+  이미 사라졌는데, systemd unit은 여전히 그 경로를 실행하려고 했습니다. 그래서
+  gateway가 죽은 게 아니라, 죽은 gateway를 깨우는 장치가 남아 있었던 셈입니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. migration은 새 구조를 만드는 것만이 아니다</Subtitle>
+
+<Paragraph>
+  이 사건에서 기준을 하나 얻었습니다. migration은 새 구조를 만드는 작업과 예전
+  구조가 다시 끼어들지 못하게 하는 작업을 같이 포함합니다. 둘 중 하나만 하면
+  반쯤 끝난 상태입니다.
+</Paragraph>
+
+| 해야 할 일             | 이유                                       |
+| ---------------------- | ------------------------------------------ |
+| active service 확인    | 지금 실제로 누가 메시지를 받고 있는지 확인 |
+| stale unit 확인        | 사라진 runtime을 다시 띄우는 흔적 제거     |
+| memory/skill path 확인 | 예전 `.openclaw` 경로로 작업하지 않게 방지 |
+| logs 확인              | 겉으로 보이지 않는 restart loop 발견       |
+| cron/timer 확인        | 자동 재시작과 주기 작업 잔재 확인          |
+
+<Paragraph>
+  특히 gateway migration에서는 "새 gateway가 뜬다"만 보면 안 됩니다. 예전
+  gateway가 정말 멈췄는지, 다시 살아나지 않는지까지 봐야 합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. 오케이징 로직에 남은 영향</Subtitle>
+
+<Paragraph>
+  이 경험 이후 오케이징의 기본 루틴은 조금 더 보수적으로 바뀌었습니다. live
+  system 상태를 memory로 때우지 않고 실제 명령으로 확인합니다. repo path도
+  기억만 믿지 않고 `git status`로 확인합니다. 서비스 상태나 포트, 로그는 말로
+  추측하지 않고 직접 봅니다.
+</Paragraph>
+
+<Paragraph>
+  실행형 AI에게 가장 위험한 건 "아마 그럴 것"입니다. 특히 gateway와 systemd는
+  현재 상태가 중요합니다. 어제 맞았던 구조가 오늘도 맞는다는 보장이 없습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>5. 정리</Subtitle>
+
+<Paragraph>
+  죽은 OpenClaw가 계속 재시작되던 문제는 거창한 버그가 아니었습니다. 지워진
+  경로를 가리키는 systemd 잔재였습니다. 하지만 이런 잔재가 운영 시스템에서는 꽤
+  큰 소음을 만듭니다.
+</Paragraph>
+
+<Paragraph>
+  그래서 지금 오케이징은 migration을 볼 때 새 구조만 보지 않습니다. 예전 구조의
+  흔적까지 봅니다. 잘 돌아가는 시스템은 새 코드만으로 만들어지지 않습니다. 다시
+  살아나면 안 되는 것들이 조용히 죽어 있는지도 확인해야 합니다.
+</Paragraph>
