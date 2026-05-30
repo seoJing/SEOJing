@@ -1,0 +1,245 @@
+---
+title: "context pack은 요약본이 아니다 — 오케이징 기억에 source_id를 붙인 이유"
+date: 2026-06-01
+tags:
+  - okayJing
+  - memory
+  - context-pack
+  - provenance
+  - Hermes
+description: 오케이징의 context pack을 단순 요약본이 아니라 git 상태, facts, events, source-linked chunks를 묶은 작업용 증거 묶음으로 설계한 이유를 정리합니다.
+---
+
+<Subtitle level={2}>0. context를 많이 넣으면 해결될 줄 알았다</Subtitle>
+
+<Paragraph>
+  에이전트 작업에서 자주 생기는 문제는 컨텍스트 부족입니다. 전에 무슨 결정을
+  했는지, 어떤 파일을 봐야 하는지, 이 프로젝트의 빌드 명령이 무엇인지 매번 다시
+  찾아야 합니다. 그래서 처음에는 단순하게 생각했습니다. 필요한 정보를 한 번에
+  많이 넣어주면 되지 않을까.
+</Paragraph>
+
+<Paragraph>
+  그런데 실제로는 그렇게 간단하지 않았습니다. context window에 많이 넣는다고
+  해서 기억이 좋아지는 건 아닙니다. 오히려 오래된 요약, 애매한 메모, 출처 없는
+  판단이 섞이면 에이전트는 더 자신 있게 틀릴 수 있습니다.
+</Paragraph>
+
+<Paragraph>
+  그래서 이번 memory architecture에서 context pack은 "요약본"이 아니라 "작업
+  전에 읽는 증거 묶음"으로 잡았습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. 좋은 context pack의 조건</Subtitle>
+
+<Paragraph>
+  context pack이 유용하려면 단순히 읽기 좋아서는 안 됩니다. 오케이징이 실제
+  작업을 시작할 때 필요한 최소 조건을 만족해야 합니다.
+</Paragraph>
+
+1. 지금 어떤 project를 대상으로 하는지 알아야 한다.
+2. git status를 포함해야 한다.
+3. 최근 event와 fact를 보여줘야 한다.
+4. 검색된 chunk가 어떤 source에서 왔는지 남겨야 한다.
+5. pack 자체가 언제 만들어졌는지 알아야 한다.
+6. 원본과 충돌하면 원본을 다시 읽을 수 있어야 한다.
+
+<Paragraph>
+  이 조건 때문에 context pack에는 `source_id`와 `chunk_id`가 들어갑니다.
+  보기에는 조금 지저분합니다. 하지만 이 지저분함이 필요했습니다. 에이전트가 "이
+  프로젝트는 이렇게 되어 있다"고 말할 때, 그 말이 어느 파일의 어느 chunk에서
+  왔는지 따라갈 수 있어야 하기 때문입니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. 요약은 편하지만 위험하다</Subtitle>
+
+<Paragraph>
+  요약은 편합니다. 긴 로그를 짧게 만들고, 여러 파일의 내용을 한 문단으로
+  묶어줍니다. 하지만 요약에는 항상 손실이 있습니다. 보통은 그 손실이 괜찮습니다.
+  문제는 오케이징이 그 요약을 근거로 실제 코드를 수정할 때입니다.
+</Paragraph>
+
+<Paragraph>
+  예를 들어 "SEOJing은 pnpm build를 쓴다"는 요약은 맞을 수 있습니다. 하지만 어떤
+  package.json에서 확인한 것인지, 언제 확인한 것인지, 지금도 맞는지는 별개의
+  문제입니다. build 명령 하나는 사소해 보여도, 실제 작업에서는 검증 루틴 전체를
+  바꿉니다.
+</Paragraph>
+
+<Paragraph>
+  그래서 context pack은 요약을 포함할 수는 있지만, 요약만으로 끝나면 안 됩니다.
+  검색된 source chunk, fact source, event 기록이 같이 있어야 합니다. 요약이 길을
+  알려주고, source가 최종 확인을 맡는 구조가 되어야 합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. pack에 넣은 것들</Subtitle>
+
+<Paragraph>
+  첫 MVP의 context pack은 일부러 단순하게 만들었습니다. 그래도 작업 전에 필요한
+  뼈대는 넣었습니다.
+</Paragraph>
+
+```text
+# Context Pack
+project: SEOJing
+query: SEOJing Hermes memory MVP smoke context
+project root: /Users/seojing/.hermes/workspace/projects/SEOJing
+ollama: running
+git status: clean
+
+facts
+- statement
+- source chunk id
+
+recent events
+- smoke_test
+- payload
+
+retrieved chunks
+- source_id
+- chunk_id
+- relative path
+- line range
+- excerpt
+```
+
+<Paragraph>
+  여기서 중요한 건 retrieved chunks입니다. context pack을 읽는 오케이징은 이
+  chunk를 그대로 믿는 게 아니라, 필요한 경우 원본 파일을 다시 열어야 합니다.
+  pack은 작업 시작점을 좁혀주는 도구이지, source file을 대체하는 문서가
+  아닙니다.
+</Paragraph>
+
+<Paragraph>
+  실제로 첫 smoke에서는 SEOJing repo 200개 source에서 486개 chunk를 만들고, 그중
+  query와 관련 있는 chunk를 pack에 넣었습니다. pack은
+  `generated/context-packs/SEOJing/` 아래에 저장됐고, `validate-links`로 orphan
+  fact와 artifact가 없는지 확인했습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. fact와 event를 분리한 이유</Subtitle>
+
+<Paragraph>
+  memory를 만들다 보면 fact와 event를 섞고 싶어집니다. 둘 다 "나중에 다시 볼
+  정보"처럼 보이기 때문입니다. 하지만 둘은 역할이 다릅니다.
+</Paragraph>
+
+| 종류     | 의미                      | 예시                                                  |
+| -------- | ------------------------- | ----------------------------------------------------- |
+| fact     | 현재도 참이어야 하는 주장 | SEOJing repo path, package script, content convention |
+| event    | 특정 시점에 일어난 일     | smoke test 실행, indexing 완료, blocker 발생          |
+| artifact | 생성된 산출물             | context pack, summary draft, doc patch draft          |
+
+<Paragraph>
+  fact는 source chunk를 가져야 합니다. 출처 없이 저장된 fact는 memory라기보다
+  소문에 가깝습니다. 반면 event는 특정 시점의 기록입니다. 나중에 현재 사실과
+  달라질 수 있어도, "그때 그런 일이 있었다"는 의미는 남습니다.
+</Paragraph>
+
+<Paragraph>
+  이 구분 덕분에 context pack도 조금 더 안전해집니다. pack을 읽을 때 "현재 믿을
+  사실"과 "최근 작업 흐름"을 분리해서 볼 수 있기 때문입니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>5. stale 상태가 필요해진다</Subtitle>
+
+<Paragraph>
+  source-linked 구조를 만들면 자연스럽게 다음 문제가 생깁니다. 원본 파일이
+  바뀌면 기존 fact와 context pack은 어떻게 해야 할까. 이때 필요한 게 stale
+  상태입니다.
+</Paragraph>
+
+<Paragraph>
+  예전 방식이라면 그냥 새로 요약하면 끝났을 수도 있습니다. 하지만 source-linked
+  memory에서는 그렇게 하면 안 됩니다. 어떤 fact가 어떤 chunk를 근거로
+  만들어졌고, 그 chunk의 source hash가 바뀌었는지 알아야 합니다. 그래야 기존
+  기억을 조용히 덮어쓰는 대신, stale 또는 conflicted 상태로 표시할 수 있습니다.
+</Paragraph>
+
+<Paragraph>
+  이번 MVP의 stale-check는 아직 시작점에 가깝습니다. 하지만 방향은 정해졌습니다.
+  오래된 context pack은 계속 진실인 척하면 안 됩니다. 다시 검증해야 하는 작업
+  자료가 되어야 합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>
+  6. local LLM은 pack을 만들 수 있지만, 판사는 아니다
+</Subtitle>
+
+<Paragraph>
+  Ollama 같은 local LLM을 붙이면 pack을 더 읽기 좋게 요약할 수 있습니다. 이건
+  분명 쓸모 있습니다. 긴 chunk 목록을 사람이 읽기 좋은 summary로 바꿔줄 수 있고,
+  task에 맞는 관찰을 draft로 남길 수도 있습니다.
+</Paragraph>
+
+<Paragraph>
+  다만 local LLM이 만든 문장은 trusted fact가 아닙니다. local LLM은
+  worker입니다. 판사가 아닙니다. draft artifact를 만들 수는 있지만, 그
+  artifact는 source chunk와 연결되어 있어야 하고 review_state가 남아야 합니다.
+</Paragraph>
+
+<Paragraph>
+  이 기준을 세워두지 않으면 context pack이 다시 환각의 통로가 됩니다. 겉으로는
+  로컬이고, 빠르고, 편해 보이지만 실제로는 출처 없는 문장이 더 많이 주입되는
+  구조가 될 수 있습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>7. 오케이징 작업 루틴이 조금 바뀐다</Subtitle>
+
+<Paragraph>
+  이 구조가 안정되면 오케이징의 작업 시작 루틴도 바뀝니다. 예전에는 git status와
+  file search를 직접 돌리고, 필요한 기억은 session_search나 built-in memory에서
+  찾았습니다. 이제는 그 앞에 context pack이 들어갈 수 있습니다.
+</Paragraph>
+
+```text
+1. git status를 확인한다.
+2. hermes-memory stale-check <project>를 돌린다.
+3. hermes-memory pack <project> "이번 작업"을 만든다.
+4. pack을 읽는다.
+5. pack이 가리킨 원본 파일을 다시 확인한다.
+6. 작업 결과와 검증 결과를 event로 남긴다.
+7. durable fact는 source-linked 상태로만 추가한다.
+```
+
+<Paragraph>
+  중요한 건 5번입니다. pack을 읽었다고 바로 수정하면 안 됩니다. pack은 색인된
+  기억이고, 원본 파일은 여전히 최종 근거입니다. 이 한 단계를 빼면 memory layer가
+  오히려 위험해집니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>8. 정리</Subtitle>
+
+<Paragraph>
+  context pack은 오케이징에게 주는 긴 프롬프트가 아닙니다. 작업 전에 펼쳐보는
+  증거 묶음입니다. 그래서 보기 좋은 요약보다 source_id, chunk_id, freshness, git
+  status가 더 중요했습니다.
+</Paragraph>
+
+<Paragraph>
+  이 구조는 조금 귀찮습니다. 하지만 그 귀찮음이 기억을 안전하게 만듭니다.
+  오케이징이 오래 일하려면 많이 기억하는 것보다, 무엇을 근거로 기억하는지 계속
+  확인할 수 있어야 합니다.
+</Paragraph>
+
+<Paragraph>
+  결국 context pack의 목적은 에이전트를 더 자신 있게 만드는 게 아닙니다. 더
+  조심스럽게 빠르게 시작하게 만드는 것입니다. 이 차이가 이번 memory
+  architecture에서 꽤 중요했습니다.
+</Paragraph>

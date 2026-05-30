@@ -1,0 +1,240 @@
+---
+title: "기억은 요약이 아니라 증거여야 했다 — local-first Hermes memory를 만든 이유"
+date: 2026-05-31
+tags:
+  - okayJing
+  - memory
+  - Hermes
+  - SQLite
+  - FTS5
+  - local-first
+description: Honcho나 Mem0 같은 외부 backend를 붙이기 전에, 왜 오케이징의 기억을 SQLite와 source-linked evidence 중심으로 먼저 만들었는지 정리합니다.
+---
+
+<Subtitle level={2}>0. 처음엔 memory backend를 붙이면 될 줄 알았다</Subtitle>
+
+<Paragraph>
+  오케이징의 기억 문제를 생각할 때 처음 떠오르는 해법은 꽤 단순했습니다.
+  Honcho나 Mem0 같은 memory backend를 붙이면 되지 않을까. 대화를 저장하고,
+  중요한 선호를 추출하고, 다음 대화에서 다시 꺼내오면 됩니다. 기능 목록만 보면
+  그럴듯했습니다.
+</Paragraph>
+
+<Paragraph>
+  그런데 막상 오케이징을 실제 작업에 붙여보니 문제가 조금 달랐습니다. 필요한 건
+  더 많은 기억이 아니라, 믿을 수 있는 기억이었습니다. 특히 프로젝트 작업에서는
+  "예전에 이렇게 했던 것 같다"보다 "어떤 파일과 어떤 로그를 근거로 그렇게 말할
+  수 있나"가 더 중요했습니다.
+</Paragraph>
+
+<Paragraph>
+  그래서 이번에는 외부 memory backend를 바로 붙이지 않았습니다. 먼저 local-first
+  방식으로, 오케이징이 직접 조회할 수 있는 증거 기반 기억 레이어를 만들었습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. 기억의 진짜 문제는 저장 공간이 아니었다</Subtitle>
+
+<Paragraph>
+  memory라는 말을 쓰면 보통 "무엇을 얼마나 오래 저장할 것인가"를 먼저
+  떠올립니다. 그런데 오케이징 운영에서는 저장량보다 더 위험한 문제가 있었습니다.
+</Paragraph>
+
+1. 잘못 추출된 기억이 계속 주입될 수 있다.
+2. 오래된 요약이 현재 소스보다 더 강하게 작동할 수 있다.
+3. 작업 상태와 장기 규칙이 한 덩어리로 섞일 수 있다.
+4. 나중에 "이 말의 출처가 뭐였지?"를 추적하지 못할 수 있다.
+
+<Paragraph>
+  이 네 가지가 쌓이면 memory는 도움이 아니라 오염원이 됩니다. 특히 오케이징처럼
+  repo를 수정하고, build를 돌리고, 사용자의 운영 규칙을 따라야 하는
+  에이전트에게는 더 그렇습니다. 기억이 틀리면 그냥 대답이 틀리는 데서 끝나지
+  않고, 실제 파일을 잘못 고칠 수 있습니다.
+</Paragraph>
+
+<Paragraph>
+  이 지점에서 기준이 바뀌었습니다. 오케이징의 장기 기억은 "그럴듯한 요약"이
+  아니라 "다시 검증 가능한 증거" 위에 있어야 합니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. 그래서 SQLite와 FTS5부터 골랐다</Subtitle>
+
+<Paragraph>
+  선택지는 여러 개였습니다. 바로 vector DB를 붙일 수도 있고, 외부 memory
+  backend를 실험할 수도 있고, 기존 session_search에 더 의존할 수도 있었습니다.
+  하지만 첫 구현에서는 SQLite와 FTS5를 골랐습니다.
+</Paragraph>
+
+| 선택지                | 장점                         | 이번에는 걸린 점                                            |
+| --------------------- | ---------------------------- | ----------------------------------------------------------- |
+| 외부 memory backend   | memory lifecycle 기능이 많다 | 운영 규칙과 출처 관리가 먼저 잡혀야 했다                    |
+| vector DB             | 의미 검색이 강하다           | 초기에 provenance가 흐려질 수 있었다                        |
+| session_search만 사용 | 이미 대화 검색이 된다        | repo 파일, facts, events, artifacts를 한 구조로 묶기 어렵다 |
+| SQLite + FTS5         | 로컬, 단순, 추적 가능        | semantic search는 나중 문제로 미뤄야 한다                   |
+
+<Paragraph>
+  SQLite는 화려하지 않습니다. 그런데 이번 문제에는 그 점이 오히려 맞았습니다.
+  파일 경로, content hash, chunk id, fact source, event, artifact 같은 것들을
+  명시적으로 저장할 수 있고, 로컬에서 바로 조회할 수 있습니다. FTS5는 완벽한
+  의미 검색은 아니지만, 첫 단계에서 충분히 빠르고 예측 가능합니다.
+</Paragraph>
+
+<Paragraph>
+  핵심은 "똑똑한 검색"보다 "출처가 끊기지 않는 구조"였습니다. vector search는
+  나중에 붙일 수 있지만, 출처 규율이 없는 상태에서 붙이면 더 빨리 틀릴 뿐입니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. 구조는 세 층으로 나눴다</Subtitle>
+
+<Paragraph>
+  이번 memory architecture의 가장 중요한 구분은 권위의 단계입니다. 모든 저장물이
+  같은 무게를 가지면 안 됩니다. raw source와 LLM이 만든 요약을 같은 층에 두는
+  순간 문제가 생깁니다.
+</Paragraph>
+
+1. <strong>Raw evidence</strong> — repo 파일, git 상태, session, log, ticket,
+   config snapshot
+2. <strong>SQLite catalog</strong> — sources, chunks, FTS row, facts, events,
+   artifacts, source links
+3. <strong>Derived views</strong> — summaries, context packs, generated docs,
+   local LLM draft outputs
+
+<Paragraph>
+  여기서 권위를 갖는 건 1번과 2번입니다. 3번은 편의를 위한 파생물입니다. context
+  pack이 아무리 잘 만들어져도 원본 파일과 다르면 원본 파일이 이깁니다. LLM이
+  만든 summary도 마찬가지입니다. 초안일 뿐이고, source link 없이는 믿으면 안
+  됩니다.
+</Paragraph>
+
+<Paragraph>
+  이 기준이 생기고 나서야 memory라는 말이 조금 안전해졌습니다. 기억은 머릿속에
+  떠오르는 문장이 아니라, 출처와 freshness를 가진 조회 결과가 됐습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. MVP는 작게 만들었다</Subtitle>
+
+<Paragraph>
+  구현 루트는 `~/.hermes/memory-arch/`로 잡았습니다. CLI는
+  `~/.hermes/memory-arch/bin/hermes-memory`, DB는
+  `~/.hermes/memory-arch/memory.sqlite3`입니다. 처음부터 Hermes core 설정을
+  바꾸거나 gateway를 건드리지 않았습니다. memory layer 실험이 운영 전체를 흔들면
+  안 됐기 때문입니다.
+</Paragraph>
+
+<Paragraph>
+  첫 MVP에서 넣은 것은 많아 보이지만, 기준은 단순했습니다. deterministic하게
+  파일을 index하고, source-linked chunk를 만들고, fact/event/artifact/context
+  pack이 모두 출처를 가지게 하는 것입니다.
+</Paragraph>
+
+```text
+hermes-memory init
+hermes-memory doctor
+hermes-memory project add SEOJing --root /Users/seojing/.hermes/workspace/projects/SEOJing
+hermes-memory index SEOJing --limit 200
+hermes-memory search SEOJing SEOJing --limit 5
+hermes-memory pack SEOJing "SEOJing Hermes memory MVP smoke context" --limit 8
+hermes-memory validate-links
+hermes-memory stale-check SEOJing
+```
+
+<Paragraph>
+  실제 smoke 결과도 이 방향을 확인하는 정도로만 잡았습니다. SEOJing 파일 200개를
+  source로 등록하고, 486개 chunk를 만들고, source-linked fact와 event를 넣은 뒤,
+  context pack을 생성했습니다. 마지막 검증에서는 orphan fact와 orphan artifact가
+  0이어야 했고, stale source도 0이어야 했습니다.
+</Paragraph>
+
+```text
+projects=1
+sources=200
+chunks=486
+facts=1
+events=2
+context_packs=2
+artifacts=2
+embedding_jobs=0
+ollama=running
+
+orphan_facts=0
+orphan_artifacts=0
+stale_sources=0
+```
+
+<Paragraph>
+  이 숫자는 성능 자랑이 아닙니다. "기억이 출처 없이 떠다니지 않는다"는 최소
+  조건을 확인한 기록에 가깝습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>5. 반복 indexing에서 바로 깨진 지점</Subtitle>
+
+<Paragraph>
+  당연히 처음부터 깔끔하진 않았습니다. 반복 indexing을 하면서 chunk를 지우고
+  다시 만들려는 흐름이 있었는데, 이게 바로 문제였습니다. 이미 fact나 artifact가
+  chunk를 source로 참조하고 있으면 chunk 삭제는 provenance를 끊어버립니다.
+</Paragraph>
+
+<Paragraph>
+  이건 단순 버그가 아니라 architecture rule이 됐습니다. memory system은 재색인할
+  때 원본을 다시 읽을 수 있어야 하지만, 기존 fact의 출처를 조용히 날려버리면 안
+  됩니다. 그래서 chunk를 함부로 삭제하지 않고, FTS row를 재구성하고, stable
+  chunk는 update/insert로 갱신하는 쪽으로 기준을 잡았습니다.
+</Paragraph>
+
+<Paragraph>
+  돌이켜보면 이게 이번 작업에서 제일 중요한 배움이었습니다. memory는 잘 저장하는
+  것보다, 다시 만들 때 무엇을 보존할지 정하는 게 더 어렵습니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>6. 아직 하지 않은 것들도 있다</Subtitle>
+
+<Paragraph>
+  일부러 미룬 것들도 있습니다. vector search, AST symbol extraction, background
+  worker, 자동 persistent memory write, 자동 skill patch 같은 것들입니다. 다 할
+  수는 있지만, 지금 단계에서 붙이면 너무 빨리 복잡해집니다.
+</Paragraph>
+
+<Paragraph>
+  특히 local LLM은 worker로만 둬야 합니다. Ollama가 summary를 draft artifact로
+  만들 수는 있습니다. 하지만 LLM output이 곧 trusted fact가 되면 안 됩니다.
+  fact가 되려면 source chunk가 있어야 하고, review/freshness 상태가 있어야
+  합니다.
+</Paragraph>
+
+<Paragraph>
+  결국 이번 결정은 보수적인 결정입니다. 더 똑똑한 기억을 포기한 게 아니라,
+  나중에 똑똑해져도 덜 위험한 바닥을 먼저 만든 것입니다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>7. 정리</Subtitle>
+
+<Paragraph>
+  이번 memory architecture의 결론은 한 문장으로 줄일 수 있습니다. 오케이징의
+  기억은 요약이 아니라 증거에서 시작해야 합니다.
+</Paragraph>
+
+<Paragraph>
+  memory backend를 붙이는 건 여전히 후보입니다. vector search도 필요해질 수
+  있습니다. 다만 그 전에 source, chunk, fact, event, artifact, context pack이
+  어떤 권위 관계를 갖는지 정리돼 있어야 합니다. 그렇지 않으면 기억이 늘어나는 게
+  아니라 틀릴 가능성만 늘어납니다.
+</Paragraph>
+
+<Paragraph>
+  그래서 지금의 local-first memory는 최종 형태라기보다 바닥 공사에 가깝습니다.
+  화려하진 않지만, 오케이징이 앞으로 더 오래 작업하려면 이런 바닥이 먼저
+  필요했습니다.
+</Paragraph>
