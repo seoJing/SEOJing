@@ -1,0 +1,924 @@
+---
+title: "백엔드 스터디 Day 1: 스프링 프로젝트를 읽기 위한 최소 지도"
+date: 2026-05-31
+tags:
+  - 백엔드
+  - 스터디
+  - Spring Boot
+  - Java
+  - 서버
+  - AI 코드 읽기
+description: 직접 백엔드 코드를 다 작성하는 사람이 아니라, AI가 만든 Spring Boot 코드를 이해하고 수정 방향을 판단할 수 있는 사람을 목표로 시작합니다. Day 1에서는 서버가 하는 일, HTTP 요청의 흐름, 스프링 프로젝트 폴더 구조, Controller-Service-Repository의 역할을 아주 낮은 단계부터 잡습니다.
+---
+
+> 예상 읽기 시간: 20~30분
+
+## 오늘의 목표
+
+이번 백엔드 스터디는 "내가 백엔드 코드를 전부 손으로 작성할 수 있게 되기"가 목표가 아닙니다. 목표를 그렇게 잡으면 시작점이 너무 높아집니다. Java 문법, Spring 문법, JPA, DB, 인증, 배포, 테스트까지 한 번에 외워야 할 것처럼 느껴지고, 결국 AI에게 코드를 맡긴 뒤에도 무엇을 확인해야 하는지 감이 잘 안 옵니다.
+
+이 시리즈의 목표는 조금 다르게 잡겠습니다.
+
+> AI가 Spring Boot 백엔드 코드를 만들어 줬을 때, 그 코드가 프로젝트 안에서 어떤 위치에 있고, 어떤 요청을 처리하며, 어디까지가 위험한 변경인지 읽을 수 있는 수준.
+
+그러니까 당장 문법을 외우지 않아도 됩니다. 오늘은 외우기보다 지도를 만드는 날입니다. 지도를 먼저 만들면, 나중에 AI가 만든 코드가 길어져도 "이건 Controller구나", "이건 DB에 닿는 Repository구나", "이 DTO가 요청 바디 모양이구나", "여기서 예외 처리를 안 하면 프론트가 이상한 응답을 받겠구나" 정도를 구분할 수 있습니다.
+
+오늘 글을 읽고 나면 아래 질문에 답할 수 있어야 합니다.
+
+- 백엔드는 프론트엔드와 무엇을 주고받는가?
+- HTTP 요청은 Spring Boot 프로젝트 안에서 어떤 파일을 거쳐 가는가?
+- `controller`, `service`, `repository`, `entity`, `dto` 폴더는 왜 나뉘어 있는가?
+- AI가 만든 백엔드 코드를 볼 때 가장 먼저 어디를 봐야 하는가?
+- Java/Spring 문법을 완벽히 몰라도 흐름을 읽는 방법은 무엇인가?
+
+---
+
+## 1. 백엔드를 "화면 뒤의 코드"라고만 보면 부족하다
+
+처음에는 백엔드를 이렇게 이해하기 쉽습니다.
+
+- 프론트엔드: 사용자가 보는 화면
+- 백엔드: 화면 뒤에서 데이터를 주는 서버
+
+틀린 말은 아닙니다. 하지만 이 설명만으로는 실제 코드를 읽기가 어렵습니다. 백엔드는 단순히 데이터를 주는 곳이 아니라, 사용자의 요청을 받아서 "규칙에 맞게 판단하고, 필요한 데이터를 읽거나 바꾸고, 결과를 약속된 형태로 돌려주는 프로그램"입니다.
+
+예를 들어 블로그에 댓글을 작성하는 상황을 생각해 봅시다.
+
+사용자는 화면에서 댓글 내용을 입력하고 등록 버튼을 누릅니다. 프론트엔드는 서버에 이런 요청을 보냅니다.
+
+```text
+POST /api/posts/123/comments
+
+{
+  "content": "좋은 글입니다!"
+}
+```
+
+백엔드는 이 요청을 받고 곧바로 DB에 저장하지 않습니다. 중간에 여러 판단이 들어갑니다.
+
+- 로그인한 사용자인가?
+- 글 번호 123이 실제로 존재하는가?
+- 댓글 내용이 비어 있지는 않은가?
+- 너무 긴 댓글은 아닌가?
+- 차단된 사용자는 아닌가?
+- DB에 저장할 때 댓글과 사용자와 게시글의 관계를 어떻게 묶을 것인가?
+- 성공하면 프론트에 어떤 모양의 응답을 줄 것인가?
+
+이 판단들이 백엔드 코드 안에 들어갑니다. 그래서 백엔드를 읽는다는 것은 "서버가 데이터를 어디서 가져오는지"만 보는 게 아닙니다. 더 정확히는 "요청이 들어온 뒤 어떤 규칙으로 처리되는지"를 읽는 일입니다.
+
+이 관점이 중요합니다. AI가 코드를 작성해 줬을 때도 우리는 "돌아가냐?"만 보면 안 됩니다. 최소한 아래 정도는 확인해야 합니다.
+
+- 요청 주소가 프론트가 호출하는 주소와 맞는가?
+- 요청 데이터 이름이 프론트가 보내는 이름과 맞는가?
+- 로그인/권한 확인이 필요한 곳에 빠져 있지 않은가?
+- DB 저장 전에 검증을 하는가?
+- 실패했을 때 프론트가 이해할 수 있는 에러를 주는가?
+
+이제 이 판단들이 프로젝트 폴더 안에서 어디에 놓이는지 보겠습니다.
+
+---
+
+## 2. 백엔드는 결국 "요청과 응답"을 다룬다
+
+Spring Boot를 보기 전에 HTTP를 아주 짧게 잡고 가야 합니다. HTTP는 브라우저, 앱, 서버가 웹에서 대화할 때 쓰는 약속입니다. 프론트엔드는 HTTP 요청을 보내고, 백엔드는 HTTP 응답을 돌려줍니다.
+
+가장 기본적인 요청은 네 부분으로 볼 수 있습니다.
+
+```text
+GET /api/posts/123
+Authorization: Bearer 토큰값
+
+본문 없음
+```
+
+또는 댓글 작성처럼 본문이 있는 요청도 있습니다.
+
+```text
+POST /api/posts/123/comments
+Content-Type: application/json
+Authorization: Bearer ***
+
+{
+  "content": "좋은 글입니다!"
+}
+```
+
+여기서 우리가 읽어야 할 것은 네 가지입니다.
+
+### 2.1 Method: 어떤 행동인가
+
+HTTP Method는 요청의 의도를 나타냅니다.
+
+- `GET`: 조회한다
+- `POST`: 새로 만든다
+- `PUT`: 통째로 바꾼다
+- `PATCH`: 일부를 바꾼다
+- `DELETE`: 삭제한다
+
+현실 프로젝트에서는 완벽하게 지켜지지 않을 때도 있지만, AI가 만든 API를 리뷰할 때는 이 기준이 꽤 유용합니다.
+
+예를 들어 댓글 삭제 API가 `GET /comments/delete/1`처럼 만들어졌다면 의심해야 합니다. 조회처럼 보이는 요청이 실제로는 데이터를 삭제하고 있기 때문입니다. 이런 API는 브라우저 캐시, 크롤러, 링크 미리보기 같은 곳에서 의도치 않게 호출될 위험이 있습니다.
+
+### 2.2 Path: 어떤 자원을 대상으로 하는가
+
+`/api/posts/123/comments` 같은 주소를 path라고 부릅니다. path는 서버 안의 파일 경로가 아닙니다. 사용자가 다루고 싶은 자원을 표현하는 주소입니다.
+
+```text
+/api/posts             글 목록
+/api/posts/123         123번 글
+/api/posts/123/comments 123번 글의 댓글들
+```
+
+처음 백엔드를 볼 때는 이 주소와 Controller 파일을 연결해서 보는 습관이 중요합니다. "이 API가 어디에 있지?"라는 질문은 대부분 Controller에서 시작합니다.
+
+### 2.3 Headers: 요청의 부가 정보
+
+Header에는 인증 토큰, 콘텐츠 타입, 캐시 정책 같은 부가 정보가 들어갑니다. 초반에는 다 외울 필요 없습니다. 다만 `Authorization`과 `Content-Type`은 자주 보게 됩니다.
+
+```text
+Authorization: Bearer eyJhbGci...
+Content-Type: application/json
+```
+
+`Authorization`은 "이 사용자가 누구인지 확인하기 위한 정보"입니다. `Content-Type`은 "본문이 어떤 형식인지" 알려줍니다. JSON을 보내는데 `Content-Type`이 잘못되어 있으면 서버가 본문을 제대로 못 읽을 수 있습니다.
+
+### 2.4 Body: 실제로 보내는 데이터
+
+POST, PUT, PATCH 요청에서는 보통 body에 JSON 데이터를 담습니다.
+
+```json
+{
+  "title": "첫 번째 글",
+  "content": "본문입니다"
+}
+```
+
+Spring Boot에서는 이 body를 DTO라는 객체로 받는 경우가 많습니다. DTO는 뒤에서 다시 보겠습니다. 지금은 "프론트가 보내는 JSON 모양과 서버의 DTO 필드 이름이 맞아야 한다" 정도만 기억하면 됩니다.
+
+---
+
+## 3. Spring Boot 프로젝트를 처음 열었을 때 보는 것들
+
+Spring Boot 프로젝트를 처음 열면 폴더와 파일이 꽤 많습니다. 하지만 처음부터 모든 파일을 볼 필요는 없습니다. 보통은 아래 구조를 먼저 봅니다.
+
+```text
+backend-project/
+  build.gradle 또는 pom.xml
+  src/
+    main/
+      java/
+        com/example/project/
+          ProjectApplication.java
+          controller/
+          service/
+          repository/
+          entity/
+          dto/
+          config/
+          exception/
+      resources/
+        application.yml 또는 application.properties
+    test/
+      java/
+```
+
+프로젝트마다 폴더 이름은 조금씩 다릅니다. `domain`, `global`, `infra`, `presentation`, `application` 같은 이름을 쓰는 곳도 있습니다. 그래도 처음에는 아래 관점으로 읽으면 됩니다.
+
+| 위치                        | 먼저 이해할 역할                 |
+| --------------------------- | -------------------------------- |
+| `ProjectApplication.java`   | 서버 시작점                      |
+| `controller`                | HTTP 요청을 받는 입구            |
+| `service`                   | 비즈니스 규칙을 처리하는 중심    |
+| `repository`                | DB에 접근하는 통로               |
+| `entity`                    | DB 테이블과 가까운 객체          |
+| `dto`                       | 요청/응답 데이터 모양            |
+| `config`                    | 보안, CORS, Swagger 같은 설정    |
+| `exception`                 | 에러를 어떤 응답으로 바꿀지 처리 |
+| `resources/application.yml` | DB 주소, 서버 포트, 외부 설정    |
+
+이 중 Day 1에서 가장 중요한 것은 `controller`, `service`, `repository`, `entity`, `dto`입니다. 이 다섯 개가 보이면 대부분의 CRUD API 흐름을 따라갈 수 있습니다.
+
+---
+
+## 4. 서버 시작점: Application 파일
+
+Spring Boot 프로젝트에는 보통 이런 파일이 있습니다.
+
+```java
+@SpringBootApplication
+public class DemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+}
+```
+
+처음 보면 Java 문법도 낯설고 어노테이션도 낯섭니다. 하지만 Day 1에서는 이렇게만 이해해도 충분합니다.
+
+- `main`: Java 프로그램이 시작되는 함수
+- `SpringApplication.run`: Spring Boot 서버를 실행하는 명령
+- `@SpringBootApplication`: "이 클래스가 Spring Boot 앱의 시작점"이라는 표시
+
+여기서 중요한 것은 이 파일에 실제 API 로직을 넣지 않는다는 점입니다. 이 파일은 서버를 켜는 스위치에 가깝습니다. AI가 여기에 댓글 작성 로직이나 게시글 조회 로직을 넣었다면 구조가 이상한 것입니다.
+
+---
+
+## 5. Controller: HTTP 요청이 처음 도착하는 곳
+
+Controller는 백엔드의 입구입니다. 프론트가 `/api/posts/123`으로 요청을 보내면, Spring Boot는 그 주소와 맞는 Controller 메서드를 찾아 실행합니다.
+
+예시는 이렇게 생겼습니다.
+
+```java
+@RestController
+@RequestMapping("/api/posts")
+@RequiredArgsConstructor
+public class PostController {
+
+    private final PostService postService;
+
+    @GetMapping("/{postId}")
+    public PostResponse getPost(@PathVariable Long postId) {
+        return postService.getPost(postId);
+    }
+
+    @PostMapping
+    public PostResponse createPost(@RequestBody CreatePostRequest request) {
+        return postService.createPost(request);
+    }
+}
+```
+
+처음에는 문법을 세세하게 외우지 말고, 표시를 읽으면 됩니다.
+
+### 5.1 `@RestController`
+
+이 클래스가 HTTP 요청을 처리하는 Controller라는 뜻입니다. `Rest`라는 말은 보통 JSON 응답을 주는 API 서버라고 생각하면 됩니다.
+
+### 5.2 `@RequestMapping("/api/posts")`
+
+이 Controller의 기본 주소입니다. 클래스 위에 `/api/posts`가 있고, 메서드 위에 `/{postId}`가 있으면 합쳐서 `/api/posts/{postId}`가 됩니다.
+
+```java
+@RequestMapping("/api/posts")
+@GetMapping("/{postId}")
+```
+
+이 둘을 합치면 다음 주소입니다.
+
+```text
+GET /api/posts/123
+```
+
+### 5.3 `@GetMapping`, `@PostMapping`
+
+각 메서드가 어떤 HTTP Method와 주소를 처리하는지 나타냅니다.
+
+```java
+@GetMapping("/{postId}")
+```
+
+이건 조회 요청입니다.
+
+```java
+@PostMapping
+```
+
+이건 생성 요청입니다. 괄호 안에 주소가 없으면 클래스의 기본 주소인 `/api/posts`를 그대로 씁니다.
+
+### 5.4 `@PathVariable`
+
+주소 안에 들어간 값을 꺼냅니다.
+
+```text
+/api/posts/123
+```
+
+여기서 `123`을 `postId`라는 변수로 받습니다.
+
+```java
+public PostResponse getPost(@PathVariable Long postId)
+```
+
+### 5.5 `@RequestBody`
+
+요청 body의 JSON을 Java 객체로 바꿔 받습니다.
+
+프론트가 이렇게 보내면,
+
+```json
+{
+  "title": "첫 글",
+  "content": "본문"
+}
+```
+
+서버는 보통 이런 DTO로 받습니다.
+
+```java
+public PostResponse createPost(@RequestBody CreatePostRequest request)
+```
+
+여기서 `CreatePostRequest`가 요청 DTO입니다.
+
+### 5.6 Controller에서 보면 안 좋은 신호
+
+AI가 만든 코드를 볼 때 Controller가 너무 뚱뚱하면 의심해야 합니다. Controller는 입구입니다. 요청을 받고, 필요한 값을 꺼내고, Service를 호출하고, 응답을 돌려주는 정도가 보통입니다.
+
+아래 같은 일이 Controller에 많이 들어가 있으면 구조가 흐려집니다.
+
+- DB 조회 로직이 직접 들어감
+- 복잡한 계산과 규칙이 길게 들어감
+- Entity를 직접 조립하는 코드가 많음
+- 예외 처리 코드가 모든 메서드마다 반복됨
+- 인증/권한 판단이 중구난방으로 섞임
+
+물론 작은 프로젝트에서는 Controller가 조금 두꺼울 수 있습니다. 하지만 AI가 만든 코드가 길고 복잡한데 Controller 한 파일에 몰려 있다면, "Service로 분리해 줘"라고 지시할 수 있어야 합니다.
+
+---
+
+## 6. Service: 실제 규칙이 모이는 곳
+
+Service는 백엔드의 중심입니다. Controller가 요청을 받는 입구라면, Service는 "이 요청을 어떻게 처리할지" 결정하는 곳입니다.
+
+예를 들어 게시글 조회 Service는 이렇게 생길 수 있습니다.
+
+```java
+@Service
+@RequiredArgsConstructor
+public class PostService {
+
+    private final PostRepository postRepository;
+
+    public PostResponse getPost(Long postId) {
+        Post post = postRepository.findById(postId)
+            .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다."));
+
+        return PostResponse.from(post);
+    }
+}
+```
+
+여기서 읽을 것은 세 가지입니다.
+
+### 6.1 Repository를 통해 DB에서 찾는다
+
+```java
+postRepository.findById(postId)
+```
+
+Service는 DB에 직접 SQL을 쓰기보다 Repository를 호출하는 경우가 많습니다. Spring Data JPA를 쓰면 `findById`, `save`, `delete` 같은 기본 기능이 Repository에 준비되어 있습니다.
+
+### 6.2 없을 때 예외를 던진다
+
+```java
+.orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다."))
+```
+
+게시글이 없으면 그냥 `null`을 돌려주는 대신 예외를 던집니다. 이 예외는 나중에 `404 Not Found` 같은 HTTP 응답으로 바뀔 수 있습니다.
+
+AI 코드 리뷰에서 중요한 지점입니다. 없는 데이터를 조회했을 때 무조건 성공 응답을 주거나, `null`을 그대로 응답하면 프론트에서 처리가 애매해집니다.
+
+### 6.3 Entity를 Response DTO로 바꾼다
+
+```java
+return PostResponse.from(post);
+```
+
+DB와 가까운 Entity를 그대로 프론트에 내보내지 않고, 응답용 DTO로 바꿉니다. 이것도 중요한 습관입니다. Entity를 그대로 반환하면 DB 구조가 API 응답 구조로 새어 나가고, 나중에 필드 하나를 바꾸기 어려워집니다.
+
+### 6.4 Service에서 봐야 하는 질문
+
+AI가 Service 코드를 만들었을 때는 아래 질문을 던지면 됩니다.
+
+- 이 메서드는 하나의 역할을 하고 있는가?
+- 필요한 데이터가 없을 때 예외 처리를 하는가?
+- 사용자가 이 작업을 해도 되는지 권한을 확인하는가?
+- DB에 저장하기 전에 검증을 하는가?
+- Entity를 그대로 응답하지 않고 DTO로 바꾸는가?
+- 트랜잭션이 필요한 변경 작업에 `@Transactional`이 있는가?
+
+`@Transactional`은 오늘 깊게 들어가지 않겠습니다. 지금은 "DB 변경 작업을 하나의 묶음으로 안전하게 처리하게 해 주는 표시" 정도로만 기억하면 됩니다.
+
+---
+
+## 7. Repository: DB에 접근하는 통로
+
+Repository는 DB에 접근하는 인터페이스입니다. Spring Data JPA를 쓰는 프로젝트에서는 보통 이렇게 생겼습니다.
+
+```java
+public interface PostRepository extends JpaRepository<Post, Long> {
+    List<Post> findByAuthorId(Long authorId);
+}
+```
+
+처음 보면 구현 코드가 없어서 이상할 수 있습니다. 그런데 Spring Data JPA는 메서드 이름을 보고 쿼리를 만들어 주는 기능이 있습니다.
+
+```java
+findByAuthorId
+```
+
+이 이름은 대략 이렇게 읽을 수 있습니다.
+
+```text
+authorId가 특정 값인 Post들을 찾아라
+```
+
+물론 모든 쿼리를 메서드 이름만으로 해결하지는 않습니다. 복잡한 경우에는 `@Query`를 쓰거나 QueryDSL 같은 도구를 쓰기도 합니다. 하지만 초반에는 `Repository = DB 접근 통로`라고 이해하면 충분합니다.
+
+### 7.1 Repository에서 조심할 점
+
+Repository에 비즈니스 규칙이 많이 들어가면 읽기 어려워집니다. Repository는 "어떻게 찾을 것인가"에 가깝고, Service는 "찾은 뒤 어떤 판단을 할 것인가"에 가깝습니다.
+
+예를 들어 "사용자가 이 게시글을 삭제할 권한이 있는가"는 Repository보다 Service 쪽 판단에 가깝습니다. Repository는 "게시글 ID로 게시글을 찾는다", "작성자 ID로 글 목록을 찾는다" 정도를 담당합니다.
+
+---
+
+## 8. Entity: DB 테이블과 가까운 객체
+
+Entity는 DB 테이블과 연결되는 객체입니다.
+
+```java
+@Entity
+public class Post {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String title;
+
+    private String content;
+
+    private Long authorId;
+}
+```
+
+이 코드를 완벽히 외울 필요는 없습니다. 대신 표시를 읽으면 됩니다.
+
+- `@Entity`: DB 테이블과 연결되는 객체
+- `@Id`: 기본키
+- `@GeneratedValue`: ID를 자동 생성
+- `title`, `content`, `authorId`: 테이블의 컬럼에 가까운 필드
+
+Entity는 프로젝트의 핵심 데이터 구조입니다. 그래서 AI가 Entity를 바꿨다면 더 조심해야 합니다. Entity 변경은 DB 구조 변경과 연결될 수 있기 때문입니다.
+
+### 8.1 Entity를 API 응답으로 그대로 내보내면 왜 위험한가
+
+처음에는 Entity를 그대로 반환하는 코드가 간단해 보입니다.
+
+```java
+@GetMapping("/{postId}")
+public Post getPost(@PathVariable Long postId) {
+    return postService.getPost(postId);
+}
+```
+
+하지만 이 방식은 문제가 생기기 쉽습니다.
+
+- DB 내부 필드가 그대로 노출될 수 있음
+- 비밀번호, 토큰, 내부 상태 같은 민감 정보가 실수로 응답될 수 있음
+- Entity 관계가 복잡하면 무한 순환 참조가 생길 수 있음
+- API 응답 모양이 DB 설계에 묶임
+
+그래서 보통은 Entity와 DTO를 분리합니다.
+
+---
+
+## 9. DTO: 프론트와 주고받는 데이터 모양
+
+DTO는 Data Transfer Object의 줄임말입니다. 이름은 어려운데, 역할은 단순합니다.
+
+> 요청이나 응답으로 주고받을 데이터의 모양을 정한 객체.
+
+예를 들어 게시글 작성 요청 DTO는 이렇게 생길 수 있습니다.
+
+```java
+public record CreatePostRequest(
+    String title,
+    String content
+) {
+}
+```
+
+응답 DTO는 이렇게 만들 수 있습니다.
+
+```java
+public record PostResponse(
+    Long id,
+    String title,
+    String content,
+    String authorName
+) {
+    public static PostResponse from(Post post) {
+        return new PostResponse(
+            post.getId(),
+            post.getTitle(),
+            post.getContent(),
+            "작성자 이름"
+        );
+    }
+}
+```
+
+여기서 `record`는 Java에서 간단한 데이터 객체를 만들 때 쓰는 문법입니다. 처음에는 "필드만 가진 가벼운 객체" 정도로 보면 됩니다.
+
+### 9.1 Request DTO와 Response DTO를 구분하자
+
+요청 DTO와 응답 DTO는 다를 수 있습니다.
+
+게시글 작성 요청에는 `title`, `content`만 필요할 수 있습니다.
+
+```json
+{
+  "title": "제목",
+  "content": "본문"
+}
+```
+
+하지만 응답에는 서버가 만든 `id`, 작성 시간, 작성자 이름이 포함될 수 있습니다.
+
+```json
+{
+  "id": 123,
+  "title": "제목",
+  "content": "본문",
+  "authorName": "진규",
+  "createdAt": "2026-05-31T11:00:00"
+}
+```
+
+그래서 `CreatePostRequest`와 `PostResponse`를 분리하는 것이 자연스럽습니다.
+
+### 9.2 AI 코드에서 DTO를 확인하는 방법
+
+AI가 백엔드 코드를 만들었을 때 DTO는 프론트와의 계약입니다. 반드시 확인해야 합니다.
+
+- 프론트가 보내는 JSON 필드 이름과 Request DTO 필드 이름이 같은가?
+- 프론트가 기대하는 응답 필드가 Response DTO에 있는가?
+- Entity에 있는 민감 정보가 Response DTO로 새어 나가지 않는가?
+- nullable한 값, 빈 배열, 기본값 처리가 맞는가?
+
+프론트와 백엔드가 서로 "같은 이름"을 쓰지 않으면 코드가 각각 맞아 보여도 연결하면 깨집니다. 예를 들어 프론트가 `postId`를 기대하는데 백엔드가 `id`만 주면 UI에서 값이 비어 보일 수 있습니다.
+
+---
+
+## 10. 요청 하나를 끝까지 따라가 보기
+
+이제 전체 흐름을 하나로 묶어 봅시다. 프론트가 게시글 상세 조회 요청을 보냅니다.
+
+```text
+GET /api/posts/123
+```
+
+Spring Boot 프로젝트 안에서는 보통 이런 흐름으로 움직입니다.
+
+```text
+프론트엔드
+  ↓ HTTP 요청
+PostController
+  ↓ postService.getPost(123)
+PostService
+  ↓ postRepository.findById(123)
+PostRepository
+  ↓ DB 조회
+Database
+  ↑ Post Entity
+PostService
+  ↓ PostResponse DTO로 변환
+PostController
+  ↓ JSON 응답
+프론트엔드
+```
+
+코드로 보면 이렇게 연결됩니다.
+
+```java
+@RestController
+@RequestMapping("/api/posts")
+@RequiredArgsConstructor
+public class PostController {
+    private final PostService postService;
+
+    @GetMapping("/{postId}")
+    public PostResponse getPost(@PathVariable Long postId) {
+        return postService.getPost(postId);
+    }
+}
+```
+
+```java
+@Service
+@RequiredArgsConstructor
+public class PostService {
+    private final PostRepository postRepository;
+
+    public PostResponse getPost(Long postId) {
+        Post post = postRepository.findById(postId)
+            .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다."));
+
+        return PostResponse.from(post);
+    }
+}
+```
+
+```java
+public interface PostRepository extends JpaRepository<Post, Long> {
+}
+```
+
+```java
+@Entity
+public class Post {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String title;
+    private String content;
+}
+```
+
+```java
+public record PostResponse(
+    Long id,
+    String title,
+    String content
+) {
+    public static PostResponse from(Post post) {
+        return new PostResponse(post.getId(), post.getTitle(), post.getContent());
+    }
+}
+```
+
+이 정도 흐름만 읽을 수 있어도 AI가 만든 코드에서 큰 그림을 놓치지 않습니다.
+
+---
+
+## 11. 문법을 외우지 않고 읽는 요령
+
+Spring 코드는 어노테이션이 많습니다. `@RestController`, `@Service`, `@Repository`, `@Entity`, `@Transactional`, `@RequestBody`, `@PathVariable`처럼 골뱅이가 붙은 표시가 계속 나옵니다.
+
+처음에는 이걸 문법으로 외우려고 하면 피곤합니다. 대신 "표지판"으로 보면 됩니다.
+
+| 어노테이션        | 처음 읽을 때 의미                                            |
+| ----------------- | ------------------------------------------------------------ |
+| `@RestController` | HTTP API 입구                                                |
+| `@RequestMapping` | 기본 주소                                                    |
+| `@GetMapping`     | GET 요청 처리                                                |
+| `@PostMapping`    | POST 요청 처리                                               |
+| `@RequestBody`    | JSON body를 객체로 받음                                      |
+| `@PathVariable`   | URL 안의 값을 변수로 받음                                    |
+| `@Service`        | 핵심 처리 로직                                               |
+| `@Repository`     | DB 접근 담당이라는 표시. Spring Data JPA에서는 생략되기도 함 |
+| `@Entity`         | DB 테이블과 연결                                             |
+| `@Transactional`  | DB 작업을 하나의 안전한 묶음으로 처리                        |
+
+읽는 순서는 보통 이렇습니다.
+
+1. Controller에서 API 주소를 찾는다.
+2. Controller가 호출하는 Service 메서드를 따라간다.
+3. Service가 어떤 Repository를 쓰는지 본다.
+4. Repository가 어떤 Entity를 다루는지 본다.
+5. Request DTO와 Response DTO의 필드 이름을 확인한다.
+6. 예외 처리와 권한 체크가 빠져 있지 않은지 본다.
+
+이 순서가 잡히면 Java 문법을 덜 알아도 흐름을 따라갈 수 있습니다.
+
+---
+
+## 12. AI에게 백엔드 작업을 맡길 때 더 좋은 지시 방식
+
+AI에게 "게시글 API 만들어 줘"라고만 하면 결과가 너무 넓게 나올 수 있습니다. Controller, Service, Repository, Entity, DTO, 예외 처리, 테스트, 문서까지 뒤섞여 나올 수 있고, 어떤 판단을 했는지 확인하기 어렵습니다.
+
+더 좋은 지시는 흐름과 검증 포인트를 같이 주는 것입니다.
+
+예를 들어 이렇게 요청할 수 있습니다.
+
+```text
+Spring Boot로 게시글 상세 조회 API를 추가해 줘.
+
+요구사항:
+- GET /api/posts/{postId}
+- Controller, Service, Repository, Response DTO를 분리해 줘.
+- 게시글이 없으면 404를 반환하게 해 줘.
+- Entity를 그대로 반환하지 말고 PostResponse로 변환해 줘.
+- 프론트에서 필요한 필드는 id, title, content, authorName, createdAt이야.
+- 변경 후 테스트 또는 최소한 빌드와 lint를 실행해 줘.
+```
+
+이렇게 지시하면 AI가 만든 코드도 리뷰하기 쉬워집니다. 파일이 역할별로 나뉘고, 응답 모양이 명확해지며, 실패 케이스도 빠뜨릴 가능성이 줄어듭니다.
+
+반대로 아래처럼 너무 추상적인 지시는 위험합니다.
+
+```text
+게시글 기능 전체 만들어 줘.
+```
+
+이러면 AI가 임의로 DB 구조, API 주소, 인증 방식, 응답 형식을 정해 버릴 수 있습니다. 나중에 프론트와 연결할 때 맞지 않는 부분이 많아집니다.
+
+---
+
+## 13. 오늘 기준으로 외우지 않아도 되는 것들
+
+초반에는 일부러 범위를 줄여야 합니다. 아래는 오늘 몰라도 됩니다.
+
+- JPA의 영속성 컨텍스트
+- Lazy Loading과 N+1 문제
+- Spring Security의 필터 체인
+- JWT 서명 검증 내부 구조
+- Gradle 멀티 모듈 설정
+- Docker 배포
+- QueryDSL
+- Testcontainers
+- Hexagonal Architecture
+
+이런 것들은 중요하지 않다는 뜻이 아닙니다. 다만 Day 1에서 알 필요가 없다는 뜻입니다. 지금은 "요청이 Controller로 들어와서 Service를 거쳐 Repository와 DB에 닿고, DTO로 응답된다"는 지도만 있으면 됩니다.
+
+백엔드는 깊게 들어갈수록 어려운 개념이 많습니다. 그런데 지도가 없는 상태에서 깊은 개념부터 보면 전부 암기처럼 느껴집니다. 반대로 요청 흐름이 잡히면 나중에 어려운 개념이 나와도 "아, 이건 Service와 DB 사이에서 생기는 문제구나", "이건 Controller 앞단의 보안 문제구나"처럼 위치를 잡을 수 있습니다.
+
+---
+
+## 14. AI가 만든 코드에서 Day 1 수준으로 체크할 것
+
+오늘 배운 내용만으로도 체크리스트를 만들 수 있습니다.
+
+### 14.1 API 주소와 Method
+
+- 조회인데 `GET`인가?
+- 생성인데 `POST`인가?
+- 수정인데 `PUT` 또는 `PATCH`인가?
+- 삭제인데 `DELETE`인가?
+- 프론트가 호출하는 주소와 Controller 주소가 같은가?
+
+### 14.2 Controller
+
+- Controller가 요청을 받는 입구 역할만 하는가?
+- 너무 많은 로직이 Controller에 들어가 있지 않은가?
+- `@RequestBody`, `@PathVariable`이 필요한 위치에 있는가?
+- 응답 DTO를 반환하는가?
+
+### 14.3 Service
+
+- 핵심 규칙이 Service에 있는가?
+- 없는 데이터에 대한 예외 처리가 있는가?
+- 권한 확인이 필요한 기능에서 사용자 검증을 하는가?
+- DB 변경 작업이 안전하게 묶여 있는가?
+
+### 14.4 Repository
+
+- DB 조회/저장 역할에 집중하는가?
+- 메서드 이름이 실제 의도와 맞는가?
+- 너무 복잡한 규칙이 Repository에 들어가 있지 않은가?
+
+### 14.5 Entity와 DTO
+
+- Entity를 그대로 API 응답으로 노출하지 않는가?
+- Request DTO 필드 이름이 프론트 요청 JSON과 맞는가?
+- Response DTO 필드 이름이 프론트 기대값과 맞는가?
+- 민감 정보가 응답에 포함되지 않는가?
+
+이 체크리스트는 아직 낮은 단계입니다. 하지만 실제 협업에서는 이 낮은 단계의 실수가 정말 자주 납니다. 특히 AI가 빠르게 코드를 만들 때는 구조가 그럴듯해 보여도 DTO 이름 하나, API path 하나, 예외 응답 하나가 틀어져서 프론트 연결이 깨질 수 있습니다.
+
+---
+
+## 15. 짧은 실전 읽기 예시
+
+아래 코드를 처음 본다고 가정해 봅시다.
+
+```java
+@RestController
+@RequestMapping("/api/todos")
+@RequiredArgsConstructor
+public class TodoController {
+
+    private final TodoService todoService;
+
+    @PostMapping
+    public TodoResponse create(@RequestBody CreateTodoRequest request) {
+        return todoService.create(request);
+    }
+}
+```
+
+Day 1 수준에서는 이렇게 읽으면 됩니다.
+
+```text
+POST /api/todos 요청을 받는다.
+요청 body는 CreateTodoRequest 모양이다.
+실제 생성 처리는 TodoService의 create 메서드로 넘긴다.
+응답은 TodoResponse 모양이다.
+```
+
+이제 Service를 봅니다.
+
+```java
+@Service
+@RequiredArgsConstructor
+public class TodoService {
+
+    private final TodoRepository todoRepository;
+
+    @Transactional
+    public TodoResponse create(CreateTodoRequest request) {
+        Todo todo = new Todo(request.title(), false);
+        Todo saved = todoRepository.save(todo);
+        return TodoResponse.from(saved);
+    }
+}
+```
+
+이렇게 읽습니다.
+
+```text
+CreateTodoRequest에서 title을 꺼내 Todo Entity를 만든다.
+완료 여부는 false로 시작한다.
+Repository를 통해 DB에 저장한다.
+저장된 Entity를 TodoResponse로 변환해서 반환한다.
+DB 변경 작업이라 @Transactional이 붙어 있다.
+```
+
+이제 DTO를 봅니다.
+
+```java
+public record CreateTodoRequest(String title) {
+}
+```
+
+```java
+public record TodoResponse(Long id, String title, boolean completed) {
+    public static TodoResponse from(Todo todo) {
+        return new TodoResponse(todo.getId(), todo.getTitle(), todo.isCompleted());
+    }
+}
+```
+
+이렇게 읽습니다.
+
+```text
+프론트는 title만 보내면 된다.
+서버 응답에는 id, title, completed가 포함된다.
+```
+
+마지막으로 Entity를 봅니다.
+
+```java
+@Entity
+public class Todo {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String title;
+    private boolean completed;
+}
+```
+
+이렇게 읽습니다.
+
+```text
+DB에는 Todo가 저장된다.
+각 Todo는 id, title, completed를 가진다.
+```
+
+이 정도면 "코드를 작성할 수 있다"까지는 아니어도, AI가 생성한 코드의 큰 흐름은 이해할 수 있습니다.
+
+---
+
+## 16. 오늘의 핵심 문장
+
+오늘은 용어가 많았습니다. 그래도 핵심은 하나입니다.
+
+> Spring Boot 백엔드는 HTTP 요청을 Controller에서 받고, Service에서 규칙을 처리하고, Repository로 DB에 접근하고, Entity와 DTO를 통해 데이터 구조를 나눈다.
+
+이 문장을 머릿속에 두고 코드를 보면 됩니다.
+
+처음에는 Java 문법보다 파일의 역할을 먼저 보세요. `public`, `private`, `final`, 생성자, record, Optional 같은 문법이 낯설어도 괜찮습니다. 지금은 "이 파일은 입구인가, 규칙인가, DB 통로인가, DB 모양인가, 응답 모양인가"를 구분하는 것이 더 중요합니다.
+
+다음 Day에서는 실제 Spring Boot 프로젝트 폴더를 기준으로, 파일 하나를 열었을 때 어떤 순서로 읽으면 되는지 더 구체적으로 다루겠습니다. 특히 `application.yml`, Gradle, 패키지명, 실행 명령, 그리고 Controller 메서드가 실제 URL로 연결되는 방식을 조금 더 손에 잡히게 보겠습니다.
+
+---
+
+## Day 1 복습 질문
+
+아래 질문에 답해 보세요. 답을 외우기보다, 글 안에서 다시 찾아도 괜찮습니다.
+
+1. Controller는 백엔드 흐름에서 어떤 역할을 하나요?
+2. Service에 있어야 할 로직이 Controller에 너무 많이 들어가면 어떤 문제가 생길까요?
+3. Repository는 무엇에 접근하는 통로인가요?
+4. Entity를 그대로 API 응답으로 내보내면 어떤 위험이 있나요?
+5. Request DTO와 Response DTO는 왜 다를 수 있나요?
+6. 프론트가 `POST /api/todos`로 `{ "title": "공부" }`를 보낸다면, 백엔드에서는 어떤 파일들을 차례로 확인하면 좋을까요?
+7. AI에게 백엔드 작업을 맡길 때 "게시글 기능 만들어 줘"보다 더 좋은 지시에는 어떤 정보가 들어가야 할까요?
+
+---
+
+## 다음에 이어서 볼 것
+
+Day 2에서는 "Spring Boot 프로젝트를 처음 클론했을 때 어디부터 열어야 하는가"를 다루겠습니다. 목표는 여전히 코드를 외워 쓰는 것이 아니라, AI가 만든 변경사항을 안전하게 읽고 판단하는 것입니다.
+
+다음 글에서 볼 내용은 아래와 같습니다.
+
+- `build.gradle` 또는 `pom.xml`에서 프로젝트 성격 읽기
+- `application.yml`에서 서버 포트, DB 설정, 환경변수 힌트 찾기
+- 패키지 구조가 기능별인지 계층별인지 구분하기
+- Controller 주소를 실제 API URL로 조립하기
+- 로컬에서 서버 실행과 빌드 오류를 읽는 최소 방법
