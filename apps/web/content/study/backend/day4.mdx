@@ -1,0 +1,883 @@
+---
+title: "백엔드 스터디 Day 4: Entity와 Repository로 DB 흐름 읽기"
+date: 2026-06-03
+tags:
+  - 백엔드
+  - 스터디
+  - Spring Boot
+  - Java
+  - API
+  - JPA
+  - 데이터베이스
+  - AI 코드 읽기
+description: AI가 만든 Spring Boot 백엔드 코드를 검토할 때 DB 저장 흐름은 가장 자주 위험해지는 지점입니다. Day 4에서는 Entity, Repository, JPA, ID, 관계, 조회/저장 메서드를 낮은 단계부터 읽고 프론트엔드 기능과 연결해 점검하는 방법을 다룹니다.
+---
+
+> 예상 읽기 시간: 20~30분
+
+## 오늘의 목표
+
+Day 1에서는 Spring Boot 프로젝트의 큰 지도를 만들었습니다. Day 2에서는 프론트엔드와 백엔드 사이의 API 계약을 읽었고, Day 3에서는 잘못된 입력과 실패 상황을 어떻게 검증하고 에러 응답으로 돌려주는지 봤습니다.
+
+오늘은 백엔드가 실제 데이터를 어디에 저장하고, 다시 어떻게 꺼내 오는지 봅니다.
+
+프론트엔드에서 글 작성 버튼을 누르면 화면에는 단순히 "등록 완료"가 보일 수 있습니다. 하지만 백엔드 안쪽에서는 보통 이런 일이 일어납니다.
+
+```text
+요청 DTO 받기
+→ 검증하기
+→ 현재 사용자/권한 확인하기
+→ Entity 만들기
+→ Repository로 DB에 저장하기
+→ 저장된 결과를 응답 DTO로 바꾸기
+→ 프론트엔드에 JSON으로 돌려주기
+```
+
+이 중에서 오늘 집중할 부분은 `Entity`와 `Repository`입니다.
+
+> AI가 만든 백엔드가 데이터를 올바른 테이블 구조로 저장하고, 필요한 조건으로 다시 조회하는가?
+
+오늘 글을 읽고 나면 아래 질문에 답할 수 있어야 합니다.
+
+- `Entity`는 DTO와 무엇이 다른가?
+- `@Entity`, `@Id`, `@GeneratedValue`, `@Column`은 무엇을 표현하는가?
+- `Repository`는 왜 직접 SQL을 쓰지 않아도 DB와 대화할 수 있는가?
+- `findById`, `save`, `delete`, `findAll`, `findBy...` 메서드는 어떻게 읽는가?
+- AI가 만든 DB 코드에서 어떤 위험 신호를 봐야 하는가?
+- 프론트엔드 버그처럼 보이는 문제가 사실 DB 조회 조건 문제일 수 있는 이유는 무엇인가?
+
+---
+
+## 1. DB는 "저장소"지만, 백엔드 코드에서는 더 구체적으로 읽어야 한다
+
+처음에는 DB를 단순히 "데이터를 저장하는 곳"이라고 이해해도 됩니다. 하지만 AI가 만든 백엔드 코드를 리뷰할 때는 조금 더 구체적으로 봐야 합니다.
+
+예를 들어 게시글 기능이 있다고 해 봅시다.
+
+사용자가 입력한 데이터는 이런 모양일 수 있습니다.
+
+```json
+{
+  "title": "오늘 배운 내용",
+  "content": "Controller와 Service 흐름을 봤다.",
+  "categoryId": 3
+}
+```
+
+이 요청은 그대로 DB에 저장되지 않습니다. 백엔드는 요청 DTO를 받고, 서비스 규칙을 확인한 뒤, DB에 저장할 수 있는 객체로 바꿉니다. 그 객체가 보통 `Entity`입니다.
+
+```text
+CreatePostRequest DTO
+→ Post Entity
+→ posts 테이블의 한 행(row)
+```
+
+여기서 중요한 구분이 있습니다.
+
+- DTO: API 입출력용 데이터 모양
+- Entity: DB에 저장되는 핵심 데이터 모양
+- Table: DB 안에서 실제로 저장되는 구조
+
+DTO와 Entity를 헷갈리면 AI가 만든 코드를 볼 때 위험합니다. 요청 DTO는 사용자가 보낸 값만 담을 수 있지만, Entity는 DB의 저장 구조와 서비스 내부 규칙을 더 많이 담습니다.
+
+예를 들어 게시글 Entity에는 요청에는 없던 값이 들어갈 수 있습니다.
+
+- `id`: DB가 붙여 주는 고유 번호
+- `author`: 작성자 사용자
+- `createdAt`: 생성 시각
+- `updatedAt`: 수정 시각
+- `deleted`: 삭제 여부
+- `viewCount`: 조회 수
+
+프론트엔드는 이런 값을 직접 다 보내지 않습니다. 백엔드가 현재 로그인 사용자, 서버 시간, 기본값, DB 규칙을 이용해서 채웁니다.
+
+AI가 만든 코드를 볼 때 첫 번째 질문은 이것입니다.
+
+> 사용자가 보낸 값과 서버가 책임져야 하는 값이 제대로 나뉘어 있는가?
+
+예를 들어 게시글 작성 요청 DTO에 `authorId`, `createdAt`, `viewCount` 같은 값을 프론트엔드가 마음대로 보내게 되어 있다면 의심해야 합니다. 작성자는 보통 로그인 세션이나 토큰에서 결정해야 하고, 생성 시각은 서버가 정해야 하며, 조회 수는 사용자가 조작하면 안 됩니다.
+
+---
+
+## 2. Entity는 DB 테이블과 가까운 객체다
+
+Spring Boot에서 JPA를 쓰는 프로젝트라면 Entity는 보통 이렇게 생겼습니다.
+
+```java
+@Entity
+@Table(name = "posts")
+public class Post {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 100)
+    private String title;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String content;
+
+    private LocalDateTime createdAt;
+
+    protected Post() {
+    }
+
+    public Post(String title, String content) {
+        this.title = title;
+        this.content = content;
+        this.createdAt = LocalDateTime.now();
+    }
+}
+```
+
+처음 보면 어노테이션이 많아서 어렵게 느껴질 수 있습니다. 하지만 읽는 관점에서는 아래처럼 해석하면 됩니다.
+
+```text
+@Entity
+→ 이 클래스는 DB에 저장되는 대상이다.
+
+@Table(name = "posts")
+→ DB에서는 posts 테이블과 연결된다.
+
+@Id
+→ 이 필드는 각 행을 구분하는 고유 ID다.
+
+@GeneratedValue
+→ ID는 직접 입력하지 않고 DB/시스템이 자동으로 만든다.
+
+@Column(nullable = false, length = 100)
+→ 이 컬럼은 비어 있으면 안 되고 길이 제한이 있다.
+```
+
+문법을 외우는 것보다 중요한 것은 책임을 읽는 것입니다.
+
+`Post` Entity는 게시글이라는 데이터의 장기 저장 모양입니다. API 요청 한 번을 처리하기 위해 잠깐 생기는 DTO보다 더 오래 살아남습니다. 그래서 Entity에는 서비스의 중요한 규칙이 반영됩니다.
+
+AI가 만든 Entity를 볼 때는 아래를 확인하면 좋습니다.
+
+- 이 Entity가 어떤 테이블에 저장되는지 알 수 있는가?
+- `id`가 있는가?
+- 필수 값이 `nullable = false` 또는 생성자/비즈니스 로직으로 보호되는가?
+- 문자열 길이나 숫자 범위가 너무 느슨하거나 너무 빡빡하지 않은가?
+- 프론트엔드가 조작하면 안 되는 값이 요청 DTO에서 그대로 들어오고 있지 않은가?
+- 생성자나 정적 팩토리 메서드가 기본값을 안전하게 채우는가?
+
+---
+
+## 3. DTO와 Entity를 분리하는 이유
+
+처음에는 "그냥 Entity를 API 응답으로 보내면 안 되나?"라고 생각할 수 있습니다. 작은 예제에서는 그렇게 해도 돌아갑니다. 하지만 실제 서비스에서는 위험해집니다.
+
+예를 들어 User Entity가 있다고 해 봅시다.
+
+```java
+@Entity
+public class User {
+    @Id
+    private Long id;
+
+    private String email;
+    private String passwordHash;
+    private String nickname;
+    private String role;
+}
+```
+
+이 Entity를 그대로 응답으로 보내면 `passwordHash` 같은 내부 값이 노출될 수 있습니다. 해시라고 해도 외부로 나가면 안 되는 값입니다.
+
+그래서 응답 DTO를 따로 만듭니다.
+
+```java
+public record UserProfileResponse(
+    Long id,
+    String email,
+    String nickname
+) {
+}
+```
+
+읽을 때는 이렇게 보면 됩니다.
+
+```text
+Entity는 내부 저장 구조다.
+Response DTO는 외부에 보여 줄 모양이다.
+둘은 비슷해 보여도 책임이 다르다.
+```
+
+AI가 만든 코드에서 Entity를 Controller가 바로 반환하고 있다면 항상 의심해야 합니다.
+
+```java
+@GetMapping("/users/{id}")
+public User getUser(@PathVariable Long id) {
+    return userRepository.findById(id).orElseThrow();
+}
+```
+
+이 코드는 간단해 보이지만 위험할 수 있습니다.
+
+- 내부 필드가 그대로 노출될 수 있습니다.
+- Entity 관계가 JSON 변환 중 무한 반복될 수 있습니다.
+- DB 구조 변경이 API 응답 변경으로 바로 이어집니다.
+- 프론트엔드가 필요하지 않은 데이터까지 받습니다.
+
+더 안전한 방향은 보통 이렇습니다.
+
+```java
+@GetMapping("/users/{id}")
+public UserProfileResponse getUser(@PathVariable Long id) {
+    User user = userService.getUser(id);
+    return new UserProfileResponse(user.getId(), user.getEmail(), user.getNickname());
+}
+```
+
+완벽한 정답 형태를 외울 필요는 없습니다. 리뷰할 때는 이렇게 질문하면 됩니다.
+
+> API로 나가도 되는 데이터만 DTO로 골라서 보내고 있는가?
+
+---
+
+## 4. Repository는 DB와 대화하는 문이다
+
+`Repository`는 백엔드 코드가 DB와 대화하는 통로입니다.
+
+JPA를 쓰는 Spring Boot 프로젝트에서는 보통 이런 인터페이스가 있습니다.
+
+```java
+public interface PostRepository extends JpaRepository<Post, Long> {
+    List<Post> findByAuthorId(Long authorId);
+
+    List<Post> findByTitleContaining(String keyword);
+}
+```
+
+처음 보면 구현 코드가 없어서 이상하게 느껴질 수 있습니다. `findByAuthorId`의 본문이 없는데 어떻게 동작할까요?
+
+Spring Data JPA는 메서드 이름을 읽어서 쿼리를 만들어 줍니다.
+
+```text
+findByAuthorId(Long authorId)
+→ authorId가 같은 Post 목록을 찾아라.
+
+findByTitleContaining(String keyword)
+→ title에 keyword가 포함된 Post 목록을 찾아라.
+```
+
+그리고 `JpaRepository<Post, Long>`을 상속하면 기본 메서드도 생깁니다.
+
+- `save(entity)`: 저장하거나 수정한다
+- `findById(id)`: ID로 한 개를 찾는다
+- `findAll()`: 전체를 찾는다
+- `delete(entity)`: 삭제한다
+- `existsById(id)`: 존재 여부를 확인한다
+- `count()`: 개수를 센다
+
+AI가 만든 코드를 볼 때 Repository는 아주 중요한 단서입니다. 서비스가 어떤 조건으로 DB를 찾는지 거의 여기서 드러납니다.
+
+예를 들어 게시글 상세 조회가 이렇게 되어 있다고 해 봅시다.
+
+```java
+Post post = postRepository.findById(postId)
+    .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다."));
+```
+
+이 코드는 `postId`만 맞으면 게시글을 찾습니다. 공개 게시글이라면 괜찮을 수 있습니다. 하지만 팀/방/프로젝트 안에 있는 게시글이라면 부족할 수 있습니다.
+
+```text
+postId만 맞으면 다른 방의 글도 볼 수 있지 않은가?
+현재 사용자가 접근할 수 있는 글인지 확인하는가?
+```
+
+그런 경우에는 조회 조건에 소유 범위가 들어가야 합니다.
+
+```java
+Optional<Post> findByIdAndRoomId(Long postId, Long roomId);
+```
+
+또는 Service에서 조회 후 권한을 확인해야 합니다.
+
+AI가 만든 코드에서 `findById`만 반복적으로 보인다면 무조건 틀린 것은 아닙니다. 하지만 "이 데이터가 누구의 것인지"가 중요한 기능에서는 반드시 한 번 더 봐야 합니다.
+
+---
+
+## 5. `save`는 단순 저장이 아니라 상태 변경이다
+
+Repository에서 가장 자주 보이는 메서드는 `save`입니다.
+
+```java
+Post post = new Post(request.title(), request.content());
+Post savedPost = postRepository.save(post);
+```
+
+읽을 때는 이렇게 보면 됩니다.
+
+```text
+요청 DTO로부터 새 Entity를 만든다.
+Repository가 DB에 저장한다.
+저장된 Entity에는 id 같은 DB 생성 값이 붙을 수 있다.
+```
+
+주의할 점은 `save`가 새로 만들기만 하는 메서드가 아니라는 것입니다. 이미 존재하는 Entity를 수정할 때도 쓰일 수 있습니다.
+
+```java
+Post post = postRepository.findById(id).orElseThrow();
+post.changeTitle(request.title());
+postRepository.save(post);
+```
+
+JPA에서는 트랜잭션 안에서 Entity를 바꾸면 `save`를 명시하지 않아도 변경이 반영되는 경우도 있습니다. 이 부분은 나중에 트랜잭션을 다룰 때 다시 보겠습니다.
+
+오늘 단계에서 중요한 것은 이것입니다.
+
+> 저장 전후로 서비스 규칙이 적용되는가?
+
+게시글 작성이라면 아래를 봅니다.
+
+- 제목/본문 검증이 이미 되었는가?
+- 작성자가 현재 로그인 사용자로 설정되는가?
+- 카테고리나 방이 실제로 존재하는지 확인하는가?
+- 사용자가 그 카테고리/방에 작성할 권한이 있는가?
+- 생성 시각과 기본 상태가 서버에서 채워지는가?
+- 저장 후 응답 DTO가 프론트엔드가 기대하는 모양인가?
+
+AI가 만든 코드는 종종 "돌아가는 예제"를 빠르게 만듭니다. 하지만 실제 서비스에서는 저장 전 규칙이 빠지면 데이터가 쌓인 뒤에 고치기 어려워집니다.
+
+---
+
+## 6. 조회 조건은 프론트엔드 화면과 직접 연결된다
+
+프론트엔드에서 목록 화면이 비어 있거나, 다른 사용자의 데이터가 보이거나, 정렬이 이상하면 백엔드의 조회 조건을 의심해야 합니다.
+
+예를 들어 내 게시글 목록 API가 있다고 해 봅시다.
+
+```java
+@GetMapping("/me/posts")
+public List<PostResponse> myPosts() {
+    return postService.getMyPosts();
+}
+```
+
+Service 안쪽이 이렇게 되어 있다면 문제가 있습니다.
+
+```java
+public List<PostResponse> getMyPosts() {
+    return postRepository.findAll().stream()
+        .map(PostResponse::from)
+        .toList();
+}
+```
+
+`findAll()`은 전체 게시글을 가져옵니다. "내 게시글" API인데 전체를 가져온다면 권한 문제이자 기능 버그입니다.
+
+더 적절한 흐름은 보통 이렇습니다.
+
+```java
+public List<PostResponse> getMyPosts(Long currentUserId) {
+    return postRepository.findByAuthorIdOrderByCreatedAtDesc(currentUserId)
+        .stream()
+        .map(PostResponse::from)
+        .toList();
+}
+```
+
+읽을 때는 메서드 이름에서 조건을 찾습니다.
+
+```text
+findByAuthorId
+→ 작성자 기준으로 필터링한다.
+
+OrderByCreatedAtDesc
+→ 생성일 기준 최신순으로 정렬한다.
+```
+
+AI가 만든 Repository 메서드 이름은 길어질 수 있습니다.
+
+```java
+List<Post> findByRoomIdAndDeletedFalseOrderByCreatedAtDesc(Long roomId);
+```
+
+길어도 쪼개서 읽으면 됩니다.
+
+```text
+findBy
+RoomId
+And
+DeletedFalse
+OrderBy
+CreatedAt
+Desc
+
+→ 특정 방의, 삭제되지 않은 글을, 생성일 최신순으로 찾는다.
+```
+
+이렇게 읽으면 프론트엔드 요구사항과 비교할 수 있습니다.
+
+- 특정 방의 글만 보여야 하는가?
+- 삭제된 글은 숨겨야 하는가?
+- 최신순이어야 하는가?
+- 페이지네이션이 필요한가?
+- 검색어가 있으면 제목/본문 중 어디를 검색해야 하는가?
+
+프론트엔드에서 "왜 이 카드가 여기에 보이지?"라는 문제가 생겼을 때, Repository 메서드 이름만 봐도 원인을 좁힐 수 있습니다.
+
+---
+
+## 7. 관계 매핑은 처음부터 완벽히 외우지 않아도 된다
+
+DB에는 데이터 사이의 관계가 있습니다.
+
+- 사용자는 여러 게시글을 쓸 수 있습니다.
+- 게시글은 한 작성자를 가집니다.
+- 게시글은 여러 댓글을 가질 수 있습니다.
+- 댓글은 한 게시글에 속합니다.
+
+JPA Entity에서는 이런 관계가 어노테이션으로 표현됩니다.
+
+```java
+@Entity
+public class Post {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id", nullable = false)
+    private User author;
+}
+```
+
+처음에는 `@ManyToOne`, `@OneToMany`, `fetch = FetchType.LAZY` 같은 말을 전부 외우지 않아도 됩니다. 대신 문장으로 바꿔 읽어 보세요.
+
+```text
+Post many to one User
+→ 여러 게시글이 한 사용자에 속할 수 있다.
+
+@JoinColumn(name = "author_id")
+→ posts 테이블에는 author_id라는 컬럼으로 사용자를 가리킨다.
+```
+
+AI 코드 리뷰에서는 관계의 문법보다 방향과 노출을 먼저 봅니다.
+
+- 게시글에 작성자 정보가 필요한가?
+- 댓글이 어떤 게시글에 속하는지 표현되어 있는가?
+- 응답 DTO에서 관계 Entity 전체를 그대로 내보내고 있지 않은가?
+- 삭제할 때 연결된 데이터가 어떻게 되는가?
+- 무한 JSON 순환이 생길 가능성은 없는가?
+
+예를 들어 `User`가 `List<Post>`를 가지고, `Post`가 다시 `User`를 가지고 있는데 둘 다 그대로 JSON으로 반환하면 문제가 생길 수 있습니다.
+
+```text
+User → posts → author → posts → author → ...
+```
+
+그래서 관계가 있는 Entity는 특히 DTO 변환이 중요합니다.
+
+```java
+public record PostResponse(
+    Long id,
+    String title,
+    String authorNickname
+) {
+    public static PostResponse from(Post post) {
+        return new PostResponse(
+            post.getId(),
+            post.getTitle(),
+            post.getAuthor().getNickname()
+        );
+    }
+}
+```
+
+이 응답은 필요한 작성자 닉네임만 골라서 내보냅니다. Entity 전체를 그대로 내보내는 것보다 안전합니다.
+
+---
+
+## 8. 삭제는 실제 삭제와 숨김 삭제를 구분해야 한다
+
+삭제 API를 볼 때도 Repository 흐름을 확인해야 합니다.
+
+```java
+postRepository.delete(post);
+```
+
+이 코드는 DB에서 실제로 행을 삭제할 수 있습니다. 이를 물리 삭제라고 부를 수 있습니다.
+
+하지만 서비스에 따라서는 글을 완전히 지우지 않고 `deleted = true`처럼 표시만 하는 경우가 많습니다. 이를 소프트 삭제 또는 논리 삭제라고 부릅니다.
+
+```java
+post.markDeleted();
+```
+
+둘 중 무엇이 항상 정답인 것은 아닙니다. 중요한 것은 서비스 요구사항과 맞는지입니다.
+
+물리 삭제가 맞을 수 있는 경우:
+
+- 임시 데이터
+- 사용자가 완전히 삭제하기를 기대하는 개인 메모
+- 보관할 필요가 없는 캐시성 데이터
+
+소프트 삭제가 맞을 수 있는 경우:
+
+- 댓글/알림/통계와 연결된 게시글
+- 운영자가 복구해야 할 수 있는 데이터
+- 감사 로그가 필요한 데이터
+- 다른 테이블이 참조하고 있는 데이터
+
+AI가 만든 삭제 코드를 볼 때는 아래를 확인합니다.
+
+- 삭제 전에 현재 사용자가 삭제 권한을 가지는가?
+- 이미 삭제된 데이터를 다시 삭제할 때 응답이 어떻게 되는가?
+- 목록 조회에서 삭제된 데이터가 제외되는가?
+- 상세 조회에서 삭제된 데이터가 404 또는 적절한 에러로 처리되는가?
+- 실제 삭제가 필요한지, 소프트 삭제가 필요한지 요구사항과 맞는가?
+
+특히 소프트 삭제를 쓰기로 했는데 목록 Repository가 `findAll()`을 쓰면 삭제된 글이 다시 화면에 나올 수 있습니다.
+
+```java
+List<Post> findByDeletedFalseOrderByCreatedAtDesc();
+```
+
+이런 조건이 들어가야 하는지 확인해야 합니다.
+
+---
+
+## 9. AI가 만든 Repository 코드의 흔한 위험 신호
+
+AI가 백엔드 코드를 빠르게 만들 때 자주 보이는 위험 신호를 정리해 보겠습니다.
+
+### 9-1. `findAll()`이 너무 쉽게 쓰인다
+
+관리자 화면이나 작은 내부 기능이 아니라면 `findAll()`은 조심해야 합니다.
+
+```java
+return postRepository.findAll();
+```
+
+질문해야 할 것:
+
+- 정말 전체 데이터가 필요한가?
+- 사용자별/방별/상태별 필터가 빠진 것은 아닌가?
+- 데이터가 많아지면 페이지네이션 없이 괜찮은가?
+- 삭제된 데이터나 비공개 데이터가 섞이지 않는가?
+
+### 9-2. `orElseThrow()`는 있는데 에러 의미가 없다
+
+```java
+Post post = postRepository.findById(id).orElseThrow();
+```
+
+이 코드는 데이터가 없을 때 예외를 던지지만, 어떤 HTTP 응답으로 바뀔지 명확하지 않습니다. Day 3에서 본 것처럼 전역 예외 처리와 연결되어야 합니다.
+
+더 읽기 좋은 형태는 이런 식입니다.
+
+```java
+Post post = postRepository.findById(id)
+    .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다."));
+```
+
+그리고 `NotFoundException`이 `404` 응답으로 바뀌는지 확인해야 합니다.
+
+### 9-3. 요청에서 받은 ID를 권한 확인 없이 믿는다
+
+```java
+Post post = new Post(request.title(), request.content(), request.authorId());
+```
+
+작성자 ID를 요청에서 받아 그대로 저장하면 사용자가 다른 사람 ID로 글을 만들 수 있습니다. 보통 작성자는 현재 로그인 사용자에서 가져와야 합니다.
+
+```java
+User author = currentUserProvider.getCurrentUser();
+Post post = Post.create(request.title(), request.content(), author);
+```
+
+인증은 뒤에서 더 자세히 다루겠지만, DB 저장 흐름에서도 이미 의심할 수 있습니다.
+
+### 9-4. Entity를 그대로 응답한다
+
+```java
+return postRepository.save(post);
+```
+
+저장된 Entity를 그대로 반환하면 내부 필드와 관계가 노출될 수 있습니다. 응답 DTO로 바꾸는지 확인합니다.
+
+```java
+Post saved = postRepository.save(post);
+return PostResponse.from(saved);
+```
+
+### 9-5. 정렬과 페이지네이션이 없다
+
+목록 API에서 정렬이 없으면 DB가 어떤 순서로 줄지 보장하기 어렵습니다.
+
+```java
+List<Post> findByAuthorId(Long authorId);
+```
+
+프론트엔드가 최신순을 기대한다면 명시해야 합니다.
+
+```java
+List<Post> findByAuthorIdOrderByCreatedAtDesc(Long authorId);
+```
+
+데이터가 많아질 기능이라면 `Pageable` 같은 페이지네이션도 필요할 수 있습니다. 지금은 문법을 몰라도 됩니다. 다만 "목록인데 무한히 전부 가져오는가?"라는 질문은 할 수 있어야 합니다.
+
+---
+
+## 10. 코드 읽기 루틴: Controller에서 Repository까지 따라가기
+
+AI가 만든 기능을 리뷰할 때는 파일을 무작정 열기보다 한 요청을 기준으로 따라가는 것이 좋습니다.
+
+예를 들어 게시글 작성 기능이라면 이렇게 봅니다.
+
+### 1단계: Controller에서 API 계약 확인
+
+```java
+@PostMapping("/posts")
+public PostResponse createPost(@Valid @RequestBody CreatePostRequest request) {
+    return postService.createPost(request);
+}
+```
+
+확인할 것:
+
+- URL과 HTTP Method가 프론트엔드와 맞는가?
+- 요청 DTO가 있는가?
+- `@Valid`가 붙어 있는가?
+- 응답 DTO가 있는가?
+
+### 2단계: Service에서 규칙 확인
+
+```java
+public PostResponse createPost(CreatePostRequest request) {
+    Post post = new Post(request.title(), request.content());
+    Post saved = postRepository.save(post);
+    return PostResponse.from(saved);
+}
+```
+
+확인할 것:
+
+- 현재 사용자/권한/소속 확인이 필요한 기능인가?
+- 카테고리나 방 같은 연결 대상이 실제로 존재하는지 확인하는가?
+- Entity 생성 시 서버가 책임질 값을 채우는가?
+- 저장 후 응답이 DTO로 변환되는가?
+
+### 3단계: Entity에서 저장 구조 확인
+
+```java
+@Entity
+public class Post {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String title;
+    private String content;
+}
+```
+
+확인할 것:
+
+- 필수 값이 보호되는가?
+- 생성 시각/수정 시각 같은 기본 필드가 필요한가?
+- 작성자/방/카테고리 관계가 필요한가?
+- Entity가 너무 빈약해서 모든 규칙이 밖에 흩어져 있지 않은가?
+
+### 4단계: Repository에서 DB 접근 확인
+
+```java
+public interface PostRepository extends JpaRepository<Post, Long> {
+}
+```
+
+확인할 것:
+
+- 기본 저장만 필요한가?
+- 목록/검색/상세 조회에 필요한 조건 메서드가 있는가?
+- `findAll()`로 때우고 있지 않은가?
+- 권한 범위나 삭제 여부 조건이 빠지지 않았는가?
+
+이 루틴은 문법을 몰라도 쓸 수 있습니다. 핵심은 "요청 하나가 어떤 파일을 지나 DB에 닿는지"를 따라가는 것입니다.
+
+---
+
+## 11. 프론트엔드 관점에서 DB 코드를 의심하는 법
+
+진규가 프론트엔드 작업을 하다가 백엔드 코드를 리뷰해야 하는 상황을 생각해 봅시다. 화면에서 이상한 일이 생겼을 때 DB 흐름을 이렇게 의심할 수 있습니다.
+
+### 화면에 데이터가 안 나온다
+
+가능한 백엔드 원인:
+
+- 저장은 됐지만 조회 조건이 다르다.
+- `roomId`, `userId`, `categoryId` 필터가 잘못됐다.
+- 삭제 여부 조건이 반대로 되어 있다.
+- 응답 DTO가 필요한 필드를 빼고 있다.
+- 정렬/페이지네이션 때문에 첫 페이지에 안 보인다.
+
+볼 파일:
+
+- 목록 API Controller
+- 목록 Service
+- Repository의 `findBy...` 메서드
+- Response DTO mapper
+
+### 다른 사람 데이터가 보인다
+
+가능한 백엔드 원인:
+
+- `findAll()`을 사용한다.
+- 현재 사용자 ID를 조회 조건에 넣지 않는다.
+- 방/프로젝트 권한 확인이 없다.
+- 요청에서 받은 `userId`를 그대로 믿는다.
+
+볼 파일:
+
+- 인증 사용자 추출 코드
+- Service 권한 체크
+- Repository 조회 조건
+
+### 삭제했는데 다시 보인다
+
+가능한 백엔드 원인:
+
+- 삭제 API는 `deleted = true`로 바꾸지만 목록 API가 `deleted = false` 조건을 안 쓴다.
+- 프론트엔드 캐시 문제처럼 보이지만 실제로 백엔드가 삭제된 데이터를 다시 내려준다.
+- 삭제 후 응답은 성공인데 DB 상태 변경이 트랜잭션 밖에서 실패한다.
+
+볼 파일:
+
+- delete Service
+- Entity의 삭제 상태 필드
+- 목록 Repository 메서드
+- 전역 예외 처리/트랜잭션 로그
+
+### 새로 만든 데이터의 작성자가 이상하다
+
+가능한 백엔드 원인:
+
+- 요청 DTO의 `authorId`를 그대로 사용한다.
+- 현재 로그인 사용자 추출이 빠졌다.
+- 테스트용 하드코딩 사용자가 남아 있다.
+
+볼 파일:
+
+- CreateRequest DTO
+- create Service
+- 인증/보안 컨텍스트 접근 코드
+
+---
+
+## 12. 오늘 단계에서 외우지 않아도 되는 것
+
+오늘은 Entity와 Repository를 처음 읽는 날입니다. 아래는 지금 당장 완벽히 외우지 않아도 됩니다.
+
+- JPA 영속성 컨텍스트의 내부 동작
+- Lazy Loading과 N+1 문제의 상세 원리
+- JPQL 문법 전체
+- 복잡한 인덱스 설계
+- 트랜잭션 전파 옵션
+- DB 정규화 이론 전체
+
+이 내용들은 중요하지만, 처음부터 다 외우려 하면 오히려 흐름을 놓칩니다. 지금 필요한 것은 AI가 만든 코드를 보고 큰 위험을 감지하는 능력입니다.
+
+오늘 기준으로는 아래 정도만 잡으면 충분합니다.
+
+```text
+Entity는 DB 저장 구조다.
+DTO와 Entity는 분리해야 한다.
+Repository는 DB 조회/저장 통로다.
+조회 조건은 화면에 보이는 데이터와 직접 연결된다.
+findAll, Entity 직접 반환, 권한 없는 findById는 의심 포인트다.
+```
+
+---
+
+## 13. AI에게 백엔드 코드를 맡길 때 던질 좋은 요청
+
+AI에게 Spring Boot 코드를 만들게 할 때도 요구를 구체적으로 주면 더 안전합니다.
+
+나쁜 요청:
+
+```text
+게시글 CRUD 만들어줘.
+```
+
+조금 더 좋은 요청:
+
+```text
+Spring Boot로 게시글 CRUD를 만들어줘.
+Controller, Service, Repository, Entity, DTO를 분리해줘.
+Entity를 API 응답으로 직접 반환하지 말고 Response DTO로 변환해줘.
+작성자는 요청 바디에서 받지 말고 현재 로그인 사용자에서 가져오는 구조로 만들어줘.
+목록 조회는 삭제되지 않은 게시글만 최신순으로 반환하게 해줘.
+데이터가 없으면 404 에러 응답으로 처리해줘.
+```
+
+더 좋은 리뷰 요청:
+
+```text
+이 코드에서 Repository 조회 조건이 프론트엔드 요구사항과 맞는지 검토해줘.
+findAll 사용, 권한 없는 findById, Entity 직접 반환, 삭제된 데이터 노출 가능성을 우선 확인해줘.
+수정이 필요하면 어떤 파일을 바꿔야 하는지 Controller → Service → Repository 흐름으로 설명해줘.
+```
+
+이렇게 요청하면 AI가 단순히 코드를 늘리는 대신 위험 지점을 기준으로 설명할 가능성이 높아집니다.
+
+---
+
+## 14. 오늘의 체크리스트
+
+AI가 만든 Spring Boot DB 접근 코드를 볼 때 아래 체크리스트를 사용해 보세요.
+
+### Entity 체크
+
+- [ ] `@Entity`가 붙은 클래스가 어떤 테이블을 의미하는지 알 수 있다.
+- [ ] `id` 필드가 있고 자동 생성 전략이 자연스럽다.
+- [ ] 필수 값이 null로 저장되지 않도록 보호된다.
+- [ ] 서버가 책임질 값이 요청 DTO에서 그대로 들어오지 않는다.
+- [ ] 관계가 필요한 데이터는 `@ManyToOne` 등으로 표현되어 있거나 명시적으로 ID 검증을 한다.
+
+### DTO 분리 체크
+
+- [ ] 요청 DTO와 Entity가 분리되어 있다.
+- [ ] 응답 DTO가 Entity 전체를 그대로 노출하지 않는다.
+- [ ] 비밀번호, 권한 내부값, 삭제 상태 같은 민감하거나 내부적인 값이 응답에 새지 않는다.
+
+### Repository 체크
+
+- [ ] 목록 API가 무조건 `findAll()`만 쓰지 않는다.
+- [ ] 사용자/방/프로젝트/삭제 여부 같은 필터가 필요한 곳에 들어가 있다.
+- [ ] 정렬이 필요한 목록에는 정렬 조건이 있다.
+- [ ] 존재하지 않는 데이터는 의미 있는 예외로 처리된다.
+
+### 프론트엔드 연결 체크
+
+- [ ] 화면이 기대하는 데이터와 Response DTO 필드가 맞다.
+- [ ] 생성/수정 후 응답에 새 ID나 최신 상태가 포함된다.
+- [ ] 삭제/숨김 처리 후 목록 API에서도 같은 규칙이 적용된다.
+- [ ] 권한 문제가 프론트엔드 버그처럼 보이지 않도록 상태 코드와 에러 메시지가 분리되어 있다.
+
+---
+
+## 마무리
+
+오늘은 백엔드의 DB 흐름을 `Entity`와 `Repository` 중심으로 읽었습니다.
+
+처음부터 JPA를 깊게 이해할 필요는 없습니다. 대신 AI가 만든 코드에서 아래 흐름을 따라갈 수 있으면 됩니다.
+
+```text
+Controller가 요청을 받는다.
+Service가 규칙을 판단한다.
+Entity가 DB에 저장될 모양을 만든다.
+Repository가 저장하거나 조회한다.
+Response DTO가 프론트엔드에 필요한 모양만 돌려준다.
+```
+
+그리고 DB 코드를 볼 때 가장 중요한 질문은 이것입니다.
+
+> 이 데이터는 누구의 것이고, 어떤 조건으로 저장/조회되어야 하는가?
+
+이 질문을 붙잡으면 `findAll()`이 위험한지, `findById`만으로 충분한지, Entity를 그대로 반환해도 되는지, 삭제된 데이터가 다시 보일 수 있는지 판단할 수 있습니다.
+
+다음 Day에서는 트랜잭션을 다루겠습니다. 사용자가 결제하거나, 게시글과 첨부파일을 함께 저장하거나, 여러 테이블을 한 번에 바꿀 때 "중간에 하나만 성공하면 어떻게 되는가?"라는 문제를 볼 예정입니다.
