@@ -1,0 +1,713 @@
+---
+title: "백엔드 스터디 Day 5: Service와 트랜잭션으로 비즈니스 흐름 읽기"
+date: 2026-06-05
+tags:
+  - 백엔드
+  - 스터디
+  - Spring Boot
+  - Java
+  - API
+  - Service
+  - Transaction
+  - AI 코드 읽기
+description: AI가 만든 Spring Boot 백엔드 코드를 검토할 때 Service 계층은 Controller, Repository, Entity를 연결하는 핵심 판단 지점입니다. Day 5에서는 Service 메서드, 비즈니스 규칙, 트랜잭션, 읽기/쓰기 경계, 위험 신호를 낮은 단계부터 읽는 법을 다룹니다.
+---
+
+> 예상 읽기 시간: 20~30분
+
+## 오늘의 목표
+
+Day 1에서는 Spring Boot 프로젝트의 폴더와 큰 지도를 봤습니다. Day 2에서는 프론트엔드와 백엔드가 약속하는 API 계약을 읽었습니다. Day 3에서는 입력 검증과 에러 응답을 봤고, Day 4에서는 Entity와 Repository를 통해 데이터가 DB에 저장되고 조회되는 흐름을 봤습니다.
+
+오늘은 그 사이를 연결하는 `Service` 계층을 봅니다.
+
+Spring Boot 코드에서 Service는 보통 이런 역할을 합니다.
+
+```text
+Controller: HTTP 요청을 받는다
+Service: 기능의 실제 규칙을 실행한다
+Repository: DB와 대화한다
+Entity: DB에 저장되는 객체다
+DTO: API 입출력 모양이다
+```
+
+프론트엔드 입장에서 버튼 하나를 눌렀을 뿐인데, 백엔드 안에서는 여러 판단이 이어집니다.
+
+```text
+게시글 작성 요청
+→ 로그인 사용자인지 확인
+→ 제목/내용이 유효한지 확인
+→ 카테고리가 존재하는지 확인
+→ 작성 권한이 있는지 확인
+→ Post Entity 생성
+→ DB에 저장
+→ 응답 DTO 반환
+```
+
+이 흐름 대부분이 Service에 들어갑니다.
+
+오늘의 핵심 질문은 이것입니다.
+
+> AI가 만든 Service가 기능 규칙을 한곳에서 일관되게 실행하고, DB 변경을 안전한 단위로 묶고 있는가?
+
+오늘 글을 읽고 나면 아래 질문에 답할 수 있어야 합니다.
+
+- Service는 Controller나 Repository와 무엇이 다른가?
+- `@Service`와 `@Transactional`은 어떤 힌트를 주는가?
+- 하나의 기능 메서드를 위에서 아래로 어떻게 읽는가?
+- 읽기 전용 기능과 쓰기 기능은 왜 다르게 봐야 하는가?
+- AI가 만든 Service 코드에서 위험 신호는 무엇인가?
+- 프론트엔드 버그처럼 보이는 문제가 왜 Service 규칙 누락일 수 있는가?
+
+---
+
+## 1. Service는 "기능의 문장"을 코드로 옮긴 곳이다
+
+Controller는 HTTP 세계에 가깝습니다.
+
+```java
+@PostMapping("/posts")
+public ResponseEntity<PostResponse> createPost(
+        @Valid @RequestBody CreatePostRequest request,
+        @AuthenticationPrincipal UserPrincipal user
+) {
+    PostResponse response = postService.createPost(request, user.getId());
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+}
+```
+
+여기서 Controller가 하는 일은 비교적 얇습니다.
+
+- `/posts`로 온 요청을 받는다.
+- 요청 JSON을 `CreatePostRequest`로 바꾼다.
+- 로그인 사용자 ID를 꺼낸다.
+- Service를 호출한다.
+- 결과를 HTTP 응답으로 감싼다.
+
+진짜 기능 규칙은 `postService.createPost(...)` 안쪽에 있습니다.
+
+```java
+@Service
+@RequiredArgsConstructor
+public class PostService {
+
+    private final PostRepository postRepository;
+    private final CategoryRepository categoryRepository;
+    private final UserRepository userRepository;
+
+    @Transactional
+    public PostResponse createPost(CreatePostRequest request, Long userId) {
+        User author = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+        Category category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new NotFoundException("카테고리를 찾을 수 없습니다."));
+
+        Post post = Post.create(
+                request.title(),
+                request.content(),
+                author,
+                category
+        );
+
+        Post savedPost = postRepository.save(post);
+        return PostResponse.from(savedPost);
+    }
+}
+```
+
+이 코드를 처음 보면 길어 보일 수 있지만, 문장으로 바꾸면 단순합니다.
+
+```text
+작성자 사용자를 찾는다.
+카테고리를 찾는다.
+게시글 Entity를 만든다.
+DB에 저장한다.
+응답 DTO로 바꿔 돌려준다.
+```
+
+Service를 읽을 때는 Java 문법을 모두 외우려 하지 말고, 먼저 이 문장 흐름으로 바꾸면 됩니다.
+
+---
+
+## 2. Service를 읽는 기본 순서
+
+AI가 만든 백엔드 코드를 검토할 때 Service 메서드는 아래 순서로 읽으면 좋습니다.
+
+```text
+1. 메서드 이름을 본다.
+2. 입력값을 본다.
+3. 조회하는 Repository를 본다.
+4. 검증/권한/상태 변경 규칙을 본다.
+5. 저장하거나 삭제하는 Repository 호출을 본다.
+6. 어떤 DTO로 응답하는지 본다.
+7. 트랜잭션이 필요한지 본다.
+```
+
+예를 들어 `updatePost`를 봅시다.
+
+```java
+@Transactional
+public PostResponse updatePost(Long postId, UpdatePostRequest request, Long userId) {
+    Post post = postRepository.findById(postId)
+            .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다."));
+
+    if (!post.isWrittenBy(userId)) {
+        throw new ForbiddenException("게시글 수정 권한이 없습니다.");
+    }
+
+    post.updateTitle(request.title());
+    post.updateContent(request.content());
+
+    return PostResponse.from(post);
+}
+```
+
+문장으로 바꾸면 이렇습니다.
+
+```text
+수정할 게시글을 찾는다.
+없으면 404를 낸다.
+작성자가 아니면 403을 낸다.
+제목과 내용을 바꾼다.
+바뀐 게시글을 응답 DTO로 돌려준다.
+```
+
+여기서 초보자가 자주 묻는 질문이 있습니다.
+
+> `postRepository.save(post)`가 없는데 DB에 저장되나요?
+
+JPA에서는 `@Transactional` 안에서 조회한 Entity를 수정하면, 트랜잭션이 끝날 때 변경 사항이 DB에 반영될 수 있습니다. 이것을 보통 변경 감지(dirty checking)라고 부릅니다.
+
+처음에는 세부 동작을 깊게 외울 필요는 없습니다. 대신 이렇게 기억하면 됩니다.
+
+```text
+@Transactional 안에서 조회한 Entity를 바꾸면 저장될 수 있다.
+그래서 Service의 @Transactional 여부와 Entity 변경 코드를 같이 봐야 한다.
+```
+
+---
+
+## 3. `@Service`는 "여기가 기능 계층"이라는 표시다
+
+`@Service`는 Spring에게 이 클래스가 Service 계층의 Bean이라고 알려주는 표시입니다.
+
+```java
+@Service
+@RequiredArgsConstructor
+public class CommentService {
+    private final CommentRepository commentRepository;
+    private final PostRepository postRepository;
+}
+```
+
+AI가 만든 프로젝트에서 `@Service`가 붙은 파일은 보통 아래 폴더에 있습니다.
+
+```text
+src/main/java/com/example/app/post/PostService.java
+src/main/java/com/example/app/comment/CommentService.java
+src/main/java/com/example/app/user/UserService.java
+```
+
+Service 파일을 볼 때는 이름도 중요합니다.
+
+- `PostService`: 게시글 기능 규칙
+- `CommentService`: 댓글 기능 규칙
+- `AuthService`: 로그인/회원가입/토큰 기능 규칙
+- `UserService`: 사용자 조회/수정 기능 규칙
+- `FileService`: 파일 업로드/다운로드 기능 규칙
+
+AI가 만든 코드에서 모든 기능이 하나의 `CommonService`나 `MainService`에 몰려 있다면 의심해야 합니다. 기능별 경계가 흐려지면 나중에 권한, 검증, 트랜잭션, 테스트가 꼬이기 쉽습니다.
+
+---
+
+## 4. Controller가 너무 뚱뚱하면 Service 책임이 새고 있는 것이다
+
+좋은 Controller는 요청과 응답을 다루고, Service에 기능 실행을 맡깁니다.
+
+하지만 AI가 만든 코드에서 이런 Controller를 볼 수 있습니다.
+
+```java
+@PostMapping("/posts")
+public PostResponse createPost(@RequestBody CreatePostRequest request) {
+    User user = userRepository.findById(request.userId()).get();
+    Category category = categoryRepository.findById(request.categoryId()).get();
+
+    if (request.title().length() > 100) {
+        throw new IllegalArgumentException("제목이 너무 깁니다.");
+    }
+
+    Post post = new Post(request.title(), request.content(), user, category);
+    return PostResponse.from(postRepository.save(post));
+}
+```
+
+처음에는 "동작하니까 괜찮지 않나?"라고 느낄 수 있습니다. 하지만 위험합니다.
+
+문제는 다음과 같습니다.
+
+- Controller가 Repository를 직접 호출한다.
+- 권한/검증/저장 규칙이 HTTP 계층에 섞였다.
+- 같은 기능을 다른 곳에서 재사용하기 어렵다.
+- 테스트가 어려워진다.
+- 트랜잭션 경계가 불분명하다.
+
+이런 코드는 Service로 옮기는 편이 낫습니다.
+
+```text
+Controller: 요청을 Service에 전달
+Service: 사용자/카테고리 조회, 검증, Entity 생성, 저장
+Repository: DB 접근
+```
+
+AI 코드 리뷰에서 중요한 기준은 이것입니다.
+
+> 기능 규칙이 Controller에 흩어져 있지 않고 Service에 모여 있는가?
+
+---
+
+## 5. Repository가 너무 똑똑해도 위험하다
+
+반대로 Repository가 너무 많은 기능 규칙을 들고 있어도 위험합니다.
+
+Repository는 DB 조회/저장에 집중해야 합니다.
+
+```java
+public interface PostRepository extends JpaRepository<Post, Long> {
+    List<Post> findByAuthorId(Long authorId);
+    List<Post> findByCategoryId(Long categoryId);
+    boolean existsByTitleAndAuthorId(String title, Long authorId);
+}
+```
+
+이 정도는 자연스럽습니다. 하지만 아래처럼 Repository 쿼리에 기능 정책이 지나치게 들어가면 읽기 어려워질 수 있습니다.
+
+```java
+@Query("""
+    select p from Post p
+    where p.category.id = :categoryId
+      and p.deleted = false
+      and p.author.status = 'ACTIVE'
+      and p.createdAt > :limitDate
+      and (p.visibility = 'PUBLIC' or p.author.id = :viewerId)
+""")
+List<Post> findVisibleRecentPosts(Long categoryId, Long viewerId, LocalDateTime limitDate);
+```
+
+이 쿼리 자체가 항상 나쁜 것은 아닙니다. 하지만 Service에서 아래 질문을 확인해야 합니다.
+
+- 왜 `deleted = false`가 필요한가?
+- 비공개 글은 작성자만 볼 수 있는가?
+- 정지된 사용자의 글은 숨기는 정책인가?
+- 이 정책이 다른 목록 조회에서도 동일하게 적용되는가?
+
+Repository는 "어떻게 찾을지"에 가깝고, Service는 "왜 그렇게 찾아야 하는지"에 가깝습니다. AI가 만든 코드가 이 경계를 흐리면, 기능은 동작해도 정책이 흩어질 수 있습니다.
+
+---
+
+## 6. `@Transactional`은 DB 변경의 안전한 작업 단위를 만든다
+
+백엔드 기능은 보통 하나의 요청 안에서 여러 DB 작업을 합니다.
+
+예를 들어 주문 생성 기능을 생각해 봅시다.
+
+```text
+상품 재고 확인
+→ 주문 생성
+→ 주문 항목 생성
+→ 재고 차감
+→ 결제 대기 상태 저장
+```
+
+이 중간에서 에러가 나면 어떻게 해야 할까요?
+
+주문은 생성됐는데 재고 차감은 실패하면 데이터가 이상해집니다. 그래서 관련 DB 변경을 하나의 작업 단위로 묶어야 합니다. 이것이 트랜잭션입니다.
+
+Spring에서는 보통 Service 메서드에 `@Transactional`을 붙입니다.
+
+```java
+@Transactional
+public OrderResponse createOrder(CreateOrderRequest request, Long userId) {
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+    Product product = productRepository.findById(request.productId())
+            .orElseThrow(() -> new NotFoundException("상품을 찾을 수 없습니다."));
+
+    product.decreaseStock(request.quantity());
+
+    Order order = Order.create(user, product, request.quantity());
+    Order savedOrder = orderRepository.save(order);
+
+    return OrderResponse.from(savedOrder);
+}
+```
+
+이 코드는 아래 작업을 한 단위로 묶습니다.
+
+```text
+사용자 조회
+상품 조회
+재고 차감
+주문 생성
+주문 저장
+```
+
+중간에서 예외가 발생하면 DB 변경을 되돌리는 것이 트랜잭션의 핵심입니다.
+
+AI가 만든 쓰기 Service를 볼 때는 먼저 물어보세요.
+
+> 이 메서드가 DB를 바꾸는데 `@Transactional`이 있는가?
+
+없다면 무조건 버그라고 단정할 수는 없지만, 강한 검토 신호입니다.
+
+---
+
+## 7. 읽기 기능에는 `readOnly = true`가 붙을 수 있다
+
+조회만 하는 Service에는 아래처럼 붙는 경우가 많습니다.
+
+```java
+@Transactional(readOnly = true)
+public PostDetailResponse getPost(Long postId, Long viewerId) {
+    Post post = postRepository.findById(postId)
+            .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다."));
+
+    if (!post.canBeViewedBy(viewerId)) {
+        throw new ForbiddenException("게시글을 볼 수 없습니다.");
+    }
+
+    return PostDetailResponse.from(post);
+}
+```
+
+`readOnly = true`는 "이 메서드는 조회 중심"이라는 힌트입니다. 성능 최적화나 의도 표현에 도움이 됩니다.
+
+하지만 주의해야 할 점이 있습니다.
+
+읽기 전용 메서드 안에서 Entity를 바꾸면 이상합니다.
+
+```java
+@Transactional(readOnly = true)
+public PostDetailResponse getPost(Long postId) {
+    Post post = postRepository.findById(postId)
+            .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다."));
+
+    post.increaseViewCount(); // 위험 신호
+
+    return PostDetailResponse.from(post);
+}
+```
+
+조회수 증가처럼 DB를 바꾸는 작업이라면 읽기 전용 트랜잭션과 맞지 않습니다. AI가 이런 코드를 만들면 "조회인지 쓰기인지" 경계를 다시 확인해야 합니다.
+
+---
+
+## 8. Service 메서드 하나는 하나의 유스케이스처럼 읽는다
+
+좋은 Service 메서드는 하나의 사용자 행동이나 시스템 유스케이스에 대응합니다.
+
+예를 들어 게시글 작성은 하나의 유스케이스입니다.
+
+```text
+createPost
+```
+
+댓글 작성도 하나의 유스케이스입니다.
+
+```text
+createComment
+```
+
+좋아요 토글도 하나의 유스케이스입니다.
+
+```text
+togglePostLike
+```
+
+AI가 만든 Service에서 한 메서드가 너무 많은 일을 하면 위험합니다.
+
+```java
+@Transactional
+public PostResponse createPostAndNotifyAndUploadAndRecommend(...) {
+    // 게시글 생성
+    // 파일 업로드
+    // 알림 발송
+    // 추천 피드 갱신
+    // 검색 인덱스 갱신
+    // 통계 업데이트
+}
+```
+
+이런 코드는 실패 지점이 많고, 테스트하기 어렵고, 트랜잭션 경계도 애매해집니다.
+
+초보 리뷰 기준으로는 이렇게 보면 됩니다.
+
+- 메서드 이름이 너무 길고 많은 동사를 담고 있는가?
+- DB 저장, 외부 API 호출, 파일 업로드, 알림 발송이 한 트랜잭션에 섞였는가?
+- 실패하면 어디까지 되돌아가야 하는지 알 수 있는가?
+
+Service는 기능 흐름의 중심이지만, 모든 일을 한 메서드에 넣는 곳은 아닙니다.
+
+---
+
+## 9. AI Service 코드에서 자주 보는 위험 신호
+
+### 9.1 `.get()`으로 Optional을 바로 꺼낸다
+
+```java
+Post post = postRepository.findById(postId).get();
+```
+
+데이터가 없으면 예외가 터지지만, 사용자가 이해할 수 있는 404 응답으로 바뀌지 않을 수 있습니다.
+
+더 나은 흐름은 보통 이렇습니다.
+
+```java
+Post post = postRepository.findById(postId)
+        .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다."));
+```
+
+리뷰 질문:
+
+> 없는 데이터에 대해 명확한 에러를 돌려주는가?
+
+### 9.2 로그인 사용자 대신 요청 body의 userId를 믿는다
+
+```java
+public PostResponse createPost(CreatePostRequest request) {
+    User author = userRepository.findById(request.userId()).get();
+    // ...
+}
+```
+
+게시글 작성자 ID를 프론트엔드 요청에서 그대로 받으면 사용자가 다른 사람 ID를 넣을 수 있습니다. 보통 작성자는 인증 정보에서 가져와야 합니다.
+
+```java
+public PostResponse createPost(CreatePostRequest request, Long currentUserId) {
+    User author = userRepository.findById(currentUserId)
+            .orElseThrow(...);
+}
+```
+
+리뷰 질문:
+
+> 사용자가 조작할 수 있는 값과 서버가 결정해야 하는 값이 분리되어 있는가?
+
+### 9.3 권한 검사가 없다
+
+```java
+@Transactional
+public void deletePost(Long postId) {
+    postRepository.deleteById(postId);
+}
+```
+
+이 코드는 게시글 ID만 알면 삭제할 수 있는 구조일 수 있습니다. 보통은 작성자이거나 관리자이어야 합니다.
+
+```java
+@Transactional
+public void deletePost(Long postId, Long userId) {
+    Post post = postRepository.findById(postId)
+            .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다."));
+
+    if (!post.isWrittenBy(userId)) {
+        throw new ForbiddenException("게시글 삭제 권한이 없습니다.");
+    }
+
+    postRepository.delete(post);
+}
+```
+
+리뷰 질문:
+
+> 수정/삭제/비공개 조회에 권한 검사가 있는가?
+
+### 9.4 Service가 응답 DTO 대신 Entity를 그대로 반환한다
+
+```java
+public Post getPost(Long postId) {
+    return postRepository.findById(postId).orElseThrow(...);
+}
+```
+
+Entity를 그대로 API 응답으로 내보내면 내부 DB 구조가 노출되거나, 관계 객체 때문에 JSON 변환 문제가 생길 수 있습니다.
+
+더 안전한 형태는 응답 DTO입니다.
+
+```java
+public PostResponse getPost(Long postId) {
+    Post post = postRepository.findById(postId).orElseThrow(...);
+    return PostResponse.from(post);
+}
+```
+
+리뷰 질문:
+
+> API 응답은 외부에 보여도 되는 모양으로 따로 관리되는가?
+
+### 9.5 쓰기 작업인데 트랜잭션이 없다
+
+```java
+public PostResponse updatePost(Long postId, UpdatePostRequest request) {
+    Post post = postRepository.findById(postId).orElseThrow(...);
+    post.update(request.title(), request.content());
+    return PostResponse.from(post);
+}
+```
+
+JPA 변경 감지에 의존하는 코드라면 `@Transactional`이 필요합니다. 없으면 수정이 저장되지 않거나, 영속성 컨텍스트 관련 문제가 생길 수 있습니다.
+
+리뷰 질문:
+
+> Entity를 바꾸는 Service 메서드에 트랜잭션 경계가 있는가?
+
+### 9.6 외부 API 호출과 DB 변경이 아무 생각 없이 섞였다
+
+```java
+@Transactional
+public void payOrder(Long orderId) {
+    Order order = orderRepository.findById(orderId).orElseThrow(...);
+    paymentClient.pay(order.getPrice());
+    order.markPaid();
+}
+```
+
+결제 API 호출은 외부 시스템입니다. DB 트랜잭션과 똑같이 되돌릴 수 없습니다. 결제는 성공했는데 DB 저장이 실패하거나, DB는 바뀌었는데 결제가 실패할 수 있습니다.
+
+이 주제는 나중에 더 깊게 다루겠지만, 지금은 이렇게 기억하면 됩니다.
+
+> DB 변경과 외부 시스템 호출이 한 메서드에 섞이면 실패 시나리오를 반드시 확인해야 한다.
+
+---
+
+## 10. 프론트엔드 기능과 Service를 연결해 읽기
+
+진규가 프론트엔드 개발자 관점에서 AI가 만든 백엔드를 검토한다면, Service는 "화면 행동이 실제로 어떤 규칙을 거치는지" 확인하는 곳입니다.
+
+예를 들어 화면에는 이런 버튼이 있습니다.
+
+```text
+[게시글 수정]
+```
+
+프론트엔드에서는 API를 이렇게 호출할 수 있습니다.
+
+```ts
+await updatePost({ postId, title, content });
+```
+
+백엔드 Service에서는 아래를 확인해야 합니다.
+
+```text
+postId로 게시글을 찾는가?
+없으면 404인가?
+현재 사용자가 작성자인지 확인하는가?
+title/content 검증은 어디서 하는가?
+수정 시간이 갱신되는가?
+응답 DTO에 프론트엔드가 필요한 필드가 들어가는가?
+```
+
+만약 수정 후 화면이 최신 내용으로 바뀌지 않는다면 프론트엔드 캐시 문제일 수도 있습니다. 하지만 백엔드 Service에서 응답 DTO가 예전 값을 돌려주거나, 트랜잭션이 없어 DB에 반영되지 않는 문제일 수도 있습니다.
+
+그래서 기능 버그를 볼 때는 이렇게 연결해서 봐야 합니다.
+
+```text
+화면 행동
+→ API 요청 payload
+→ Controller 파라미터
+→ Service 규칙
+→ Repository 조회/저장
+→ Entity 변경
+→ 응답 DTO
+→ 프론트엔드 상태 갱신
+```
+
+---
+
+## 11. Service 테스트는 기능 규칙을 확인하는 좋은 문서다
+
+AI가 테스트까지 생성했다면 Service 테스트를 꼭 봐야 합니다.
+
+```java
+@Test
+void 작성자가_아니면_게시글을_수정할_수_없다() {
+    Post post = postRepository.save(PostFixture.post(author));
+
+    assertThatThrownBy(() -> postService.updatePost(
+            post.getId(),
+            new UpdatePostRequest("새 제목", "새 내용"),
+            otherUser.getId()
+    )).isInstanceOf(ForbiddenException.class);
+}
+```
+
+좋은 Service 테스트는 기능 규칙을 문장으로 보여줍니다.
+
+- 없는 게시글이면 실패한다.
+- 작성자가 아니면 실패한다.
+- 정상 수정이면 제목과 내용이 바뀐다.
+- 삭제된 글은 조회되지 않는다.
+- 재고가 부족하면 주문할 수 없다.
+
+AI가 만든 코드에서 Service는 복잡한데 테스트가 없다면 위험합니다. 특히 결제, 주문, 권한, 포인트, 재고, 관리자 기능은 Service 테스트가 중요합니다.
+
+---
+
+## 12. 오늘의 코드 리뷰 체크리스트
+
+AI가 만든 Spring Boot Service를 볼 때 아래 질문을 순서대로 던져 보세요.
+
+### 역할 분리
+
+- Controller가 너무 많은 기능 규칙을 들고 있지 않은가?
+- Service가 기능 규칙을 중심으로 들고 있는가?
+- Repository는 DB 조회/저장 역할에 집중하는가?
+- Entity와 DTO가 구분되어 있는가?
+
+### 입력과 권한
+
+- 사용자가 조작할 수 있는 값과 서버가 결정해야 하는 값이 분리되어 있는가?
+- 수정/삭제/비공개 조회에 권한 검사가 있는가?
+- 없는 데이터에 대해 명확한 에러를 던지는가?
+
+### 트랜잭션
+
+- DB를 바꾸는 메서드에 `@Transactional`이 있는가?
+- 조회 전용 메서드에는 `readOnly = true`를 쓸 수 있는가?
+- 읽기 전용 메서드 안에서 Entity를 바꾸고 있지 않은가?
+- 여러 DB 변경이 하나의 안전한 작업 단위로 묶여야 하는가?
+
+### 응답
+
+- Entity를 그대로 반환하지 않고 응답 DTO로 바꾸는가?
+- 프론트엔드가 필요한 필드가 응답에 들어 있는가?
+- 민감한 내부 필드가 응답에 섞이지 않았는가?
+
+### 실패 시나리오
+
+- 중간에 실패하면 DB 상태가 이상해지지 않는가?
+- 외부 API 호출과 DB 변경이 섞인 경우 실패 보상이 고려되어 있는가?
+- 테스트가 주요 규칙을 확인하는가?
+
+---
+
+## 13. 오늘의 한 문장 요약
+
+Service는 Spring Boot 백엔드에서 기능 규칙이 실제로 실행되는 중심 계층입니다.
+
+Controller는 요청을 받고, Repository는 DB와 대화하지만, "누가 무엇을 할 수 있는지", "어떤 순서로 검증하고 저장할지", "실패하면 어떤 에러를 낼지"는 대부분 Service에서 드러납니다.
+
+AI가 만든 백엔드 코드를 읽을 때 Service를 문장으로 번역해 보세요.
+
+```text
+무엇을 찾고,
+무엇을 검증하고,
+무엇을 바꾸고,
+무엇을 저장하고,
+무엇을 응답하는가?
+```
+
+이 다섯 질문만 잘 따라가도 Controller, Repository, Entity가 따로 보이지 않고 하나의 기능 흐름으로 연결되기 시작합니다.
+
+다음 Day에서는 인증과 현재 사용자 흐름을 더 자세히 봅니다. 특히 프론트엔드가 보낸 `userId`를 믿으면 왜 위험한지, 로그인 토큰에서 현재 사용자를 어떻게 결정하는지, AI가 만든 인증 코드에서 어떤 부분을 조심해야 하는지 다룰 예정입니다.
