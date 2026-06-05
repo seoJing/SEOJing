@@ -1,0 +1,1075 @@
+---
+title: "백엔드 스터디 Day 6: 로그인과 권한 흐름을 코드에서 읽기"
+date: 2026-06-06
+tags:
+  - 백엔드
+  - 스터디
+  - Spring Boot
+  - Java
+  - API
+  - Auth
+  - Security
+  - AI 코드 읽기
+description: AI가 만든 Spring Boot 백엔드 코드를 검토할 때 로그인, 인증, 인가, 토큰, 현재 사용자 흐름은 기능 안전성을 결정합니다. Day 6에서는 auth 코드를 외우는 대신 요청이 누구의 요청인지 확인하고 권한을 적용하는 흐름을 낮은 단계부터 읽습니다.
+---
+
+> 예상 읽기 시간: 20~30분
+
+## 오늘의 목표
+
+Day 1에서는 Spring Boot 프로젝트의 폴더 구조를 봤습니다. Day 2에서는 프론트엔드와 백엔드가 맞추는 API 계약을 읽었습니다. Day 3에서는 입력 검증과 에러 응답을 봤고, Day 4에서는 Entity와 Repository로 DB 접근 흐름을 봤습니다. Day 5에서는 Service와 트랜잭션으로 비즈니스 흐름을 읽었습니다.
+
+오늘은 로그인과 권한 흐름을 봅니다.
+
+백엔드 코드를 처음 볼 때 `SecurityConfig`, `JwtTokenProvider`, `UserDetailsService`, `@AuthenticationPrincipal`, `PasswordEncoder` 같은 이름이 나오면 갑자기 어려워 보입니다. 하지만 진규가 지금 목표로 삼아야 하는 것은 보안 프레임워크를 처음부터 구현하는 것이 아닙니다.
+
+목표는 이것입니다.
+
+> AI가 만든 Spring Boot 백엔드 코드에서 “이 요청은 누구의 요청인가?”와 “이 사용자가 이 행동을 해도 되는가?”가 어디에서 확인되는지 읽을 수 있어야 한다.
+
+오늘 글을 읽고 나면 아래 질문에 답할 수 있어야 합니다.
+
+- 인증과 인가는 무엇이 다른가?
+- 로그인 API는 어떤 값을 받고 어떤 값을 돌려주는가?
+- JWT 토큰은 백엔드 코드에서 어떤 흐름으로 해석되는가?
+- Controller와 Service는 현재 사용자를 어떻게 전달받는가?
+- “본인만 수정 가능” 같은 권한 규칙은 어디에 있어야 하는가?
+- AI가 만든 auth 코드에서 어떤 위험 신호를 봐야 하는가?
+
+---
+
+## 1. 인증과 인가를 먼저 나눈다
+
+로그인/권한 코드를 읽을 때 가장 먼저 나눌 단어는 두 개입니다.
+
+```text
+인증 Authentication: 너 누구야?
+인가 Authorization: 너 이거 해도 돼?
+```
+
+예를 들어 게시글 수정 API가 있다고 해보겠습니다.
+
+```http
+PATCH /api/posts/10
+Authorization: Bearer eyJhbGciOi...
+Content-Type: application/json
+
+{
+  "title": "수정된 제목",
+  "content": "수정된 내용"
+}
+```
+
+백엔드는 이 요청을 보고 두 가지를 확인해야 합니다.
+
+```text
+1. 인증: 토큰을 해석했더니 userId=3인 사용자가 보낸 요청인가?
+2. 인가: userId=3이 postId=10을 수정할 권한이 있는가?
+```
+
+첫 번째는 “누구인가”입니다. 두 번째는 “해도 되는가”입니다.
+
+이 둘을 섞어서 읽으면 코드가 헷갈립니다. 예를 들어 토큰이 유효하다는 사실만으로 게시글 수정이 허용되면 안 됩니다. 로그인한 사용자인 것은 맞지만, 그 사용자가 남의 게시글까지 수정해도 된다는 뜻은 아니기 때문입니다.
+
+그래서 auth 코드를 볼 때는 항상 이렇게 표시해보면 좋습니다.
+
+```text
+로그인 API: 사용자 신원을 확인하고 토큰을 발급한다
+JWT 필터: 요청마다 토큰을 읽어서 현재 사용자 정보를 만든다
+Controller: 현재 사용자 정보를 받아 Service에 넘긴다
+Service: 이 사용자가 이 기능을 실행해도 되는지 확인한다
+```
+
+---
+
+## 2. 로그인 API의 기본 입출력부터 본다
+
+가장 단순한 로그인 API는 이런 모양입니다.
+
+```java
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    private final AuthService authService;
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        LoginResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
+    }
+}
+```
+
+여기서 진규가 먼저 볼 것은 Spring Security 내부가 아닙니다. API 계약입니다.
+
+```java
+public record LoginRequest(
+        @NotBlank String email,
+        @NotBlank String password
+) {
+}
+```
+
+```java
+public record LoginResponse(
+        String accessToken,
+        String tokenType,
+        UserSummary user
+) {
+}
+```
+
+문장으로 바꾸면 이렇습니다.
+
+```text
+프론트엔드는 email/password를 보낸다.
+백엔드는 accessToken과 사용자 요약 정보를 돌려준다.
+프론트엔드는 이후 요청에 Authorization 헤더를 붙인다.
+```
+
+프론트엔드 입장에서 중요한 흐름은 다음입니다.
+
+```ts
+const response = await fetch("/api/auth/login", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email, password }),
+});
+
+const data = await response.json();
+localStorage.setItem("accessToken", data.accessToken);
+```
+
+그리고 이후 요청은 이렇게 갑니다.
+
+```ts
+await fetch("/api/posts", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+  body: JSON.stringify({ title, content }),
+});
+```
+
+즉 로그인 기능을 읽을 때의 첫 질문은 이것입니다.
+
+> 프론트엔드가 어떤 값을 보내고, 백엔드가 어떤 토큰/사용자 정보를 돌려주며, 이후 요청에서 그 토큰을 어떤 헤더 이름으로 기대하는가?
+
+AI가 만든 코드에서 자주 생기는 문제는 백엔드와 프론트엔드의 약속이 살짝 어긋나는 것입니다.
+
+예를 들어 백엔드는 `accessToken`을 반환하는데 프론트엔드는 `token`을 읽을 수 있습니다.
+
+```json
+{
+  "accessToken": "...",
+  "tokenType": "Bearer"
+}
+```
+
+```ts
+// 위험: 백엔드 응답에는 token이 없는데 token을 읽고 있다
+localStorage.setItem("token", data.token);
+```
+
+또는 백엔드는 `Authorization: Bearer <token>`을 기대하는데 프론트엔드는 `X-Auth-Token`으로 보낼 수 있습니다.
+
+이런 문제는 Spring Security 지식보다 API 계약 확인으로 먼저 잡을 수 있습니다.
+
+---
+
+## 3. AuthService는 비밀번호를 직접 비교하지 않는다
+
+로그인 Service는 보통 이런 흐름입니다.
+
+```java
+@Service
+@RequiredArgsConstructor
+public class AuthService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    @Transactional(readOnly = true)
+    public LoginResponse login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new UnauthorizedException("이메일 또는 비밀번호가 올바르지 않습니다."));
+
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+            throw new UnauthorizedException("이메일 또는 비밀번호가 올바르지 않습니다.");
+        }
+
+        String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getRole());
+        return new LoginResponse(
+                accessToken,
+                "Bearer",
+                UserSummary.from(user)
+        );
+    }
+}
+```
+
+여기서 핵심은 세 단계입니다.
+
+```text
+1. 이메일로 사용자를 찾는다
+2. 입력 비밀번호와 저장된 비밀번호 해시를 비교한다
+3. 토큰을 발급한다
+```
+
+중요한 점은 저장된 비밀번호가 평문이면 안 된다는 것입니다.
+
+위 코드에서 `user.getPassword()`는 실제 비밀번호 문자열이 아니라 해시여야 합니다. 그래서 비교도 아래처럼 하면 안 됩니다.
+
+```java
+// 위험: 평문 문자열 비교처럼 보인다
+if (!request.password().equals(user.getPassword())) {
+    throw new UnauthorizedException("로그인 실패");
+}
+```
+
+좋은 코드는 보통 `PasswordEncoder.matches(rawPassword, encodedPassword)`를 사용합니다.
+
+```java
+passwordEncoder.matches(request.password(), user.getPassword())
+```
+
+진규가 코드를 리뷰할 때는 이렇게 읽으면 됩니다.
+
+```text
+회원가입 때 비밀번호를 encode해서 저장하는가?
+로그인 때 matches로 비교하는가?
+응답에 password/passwordHash가 포함되지 않는가?
+로그인 실패 메시지가 이메일 존재 여부를 과하게 노출하지 않는가?
+```
+
+특히 AI가 만든 코드에서 조심할 신호는 이것입니다.
+
+```java
+return new LoginResponse(user.getId(), user.getEmail(), user.getPassword(), token);
+```
+
+응답 DTO에 비밀번호 필드가 들어가면 거의 항상 잘못된 설계입니다. 해시라고 해도 외부로 보내지 않는 편이 맞습니다.
+
+---
+
+## 4. JWT는 “사용자 정보를 담은 출입증”처럼 읽는다
+
+JWT를 깊게 구현하려면 암호화, 서명, 만료 시간, refresh token 등 많은 주제가 있습니다. 하지만 AI 코드 리뷰 관점에서는 먼저 흐름만 잡으면 됩니다.
+
+JWT는 보통 이런 역할을 합니다.
+
+```text
+로그인 성공
+→ 백엔드가 accessToken 발급
+→ 프론트엔드가 토큰 저장
+→ 다음 요청부터 Authorization 헤더에 토큰 첨부
+→ 백엔드 필터가 토큰 검증
+→ 현재 사용자 정보를 SecurityContext에 넣음
+→ Controller/Service가 현재 사용자 기준으로 동작
+```
+
+코드에서는 토큰 생성기가 이런 모양일 수 있습니다.
+
+```java
+@Component
+public class JwtTokenProvider {
+
+    private final SecretKey secretKey;
+    private final Duration accessTokenValidity = Duration.ofHours(2);
+
+    public String createAccessToken(Long userId, Role role) {
+        Instant now = Instant.now();
+        return Jwts.builder()
+                .subject(String.valueOf(userId))
+                .claim("role", role.name())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plus(accessTokenValidity)))
+                .signWith(secretKey)
+                .compact();
+    }
+
+    public Long getUserId(String token) {
+        Claims claims = parseClaims(token);
+        return Long.valueOf(claims.getSubject());
+    }
+
+    public Role getRole(String token) {
+        Claims claims = parseClaims(token);
+        return Role.valueOf(claims.get("role", String.class));
+    }
+}
+```
+
+여기서 진규가 외울 것은 `Jwts.builder()` 문법이 아닙니다. 무엇이 토큰 안에 들어가는지입니다.
+
+```text
+subject: 보통 userId
+claim role: 사용자 권한
+issuedAt: 발급 시각
+expiration: 만료 시각
+signWith: 위조 방지를 위한 서명
+```
+
+리뷰 질문은 이렇습니다.
+
+```text
+토큰에 필요한 최소 정보만 들어가는가?
+비밀번호, 주민번호, 전화번호 같은 민감 정보가 들어가지 않는가?
+만료 시간이 있는가?
+서명 키가 코드에 하드코딩되어 있지 않은가?
+토큰 검증 실패 시 요청이 차단되는가?
+```
+
+위험한 예시는 이런 것입니다.
+
+```java
+// 위험: secret이 코드에 직접 들어 있다
+private static final String SECRET = "my-super-secret-key";
+```
+
+좋은 코드는 보통 설정이나 환경변수에서 읽습니다.
+
+```java
+public JwtTokenProvider(@Value("${jwt.secret}") String secret) {
+    this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+}
+```
+
+단, 여기서도 실제 secret 값을 GitHub에 올리면 안 됩니다. 설정 파일에는 placeholder나 환경변수 연결만 있어야 합니다.
+
+---
+
+## 5. JWT 필터는 매 요청마다 “현재 사용자”를 만든다
+
+로그인 API는 한 번 실행됩니다. 하지만 보호된 API는 매번 토큰 검증이 필요합니다.
+
+그래서 Spring Security 프로젝트에는 보통 필터가 있습니다.
+
+```java
+@Component
+@RequiredArgsConstructor
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private final JwtTokenProvider jwtTokenProvider;
+    private final CustomUserDetailsService userDetailsService;
+
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+        String token = resolveToken(request);
+
+        if (token != null && jwtTokenProvider.validateToken(token)) {
+            Long userId = jwtTokenProvider.getUserId(token);
+            UserDetails userDetails = userDetailsService.loadUserById(userId);
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
+
+        filterChain.doFilter(request, response);
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
+}
+```
+
+이 코드는 처음 보면 복잡하지만 문장으로 바꿀 수 있습니다.
+
+```text
+Authorization 헤더를 읽는다.
+Bearer 접두사를 제거해서 토큰만 꺼낸다.
+토큰이 유효하면 userId를 꺼낸다.
+userId로 사용자 정보를 로드한다.
+Spring Security의 현재 인증 정보에 사용자 정보를 넣는다.
+다음 필터/Controller로 요청을 넘긴다.
+```
+
+여기서 중요한 리뷰 포인트는 “필터가 실패했을 때 어떻게 되는가”입니다.
+
+- 토큰이 없으면 그냥 익명 요청으로 지나갈 수 있습니다. 그 뒤 SecurityConfig가 보호 API를 막아야 합니다.
+- 토큰이 잘못됐으면 인증 실패로 처리해야 합니다.
+- 만료된 토큰을 무시하고 통과시키면 안 됩니다.
+- 필터가 모든 예외를 삼키고 조용히 통과시키면 디버깅이 어려워집니다.
+
+AI가 만든 코드에서 가끔 이런 흐름이 나옵니다.
+
+```java
+try {
+    // token parse
+} catch (Exception e) {
+    // 아무것도 안 함
+}
+filterChain.doFilter(request, response);
+```
+
+이 자체가 항상 틀린 것은 아닙니다. SecurityConfig가 뒤에서 보호 API를 막는 구조라면 괜찮을 수 있습니다. 하지만 보호된 API까지 익명으로 열려 있으면 큰 문제입니다.
+
+그래서 필터만 보지 말고 SecurityConfig까지 같이 봐야 합니다.
+
+---
+
+## 6. SecurityConfig에서는 “어떤 API가 열려 있는지”를 본다
+
+Spring Security 설정은 보통 이런 모양입니다.
+
+```java
+@Configuration
+@EnableWebSecurity
+@RequiredArgsConstructor
+public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/signup").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
+}
+```
+
+여기서 외울 것은 설정 문법이 아니라 정책입니다.
+
+```text
+로그인/회원가입은 누구나 접근 가능
+게시글 조회는 누구나 접근 가능
+관리자 API는 ADMIN만 가능
+나머지는 로그인 필요
+JWT 필터는 Spring Security 인증 필터 앞에 둔다
+```
+
+진규가 AI 코드를 검토할 때는 이 부분을 표로 바꿔보면 좋습니다.
+
+| API                     | 접근 정책                   | 확인할 점                            |
+| ----------------------- | --------------------------- | ------------------------------------ |
+| `POST /api/auth/login`  | 공개                        | 비밀번호 검증, 토큰 발급             |
+| `POST /api/auth/signup` | 공개                        | 비밀번호 해시 저장, 중복 이메일 검증 |
+| `GET /api/posts/**`     | 공개                        | 공개 글만 보이는지                   |
+| `POST /api/posts`       | 로그인 필요                 | 현재 사용자로 작성자 설정            |
+| `PATCH /api/posts/{id}` | 로그인 필요 + 작성자/관리자 | Service에서 소유권 확인              |
+| `/api/admin/**`         | 관리자만                    | role 체크                            |
+
+위험한 설정은 이런 것입니다.
+
+```java
+.anyRequest().permitAll()
+```
+
+개발 중에는 편하지만 실제 서비스에서는 대부분 위험합니다. 특히 AI가 빠르게 만든 데모 코드에서는 모든 API를 열어두는 설정이 자주 나옵니다. 그 상태에서 프론트엔드가 로그인 화면을 갖고 있다고 해도 백엔드 API 자체는 보호되지 않을 수 있습니다.
+
+프론트엔드 라우팅 보호와 백엔드 API 보호는 다릅니다.
+
+```text
+프론트엔드 보호: 로그인 안 하면 화면을 안 보여준다
+백엔드 보호: 로그인 안 하면 API가 데이터를 안 준다
+```
+
+보안은 백엔드에서 최종적으로 막아야 합니다.
+
+---
+
+## 7. Controller는 현재 사용자를 어떻게 받는가
+
+JWT 필터가 현재 사용자 정보를 만들어두면 Controller에서는 보통 아래처럼 받습니다.
+
+```java
+@PostMapping("/posts")
+public ResponseEntity<PostResponse> createPost(
+        @Valid @RequestBody CreatePostRequest request,
+        @AuthenticationPrincipal CustomUserPrincipal principal
+) {
+    PostResponse response = postService.createPost(request, principal.getUserId());
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+}
+```
+
+여기서 중요한 것은 `userId`를 요청 body에서 받지 않는다는 점입니다.
+
+좋지 않은 예시는 이런 것입니다.
+
+```java
+public record CreatePostRequest(
+        Long userId,
+        String title,
+        String content
+) {
+}
+```
+
+왜 위험할까요?
+
+프론트엔드가 아래처럼 보낼 수 있기 때문입니다.
+
+```json
+{
+  "userId": 999,
+  "title": "남의 계정으로 작성",
+  "content": "..."
+}
+```
+
+백엔드가 이 `userId`를 그대로 믿으면 사용자가 다른 사람인 척할 수 있습니다.
+
+그래서 로그인 사용자 기준 기능에서는 보통 이런 원칙을 둡니다.
+
+```text
+현재 사용자 ID는 토큰/세션에서 가져온다.
+클라이언트가 보낸 userId를 신뢰하지 않는다.
+```
+
+좋은 흐름은 이렇습니다.
+
+```java
+public PostResponse createPost(CreatePostRequest request, Long currentUserId) {
+    User author = userRepository.findById(currentUserId)
+            .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+    Post post = Post.create(request.title(), request.content(), author);
+    return PostResponse.from(postRepository.save(post));
+}
+```
+
+리뷰 질문은 간단합니다.
+
+> 이 기능에서 “현재 사용자”가 request body/query parameter에서 오고 있는가, 아니면 인증 컨텍스트에서 오고 있는가?
+
+프로필 수정, 게시글 작성, 댓글 작성, 좋아요, 북마크, 주문, 결제 같은 기능은 대부분 현재 사용자를 클라이언트 입력으로 믿으면 안 됩니다.
+
+---
+
+## 8. 인가는 Service에서 기능 규칙으로 확인한다
+
+인증은 “로그인했는가”를 확인합니다. 인가는 “이 리소스를 건드려도 되는가”를 확인합니다.
+
+예를 들어 게시글 수정 Service를 봅시다.
+
+```java
+@Transactional
+public PostResponse updatePost(Long postId, UpdatePostRequest request, Long currentUserId) {
+    Post post = postRepository.findById(postId)
+            .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다."));
+
+    if (!post.isWrittenBy(currentUserId)) {
+        throw new ForbiddenException("게시글을 수정할 권한이 없습니다.");
+    }
+
+    post.update(request.title(), request.content());
+    return PostResponse.from(post);
+}
+```
+
+이 코드는 이렇게 읽을 수 있습니다.
+
+```text
+postId로 게시글을 찾는다.
+없으면 404.
+현재 사용자가 작성자인지 확인한다.
+작성자가 아니면 403.
+권한이 있으면 내용을 수정한다.
+```
+
+여기서 `post.isWrittenBy(currentUserId)`는 Entity 안의 작은 도메인 메서드일 수 있습니다.
+
+```java
+public boolean isWrittenBy(Long userId) {
+    return this.author.getId().equals(userId);
+}
+```
+
+관리자는 예외적으로 수정 가능하게 할 수도 있습니다.
+
+```java
+if (!post.isWrittenBy(currentUserId) && !currentUserRole.isAdmin()) {
+    throw new ForbiddenException("게시글을 수정할 권한이 없습니다.");
+}
+```
+
+중요한 것은 권한 규칙이 실제 수정 직전에 있다는 점입니다.
+
+위험한 코드는 이런 것입니다.
+
+```java
+@Transactional
+public PostResponse updatePost(Long postId, UpdatePostRequest request) {
+    Post post = postRepository.findById(postId)
+            .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다."));
+
+    post.update(request.title(), request.content());
+    return PostResponse.from(post);
+}
+```
+
+이 코드는 로그인 여부조차 Service에서 모릅니다. Controller나 SecurityConfig에서 막았을 수 있지만, “본인 글만 수정” 규칙은 보이지 않습니다.
+
+진규가 리뷰할 때는 수정/삭제/결제/관리 기능마다 아래 질문을 붙이면 됩니다.
+
+```text
+이 기능은 누구나 해도 되는가?
+로그인만 하면 되는가?
+본인 리소스만 가능한가?
+관리자만 가능한가?
+조직/팀/프로젝트 멤버만 가능한가?
+그 규칙이 코드에서 실제 데이터 조회 후 확인되는가?
+```
+
+---
+
+## 9. HTTP 상태 코드도 권한 흐름의 일부다
+
+auth 코드를 볼 때 에러 응답도 중요합니다.
+
+대략적인 구분은 이렇습니다.
+
+| 상황                    | 상태 코드 | 의미          |
+| ----------------------- | --------: | ------------- |
+| 로그인 정보가 틀림      |       401 | 인증 실패     |
+| 토큰이 없음/만료/잘못됨 |       401 | 인증 필요     |
+| 로그인했지만 권한 없음  |       403 | 인가 실패     |
+| 대상 리소스 없음        |       404 | 찾을 수 없음  |
+| 입력 형식 오류          |       400 | 요청이 잘못됨 |
+
+예를 들어 토큰이 없어서 게시글을 작성할 수 없으면 401이 자연스럽습니다.
+
+```json
+{
+  "code": "UNAUTHORIZED",
+  "message": "로그인이 필요합니다."
+}
+```
+
+로그인은 했지만 남의 게시글을 수정하려고 하면 403이 자연스럽습니다.
+
+```json
+{
+  "code": "FORBIDDEN",
+  "message": "게시글을 수정할 권한이 없습니다."
+}
+```
+
+프론트엔드는 이 차이를 보고 다른 행동을 할 수 있습니다.
+
+```text
+401 → 로그인 페이지로 보낸다
+403 → 권한 없음 메시지를 보여준다
+404 → 존재하지 않는 글이라고 알려준다
+```
+
+AI가 만든 코드에서 흔한 문제는 모든 에러를 500으로 던지는 것입니다.
+
+```java
+throw new RuntimeException("권한 없음");
+```
+
+이렇게 되면 프론트엔드는 “서버가 터졌다”고만 보게 됩니다. 권한 문제인지, 로그인 문제인지, 입력 문제인지 알 수 없습니다.
+
+Day 3에서 본 전역 예외 처리와 연결해서 보면 좋습니다.
+
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ErrorResponse.of("UNAUTHORIZED", e.getMessage()));
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.of("FORBIDDEN", e.getMessage()));
+    }
+}
+```
+
+---
+
+## 10. 회원가입 코드는 중복과 비밀번호 저장을 본다
+
+로그인과 함께 회원가입 코드도 자주 나옵니다.
+
+```java
+@Transactional
+public SignupResponse signup(SignupRequest request) {
+    if (userRepository.existsByEmail(request.email())) {
+        throw new ConflictException("이미 사용 중인 이메일입니다.");
+    }
+
+    String encodedPassword = passwordEncoder.encode(request.password());
+
+    User user = User.create(
+            request.email(),
+            encodedPassword,
+            request.nickname(),
+            Role.USER
+    );
+
+    User savedUser = userRepository.save(user);
+    return SignupResponse.from(savedUser);
+}
+```
+
+이 코드에서 볼 것은 네 가지입니다.
+
+```text
+이메일 중복을 확인하는가?
+비밀번호를 encode해서 저장하는가?
+기본 role이 과하게 높지 않은가?
+응답에 password가 빠져 있는가?
+```
+
+위험한 예시는 다음입니다.
+
+```java
+User user = User.create(
+        request.email(),
+        request.password(),
+        request.nickname(),
+        Role.ADMIN
+);
+```
+
+비밀번호를 그대로 저장하고 기본 권한을 ADMIN으로 주고 있습니다. 데모 코드에서 “일단 되게 하려고” 이런 형태가 나올 수 있지만, 실제 서비스 코드라면 막아야 합니다.
+
+또 하나 볼 것은 DB 제약입니다.
+
+Service에서 `existsByEmail`을 확인해도 동시에 두 요청이 들어오면 중복이 생길 수 있습니다. 그래서 Entity나 DB schema에 unique 제약도 있어야 합니다.
+
+```java
+@Column(nullable = false, unique = true)
+private String email;
+```
+
+또는 migration SQL에 unique index가 있어야 합니다.
+
+```sql
+create unique index uk_users_email on users(email);
+```
+
+진규가 지금 당장 DB 인덱스 문법을 다 외울 필요는 없습니다. 다만 AI 코드 리뷰 때 이렇게 물어보면 됩니다.
+
+> 이메일 중복은 Service에서만 막고 있는가, DB에서도 막는가?
+
+---
+
+## 11. Role과 권한 이름은 프론트엔드까지 이어진다
+
+사용자 권한은 보통 `Role` enum으로 표현됩니다.
+
+```java
+public enum Role {
+    USER,
+    ADMIN
+}
+```
+
+Spring Security에서는 `ROLE_USER`, `ROLE_ADMIN`처럼 접두사가 붙는 경우가 많습니다.
+
+```java
+public Collection<? extends GrantedAuthority> getAuthorities() {
+    return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+}
+```
+
+그 다음 SecurityConfig에서는 이렇게 쓸 수 있습니다.
+
+```java
+.requestMatchers("/api/admin/**").hasRole("ADMIN")
+```
+
+주의할 점은 `hasRole("ADMIN")`은 내부적으로 `ROLE_ADMIN`을 기대한다는 것입니다. 반면 `hasAuthority("ADMIN")`와 `hasAuthority("ROLE_ADMIN")`는 다르게 동작할 수 있습니다.
+
+진규가 AI 코드에서 볼 것은 이것입니다.
+
+```text
+Role enum 값은 무엇인가?
+GrantedAuthority로 바뀔 때 접두사가 붙는가?
+SecurityConfig의 hasRole/hasAuthority와 일치하는가?
+JWT claim에 들어가는 role 문자열과 일치하는가?
+프론트엔드가 role 값을 사용할 때 같은 이름을 기대하는가?
+```
+
+프론트엔드가 관리자 메뉴를 숨기는 것은 UX입니다. 백엔드가 관리자 API를 막는 것은 보안입니다.
+
+```tsx
+{
+  user.role === "ADMIN" && <AdminMenu />;
+}
+```
+
+이 코드가 있어도 누군가 직접 `/api/admin/users`를 호출할 수 있습니다. 그래서 백엔드의 `hasRole("ADMIN")` 같은 보호가 따로 필요합니다.
+
+---
+
+## 12. Refresh token은 “나중에 볼 주제”로 분리한다
+
+실제 서비스에서는 access token만 쓰지 않고 refresh token도 둡니다.
+
+```text
+access token: 짧게 살아 있는 API 출입증
+refresh token: access token을 다시 발급받기 위한 긴 수명의 토큰
+```
+
+하지만 Day 6에서 핵심은 refresh token 구현이 아닙니다. 오히려 처음 auth 코드를 볼 때 모든 개념을 한꺼번에 이해하려고 하면 흐름을 놓칩니다.
+
+AI가 만든 프로젝트가 refresh token을 포함한다면 먼저 이렇게 분리해서 읽으면 됩니다.
+
+```text
+로그인 성공 시 access token과 refresh token을 둘 다 발급하는가?
+refresh token은 어디에 저장하는가? DB? Redis? HttpOnly cookie?
+access token 재발급 API가 있는가?
+로그아웃/탈퇴 시 refresh token을 무효화하는가?
+```
+
+지금 단계에서는 아래 정도만 체크해도 충분합니다.
+
+- refresh token이 localStorage에 무심코 저장되는 설계인지
+- 만료 시간이 없는지
+- 로그아웃 후에도 계속 재사용 가능한지
+- DB에 저장한다면 사용자와 연결되어 있는지
+
+깊은 보안 설계는 나중에 별도 Day에서 다루는 편이 좋습니다.
+
+---
+
+## 13. AI가 만든 auth 코드를 리뷰하는 체크리스트
+
+아래 체크리스트는 실제 코드 리뷰 때 바로 사용할 수 있습니다.
+
+### 로그인/회원가입
+
+```text
+[ ] 회원가입 때 비밀번호를 PasswordEncoder로 encode해서 저장한다.
+[ ] 로그인 때 PasswordEncoder.matches로 비교한다.
+[ ] 로그인 실패 메시지가 이메일 존재 여부를 과하게 노출하지 않는다.
+[ ] 응답 DTO에 password/passwordHash가 없다.
+[ ] 이메일/닉네임 중복은 Service와 DB 제약으로 함께 막는다.
+[ ] 기본 role이 USER처럼 최소 권한이다.
+```
+
+### JWT/토큰
+
+```text
+[ ] Authorization: Bearer <token> 형식을 일관되게 사용한다.
+[ ] 토큰에 userId/role 같은 최소 정보만 넣는다.
+[ ] 토큰에 비밀번호/전화번호/민감 개인정보를 넣지 않는다.
+[ ] 만료 시간이 있다.
+[ ] secret key가 코드에 하드코딩되어 있지 않다.
+[ ] 잘못된/만료된 토큰은 보호 API에서 401로 처리된다.
+```
+
+### API 보호
+
+```text
+[ ] SecurityConfig에서 공개 API와 보호 API가 분리되어 있다.
+[ ] anyRequest().permitAll()이 운영 코드에 남아 있지 않다.
+[ ] 관리자 API는 role 기반으로 막혀 있다.
+[ ] 프론트엔드 라우트 보호만 믿지 않고 백엔드 API도 보호한다.
+```
+
+### 현재 사용자/인가
+
+```text
+[ ] 현재 사용자 ID를 request body에서 받지 않는다.
+[ ] @AuthenticationPrincipal 또는 SecurityContext에서 현재 사용자를 얻는다.
+[ ] 작성/수정/삭제 기능은 Service에서 소유권/권한을 확인한다.
+[ ] 로그인만 필요한 기능과 본인 리소스만 가능한 기능을 구분한다.
+[ ] 권한 없음은 403, 인증 없음은 401로 구분한다.
+```
+
+---
+
+## 14. 작은 예제로 전체 흐름 연결하기
+
+마지막으로 게시글 작성/수정 흐름을 한 번에 연결해봅시다.
+
+### 1단계: 로그인
+
+```http
+POST /api/auth/login
+
+{
+  "email": "jing@example.com",
+  "password": "password123"
+}
+```
+
+응답:
+
+```json
+{
+  "accessToken": "eyJhbGciOi...",
+  "tokenType": "Bearer",
+  "user": {
+    "id": 3,
+    "email": "jing@example.com",
+    "nickname": "진규",
+    "role": "USER"
+  }
+}
+```
+
+### 2단계: 프론트엔드가 토큰 첨부
+
+```http
+POST /api/posts
+Authorization: Bearer eyJhbGciOi...
+
+{
+  "title": "첫 글",
+  "content": "내용"
+}
+```
+
+### 3단계: JWT 필터가 현재 사용자 생성
+
+```text
+Authorization 헤더 읽기
+→ 토큰 검증
+→ userId=3 추출
+→ UserDetails 로드
+→ SecurityContext에 인증 정보 저장
+```
+
+### 4단계: Controller가 현재 사용자 전달
+
+```java
+@PostMapping("/posts")
+public ResponseEntity<PostResponse> createPost(
+        @Valid @RequestBody CreatePostRequest request,
+        @AuthenticationPrincipal CustomUserPrincipal principal
+) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+            .body(postService.createPost(request, principal.getUserId()));
+}
+```
+
+### 5단계: Service가 현재 사용자를 작성자로 사용
+
+```java
+@Transactional
+public PostResponse createPost(CreatePostRequest request, Long currentUserId) {
+    User author = userRepository.findById(currentUserId)
+            .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+    Post post = Post.create(request.title(), request.content(), author);
+    return PostResponse.from(postRepository.save(post));
+}
+```
+
+### 6단계: 수정 때는 소유권 확인
+
+```java
+@Transactional
+public PostResponse updatePost(Long postId, UpdatePostRequest request, Long currentUserId) {
+    Post post = postRepository.findById(postId)
+            .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다."));
+
+    if (!post.isWrittenBy(currentUserId)) {
+        throw new ForbiddenException("게시글을 수정할 권한이 없습니다.");
+    }
+
+    post.update(request.title(), request.content());
+    return PostResponse.from(post);
+}
+```
+
+이 전체 흐름을 읽을 수 있으면 auth 코드의 절반 이상은 잡은 것입니다.
+
+---
+
+## 15. 프론트엔드 버그처럼 보여도 백엔드 권한 문제일 수 있다
+
+실제 개발에서는 이런 일이 자주 생깁니다.
+
+```text
+수정 버튼을 눌렀는데 403이 나온다.
+로그인했는데 내 프로필 API가 401을 반환한다.
+관리자 계정인데 관리자 메뉴 API가 403을 반환한다.
+게시글 작성자는 나인데 수정 권한이 없다고 나온다.
+```
+
+이때 프론트엔드만 보면 원인을 놓칠 수 있습니다. 아래 순서로 추적하면 좋습니다.
+
+```text
+1. 프론트엔드가 Authorization 헤더를 실제로 보내는가?
+2. 헤더 형식이 Bearer <token>인가?
+3. 토큰이 만료되지 않았는가?
+4. 백엔드 JWT 필터가 userId/role을 제대로 꺼내는가?
+5. Controller가 principal을 제대로 받고 있는가?
+6. Service가 currentUserId와 리소스 소유자를 올바르게 비교하는가?
+7. role 문자열이 SecurityConfig와 일치하는가?
+8. 에러 응답이 401/403/404 중 무엇인가?
+```
+
+이 순서는 AI가 만든 코드를 디버깅할 때도 유용합니다. AI는 한 파일에서는 그럴듯하게 만들지만, 프론트엔드 저장 키, API 헤더 이름, 백엔드 필터, SecurityConfig, Service 권한 체크를 끝까지 일치시키지 못할 때가 있습니다.
+
+진규의 역할은 모든 보안 코드를 손으로 외워서 쓰는 것이 아니라, 이 연결이 끊긴 지점을 찾아내는 것입니다.
+
+---
+
+## 오늘의 정리
+
+오늘은 Spring Boot 백엔드에서 로그인과 권한 흐름을 읽었습니다.
+
+핵심은 다음입니다.
+
+```text
+인증은 “너 누구야?”다.
+인가는 “너 이거 해도 돼?”다.
+로그인 API는 토큰을 발급한다.
+JWT 필터는 매 요청마다 현재 사용자를 만든다.
+SecurityConfig는 어떤 API가 열려 있는지 정한다.
+Controller는 현재 사용자 정보를 Service에 넘긴다.
+Service는 리소스 소유권과 기능 권한을 확인한다.
+```
+
+AI가 만든 Spring Boot 코드를 볼 때는 auth 관련 파일 이름이 많다고 겁먹지 않아도 됩니다. 먼저 요청 흐름을 따라가면 됩니다.
+
+```text
+프론트엔드 로그인 요청
+→ AuthController
+→ AuthService
+→ PasswordEncoder
+→ JwtTokenProvider
+→ 프론트엔드 Authorization 헤더
+→ JwtAuthenticationFilter
+→ SecurityContext
+→ Controller의 현재 사용자
+→ Service의 권한 확인
+```
+
+다음에 auth 코드를 볼 때는 아래 한 문장만 기억해도 좋습니다.
+
+> 토큰이 유효한지만 보지 말고, 그 사용자가 그 리소스를 다뤄도 되는지까지 확인하자.
+
+다음 Day에서는 이 흐름을 바탕으로 테스트 코드를 읽는 법을 다루면 좋습니다. 특히 “로그인 안 하면 401”, “남의 글 수정은 403”, “내 글 수정은 200” 같은 테스트가 실제 권한 규칙을 어떻게 보호하는지 볼 수 있습니다.
