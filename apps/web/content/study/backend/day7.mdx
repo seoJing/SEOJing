@@ -1,0 +1,953 @@
+---
+title: "백엔드 스터디 Day 7: 테스트 코드로 AI 백엔드 검증하기"
+date: 2026-06-07
+tags:
+  - 백엔드
+  - 스터디
+  - Spring Boot
+  - Java
+  - API
+  - Test
+  - JUnit
+  - AI 코드 읽기
+description: AI가 만든 Spring Boot 백엔드 코드를 검토할 때 테스트는 기능이 실제로 지켜지는지 확인하는 가장 안전한 증거입니다. Day 7에서는 테스트 문법을 외우기보다 Controller, Service, Repository 테스트가 무엇을 보장하는지 읽는 법을 낮은 단계부터 익힙니다.
+---
+
+> 예상 읽기 시간: 20~30분
+
+## 오늘의 목표
+
+Day 1에서는 Spring Boot 프로젝트의 폴더 구조를 봤습니다. Day 2에서는 프론트엔드와 백엔드가 맞추는 API 계약을 읽었습니다. Day 3에서는 입력 검증과 에러 응답을 봤고, Day 4에서는 Entity와 Repository로 DB 접근 흐름을 봤습니다. Day 5에서는 Service와 트랜잭션으로 비즈니스 흐름을 읽었습니다. Day 6에서는 로그인과 권한 흐름을 봤습니다.
+
+오늘은 테스트 코드를 봅니다.
+
+AI가 백엔드 코드를 만들어주면 처음에는 “코드가 그럴듯해 보인다”는 느낌이 듭니다. Controller도 있고, Service도 있고, Repository도 있고, 예외 클래스도 있습니다. 하지만 백엔드에서 중요한 질문은 이것입니다.
+
+> 이 코드가 진짜로 우리가 기대한 동작을 보장하는가?
+
+이 질문에 답하기 위해 테스트를 읽습니다.
+
+진규가 지금 목표로 삼아야 하는 것은 JUnit 문법을 전부 외우는 것이 아닙니다. 목표는 AI가 만든 테스트를 보고 “무엇을 검증하고 있고, 무엇을 놓치고 있는지” 판단하는 것입니다.
+
+오늘 글을 읽고 나면 아래 질문에 답할 수 있어야 합니다.
+
+- 테스트 코드는 왜 백엔드 리뷰에서 중요한가?
+- Controller 테스트, Service 테스트, Repository 테스트는 각각 무엇을 확인하는가?
+- `given`, `when`, `then` 구조는 어떻게 읽는가?
+- Mock은 “가짜 객체”일 뿐인데 왜 쓰는가?
+- 로그인/권한/검증/트랜잭션 테스트에서 어떤 빠진 케이스를 찾아야 하는가?
+- AI가 만든 테스트 코드가 실제 안전망인지, 겉보기 테스트인지 어떻게 구분하는가?
+
+---
+
+## 1. 테스트는 “코드 설명”이 아니라 “증거”다
+
+백엔드 코드를 리뷰할 때 설명만으로는 부족합니다.
+
+```text
+이 API는 게시글을 만든다.
+이 API는 제목이 비어 있으면 400을 돌려준다.
+이 API는 본인 게시글만 수정할 수 있다.
+```
+
+이런 설명은 문서나 주석에도 적을 수 있습니다. 하지만 실제 코드가 그 설명대로 동작한다는 보장은 아닙니다.
+
+테스트는 이 설명을 실행 가능한 형태로 바꿉니다.
+
+```text
+제목과 내용을 보내면 게시글이 저장되는가?
+제목이 비어 있으면 400 Bad Request가 나오는가?
+다른 사용자의 게시글을 수정하려 하면 403 Forbidden이 나오는가?
+```
+
+이 질문을 코드로 실행해서 통과하면 최소한 그 상황에서는 기능이 맞게 동작했다는 증거가 생깁니다.
+
+물론 테스트가 모든 버그를 막지는 못합니다. 하지만 테스트가 없으면 AI가 만든 백엔드 코드를 검토할 때 판단 기준이 너무 약해집니다.
+
+```text
+테스트 없음: 코드가 그럴듯해 보인다
+테스트 있음: 이 입력에서는 이 결과가 나와야 한다는 증거가 있다
+좋은 테스트 있음: 정상/실패/권한/경계 케이스까지 안전망이 있다
+```
+
+그래서 AI 백엔드 리뷰에서 테스트를 읽는 첫 번째 질문은 이것입니다.
+
+> 이 테스트가 어떤 사용자 행동이나 비즈니스 규칙을 증명하고 있는가?
+
+---
+
+## 2. 테스트 파일 위치부터 본다
+
+Spring Boot 프로젝트에서 테스트는 보통 `src/test` 아래에 있습니다.
+
+```text
+src/
+  main/
+    java/com/example/app/
+      post/
+        PostController.java
+        PostService.java
+        PostRepository.java
+        Post.java
+  test/
+    java/com/example/app/
+      post/
+        PostControllerTest.java
+        PostServiceTest.java
+        PostRepositoryTest.java
+```
+
+`main`은 실제 애플리케이션 코드입니다. `test`는 그 코드를 검증하는 코드입니다.
+
+파일 이름을 보면 테스트의 대상이 보입니다.
+
+```text
+PostControllerTest   -> API 요청/응답을 주로 확인
+PostServiceTest      -> 비즈니스 규칙을 주로 확인
+PostRepositoryTest   -> DB 저장/조회 쿼리를 주로 확인
+AuthServiceTest      -> 로그인/토큰/비밀번호 검증 흐름을 주로 확인
+```
+
+AI가 만든 프로젝트를 받으면 먼저 `src/test`가 있는지 봅니다. 그리고 실제 기능 파일과 테스트 파일이 짝을 이루는지 확인합니다.
+
+예를 들어 실제 코드는 이렇게 많은데 테스트가 거의 없다면 위험 신호입니다.
+
+```text
+src/main/java/.../post/PostController.java
+src/main/java/.../post/PostService.java
+src/main/java/.../post/PostRepository.java
+src/main/java/.../auth/AuthController.java
+src/main/java/.../auth/AuthService.java
+src/main/java/.../security/JwtTokenProvider.java
+
+src/test/java/.../post/PostControllerTest.java
+```
+
+이 경우 게시글 API 일부만 테스트되고, 로그인/권한/Service 규칙은 비어 있을 수 있습니다.
+
+반대로 테스트 파일이 많아도 안심하면 안 됩니다. 테스트가 실제 규칙을 검증하지 않고 단순히 “메서드가 호출된다” 수준일 수도 있기 때문입니다.
+
+---
+
+## 3. given, when, then 구조로 읽는다
+
+테스트 코드는 보통 세 부분으로 나눠 읽으면 편합니다.
+
+```text
+given: 이런 상황이 준비되어 있고
+when: 이 행동을 실행하면
+then: 이런 결과가 나와야 한다
+```
+
+예를 들어 게시글 생성 Service 테스트를 보겠습니다.
+
+```java
+@ExtendWith(MockitoExtension.class)
+class PostServiceTest {
+
+    @Mock
+    private PostRepository postRepository;
+
+    @InjectMocks
+    private PostService postService;
+
+    @Test
+    void createPost_savesPostAndReturnsId() {
+        // given
+        CreatePostRequest request = new CreatePostRequest("제목", "내용");
+        User author = new User(1L, "jin@example.com", "진규");
+        Post savedPost = new Post(10L, "제목", "내용", author);
+
+        given(postRepository.save(any(Post.class))).willReturn(savedPost);
+
+        // when
+        CreatePostResponse response = postService.createPost(request, author);
+
+        // then
+        assertThat(response.id()).isEqualTo(10L);
+        assertThat(response.title()).isEqualTo("제목");
+        verify(postRepository).save(any(Post.class));
+    }
+}
+```
+
+처음 보면 어노테이션과 Mock 때문에 복잡해 보일 수 있습니다. 하지만 구조만 보면 단순합니다.
+
+```text
+given: 제목/내용 요청과 작성자, 저장 결과를 준비한다
+when: postService.createPost를 실행한다
+then: 응답 id/title이 맞고 repository.save가 호출됐는지 확인한다
+```
+
+테스트를 읽을 때는 먼저 문법을 하나하나 해석하려 하지 말고 이 세 줄로 번역하면 됩니다.
+
+그리고 바로 다음 질문을 붙입니다.
+
+> 이 테스트가 정말 중요한 규칙을 검증하고 있는가?
+
+위 테스트는 “저장하고 응답을 반환한다”는 정상 흐름을 확인합니다. 하지만 아직 부족합니다.
+
+예를 들어 게시글 제목이 비어 있을 때는 어떻게 되나요? 작성자가 없는 경우는요? 저장 실패는요? 권한은요?
+
+좋은 테스트 리뷰는 “있는 테스트가 맞는지”뿐 아니라 “없는 테스트가 무엇인지”를 찾는 일입니다.
+
+---
+
+## 4. Controller 테스트는 API 계약을 확인한다
+
+Controller 테스트는 프론트엔드와 백엔드의 약속을 검증합니다.
+
+예를 들어 게시글 생성 API가 있다고 하겠습니다.
+
+```http
+POST /api/posts
+Authorization: Bearer ***
+Content-Type: application/json
+
+{
+  "title": "첫 글",
+  "content": "내용"
+}
+```
+
+기대 결과는 이런 식일 수 있습니다.
+
+```http
+201 Created
+
+{
+  "id": 10,
+  "title": "첫 글"
+}
+```
+
+Controller 테스트는 이 요청/응답 약속이 지켜지는지 봅니다.
+
+```java
+@WebMvcTest(PostController.class)
+class PostControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private PostService postService;
+
+    @Test
+    void createPost_returnsCreatedResponse() throws Exception {
+        // given
+        CreatePostResponse response = new CreatePostResponse(10L, "첫 글");
+        given(postService.createPost(any(), any())).willReturn(response);
+
+        // when & then
+        mockMvc.perform(post("/api/posts")
+                        .header("Authorization", "Bearer ***")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "title": "첫 글",
+                              "content": "내용"
+                            }
+                            """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(10))
+                .andExpect(jsonPath("$.title").value("첫 글"));
+    }
+}
+```
+
+여기서 진규가 읽어야 할 핵심은 다음입니다.
+
+```text
+요청 경로: POST /api/posts
+요청 헤더: Authorization, Content-Type
+요청 body: title, content
+응답 상태: 201 Created
+응답 body: id, title
+```
+
+이 테스트가 있으면 프론트엔드와 연결할 때 중요한 약속을 확인할 수 있습니다.
+
+AI가 만든 Controller 테스트에서 자주 보는 위험 신호는 다음입니다.
+
+### 위험 신호 1: 상태 코드만 확인한다
+
+```java
+.andExpect(status().isOk());
+```
+
+상태 코드만 확인하면 응답 body가 틀려도 테스트가 통과할 수 있습니다. 프론트엔드가 `id`를 기대하는데 백엔드가 `postId`를 보내도 놓칠 수 있습니다.
+
+좋은 Controller 테스트는 상태 코드뿐 아니라 중요한 JSON 필드도 확인합니다.
+
+```java
+.andExpect(jsonPath("$.id").value(10))
+.andExpect(jsonPath("$.title").value("첫 글"));
+```
+
+### 위험 신호 2: 실패 케이스가 없다
+
+정상 생성만 테스트하고 검증 실패를 테스트하지 않는 경우가 많습니다.
+
+```java
+@Test
+void createPost_withBlankTitle_returnsBadRequest() throws Exception {
+    mockMvc.perform(post("/api/posts")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                        {
+                          "title": "",
+                          "content": "내용"
+                        }
+                        """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").exists());
+}
+```
+
+이 테스트는 Day 3에서 본 입력 검증과 에러 응답이 실제로 작동하는지 확인합니다.
+
+### 위험 신호 3: 인증이 필요한 API인데 인증 없는 요청을 테스트하지 않는다
+
+게시글 생성이 로그인 사용자만 가능하다면 인증 없는 요청도 테스트해야 합니다.
+
+```java
+@Test
+void createPost_withoutToken_returnsUnauthorized() throws Exception {
+    mockMvc.perform(post("/api/posts")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                        {
+                          "title": "첫 글",
+                          "content": "내용"
+                        }
+                        """))
+            .andExpect(status().isUnauthorized());
+}
+```
+
+AI가 auth 코드를 만들었는데 이런 테스트가 없다면, 보안 설정이 실제로 막고 있는지 증거가 약합니다.
+
+---
+
+## 5. Service 테스트는 비즈니스 규칙을 확인한다
+
+Service는 백엔드의 규칙이 들어가는 곳입니다.
+
+Controller가 요청과 응답을 담당한다면, Service는 “이 행동이 가능한가?”를 판단합니다.
+
+예를 들어 게시글 수정 규칙을 보겠습니다.
+
+```text
+게시글 작성자 본인만 게시글을 수정할 수 있다.
+```
+
+이 규칙은 Controller보다 Service에서 확인하는 것이 자연스럽습니다.
+
+```java
+@Service
+@RequiredArgsConstructor
+public class PostService {
+
+    private final PostRepository postRepository;
+
+    @Transactional
+    public UpdatePostResponse updatePost(Long postId, UpdatePostRequest request, User currentUser) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다."));
+
+        if (!post.isAuthor(currentUser)) {
+            throw new ForbiddenException("게시글을 수정할 권한이 없습니다.");
+        }
+
+        post.update(request.title(), request.content());
+        return new UpdatePostResponse(post.getId(), post.getTitle(), post.getContent());
+    }
+}
+```
+
+이 코드의 중요한 테스트는 정상 수정만이 아닙니다.
+
+```java
+@Test
+void updatePost_whenCurrentUserIsNotAuthor_throwsForbidden() {
+    // given
+    User author = new User(1L, "author@example.com", "작성자");
+    User otherUser = new User(2L, "other@example.com", "다른 사용자");
+    Post post = new Post(10L, "기존 제목", "기존 내용", author);
+    UpdatePostRequest request = new UpdatePostRequest("새 제목", "새 내용");
+
+    given(postRepository.findById(10L)).willReturn(Optional.of(post));
+
+    // when & then
+    assertThatThrownBy(() -> postService.updatePost(10L, request, otherUser))
+            .isInstanceOf(ForbiddenException.class)
+            .hasMessageContaining("권한");
+}
+```
+
+이 테스트를 문장으로 바꾸면 다음입니다.
+
+```text
+작성자가 아닌 사용자가 게시글을 수정하려 하면 ForbiddenException이 발생해야 한다.
+```
+
+이런 테스트가 있으면 Day 6에서 본 인가 규칙이 실제로 Service에 들어있다는 증거가 됩니다.
+
+Service 테스트를 읽을 때는 아래 체크리스트를 사용하면 좋습니다.
+
+```text
+- 정상 케이스만 있는가?
+- 찾을 수 없는 데이터 케이스가 있는가?
+- 권한이 없는 사용자 케이스가 있는가?
+- 중복/상태 전이/수량 제한 같은 비즈니스 규칙이 있는가?
+- 예외 메시지나 예외 타입이 API 에러 응답과 연결되는가?
+```
+
+AI가 만든 Service 테스트는 종종 “성공 경로”만 만듭니다. 하지만 실제 버그는 실패 경로와 경계 조건에서 많이 나옵니다.
+
+---
+
+## 6. Repository 테스트는 DB 약속을 확인한다
+
+Repository 테스트는 DB 저장/조회가 의도대로 되는지 확인합니다.
+
+예를 들어 이메일로 사용자를 찾는 기능이 있다고 하겠습니다.
+
+```java
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByEmail(String email);
+    boolean existsByEmail(String email);
+}
+```
+
+테스트는 이런 식입니다.
+
+```java
+@DataJpaTest
+class UserRepositoryTest {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    void findByEmail_returnsUser() {
+        // given
+        User user = new User("jin@example.com", "진규");
+        userRepository.save(user);
+
+        // when
+        Optional<User> found = userRepository.findByEmail("jin@example.com");
+
+        // then
+        assertThat(found).isPresent();
+        assertThat(found.get().getName()).isEqualTo("진규");
+    }
+}
+```
+
+Repository 테스트에서는 Mock을 쓰기보다 실제 테스트 DB를 사용하는 경우가 많습니다. 왜냐하면 쿼리 메서드 이름, JPA 매핑, 컬럼 제약조건은 실제 DB와 연결되어야 검증되기 때문입니다.
+
+Repository 테스트에서 중요한 질문은 다음입니다.
+
+```text
+- 저장 후 조회가 되는가?
+- unique 제약조건이 필요한 필드가 실제로 중복을 막는가?
+- 연관관계가 의도대로 저장/조회되는가?
+- 삭제나 soft delete 조건이 쿼리에 반영되는가?
+- 정렬/페이징 조건이 맞는가?
+```
+
+예를 들어 이메일 중복 가입을 막아야 한다면 Entity나 DB에 unique 제약이 있어야 합니다.
+
+```java
+@Column(nullable = false, unique = true)
+private String email;
+```
+
+그리고 테스트도 있으면 좋습니다.
+
+```java
+@Test
+void save_whenEmailDuplicated_throwsException() {
+    userRepository.save(new User("jin@example.com", "진규"));
+    userRepository.flush();
+
+    userRepository.save(new User("jin@example.com", "다른 이름"));
+
+    assertThatThrownBy(() -> userRepository.flush())
+            .isInstanceOf(DataIntegrityViolationException.class);
+}
+```
+
+AI가 회원가입 코드를 만들었는데 이메일 중복 체크는 Service에만 있고 DB unique 제약이 없다면 동시 요청에서 중복 데이터가 생길 수 있습니다. Repository 테스트는 이런 구조적 약속을 확인하는 데 도움이 됩니다.
+
+---
+
+## 7. Mock은 “외부를 가짜로 만들고, 현재 대상만 읽기” 위한 도구다
+
+Service 테스트에서 자주 보이는 것이 Mock입니다.
+
+```java
+@Mock
+private PostRepository postRepository;
+
+@InjectMocks
+private PostService postService;
+```
+
+Mock은 가짜 객체입니다. 실제 DB에 저장하지 않고, 테스트가 원하는 응답을 돌려주도록 설정할 수 있습니다.
+
+```java
+given(postRepository.findById(10L)).willReturn(Optional.of(post));
+```
+
+이 문장은 이렇게 읽으면 됩니다.
+
+```text
+테스트 중 postRepository.findById(10L)을 호출하면, 실제 DB를 보지 말고 이 post를 찾은 것처럼 행동해라.
+```
+
+왜 이런 가짜가 필요할까요?
+
+Service 테스트의 목적이 DB 동작이 아니라 Service 규칙 검증이기 때문입니다.
+
+```text
+Repository 테스트: DB 저장/조회가 맞는지 확인
+Service 테스트: DB가 이런 값을 돌려줬을 때 비즈니스 규칙이 맞는지 확인
+Controller 테스트: Service가 이런 값을 돌려줬을 때 HTTP 응답이 맞는지 확인
+```
+
+즉 테스트 종류마다 관심사가 다릅니다.
+
+하지만 Mock에도 위험이 있습니다. Mock을 너무 많이 쓰면 실제 연결 문제를 놓칠 수 있습니다.
+
+예를 들어 Controller 테스트에서 Service를 Mock으로 대체하면 Controller의 JSON 응답은 확인할 수 있지만, 실제 Service와 Repository가 함께 작동하는지는 확인하지 못합니다.
+
+그래서 프로젝트에는 보통 여러 층의 테스트가 함께 필요합니다.
+
+```text
+단위 테스트: 특정 클래스의 규칙을 빠르게 확인
+슬라이스 테스트: Controller 또는 Repository 같은 한 층을 확인
+통합 테스트: 실제 Spring context와 DB에 가까운 흐름을 확인
+```
+
+진규가 AI 코드를 리뷰할 때는 “Mock이 있다/없다”보다 이것을 봐야 합니다.
+
+> 이 테스트는 어떤 부분을 진짜로 실행하고, 어떤 부분을 가짜로 대체하고 있는가?
+
+---
+
+## 8. 통합 테스트는 실제 요청 흐름을 더 넓게 확인한다
+
+Controller 테스트와 Service 테스트가 각각 한 층을 본다면, 통합 테스트는 여러 층을 함께 봅니다.
+
+예를 들어 실제 요청처럼 게시글 생성 API를 호출하고 DB에 저장되는지 확인할 수 있습니다.
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+class PostIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private PostRepository postRepository;
+
+    @Test
+    void createPost_persistsPost() throws Exception {
+        mockMvc.perform(post("/api/posts")
+                        .header("Authorization", "Bearer ***")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "title": "통합 테스트",
+                              "content": "DB까지 확인"
+                            }
+                            """))
+                .andExpect(status().isCreated());
+
+        assertThat(postRepository.findAll())
+                .extracting(Post::getTitle)
+                .contains("통합 테스트");
+    }
+}
+```
+
+이 테스트는 더 느릴 수 있지만, 실제 흐름에 가까운 증거를 줍니다.
+
+```text
+HTTP 요청 -> Controller -> Service -> Repository -> DB
+```
+
+AI가 만든 백엔드 코드에서 통합 테스트가 필요한 경우는 특히 다음입니다.
+
+```text
+- 보안 필터와 Controller가 함께 작동하는지
+- JSON 직렬화/역직렬화가 실제로 맞는지
+- DB 제약조건과 트랜잭션이 실제로 작동하는지
+- 에러 응답 포맷이 실제 요청에서 일관적인지
+```
+
+하지만 모든 것을 통합 테스트로만 만들면 테스트가 느려지고 관리가 어려워질 수 있습니다. 그래서 빠른 단위 테스트와 핵심 통합 테스트를 섞는 것이 좋습니다.
+
+---
+
+## 9. 테스트 이름은 요구사항 문장이어야 한다
+
+좋은 테스트 이름은 요구사항을 설명합니다.
+
+```java
+@Test
+void updatePost_whenCurrentUserIsAuthor_updatesPost() {
+}
+
+@Test
+void updatePost_whenCurrentUserIsNotAuthor_throwsForbidden() {
+}
+
+@Test
+void createPost_whenTitleIsBlank_returnsBadRequest() {
+}
+```
+
+이름만 읽어도 무엇을 검증하는지 알 수 있습니다.
+
+반대로 이런 이름은 약합니다.
+
+```java
+@Test
+void test1() {
+}
+
+@Test
+void createPostTest() {
+}
+
+@Test
+void success() {
+}
+```
+
+AI가 테스트를 만들 때 이런 약한 이름을 붙이는 경우가 있습니다. 테스트 이름이 약하면 리뷰어가 테스트의 의도를 빠르게 파악하기 어렵습니다.
+
+진규는 테스트 이름을 읽으면서 요구사항 목록처럼 정리할 수 있습니다.
+
+```text
+- 게시글 작성자는 게시글을 수정할 수 있다
+- 작성자가 아닌 사용자는 게시글을 수정할 수 없다
+- 제목이 비어 있으면 게시글을 만들 수 없다
+- 존재하지 않는 게시글은 404를 반환한다
+- 인증되지 않은 사용자는 게시글을 만들 수 없다
+```
+
+이 목록이 실제 서비스 요구사항과 맞는지 확인하면 됩니다.
+
+---
+
+## 10. AI가 만든 테스트의 대표적인 문제들
+
+AI가 테스트 코드를 만들어줄 때 자주 생기는 문제를 정리해보겠습니다.
+
+### 10-1. 구현을 그대로 따라가는 테스트
+
+나쁜 테스트는 현재 구현을 그대로 따라갑니다.
+
+```java
+@Test
+void createPost_callsRepositorySave() {
+    postService.createPost(request, user);
+    verify(postRepository).save(any(Post.class));
+}
+```
+
+이 테스트는 `save`가 호출됐는지만 봅니다. 하지만 실제 요구사항은 “게시글이 올바른 제목/내용/작성자로 저장되어야 한다”입니다.
+
+더 나은 테스트는 저장되는 객체의 값을 확인합니다.
+
+```java
+ArgumentCaptor<Post> captor = ArgumentCaptor.forClass(Post.class);
+
+postService.createPost(request, user);
+
+verify(postRepository).save(captor.capture());
+Post saved = captor.getValue();
+assertThat(saved.getTitle()).isEqualTo("제목");
+assertThat(saved.getContent()).isEqualTo("내용");
+assertThat(saved.getAuthor()).isEqualTo(user);
+```
+
+이렇게 하면 단순 호출이 아니라 저장하려는 데이터가 맞는지 확인할 수 있습니다.
+
+### 10-2. 테스트가 너무 쉽게 통과한다
+
+AI가 만든 테스트 중에는 실제 검증이 거의 없는 경우가 있습니다.
+
+```java
+@Test
+void loginTest() {
+    LoginResponse response = authService.login(request);
+    assertThat(response).isNotNull();
+}
+```
+
+`not null`만으로는 부족합니다.
+
+로그인 테스트라면 최소한 이런 것을 봐야 합니다.
+
+```text
+- 이메일/비밀번호가 맞으면 accessToken이 발급되는가?
+- 비밀번호가 틀리면 Unauthorized가 발생하는가?
+- 존재하지 않는 이메일이면 Unauthorized가 발생하는가?
+- 응답에 필요한 사용자 요약 정보가 들어있는가?
+- 비밀번호 원문이 응답에 포함되지 않는가?
+```
+
+### 10-3. 실패 케이스가 없다
+
+정상 케이스만 있는 테스트는 실제 서비스 안전망으로 부족합니다.
+
+게시글 수정 기능이라면 최소한 이런 실패 케이스를 찾아야 합니다.
+
+```text
+- 게시글이 존재하지 않음
+- 현재 사용자가 작성자가 아님
+- 제목이 비어 있음
+- 인증 정보가 없음
+```
+
+회원가입이라면 이런 케이스가 필요합니다.
+
+```text
+- 이메일 형식이 잘못됨
+- 비밀번호가 너무 짧음
+- 이미 가입된 이메일
+- 닉네임이 비어 있음
+```
+
+### 10-4. 보안 테스트가 없다
+
+Day 6에서 본 로그인/권한 코드는 테스트가 특히 중요합니다.
+
+예를 들어 권한이 필요한 API인데 인증 없는 요청 테스트가 없으면 위험합니다.
+
+또는 본인만 접근 가능한 데이터인데 다른 사용자의 접근을 막는 테스트가 없으면 위험합니다.
+
+```text
+GET /api/users/me        -> 로그인 사용자만 가능
+PATCH /api/posts/{id}    -> 작성자만 가능
+DELETE /api/posts/{id}   -> 작성자 또는 관리자만 가능
+GET /api/admin/users     -> 관리자만 가능
+```
+
+AI가 SecurityConfig를 만들었다면 “경로가 막혀 있다”는 것을 테스트로 확인해야 합니다.
+
+---
+
+## 11. 테스트 실행 결과도 함께 읽는다
+
+테스트 코드는 파일만 읽는 것으로 끝나지 않습니다. 실행 결과도 봐야 합니다.
+
+백엔드 프로젝트에서는 보통 이런 명령이 있습니다.
+
+```bash
+./gradlew test
+```
+
+또는 Maven 프로젝트라면 다음일 수 있습니다.
+
+```bash
+./mvnw test
+```
+
+실행 결과는 대략 이런 식입니다.
+
+```text
+BUILD SUCCESSFUL
+42 tests completed
+```
+
+또는 실패하면 이런 메시지가 나옵니다.
+
+```text
+PostServiceTest > updatePost_whenCurrentUserIsNotAuthor_throwsForbidden FAILED
+Expected ForbiddenException but was NotFoundException
+```
+
+실패 메시지를 읽을 때는 “테스트가 틀렸나, 구현이 틀렸나”를 구분해야 합니다.
+
+예를 들어 테스트는 권한 없음이면 `ForbiddenException`을 기대했는데 실제로 `NotFoundException`이 나왔다면 두 가지 가능성이 있습니다.
+
+```text
+1. 테스트의 given 데이터가 잘못되어 게시글을 찾지 못했다
+2. 구현이 권한 확인 전에 잘못된 조회/조건을 사용하고 있다
+```
+
+AI가 만든 코드에서는 테스트 자체가 틀린 경우도 있습니다. 그래서 실패를 무조건 구현 버그로 단정하지 말고, given/when/then을 다시 번역해야 합니다.
+
+---
+
+## 12. “테스트가 있다”와 “충분한 테스트가 있다”는 다르다
+
+AI에게 “테스트도 만들어줘”라고 말하면 테스트 파일은 만들어질 수 있습니다. 하지만 파일이 있다는 것만으로 충분하지 않습니다.
+
+리뷰할 때는 아래처럼 판단합니다.
+
+```text
+1. 정상 흐름 테스트가 있는가?
+2. 실패 흐름 테스트가 있는가?
+3. 권한/인증 테스트가 있는가?
+4. DB 제약조건 테스트가 있는가?
+5. 프론트엔드와 맞춰야 하는 JSON 필드 테스트가 있는가?
+6. 테스트 이름이 요구사항을 설명하는가?
+7. 테스트가 너무 약한 assertThat(response).isNotNull() 수준은 아닌가?
+8. 실제 CI/build에서 실행되는 테스트인가?
+```
+
+특히 마지막이 중요합니다. 테스트 파일이 있어도 CI나 빌드에서 실행되지 않으면 안전망이 약합니다.
+
+예를 들어 테스트 클래스 이름이 잘못되어 Gradle이 인식하지 못할 수 있습니다.
+
+```text
+PostServiceSpec.java      -> 설정에 따라 실행되지 않을 수 있음
+PostServiceTest.java      -> 보통 테스트로 인식됨
+```
+
+또는 테스트가 `@Disabled`로 꺼져 있을 수 있습니다.
+
+```java
+@Disabled("나중에 수정")
+@Test
+void updatePost_whenCurrentUserIsNotAuthor_throwsForbidden() {
+}
+```
+
+`@Disabled`가 많으면 테스트가 실제 안전망이 아닙니다.
+
+---
+
+## 13. 진규가 AI 백엔드 코드를 받을 때 요청하면 좋은 테스트 지시문
+
+AI에게 백엔드 기능을 만들게 할 때는 “테스트도 작성해줘”보다 구체적으로 말하는 것이 좋습니다.
+
+예를 들어 게시글 API를 만들 때는 이렇게 요청할 수 있습니다.
+
+```text
+게시글 생성/수정/삭제 API를 만들어줘.
+그리고 아래 테스트를 포함해줘.
+
+1. Controller 테스트
+   - 정상 생성 시 201과 id/title 응답
+   - title이 비어 있으면 400
+   - 인증 토큰이 없으면 401
+
+2. Service 테스트
+   - 작성자 본인은 수정 가능
+   - 작성자가 아니면 ForbiddenException
+   - 존재하지 않는 게시글이면 NotFoundException
+
+3. Repository 테스트
+   - 작성자별 게시글 목록 조회
+   - 최신순 정렬
+
+테스트 이름은 요구사항 문장처럼 작성해줘.
+단순 not-null 검증만 하지 말고 중요한 필드와 예외를 검증해줘.
+```
+
+이렇게 요청하면 AI가 더 유용한 테스트를 만들 가능성이 높습니다.
+
+로그인 기능이라면 이렇게 요청할 수 있습니다.
+
+```text
+로그인/회원가입 기능을 만들고 테스트를 포함해줘.
+
+- 회원가입: 이메일 중복이면 실패
+- 회원가입: 비밀번호가 너무 짧으면 400
+- 로그인: 올바른 이메일/비밀번호면 accessToken 반환
+- 로그인: 비밀번호가 틀리면 401
+- 로그인 응답에는 password/passwordHash가 포함되지 않음
+- 보호된 API는 토큰 없이는 401
+- 다른 사용자의 리소스 수정은 403
+```
+
+이 요청은 Day 2의 API 계약, Day 3의 검증/에러, Day 6의 인증/인가를 테스트로 연결합니다.
+
+---
+
+## 14. 오늘의 리뷰 루틴
+
+AI가 만든 Spring Boot 백엔드를 검토할 때 테스트는 아래 순서로 읽어보면 좋습니다.
+
+```text
+1. src/test가 있는지 본다.
+2. 기능별 테스트 파일이 실제 코드와 짝을 이루는지 본다.
+3. 테스트 이름을 요구사항 목록처럼 읽는다.
+4. 각 테스트를 given / when / then으로 번역한다.
+5. 정상 케이스뿐 아니라 실패/권한/검증 케이스가 있는지 본다.
+6. Controller 테스트에서 상태 코드와 JSON 필드를 확인하는지 본다.
+7. Service 테스트에서 비즈니스 규칙과 예외를 확인하는지 본다.
+8. Repository 테스트에서 DB 제약조건과 쿼리를 확인하는지 본다.
+9. Mock이 무엇을 가짜로 대체하는지 확인한다.
+10. 실제 테스트 명령이 통과했는지 확인한다.
+```
+
+이 루틴을 적용하면 테스트 문법을 다 외우지 않아도 AI 백엔드 코드의 안전망을 평가할 수 있습니다.
+
+---
+
+## 15. 오늘의 체크리스트
+
+오늘 내용을 실제 코드 리뷰에 적용할 때는 아래 질문을 그대로 사용하면 됩니다.
+
+```text
+테스트 구조
+- src/test가 있는가?
+- Controller/Service/Repository 테스트가 적절히 나뉘어 있는가?
+- 테스트 이름이 요구사항을 설명하는가?
+
+Controller 테스트
+- HTTP method/path가 실제 API 계약과 맞는가?
+- 요청 body와 header를 검증하는가?
+- status code뿐 아니라 JSON 응답 필드도 검증하는가?
+- 입력 검증 실패와 인증 실패 케이스가 있는가?
+
+Service 테스트
+- 정상 흐름만이 아니라 실패 흐름이 있는가?
+- 권한 규칙을 테스트하는가?
+- 예외 타입과 메시지가 기대와 맞는가?
+- Repository 저장/조회 결과에 따라 비즈니스 규칙이 맞게 동작하는가?
+
+Repository 테스트
+- 실제 DB에 가까운 테스트가 있는가?
+- unique, nullable, 연관관계, 정렬, 페이징 조건을 검증하는가?
+
+AI 코드 위험 신호
+- assertThat(response).isNotNull()만 있는가?
+- @Disabled 테스트가 많은가?
+- 보안/권한 테스트가 빠져 있는가?
+- 프론트엔드가 의존하는 JSON 필드를 확인하지 않는가?
+- 테스트가 실제 빌드/CI에서 실행되는가?
+```
+
+---
+
+## 마무리
+
+테스트 코드는 백엔드 공부에서 처음에는 낯설어 보입니다. 하지만 AI가 만든 Spring Boot 코드를 검토하는 관점에서는 아주 실용적인 도구입니다.
+
+테스트를 잘 읽으면 코드가 “그럴듯한 구조”를 갖췄는지보다 더 중요한 것을 확인할 수 있습니다.
+
+```text
+이 입력에서
+이 행동을 하면
+이 결과가 나와야 한다
+```
+
+이 세 문장이 실제 코드로 검증되어 있는지 보는 것입니다.
+
+오늘의 핵심은 이것입니다.
+
+> 테스트는 AI 백엔드 코드가 요구사항을 지키고 있다는 실행 가능한 증거다.
+
+다음 단계에서는 배포와 운영에서 자주 만나는 설정 파일, 환경변수, 프로파일, 로그를 읽는 법으로 넘어갈 수 있습니다. 백엔드 코드는 로컬에서만 맞는 것이 아니라 실제 서버 환경에서도 안전하게 돌아가야 하기 때문입니다.
