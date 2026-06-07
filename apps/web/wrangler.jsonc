@@ -4,6 +4,17 @@
   "compatibility_date": "2026-03-22",
   "compatibility_flags": ["nodejs_compat"],
   "main": "./worker/index.ts",
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "seojing.com",
+      "custom_domain": true,
+    },
+    {
+      "pattern": "www.seojing.com",
+      "custom_domain": true,
+    },
+  ],
   "assets": {
     "not_found_handling": "none",
     "binding": "ASSETS",

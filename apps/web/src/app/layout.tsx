@@ -5,39 +5,15 @@ import { ThemeProvider, ThemeScript } from "@app/ui";
 import Footer from "@/widgets/footer/Footer";
 import "./globals.css";
 import Header from "@/widgets/header/Header";
+import { buildSiteMetadata } from "@/shared/seo/metadata";
+import { JsonLd, websiteJsonLd } from "@/shared/seo/json-ld";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "SEOJing",
-  description: "SEOJing's 프론트엔드 개발 블로그 플랫폼",
-  metadataBase: new URL("https://seojing.tjwlsrb1021.workers.dev"),
-  openGraph: {
-    title: "SEOJing",
-    description: "SEOJing's 프론트엔드 개발 블로그 플랫폼",
-    url: "https://seojing.tjwlsrb1021.workers.dev",
-    siteName: "SEOJing",
-    images: [
-      {
-        url: "/logo.png",
-        width: 800,
-        height: 800,
-        alt: "SEOJing 로고",
-      },
-    ],
-    locale: "ko_KR",
-    type: "website",
-  },
-  twitter: {
-    card: "summary",
-    title: "SEOJing",
-    description: "SEOJing's 프론트엔드 개발 블로그 플랫폼",
-    images: ["/logo.png"],
-  },
-};
+export const metadata: Metadata = buildSiteMetadata();
 
 export default function RootLayout({
   children,
@@ -49,6 +25,7 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <ThemeScript />
+        <JsonLd data={websiteJsonLd()} />
       </head>
       <body className={geistMono.variable}>
         <ThemeProvider>
