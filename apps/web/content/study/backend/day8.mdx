@@ -1,0 +1,907 @@
+---
+title: "백엔드 스터디 Day 8: 배포와 운영 환경 읽기"
+date: 2026-06-08
+tags:
+  - 백엔드
+  - 스터디
+  - Spring Boot
+  - Java
+  - API
+  - Deployment
+  - Docker
+  - 운영
+  - AI 코드 읽기
+description: AI가 만든 Spring Boot 백엔드가 로컬에서만 돌아가는 코드인지, 실제 서버에서 안전하게 운영될 수 있는 코드인지 판단하려면 배포 구조와 운영 환경을 읽을 수 있어야 합니다. Day 8에서는 Docker, 환경 변수, 프로필, 로그, 헬스체크, CI/CD를 낮은 단계부터 봅니다.
+---
+
+> 예상 읽기 시간: 20~30분
+
+## 오늘의 목표
+
+Day 1에서는 Spring Boot 프로젝트 폴더 구조를 봤습니다. Day 2에서는 API 계약을 읽었습니다. Day 3에서는 입력 검증과 에러 응답을 봤고, Day 4에서는 DB 접근을 봤습니다. Day 5에서는 Service와 트랜잭션, Day 6에서는 로그인과 권한, Day 7에서는 테스트 코드로 AI 백엔드를 검증하는 법을 봤습니다.
+
+오늘은 배포와 운영 환경을 봅니다.
+
+AI가 백엔드 코드를 만들어주면 로컬에서는 쉽게 실행될 수 있습니다.
+
+```bash
+./gradlew bootRun
+```
+
+또는 IDE에서 실행 버튼을 누르면 서버가 뜰 수도 있습니다. 하지만 실제 서비스에서 중요한 질문은 조금 다릅니다.
+
+> 이 백엔드는 내 컴퓨터 밖에서도 같은 방식으로 안전하게 실행될 수 있는가?
+
+백엔드는 프론트엔드 빌드 파일처럼 정적인 파일만 올리는 것이 아닙니다. 서버 프로세스가 계속 떠 있어야 하고, DB와 연결되어야 하고, 환경 변수와 비밀값을 읽어야 하고, 로그를 남겨야 하고, 장애가 나면 다시 시작되어야 합니다.
+
+진규가 지금 목표로 삼아야 하는 것은 Docker 명령어나 CI/CD 문법을 모두 외우는 것이 아닙니다. 목표는 AI가 만든 Spring Boot 프로젝트를 보고 “운영 가능한 구조인지, 로컬 전용 장난감 코드인지” 구분하는 것입니다.
+
+오늘 글을 읽고 나면 아래 질문에 답할 수 있어야 합니다.
+
+- 로컬 실행과 운영 배포는 무엇이 다른가?
+- `application.yml`과 프로필은 왜 중요한가?
+- 환경 변수와 비밀값은 코드에 어떻게 연결되는가?
+- Dockerfile과 docker-compose 파일을 어떻게 읽는가?
+- 헬스체크는 무엇을 확인해야 하는가?
+- 로그와 에러 추적은 어떤 기준으로 봐야 하는가?
+- CI/CD 파일에서 어떤 위험 신호를 찾아야 하는가?
+- AI가 만든 배포 설정을 리뷰할 때 무엇을 질문해야 하는가?
+
+---
+
+## 1. 배포는 “서버를 켜는 일”이 아니라 “반복 가능한 실행 조건”을 만드는 일이다
+
+처음 백엔드를 배울 때 배포를 이렇게 생각하기 쉽습니다.
+
+```text
+로컬에서 잘 돌아가는 코드가 있다
+어딘가 서버에 올린다
+서버에서 실행한다
+끝
+```
+
+하지만 실제 운영에서는 “한 번 실행됐다”보다 더 중요한 것이 있습니다.
+
+```text
+누가 실행해도 같은 방식으로 실행되는가?
+서버가 재부팅돼도 다시 살아나는가?
+환경별 설정이 분리되어 있는가?
+비밀값이 코드에 들어가지 않았는가?
+DB 연결 실패를 빨리 알아차릴 수 있는가?
+로그를 보고 장애 원인을 추적할 수 있는가?
+새 버전을 올릴 때 기존 기능이 깨지지 않는가?
+```
+
+배포는 코드를 서버에 복사하는 일이 아니라, 이 조건들을 반복 가능하게 만드는 일입니다.
+
+AI가 만든 Spring Boot 프로젝트를 리뷰할 때도 같은 기준을 씁니다. Controller, Service, Repository 코드가 좋아 보여도 배포 설정이 엉망이면 실제 서비스로 쓰기 어렵습니다.
+
+예를 들어 이런 프로젝트는 위험합니다.
+
+```text
+- application.yml 안에 실제 DB 비밀번호가 들어 있다
+- 로컬 H2 DB만 쓰도록 되어 있다
+- Dockerfile이 없다
+- 로그 설정이 없다
+- 테스트 없이 바로 main에 배포한다
+- 헬스체크 API가 없다
+- 운영과 개발 설정이 섞여 있다
+```
+
+반대로 이런 프로젝트는 운영을 생각한 흔적이 있습니다.
+
+```text
+- 개발/dev, 운영/prod 프로필이 분리되어 있다
+- 비밀값은 환경 변수로 주입한다
+- Dockerfile이 있고 빌드 단계가 명확하다
+- docker-compose로 앱과 DB를 함께 띄울 수 있다
+- /actuator/health 같은 헬스체크가 있다
+- CI에서 테스트와 빌드를 통과해야 배포한다
+- 로그에 요청/에러 추적 정보가 남는다
+```
+
+오늘은 이 차이를 읽는 눈을 만드는 것이 목표입니다.
+
+---
+
+## 2. 먼저 실행 방법을 찾는다
+
+AI가 만든 백엔드 프로젝트를 받으면 처음 볼 파일은 Controller가 아닐 수도 있습니다. 운영 관점에서는 “이 프로젝트를 어떻게 실행하라고 되어 있는가?”를 먼저 봐야 합니다.
+
+보통 아래 파일들을 찾습니다.
+
+```text
+README.md
+build.gradle 또는 build.gradle.kts
+settings.gradle
+Dockerfile
+docker-compose.yml
+.github/workflows/*.yml
+src/main/resources/application.yml
+src/main/resources/application-dev.yml
+src/main/resources/application-prod.yml
+```
+
+README에는 실행 방법이 적혀 있을 수 있습니다.
+
+````markdown
+## Run locally
+
+```bash
+./gradlew bootRun
+```
+
+## Run with Docker
+
+```bash
+docker compose up --build
+```
+````
+
+이때 리뷰 질문은 단순합니다.
+
+```text
+문서에 적힌 실행 방법이 실제 파일 구조와 맞는가?
+로컬 실행만 있고 운영 실행 방법은 없는가?
+DB, Redis, 외부 API 같은 의존 서비스는 어떻게 준비하는가?
+환경 변수 목록이 문서화되어 있는가?
+```
+
+AI가 README를 그럴듯하게 만들어도 실제 설정과 맞지 않을 수 있습니다. 예를 들어 README에는 `docker compose up`이라고 되어 있는데 `docker-compose.yml` 파일이 없을 수 있습니다. 또는 `DATABASE_URL`이 필요하다고 적혀 있는데 실제 `application.yml`은 `DB_HOST`, `DB_PORT`를 읽고 있을 수 있습니다.
+
+그래서 README는 “정답”이 아니라 “검증해야 할 주장”입니다.
+
+---
+
+## 3. application.yml은 백엔드의 환경 계약서다
+
+Spring Boot에서 설정은 보통 `src/main/resources/application.yml`에 있습니다.
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/app
+    username: app
+    password: example-secret-placeholder
+  jpa:
+    hibernate:
+      ddl-auto: update
+server:
+  port: 8080
+```
+
+이 파일은 백엔드가 어떤 환경을 기대하는지 보여줍니다.
+
+```text
+DB는 어디에 있는가?
+서버 포트는 몇 번인가?
+JPA가 테이블을 자동으로 바꾸는가?
+외부 API 키는 어디서 읽는가?
+로그 레벨은 어떻게 되어 있는가?
+```
+
+운영 리뷰에서 가장 먼저 볼 위험 신호는 하드코딩된 비밀값입니다.
+
+```yaml
+spring:
+  datasource:
+    password: do-not-commit-password-placeholder
+jwt:
+  secret: do-not-commit-jwt-secret-placeholder
+```
+
+실제 비밀번호나 토큰은 코드 저장소에 들어가면 안 됩니다. 교육 예시에서도 진짜처럼 보이는 긴 토큰을 넣지 않는 것이 좋습니다. 안전한 구조는 환경 변수를 읽는 방식입니다.
+
+```yaml
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+jwt:
+  secret: ${JWT_SECRET}
+```
+
+이 문법은 “실행 환경에서 `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `JWT_SECRET` 값을 주입해줘야 한다”는 뜻입니다.
+
+여기서 리뷰 질문은 이것입니다.
+
+```text
+필요한 환경 변수 목록이 README나 배포 문서에 적혀 있는가?
+로컬 개발용 예시 값은 .env.example 같은 파일에 안전하게 제공되는가?
+실제 비밀값이 git에 들어가 있지 않은가?
+```
+
+좋은 프로젝트는 이런 식으로 예시 파일을 둡니다.
+
+```env
+DATABASE_URL=jdbc:postgresql://localhost:5432/app
+DATABASE_USERNAME=app
+DATABASE_PASSWORD=example-password
+JWT_SECRET=example-secret-placeholder
+```
+
+`.env.example`은 예시입니다. 실제 `.env`는 git에 올리지 않습니다.
+
+---
+
+## 4. 프로필은 개발/운영 설정을 나누는 장치다
+
+운영 환경과 로컬 개발 환경은 다릅니다.
+
+```text
+로컬 개발:
+- 내 컴퓨터에서 실행
+- 테스트용 DB 사용
+- 로그를 자세히 출력
+- 실패해도 사용자 영향이 작음
+
+운영:
+- 실제 서버에서 실행
+- 실제 DB 사용
+- 비밀값 관리 필요
+- 장애가 사용자에게 바로 영향
+```
+
+Spring Boot는 프로필(profile)로 환경별 설정을 나눌 수 있습니다.
+
+```text
+application.yml
+application-dev.yml
+application-prod.yml
+```
+
+예를 들어 공통 설정은 `application.yml`에 둡니다.
+
+```yaml
+spring:
+  profiles:
+    active: dev
+server:
+  port: 8080
+```
+
+개발 설정은 `application-dev.yml`에 둡니다.
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+logging:
+  level:
+    com.example.app: DEBUG
+```
+
+운영 설정은 `application-prod.yml`에 둡니다.
+
+```yaml
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+logging:
+  level:
+    com.example.app: INFO
+```
+
+여기서 중요한 차이는 `ddl-auto`입니다.
+
+```text
+create-drop: 실행할 때 테이블을 만들고 종료할 때 지움. 테스트용.
+update: Entity에 맞춰 테이블을 자동 변경. 편하지만 운영에서는 위험할 수 있음.
+validate: Entity와 DB 스키마가 맞는지만 확인. 운영에서 더 안전한 편.
+none: 자동으로 아무것도 하지 않음.
+```
+
+AI가 운영 설정에 `ddl-auto: update`를 넣었다면 바로 질문해야 합니다.
+
+> 운영 DB 스키마를 애플리케이션이 자동 변경해도 되는가?
+
+작은 개인 프로젝트에서는 허용할 수도 있지만, 협업/서비스 운영에서는 Flyway나 Liquibase 같은 마이그레이션 도구로 DB 변경을 관리하는 편이 안전합니다.
+
+지금 단계에서 진규가 외울 것은 도구 이름이 아니라 판단 기준입니다.
+
+```text
+운영 DB 구조 변경은 자동으로 조용히 일어나면 위험하다.
+변경 이력이 남고, 되돌릴 수 있고, 배포 전에 확인 가능해야 한다.
+```
+
+---
+
+## 5. Dockerfile은 “서버 실행 레시피”다
+
+Dockerfile은 애플리케이션을 어떤 환경에서 어떻게 빌드하고 실행할지 적는 파일입니다.
+
+Spring Boot 프로젝트에는 이런 Dockerfile이 있을 수 있습니다.
+
+```dockerfile
+FROM eclipse-temurin:21-jdk AS build
+WORKDIR /app
+COPY gradlew .
+COPY gradle gradle
+COPY build.gradle settings.gradle ./
+COPY src src
+RUN ./gradlew bootJar
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/build/libs/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+처음 보면 낯설지만 구조는 단순합니다.
+
+```text
+1단계 build:
+- JDK가 있는 이미지에서 코드를 복사한다
+- Gradle로 jar 파일을 만든다
+
+2단계 runtime:
+- 더 가벼운 JRE 이미지에서 jar만 복사한다
+- 8080 포트를 연다
+- java -jar app.jar로 실행한다
+```
+
+이런 방식을 multi-stage build라고 부릅니다. 빌드에 필요한 도구와 실행에 필요한 결과물을 분리합니다.
+
+리뷰할 때는 아래 질문을 봅니다.
+
+```text
+빌드 단계와 실행 단계가 분리되어 있는가?
+소스 전체와 비밀 파일을 이미지에 복사하지 않는가?
+실행 포트가 application.yml과 맞는가?
+운영 프로필은 어떻게 지정하는가?
+컨테이너가 죽었을 때 다시 시작되는 설정은 어디에 있는가?
+```
+
+예를 들어 Dockerfile에 이런 줄이 있으면 위험합니다.
+
+```dockerfile
+COPY . .
+```
+
+이 자체가 항상 나쁜 것은 아닙니다. 하지만 `.env`, 임시 파일, 로컬 설정까지 이미지에 들어갈 수 있습니다. 그래서 `.dockerignore`가 함께 있는지 봐야 합니다.
+
+```text
+.env
+.git
+build
+.idea
+node_modules
+```
+
+`.dockerignore`는 Docker 이미지에 넣지 않을 파일 목록입니다.
+
+AI가 Dockerfile만 만들고 `.dockerignore`를 만들지 않았다면 “비밀 파일이나 불필요한 파일이 이미지에 포함될 수 있다”는 리뷰 포인트가 됩니다.
+
+---
+
+## 6. docker-compose.yml은 앱 주변 의존성을 함께 보여준다
+
+백엔드 서버는 혼자 동작하지 않는 경우가 많습니다.
+
+```text
+Spring Boot 앱
+PostgreSQL DB
+Redis
+메시지 큐
+검색 엔진
+```
+
+로컬에서 이런 의존성을 쉽게 띄우기 위해 `docker-compose.yml`을 씁니다.
+
+```yaml
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DATABASE_URL: jdbc:postgresql://db:5432/app
+      DATABASE_USERNAME: app
+      DATABASE_PASSWORD: example-password
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: example-password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+```
+
+여기서 읽을 포인트는 네 가지입니다.
+
+첫째, 앱이 DB를 `localhost`가 아니라 `db`로 바라봅니다.
+
+```yaml
+DATABASE_URL: jdbc:postgresql://db:5432/app
+```
+
+Docker Compose 안에서는 서비스 이름이 네트워크 주소가 됩니다. 앱 컨테이너 입장에서 DB는 같은 컨테이너 안의 localhost가 아니라 `db` 서비스입니다.
+
+둘째, 데이터 저장소가 volume으로 분리되어 있습니다.
+
+```yaml
+volumes:
+  - postgres_data:/var/lib/postgresql/data
+```
+
+이게 없으면 컨테이너를 지울 때 DB 데이터도 쉽게 사라질 수 있습니다.
+
+셋째, 예시 비밀번호와 실제 비밀번호를 구분해야 합니다.
+
+개발용 docker-compose에는 예시 비밀번호가 들어갈 수 있습니다. 하지만 운영 compose나 서버 설정에 실제 비밀번호를 넣어 저장소에 올리면 안 됩니다.
+
+넷째, `depends_on`은 “DB가 완전히 준비됐다”를 보장하지 않습니다.
+
+`depends_on`은 시작 순서를 어느 정도 맞출 뿐입니다. DB가 연결을 받을 준비가 되기 전에 앱이 먼저 연결을 시도할 수 있습니다. 그래서 운영에서는 재시도 설정, 헬스체크, 마이그레이션 순서를 봐야 합니다.
+
+---
+
+## 7. 헬스체크는 “살아 있나?”를 자동으로 묻는 API다
+
+운영 환경에서는 사람이 매번 브라우저로 확인할 수 없습니다. 서버나 배포 시스템이 자동으로 물어봐야 합니다.
+
+```text
+앱 프로세스가 살아 있는가?
+DB 연결이 가능한가?
+필수 외부 의존성이 동작하는가?
+```
+
+Spring Boot에서는 Actuator를 자주 씁니다.
+
+`build.gradle`에 이런 의존성이 있을 수 있습니다.
+
+```gradle
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+}
+```
+
+설정에는 이런 내용이 있을 수 있습니다.
+
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+```
+
+그러면 보통 이런 API를 확인할 수 있습니다.
+
+```http
+GET /actuator/health
+```
+
+응답은 이런 식입니다.
+
+```json
+{
+  "status": "UP"
+}
+```
+
+리뷰할 때는 단순히 health API가 있는지만 보지 않습니다.
+
+```text
+헬스체크가 인증 없이 너무 많은 정보를 노출하지 않는가?
+운영에서 필요한 endpoint만 열려 있는가?
+DB 연결 상태도 반영되는가?
+배포 플랫폼이 이 endpoint를 실제로 쓰는가?
+```
+
+특히 Actuator endpoint를 전부 열어두면 위험할 수 있습니다.
+
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+```
+
+학습용으로는 편하지만 운영에서는 민감한 정보가 노출될 수 있습니다. AI가 이런 설정을 만들었다면 “운영에서는 필요한 endpoint만 열자”고 리뷰해야 합니다.
+
+---
+
+## 8. 로그는 장애가 난 뒤의 기억이다
+
+백엔드는 장애가 났을 때 원인을 찾아야 합니다. 이때 로그가 없으면 거의 감으로 추적하게 됩니다.
+
+Spring Boot에서는 기본 로그가 있지만, 운영에서는 어떤 정보가 남는지 봐야 합니다.
+
+```text
+요청이 들어왔는가?
+어떤 사용자/요청 ID였는가?
+어떤 예외가 발생했는가?
+DB 오류인지 외부 API 오류인지 구분되는가?
+비밀번호/토큰 같은 민감 정보가 로그에 찍히지 않는가?
+```
+
+좋은 로그는 문제를 재현하지 않아도 흐름을 추적할 수 있게 해줍니다.
+
+예를 들어 주문 생성 실패 로그가 있다고 해봅시다.
+
+```text
+ERROR orderId=123 userId=45 requestId=abc-123 message="Payment approval failed" reason="timeout"
+```
+
+이 로그는 최소한 어떤 주문, 어떤 사용자, 어떤 요청에서 결제 승인 timeout이 났는지 알려줍니다.
+
+반대로 이런 로그는 별로 도움이 되지 않습니다.
+
+```text
+ERROR failed
+```
+
+너무 많은 정보를 찍는 것도 위험합니다.
+
+```text
+Authorization: Bearer ***
+password=***
+```
+
+실제 운영 로그에는 토큰, 비밀번호, 인증 쿠키, 주민번호, 결제 정보 같은 민감 정보가 들어가면 안 됩니다.
+
+AI가 만든 코드를 볼 때는 이런 패턴을 찾습니다.
+
+```java
+log.info("login request: {}", request);
+log.error("payment failed", exception);
+```
+
+`request` 전체를 찍으면 비밀번호나 토큰이 포함될 수 있습니다. 그래서 로그인 요청, 결제 요청, 개인정보 요청은 필요한 필드만 골라서 기록해야 합니다.
+
+---
+
+## 9. CI/CD는 “사람이 깜빡해도 지키는 절차”다
+
+CI/CD는 GitHub Actions 같은 자동화로 테스트, 빌드, 배포를 실행하는 구조입니다.
+
+예를 들어 `.github/workflows/ci.yml`이 있을 수 있습니다.
+
+```yaml
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - run: ./gradlew test
+      - run: ./gradlew bootJar
+```
+
+이 파일은 “PR이나 main push 때 테스트와 빌드를 실행한다”는 뜻입니다.
+
+운영 관점에서 CI는 중요합니다. 로컬에서 사람이 테스트를 깜빡해도 원격에서 한 번 더 막아줄 수 있기 때문입니다.
+
+리뷰 질문은 아래와 같습니다.
+
+```text
+PR에서 테스트가 도는가?
+main에 push할 때 빌드가 도는가?
+테스트 실패해도 배포가 진행되지는 않는가?
+비밀값을 로그로 출력하지 않는가?
+배포 대상 환경이 명확한가?
+캐시나 의존성 설치가 과하게 복잡하지 않은가?
+```
+
+나쁜 예시는 이런 것입니다.
+
+```yaml
+- run: ./gradlew bootJar -x test
+```
+
+`-x test`는 테스트를 건너뛰겠다는 뜻입니다. 상황에 따라 필요할 수 있지만, 기본 CI에서 항상 테스트를 건너뛰면 위험합니다.
+
+또 다른 위험 신호는 비밀값 출력입니다.
+
+```yaml
+- run: echo $DATABASE_PASSWORD
+```
+
+CI 로그는 여러 사람이 볼 수 있고 오래 남을 수 있습니다. 비밀값을 출력하면 안 됩니다.
+
+---
+
+## 10. 배포 설정 리뷰 체크리스트
+
+AI가 만든 Spring Boot 백엔드를 받았다고 가정하고, 배포/운영 관점에서 이렇게 읽으면 됩니다.
+
+### 10.1 실행 문서
+
+```text
+README에 로컬 실행 방법이 있는가?
+Docker 실행 방법이 있는가?
+필요한 환경 변수 목록이 있는가?
+DB나 Redis 같은 의존 서비스 준비 방법이 있는가?
+```
+
+문서가 없으면 코드가 좋아도 다음 사람이 실행하기 어렵습니다.
+
+### 10.2 설정 파일
+
+```text
+application.yml, application-dev.yml, application-prod.yml이 분리되어 있는가?
+운영 비밀값이 환경 변수로 주입되는가?
+운영에서 ddl-auto가 update/create-drop로 되어 있지는 않은가?
+서버 포트, CORS, 로그 레벨이 환경별로 맞는가?
+```
+
+개발 편의 설정이 운영에 그대로 들어가 있으면 위험합니다.
+
+### 10.3 Docker
+
+```text
+Dockerfile이 실제로 jar를 빌드하고 실행하는가?
+빌드 단계와 실행 단계가 분리되어 있는가?
+.dockerignore가 있는가?
+이미지에 .env나 불필요한 파일이 들어가지 않는가?
+컨테이너 포트와 앱 포트가 맞는가?
+```
+
+Dockerfile은 “있다/없다”보다 “실제로 재현 가능한가”가 중요합니다.
+
+### 10.4 DB와 마이그레이션
+
+```text
+DB 연결 설정이 환경 변수 기반인가?
+로컬 DB와 운영 DB가 분리되어 있는가?
+스키마 변경 방식이 명확한가?
+Flyway/Liquibase 같은 마이그레이션 도구를 쓰는가, 아니면 수동 관리인가?
+```
+
+지금은 도구 사용 여부보다 “DB 변경이 통제되는가”를 보세요.
+
+### 10.5 헬스체크와 로그
+
+```text
+/actuator/health 같은 헬스체크가 있는가?
+운영에서 너무 많은 actuator endpoint를 열지 않는가?
+에러 로그가 원인을 추적할 수 있을 만큼 남는가?
+민감 정보가 로그에 찍히지 않는가?
+```
+
+### 10.6 CI/CD
+
+```text
+PR 또는 push 때 테스트와 빌드가 도는가?
+테스트를 기본으로 건너뛰지 않는가?
+배포 전에 실패를 막는 단계가 있는가?
+비밀값을 안전하게 주입하는가?
+```
+
+이 체크리스트를 보면 배포 설정은 별도의 마법이 아니라 “운영 조건을 파일로 적어둔 것”에 가깝습니다.
+
+---
+
+## 11. AI가 만든 배포 설정에서 자주 나오는 실수
+
+AI는 배포 설정을 빠르게 만들어주지만, 운영 맥락을 모르면 위험한 기본값을 넣을 수 있습니다.
+
+### 실수 1: 운영 설정에 로컬 DB가 들어간다
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/app
+```
+
+운영 서버에서 앱이 Docker 컨테이너로 뜬다면 `localhost`는 DB가 아니라 앱 컨테이너 자기 자신일 수 있습니다. Docker Compose에서는 `db`, 클라우드에서는 실제 DB 호스트를 써야 합니다.
+
+### 실수 2: 실제 비밀값처럼 보이는 예시를 만든다
+
+```yaml
+jwt:
+  secret: do-not-commit-jwt-secret-placeholder
+```
+
+학습 예시라도 이런 값은 스캐너가 비밀값으로 오해할 수 있고, 습관도 좋지 않습니다. 예시는 명확히 placeholder로 둡니다.
+
+```yaml
+jwt:
+  secret: ${JWT_SECRET:example-secret-placeholder}
+```
+
+### 실수 3: 테스트 없이 배포한다
+
+```yaml
+- run: ./gradlew bootJar -x test
+```
+
+테스트를 건너뛰는 이유가 명확하지 않다면 위험합니다. 최소한 PR에서는 테스트가 돌아야 합니다.
+
+### 실수 4: Actuator를 전부 공개한다
+
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+```
+
+학습용 로컬에서는 괜찮을 수 있지만, 운영에서는 정보 노출 위험이 있습니다.
+
+### 실수 5: 로그에 요청 전체를 찍는다
+
+```java
+log.info("request={}", request);
+```
+
+요청 객체 안에 비밀번호, 토큰, 개인정보가 들어 있으면 로그에 남습니다. 필요한 필드만 남겨야 합니다.
+
+---
+
+## 12. 프론트엔드 관점에서 배포 설정을 읽는 법
+
+진규는 프론트엔드 경험이 있으니 이렇게 연결하면 이해하기 쉽습니다.
+
+프론트엔드에서 배포를 볼 때는 이런 것을 봅니다.
+
+```text
+빌드 명령어가 무엇인가?
+환경 변수는 어디서 주입되는가?
+API base URL은 환경별로 다른가?
+정적 파일이 어디로 배포되는가?
+```
+
+백엔드도 비슷합니다. 다만 추가로 봐야 할 것이 있습니다.
+
+```text
+서버 프로세스가 계속 살아 있는가?
+DB 연결이 유지되는가?
+마이그레이션이 안전한가?
+로그와 헬스체크가 있는가?
+비밀값이 안전하게 주입되는가?
+```
+
+프론트엔드의 `VITE_API_URL`이나 `NEXT_PUBLIC_API_URL`처럼, 백엔드에도 `DATABASE_URL`, `JWT_SECRET`, `SPRING_PROFILES_ACTIVE` 같은 환경 계약이 있습니다.
+
+그래서 API 연동 문제를 볼 때도 프론트엔드와 백엔드를 함께 봐야 합니다.
+
+```text
+프론트엔드가 https://api.example.com 을 호출한다
+백엔드는 8080 포트에서 뜬다
+프록시나 로드밸런서가 443 -> 8080으로 연결한다
+CORS가 프론트엔드 도메인을 허용한다
+헬스체크가 통과해야 트래픽을 받는다
+```
+
+이 연결 중 하나만 깨져도 “백엔드 코드가 맞는데 서비스가 안 되는” 상황이 생깁니다.
+
+---
+
+## 13. 오늘의 리뷰 연습
+
+AI가 만든 Spring Boot 프로젝트에 아래 파일들이 있다고 해봅시다.
+
+```text
+Dockerfile
+docker-compose.yml
+src/main/resources/application.yml
+.github/workflows/ci.yml
+README.md
+```
+
+리뷰할 때는 아래 순서로 읽어보세요.
+
+### 1단계: README 실행 방법 확인
+
+```text
+로컬 실행 명령어는?
+Docker 실행 명령어는?
+필수 환경 변수는?
+```
+
+### 2단계: application 설정 확인
+
+```text
+DB URL은 어디서 오나?
+비밀번호가 코드에 있나?
+dev/prod 프로필이 분리되어 있나?
+운영 ddl-auto가 안전한가?
+```
+
+### 3단계: Docker 확인
+
+```text
+Dockerfile이 jar를 만드는가?
+.dockerignore가 있는가?
+docker-compose에서 app과 db가 연결되는가?
+volume이 있는가?
+```
+
+### 4단계: 운영 안전장치 확인
+
+```text
+health endpoint가 있는가?
+로그에 민감 정보가 남지 않는가?
+CI에서 테스트와 빌드가 도는가?
+```
+
+### 5단계: 빠진 질문 적기
+
+마지막으로 “이 프로젝트를 운영 서버에 올리기 전에 물어볼 질문”을 적습니다.
+
+```text
+운영 DB 스키마 변경은 어떻게 관리하나요?
+비밀값은 어디에서 주입하나요?
+장애가 나면 어떤 로그로 추적하나요?
+배포 실패 시 롤백 방법이 있나요?
+헬스체크 실패 시 자동 재시작되나요?
+```
+
+이 질문들이 바로 백엔드 리뷰의 품질을 올립니다.
+
+---
+
+## 14. 오늘 정리
+
+오늘은 Spring Boot 백엔드의 배포와 운영 환경을 읽었습니다.
+
+핵심은 이것입니다.
+
+```text
+배포 = 코드를 서버에 올리는 행위가 아니라,
+같은 조건으로 안전하게 실행되도록 만드는 구조
+```
+
+AI가 만든 백엔드 코드를 볼 때는 Controller, Service, Repository만 보면 부족합니다. 실제 서비스로 쓰려면 아래를 함께 봐야 합니다.
+
+```text
+실행 문서
+환경 변수
+프로필 분리
+Dockerfile
+Docker Compose
+DB 마이그레이션
+헬스체크
+로그
+CI/CD
+```
+
+진규가 지금 외워야 할 것은 Docker나 GitHub Actions 문법 전체가 아닙니다. 대신 이런 판단 질문을 기억하면 됩니다.
+
+```text
+이 설정은 로컬 전용인가, 운영도 고려했는가?
+비밀값이 코드나 로그에 남지 않는가?
+서버가 죽거나 DB 연결이 실패했을 때 알아차릴 수 있는가?
+배포 전에 테스트와 빌드가 자동으로 검증되는가?
+DB 변경이 통제 가능한가?
+```
+
+다음 단계에서는 지금까지 본 Controller, Service, Repository, Entity, DTO, 검증, 에러, 인증, 테스트, 배포 흐름을 하나로 묶어서 AI가 만든 백엔드 프로젝트를 처음부터 리뷰하는 전체 루틴을 정리할 수 있습니다.
