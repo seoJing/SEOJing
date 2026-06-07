@@ -1,0 +1,113 @@
+---
+title: "빈 이벤트에 대답하지 않기 — Discord startup auto-resume을 끈 이유"
+date: 2026-06-13
+tags:
+  - okayJing
+  - Discord
+  - gateway
+  - session
+  - 운영
+description: Discord gateway가 재시작될 때 이전 세션을 자동 resume하려다 빈 응답을 만들던 문제를 막기 위해 startup auto-resume을 기본 비활성화한 이유를 정리합니다.
+---
+
+<Subtitle level={2}>
+  0. 아무도 말하지 않았는데 오케이징이 움직이면 이상하다
+</Subtitle>
+
+<Paragraph>
+  Discord에서 에이전트를 상주시킬 때 제일 조심해야 하는 순간은 사용자가 말을
+  걸었을 때가 아니다. 오히려 gateway가 재시작될 때가 더 위험하다. 사용자는 아무
+  말도 하지 않았는데, 시스템은 이전 세션을 복원하려고 움직일 수 있다.
+</Paragraph>
+
+<Paragraph>
+  한동안 Discord startup auto-resume이 그런 역할을 했다. gateway가 올라오면 예전
+  세션을 이어붙이려는 synthetic event가 만들어졌다. 의도는 나쁘지 않았다. 재시작
+  이후에도 작업 맥락을 잃지 않으려는 장치였다. 문제는 이 이벤트가 실제 사용자
+  메시지와 다르게 비어 있을 수 있다는 점이었다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>
+  1. resume은 필요하지만, 시작 시점의 resume은 다르다
+</Subtitle>
+
+<Paragraph>
+  세션 resume 자체는 필요하다. 사용자가 다음 메시지를 보냈을 때, 이전 thread와
+  작업 맥락을 이어받는 것은 중요하다. 그래야 "아까 그 작업"이 무엇이었는지
+  복원할 수 있다. 문제는 resume의 트리거다.
+</Paragraph>
+
+<Paragraph>
+  사용자의 실제 메시지가 들어온 뒤 resume하는 것과, gateway가 켜졌다는
+  이유만으로 resume하는 것은 다르다. 전자는 대화의 원인이 사용자에게 있다.
+  후자는 시스템 생명주기 이벤트가 대화 이벤트처럼 섞인다.
+</Paragraph>
+
+| 구분                        | 트리거                    | 안전성                                 |
+| --------------------------- | ------------------------- | -------------------------------------- |
+| 다음 실제 메시지에서 resume | 사용자가 새 메시지를 보냄 | 자연스럽고 필요한 동작                 |
+| startup auto-resume         | gateway/process가 시작됨  | 빈 이벤트, 중복 응답, 이상한 복원 위험 |
+
+<Paragraph>
+  그래서 기준을 바꿨다. Discord startup auto-resume synthetic blank event는
+  기본으로 끈다. 대신 다음 실제 Discord user message에서 resume하는 동작은
+  유지한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. 빈 이벤트는 작은 버그처럼 보이지만 UX를 망친다</Subtitle>
+
+<Paragraph>
+  기술적으로 보면 빈 이벤트는 단순한 edge case처럼 보인다. content가 없으면
+  무시하면 되지 않나 싶다. 그런데 conversational agent에서는 이런 작은 edge
+  case가 UX를 크게 망친다. 아무도 부르지 않았는데 봇이 뭔가 말하거나, 이전
+  작업을 갑자기 이어가려 하거나, thread에 맥락 없는 답변이 남으면 사용자는
+  시스템을 믿기 어렵다.
+</Paragraph>
+
+<Paragraph>
+  오케이징은 특히 조용히 있어야 할 때와 개입해야 할 때를 구분해야 한다. Discord
+  free-response나 channel prompt를 붙인 뒤에는 더 그렇다. 멘션 없이도 대화할 수
+  있게 만드는 것은 편하지만, 그만큼 "진짜 대화 이벤트"와 "시스템 이벤트"를
+  엄격히 나눠야 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. opt-in으로 남긴 이유</Subtitle>
+
+<Paragraph>
+  그렇다고 startup auto-resume을 완전히 없애지는 않았다. 실험이나 특정 운영
+  환경에서는 gateway 시작 직후 resume이 필요할 수도 있다. 그래서 escape hatch만
+  남겼다.
+</Paragraph>
+
+```bash
+HERMES_DISCORD_STARTUP_AUTO_RESUME=true
+```
+
+<Paragraph>
+  이 값을 명시적으로 켜면 예전 동작을 다시 사용할 수 있다. 하지만 기본값은
+  off다. 이 방향이 더 안전하다. 자동화는 기본적으로 조용해야 하고, 대화는
+  사용자의 실제 입력에서 시작되어야 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. 이번에 남은 기준</Subtitle>
+
+<Paragraph>
+  이번 문제는 resume 기능 하나의 버그가 아니라, gateway 이벤트를 어떻게 대화로
+  승격할지의 문제였다. 모든 이벤트가 메시지가 되어서는 안 된다. process
+  lifecycle, watchdog, startup, reconnect는 운영 이벤트이고, user message는 대화
+  이벤트다.
+</Paragraph>
+
+<Paragraph>
+  오케이징이 Discord에서 자연스럽게 보이려면 더 많은 이벤트에 반응하는 것보다,
+  반응하지 말아야 할 이벤트를 정확히 무시하는 쪽이 중요하다. 빈 이벤트에
+  대답하지 않는 것은 작은 패치지만, 사용자가 느끼는 안정감은 여기서 시작된다.
+</Paragraph>

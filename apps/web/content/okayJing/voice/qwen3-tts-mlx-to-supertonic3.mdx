@@ -1,0 +1,118 @@
+---
+title: "Qwen3-TTS MLX를 검토했지만 Supertonic3로 돌아온 이유"
+date: 2026-06-07
+tags:
+  - okayJing
+  - tts
+  - qwen3
+  - mlx
+  - supertonic3
+
+description: Apple Silicon에서 Qwen3-TTS MLX를 검토했지만, 한국어 말끝과 RAM, Discord 실사용성을 기준으로 Supertonic3를 우선 선택한 이유를 정리합니다.
+---
+
+<Subtitle level={2}>0. Qwen3-TTS는 꽤 그럴듯한 후보였다</Subtitle>
+
+<Paragraph>
+  Qwen3-TTS는 처음부터 흥미로운 후보였다. 한국어 voice 후보가 있고, Apple
+  Silicon에서는 MLX로 돌릴 수 있다는 기대도 있었다. 오케이징을 Mac mini 기준
+  환경으로 옮긴 뒤라, 로컬 모델을 쓰는 선택지도 예전보다 훨씬 현실적이었다.
+</Paragraph>
+
+<Paragraph>
+  특히 Sohee 같은 한국어 여성 voice 후보는 방향이 맞아 보였다. 진규가 여성
+  한국어 TTS를 선호하는 이유는 단순한 취향보다 자연스러움에 가까웠다. 현재
+  한국어 TTS에서는 여성 voice가 문장 연결과 말끝에서 덜 어색하게 들리는 경우가
+  많다. 그런 기준에서 Qwen3-TTS는 검토할 만했다.
+</Paragraph>
+
+<Paragraph>그런데 실제 운영 기준으로 보면 바로 채택하기는 애매했다.</Paragraph>
+
+---
+
+<Subtitle level={2}>1. 로컬 모델은 RAM을 먹는다</Subtitle>
+
+<Paragraph>
+  Mac mini M4 2TB를 기준 환경으로 잡으면서 저장공간 문제는 많이 줄었다. 모델
+  파일과 샘플, 로그를 로컬에 두는 부담이 작아졌다. 하지만 저장공간과 RAM은 다른
+  문제다. TTS 모델이 실행 중에 5GB 이상을 먹는다면, 오케이징의 다른 작업과 같이
+  볼 필요가 있다.
+</Paragraph>
+
+<Paragraph>
+  오케이징은 TTS만 하는 시스템이 아니다. repo를 열고, build를 돌리고, 브라우저를
+  띄우고, memory index를 조회하고, 때로는 다른 로컬 모델도 검토한다. 그런
+  환경에서 TTS가 항상 큰 메모리를 차지하면 대화형 기본값으로 쓰기 부담스럽다.
+</Paragraph>
+
+<Paragraph>
+  로컬 first라고 해서 무조건 큰 로컬 모델을 상시 기본값으로 두는 건 아니다.
+  로컬에서 돌릴 수 있는 것과 운영 기본값으로 적합한 것은 다르다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. 말끝이 의식적으로 길어지는 느낌이 있었다</Subtitle>
+
+<Paragraph>
+  Qwen3-TTS 쪽에서 더 신경 쓰였던 건 말끝이었다. 전체 음색은 괜찮아 보여도,
+  한국어 문장 끝이 의식적으로 길어지는 느낌이 있었다. 듣는 순간 "아, 모델이
+  자연스럽게 말하려고 노력하고 있구나"라는 인상이 남았다.
+</Paragraph>
+
+<Paragraph>
+  TTS에서 이 인상은 꽤 치명적이다. 사람 목소리처럼 들리려면 자연스러운 장식이
+  있어야 하지만, 그 장식이 너무 드러나면 오히려 부자연스럽다. 특히 오케이징은
+  짧게 자주 말해야 한다. 매번 말끝이 길게 느껴지면 대화가 늘어진다.
+</Paragraph>
+
+<Paragraph>
+  Supertonic3도 완벽하진 않았다. 그래서 F1/F2/F5를 비교하고, 피치와 속도, style
+  JSON을 만졌다. 하지만 운영용으로는 Supertonic3 쪽이 더 예측 가능하게 조정되는
+  느낌이 있었다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. Supertonic3는 지금 기준에서 조정 가능했다</Subtitle>
+
+<Paragraph>
+  Supertonic3의 장점은 완벽한 기본 voice가 있다는 게 아니었다. 오히려 기본
+  voice만 보면 부족한 부분이 있었다. 하지만 F1부터 F5, M1부터 M5까지의 style을
+  확인할 수 있었고, wrapper와 style JSON으로 오케이징에 맞게 조금씩 튜닝할 수
+  있었다.
+</Paragraph>
+
+<Paragraph>
+  F1을 기반으로 두고, 피치를 +5% 정도로 조정하고, 속도를 1.2배로 올리고, steps를
+  8~12 사이에서 보는 식의 기준을 만들 수 있었다. 이 조합은 적어도 Discord 대화형
+  사용에서는 꽤 현실적이었다.
+</Paragraph>
+
+<Paragraph>
+  중요한 건 "지금 당장 제일 사람 같은 모델"이 아니라 "매일 쓸 수 있게 조정
+  가능한 모델"이었다. 이 기준에서는 Supertonic3가 더 맞았다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. Qwen3-TTS를 버린 건 아니다</Subtitle>
+
+<Paragraph>
+  그렇다고 Qwen3-TTS를 완전히 버린 건 아니다. Apple Silicon에서 MLX로 돌아가는
+  한국어 TTS 후보는 계속 볼 가치가 있다. 나중에 RAM 부담이 줄거나, 말끝 조정이
+  쉬워지거나, 더 자연스러운 voice가 나오면 다시 검토할 수 있다.
+</Paragraph>
+
+<Paragraph>
+  다만 오케이징의 기본 voice로는 지금 당장 안정적인 쪽이 필요했다. voice mode는
+  실험실 데모가 아니라 매일 대화하는 인터페이스다. 그래서 기준은 보수적으로 잡는
+  편이 맞다.
+</Paragraph>
+
+<Paragraph>
+  결과적으로 이번 판단은 Qwen3-TTS가 나쁘다는 결론이 아니었다. 오케이징의 현재
+  운영 조건에서는 Supertonic3가 더 맞다는 결론이었다. 다음 모델을 볼 때도 같은
+  기준을 먼저 적용하면 된다. 한국어 말끝, 지연, RAM, 조정 가능성. 이 네 가지를
+  통과해야 기본 voice가 될 수 있다.
+</Paragraph>
