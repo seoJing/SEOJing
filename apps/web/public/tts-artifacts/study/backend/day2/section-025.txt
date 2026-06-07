@@ -1,0 +1,1 @@
+AI가 만든 Spring Boot API를 볼 때 아래 순서로 체크하면 됩니다.

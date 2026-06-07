@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "spot/persona-cluster-rendering-optimization",
+  "canonicalUrl": "https://seojing.com/blog/spot/persona-cluster-rendering-optimization",
+  "title": "60fps 페르소나가 맵을 뛰어다닐 때, React 를 어떻게 덜 깨우나",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:spot/persona-cluster-rendering-optimization",
+  "artifacts": [
+    {
+      "id": "spot__persona-cluster-rendering-optimization__summary-2m",
+      "kind": "summary-2m",
+      "slug": "spot/persona-cluster-rendering-optimization",
+      "canonicalUrl": "https://seojing.com/blog/spot/persona-cluster-rendering-optimization",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "60fps 페르소나가 맵을 뛰어다닐 때, React 를 어떻게 덜 깨우나 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "문제: 지도를 드래그하면 끊겼다 Spot 의 /map 에는 페르소나 시뮬레이션 이 있다. ?sim=swarm 쿼리를 붙이면 수원시 전역의 bbox 안에 페르소나 500 1000명이 뿌려지고, 각자가 자기 \"집\" 근처에서 랜덤 좌표로 이동한다. 백엔드가 아직 없기 때문에 프론트에서 가짜 실시간을 만들어 데모와 디자인 검증을 하는 용도다. 그런데 이걸 켜놓고 지도를 드래그하면 뚝뚝 끊겼다. 페르소나들이 한 번씩 멈추고, 클러스터 blob 애니메이션이 부자연스럽게 점프했다. 처음엔 \"맵 SDK 가 느린가 보다\" 싶었는데, 진짜 원인은 내가 쓴 코드 쪽에 훨씬 많았다. 이 글은 그걸 해결하기 위해 React DevTools Profiler 로 병목을 찾고, \" \" 매 프레임 state 를 갱신하는 기본 패턴 을 \" \" ref + 외부 pub/sub 으로 갈아엎은 과정이다. 그리고 왜 useSyncExternalStore 같은 \"정공법\"을 쓰지 않았는지도 같이 정리한다. --- React DevTools Profiler 가 뭔가 Chrome 확장으로 설치되는 React DevTools 안에 Profiler 탭이 있다. 녹화 버튼을 누르고 문제 인터랙션을 한 뒤 멈추면, 그 구간 동안 일어난 \" \" 모든 렌더(commit) 를 플레임차트로 보여준다. commit 이라는 단위 React 의 렌더는 두 단계다. Render phase 는 컴포넌트 함수를 호출해서 VDOM 을 만드는 단계이고, Commit phase 는 그 결과를 실제 DOM 에 반영하는 단계다. Profiler 가 보여주는 한 막대 하나는 commit 한 번이다. 즉 \"이 순간에 DOM 에 뭔가 반영됐다\"는 뜻이고, 그 아래에 어느 컴포넌트가 얼마나 걸렸는지가 쌓인다. 왜 이 컴포넌트가 렌더됐나 (why-did-this-render) Profiler 설정에서 \"Record why each component rendered while profiling\" 을 켜면, 각 컴포넌트에 커서를 올렸을 때 왜 렌더됐는지 가 뜬다. props 변경, state 변경, 부모가 렌더돼서, Hook 이 바뀌어서 등. 이게 핵심이다. 내가 본 첫 번째 이상한 신호가 이거였다. 페르소나가 움직이는 매 프레임마다 FeedBottomSheet 가 리렌더 되고 있었다. 페르소나 좌표는 바텀시트 내용과 전혀 관계가 없는데 말이다. 왜? 공통 부모인 MapClient 가 매 프레임 setState 로 좌표 Map 을 갱신하고 있었고, 그 setState 가 자식 트리 전체의 reconciliation 을 끌고 들어가고 있었기 때문이다. \"Highlight updates when components render\" 같은 설정에 있는 옵션. 이걸 켜면 렌더되는 컴포넌트 주변에 초록 빨간 테두리가 깜빡인다. 자주 렌더될수록 빨갛게. 이게 눈으로 가장 빠르게 확인되는 신호다. 페르소나가 움직이는 동안 바텀시트 헤더가 60Hz 로 깜빡이고 있었다 — 잘못된 설계의 증거. --- 매 프레임 setState 가 비싸다는 게 무슨 뜻인가 계산을 한번 해보자. 페르소나 500명, 60fps 로 움직인다고 하면 초당 30,000번의 위치 업데이트가 발생한다. 이걸 React state 에 올리는 두 가지 선택지가 있었다. 각 페르소나가 …",
+      "audioPath": "/tts-artifacts/spot/persona-cluster-rendering-optimization/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/spot/persona-cluster-rendering-optimization/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "spot__persona-cluster-rendering-optimization__core-5m",
+      "kind": "core-5m",
+      "slug": "spot/persona-cluster-rendering-optimization",
+      "canonicalUrl": "https://seojing.com/blog/spot/persona-cluster-rendering-optimization",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "60fps 페르소나가 맵을 뛰어다닐 때, React 를 어떻게 덜 깨우나 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "문제: 지도를 드래그하면 끊겼다 Spot 의 /map 에는 페르소나 시뮬레이션 이 있다. ?sim=swarm 쿼리를 붙이면 수원시 전역의 bbox 안에 페르소나 500 1000명이 뿌려지고, 각자가 자기 \"집\" 근처에서 랜덤 좌표로 이동한다. 백엔드가 아직 없기 때문에 프론트에서 가짜 실시간을 만들어 데모와 디자인 검증을 하는 용도다. 그런데 이걸 켜놓고 지도를 드래그하면 뚝뚝 끊겼다. 페르소나들이 한 번씩 멈추고, 클러스터 blob 애니메이션이 부자연스럽게 점프했다. 처음엔 \"맵 SDK 가 느린가 보다\" 싶었는데, 진짜 원인은 내가 쓴 코드 쪽에 훨씬 많았다. 이 글은 그걸 해결하기 위해 React DevTools Profiler 로 병목을 찾고, \" \" 매 프레임 state 를 갱신하는 기본 패턴 을 \" \" ref + 외부 pub/sub 으로 갈아엎은 과정이다. 그리고 왜 useSyncExternalStore 같은 \"정공법\"을 쓰지 않았는지도 같이 정리한다. --- React DevTools Profiler 가 뭔가 Chrome 확장으로 설치되는 React DevTools 안에 Profiler 탭이 있다. 녹화 버튼을 누르고 문제 인터랙션을 한 뒤 멈추면, 그 구간 동안 일어난 \" \" 모든 렌더(commit) 를 플레임차트로 보여준다. commit 이라는 단위 React 의 렌더는 두 단계다. Render phase 는 컴포넌트 함수를 호출해서 VDOM 을 만드는 단계이고, Commit phase 는 그 결과를 실제 DOM 에 반영하는 단계다. Profiler 가 보여주는 한 막대 하나는 commit 한 번이다. 즉 \"이 순간에 DOM 에 뭔가 반영됐다\"는 뜻이고, 그 아래에 어느 컴포넌트가 얼마나 걸렸는지가 쌓인다. 왜 이 컴포넌트가 렌더됐나 (why-did-this-render) Profiler 설정에서 \"Record why each component rendered while profiling\" 을 켜면, 각 컴포넌트에 커서를 올렸을 때 왜 렌더됐는지 가 뜬다. props 변경, state 변경, 부모가 렌더돼서, Hook 이 바뀌어서 등. 이게 핵심이다. 내가 본 첫 번째 이상한 신호가 이거였다. 페르소나가 움직이는 매 프레임마다 FeedBottomSheet 가 리렌더 되고 있었다. 페르소나 좌표는 바텀시트 내용과 전혀 관계가 없는데 말이다. 왜? 공통 부모인 MapClient 가 매 프레임 setState 로 좌표 Map 을 갱신하고 있었고, 그 setState 가 자식 트리 전체의 reconciliation 을 끌고 들어가고 있었기 때문이다. \"Highlight updates when components render\" 같은 설정에 있는 옵션. 이걸 켜면 렌더되는 컴포넌트 주변에 초록 빨간 테두리가 깜빡인다. 자주 렌더될수록 빨갛게. 이게 눈으로 가장 빠르게 확인되는 신호다. 페르소나가 움직이는 동안 바텀시트 헤더가 60Hz 로 깜빡이고 있었다 — 잘못된 설계의 증거. --- 매 프레임 setState 가 비싸다는 게 무슨 뜻인가 계산을 한번 해보자. 페르소나 500명, 60fps 로 움직인다고 하면 초당 30,000번의 위치 업데이트가 발생한다. 이걸 React state 에 올리는 두 가지 선택지가 있었다. 각 페르소나가 독립 state — 500개의 state, 각자 setter 호출. React batching 이 자동으로 묶어주긴 하지만 여전히 500개 fiber 각각이 dirty 표시됨. 부모 Map state 에 모아두기 — state 는 하나, 매 프레임 새 Map 만들어 setState. 자식 트리 전체가 부모 리렌더에 딸려감. 처음엔 2번을 썼다. \" \" personaPositions: Map&lt;string, GeoCoord&gt; 이라는 state 를 useMockPersonaSwarm 훅이 반환했고, MapClient 가 그걸 받아서 오버레이 좌표로 뿌렸다. 이 구조의 문제는 Profiler 가 정확히 보여줬다 — \" \" MapClient 의 commit 이 16ms 에 한 번씩 찍힌다 . 물론 각 자식 컴포넌트는 React.memo 로 감싸면 실제 render 함수 호출은 스킵된다. 하지만 React 는 commit phase 자체는 여전히 돌고, 부모 fiber 를 순회하며 자식의 props 비교를 수행한다. 그 비교를 500번 한다. 드래그 중에는 지도 SDK 도 panning 연산을 하고 있다. 둘이 겹치면 프레임 버짓 16.6ms 가 넘어가면서 끊김이 보인다. --- 대안 세 가지를 비교했다 A. 각 오버레이가 자기만의 local state 를 갖는다 페르소나마다 useState(coord) 를 두고, 훅에서 내려보내는 coord 를 props 로 받아 자기가 갱신한다. React 스럽다. 하지만 부모가 \" \" 새 props 를 매 프레임 내려보내는 순간 자식이 매 프레임 props 로 인해 리렌더된다. 루트 병목이 해결되지 않는다. B. useSyncExternalStore React 18 부터 추가된 공식 API. 외부 store 를 subscribe 하고 값을 snapshot 하는 정공법이다. 이걸 쓰면 store 가 바뀔 때 \" \" 그 Hook 을 부른 컴포넌트만 리렌더된다. 맞는 도구처럼 보인다. 그런데 문제는 여전히 있다. snapshot 을 반환해야 한다는 점이다. 500개 페르소나의 좌표 Map 을 매 프레임 스냅샷으로 만들면 그만큼 객체 할당이 일어나고, getSnapshot 의 결과가 참조 동일성으로 비교 되기 때문에 매번 새 Map 을 만들면 결국 리렌더가 발생한다. 페르소나별로 개별 store 를 두는 식으로 회피할 수는 있는데 그건 500개의 구독 슬롯을 만드는 일이고, 그때쯤 되면 그냥 DOM 을 직접 건드리는 게 더 명료하다. C. ref + 외부 pub/sub + imperative redraw — 채택 좌표는 \"그리는 데만 필요하고, 로직 분기에는 안 쓰인다\" . 이게 핵심 관찰이었다. 로직 분기(스팟 타겟 지정, 클러스터 derive 등)는 state 기반으로 두되, 좌표 자체는 React 바깥의 Ref 에 두고, 변경을 알리는 구독 콜백 을 별도 제공한다. 구독자는 받은 콜백에서 positionsRef.current.get(id) 를 읽어 DOM 의 style.transform 을 직접 갱신한다. 이러면 React 의 render/commit 은 개입하지 않는다. \" \" rAF 루프와 React 렌더 사이클이 완전히 분리 된다. 이게 이번 최적화의 척추다. --- 구현: 훅이 반환하는 타입부터 바뀌었다 useMockPersonaSwarm 이 원래 반환하던 타입과, 바뀐 타입을 나란히 두면 설계 변화가 그대로 보인다. 세 가지가 눈에 띈다. (1) positions 가 state 에서 ref 로. (2) subscribe 라는 pub/sub 인터페이스 추가. (3) setSpotTargets 라는 명령형 API — \"이 페르소나는 저 스팟으로 가\" 를 외부에서 지시할 수 있다. rAF 루프 안에서 하는 일 몇 가지 선택이 들어가 있다. 첫째, emitThrottleMs 로 step 자체를 묶었다 . advance 를 60fps 로 돌리면 N = 1000 일 때 초당 60,000번 연산이다. 눈으로는 100ms 간격(10fps 업데이트) 도 충분히 부드럽게 보이는데, 이건 \" \" 뇌가 CSS transition 으로 자연 보간한다고 착각 해서 그렇다. 실제로는 CSS 쪽에 transition: transform 100ms linear 를 걸어두지 않았는데도, 눈으로는 매끄럽게 보인다. 페르소나 dot 크기가 충분히 작아서 100ms 간 점프가 \" \" 시각적으로 한 프레임 정도의 차이 로만 인식되기 때문이다. 둘째, ref 에 직접 쓴다 . positions.set(id, coord) 는 React 에게 아무 신호도 보내지 않는다. 순수한 JS Map 변형이다. 셋째, 구독자들에게 순차 호출 . for (const cb of subscribersRef.current) cb(). 각 구독자는 자기가 필요한 좌표를 ref 에서 읽어 알아서 처리한다. --- NaverOverlay 를 뚫어 imperative redraw 를 받게 했다 …",
+      "audioPath": "/tts-artifacts/spot/persona-cluster-rendering-optimization/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/spot/persona-cluster-rendering-optimization/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

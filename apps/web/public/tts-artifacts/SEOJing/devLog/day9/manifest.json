@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "SEOJing/devLog/day9",
+  "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/day9",
+  "title": "Day 9 - 프레젠테이션 모드, 코드블럭 개선, 테스팅",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:SEOJing/devLog/day9",
+  "artifacts": [
+    {
+      "id": "SEOJing__devLog__day9__summary-2m",
+      "kind": "summary-2m",
+      "slug": "SEOJing/devLog/day9",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/day9",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "Day 9 - 프레젠테이션 모드, 코드블럭 개선, 테스팅 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "퀴즈 구조 변경 어제 만든 퀴즈 컴포넌트의 구조를 변경했다. 기존 구조가 MDX에서 쓰기 불편했는데, props 기반으로 깔끔하게 정리했다. --- 파일 탐색기 모바일 반응형 파일 탐색기가 모바일에서 좀 구렸다. 터치 영역이 너무 작고, 가로 스크롤이 생기는 문제가 있었다. 모바일 반응형을 제대로 수정했다. --- 코드 블럭 사용성 증대 코드 블럭에 복사 버튼, 언어 표시, 줄 번호 등 사용성을 높이는 기능들을 추가했다. 모바일에서 코드 블럭을 가로로 눕혀서 볼 수 있는 기능도 구상 중. 모바일 가로 코드 뷰어 --- 프레젠테이션 기능 스터디에서 PPT를 만들지 말고, 블로그에 발표 모드를 넣자는 아이디어를 실행에 옮겼다. ArticleToolbar에 프레젠테이션 버튼을 추가하고, PresentationView 컴포넌트를 새로 만들었다. MDX 컨텐츠를 --- 구분선 기준으로 슬라이드 단위로 나누고, 좌우 화살표로 넘길 수 있게 했다. 풀스크린 모드도 지원. 이제 블로그 글 하나가 곧 발표 자료가 된다. 모바일 프레젠테이션 모드 --- 테스팅 도입 프레젠테이션 유틸 로직을 분리하면서 테스트 코드도 작성했다. presentation.utils.test.ts에 MDX 파싱, 슬라이드 분리 등의 테스트를 추가. ArticleQuiz 컴포넌트 테스트도 작성했다. 유틸 함수들도 별도 파일로 분리하고, vitest.config.ts에 테스트 설정을 추가. 커밋 로그를 보면 테스트 오류 수정 → 배포 오류 수정이 연달아 있는데, CI에서 터진 걸 잡느라 좀 고생했다. --- 스터디 주차별 자료 완성 씨랩 스터디 1 4주차 자료를 모두 작성했다. 내일이 첫 대면 날인데, 드디어 준비가 끝난 느낌. 해커톤 마인드로 10일간 달려왔는데, 블로그도 만들고 스터디 자료도 완성했다. 나름 성공적.",
+      "audioPath": "/tts-artifacts/SEOJing/devLog/day9/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/devLog/day9/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "SEOJing__devLog__day9__core-5m",
+      "kind": "core-5m",
+      "slug": "SEOJing/devLog/day9",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/day9",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "Day 9 - 프레젠테이션 모드, 코드블럭 개선, 테스팅 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "퀴즈 구조 변경 어제 만든 퀴즈 컴포넌트의 구조를 변경했다. 기존 구조가 MDX에서 쓰기 불편했는데, props 기반으로 깔끔하게 정리했다. --- 파일 탐색기 모바일 반응형 파일 탐색기가 모바일에서 좀 구렸다. 터치 영역이 너무 작고, 가로 스크롤이 생기는 문제가 있었다. 모바일 반응형을 제대로 수정했다. --- 코드 블럭 사용성 증대 코드 블럭에 복사 버튼, 언어 표시, 줄 번호 등 사용성을 높이는 기능들을 추가했다. 모바일에서 코드 블럭을 가로로 눕혀서 볼 수 있는 기능도 구상 중. 모바일 가로 코드 뷰어 --- 프레젠테이션 기능 스터디에서 PPT를 만들지 말고, 블로그에 발표 모드를 넣자는 아이디어를 실행에 옮겼다. ArticleToolbar에 프레젠테이션 버튼을 추가하고, PresentationView 컴포넌트를 새로 만들었다. MDX 컨텐츠를 --- 구분선 기준으로 슬라이드 단위로 나누고, 좌우 화살표로 넘길 수 있게 했다. 풀스크린 모드도 지원. 이제 블로그 글 하나가 곧 발표 자료가 된다. 모바일 프레젠테이션 모드 --- 테스팅 도입 프레젠테이션 유틸 로직을 분리하면서 테스트 코드도 작성했다. presentation.utils.test.ts에 MDX 파싱, 슬라이드 분리 등의 테스트를 추가. ArticleQuiz 컴포넌트 테스트도 작성했다. 유틸 함수들도 별도 파일로 분리하고, vitest.config.ts에 테스트 설정을 추가. 커밋 로그를 보면 테스트 오류 수정 → 배포 오류 수정이 연달아 있는데, CI에서 터진 걸 잡느라 좀 고생했다. --- 스터디 주차별 자료 완성 씨랩 스터디 1 4주차 자료를 모두 작성했다. 내일이 첫 대면 날인데, 드디어 준비가 끝난 느낌. 해커톤 마인드로 10일간 달려왔는데, 블로그도 만들고 스터디 자료도 완성했다. 나름 성공적.",
+      "audioPath": "/tts-artifacts/SEOJing/devLog/day9/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/devLog/day9/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

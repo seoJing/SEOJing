@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "SEOJing/react-children-api",
+  "canonicalUrl": "https://seojing.com/blog/SEOJing/react-children-api",
+  "title": "Context로 퀴즈 컴포넌트를 만들다 막혀서 React.Children을 공부하게 된 이야기",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:SEOJing/react-children-api",
+  "artifacts": [
+    {
+      "id": "SEOJing__react-children-api__summary-2m",
+      "kind": "summary-2m",
+      "slug": "SEOJing/react-children-api",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/react-children-api",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "Context로 퀴즈 컴포넌트를 만들다 막혀서 React.Children을 공부하게 된 이야기 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "만들고 싶었던 것 이 블로그에 퀴즈 컴포넌트를 추가하고 싶었다. MDX 파일에서 이렇게 쓸 수 있으면 좋겠다고 생각했다. 요구사항은 명확했다. 한 번에 하나의 문제만 보여주고 , 정답 확인 후 다음 문제로 넘기고, 마지막에 점수를 보여준다. 부모인 ArticleQuiz가 현재 단계를 관리하면서, 자식 ArticleQuizItem에 콜백을 전달해야 한다. 첫 번째 시도: Context 기반 Compound Component 처음에는 \"요즘은 Context로 Compound Component 만드는 게 정석이지\"라는 생각으로 Context부터 잡았다. ArticleQuizItem은 Context에서 상태를 꺼내 쓰면 된다. 여기까지는 깔끔했다. 막힌 지점: \"나는 몇 번째 문제인가?\" 문제는 각 QuizItem이 자신의 index를 알 수 없다 는 것이었다. \"한 번에 하나만 보여준다\"는 건, 부모가 currentStep이 0이면 첫 번째 문제만 보여주고 나머지는 숨겨야 한다는 뜻이다. Context 패턴에서는 모든 QuizItem이 동시에 마운트되어 있으니, 각자 \"내가 currentStep 번째인지\" 판단해야 한다. Context에는 자식의 순서 정보가 없다. children이 몇 개이고, 내가 그 중 몇 번째인지는 Context가 알려줄 수 없는 정보다. 생각해본 우회법들 몇 가지 방법을 고민했다. 1. index prop을 수동으로 넘기기 MDX 작성자가 직접 index를 매겨야 한다. 문제를 추가하거나 순서를 바꿀 때마다 index를 다시 계산해야 한다. 실수하기 딱 좋고, MDX 작성 경험을 망친다. 2. ref 기반 등록 패턴 렌더링 중에 ref를 mutate하는 건 React의 규칙에 어긋나고, Strict Mode에서 두 번 호출되면 index가 꼬인다. useEffect로 등록하면 첫 렌더에서 index를 알 수 없어서 깜빡임이 생긴다. \" \" 단순한 퀴즈 컴포넌트에 이 정도 복잡도는 과하다. 전환: React.Children이라는 해법 이 시점에서 발상을 바꿨다. \"자식이 자기 index를 아는\" 모델이 아니라, \" \" 부모가 자식을 골라서 보여주는 모델로 전환하면 어떨까? 찾아보니 React.Children이라는 유틸리티가 있었다. React 공식 문서에서는 레거시 API로 분류하고 있지만, 정확히 이 문제를 해결하기 위해 만들어진 도구였다. 이 코드가 해결해주는 것들을 보자. index 문제 해소 : 부모가 items[currentStep]으로 직접 골라서 보여준다. 자식이 자기 index를 알 필요가 없다 한 번에 하나만 렌더 : 현재 단계의 QuizItem만 마운트된다. 불필요한 렌더링이 없다 props 주입 : cloneElement로 onResult, onNext를 전달한다. QuizItem 입장에서는 그냥 props로 받으면 된다 React.Children API 정리 이 경험을 계기로 React.Children API를 제대로 공부했다. 정리하면 다음과 같다. API 설명 -------------------------------------- ----------------------------------------------------------------- React.Children.toArray(children) children을 평탄화된 배열 로 변환. key를 자동 부여 React.Children.map(children, fn) children을 순회하며 변환. null/undefined는 자동 제거 React.Children.forEach(children, fn) map과 동일하되 반환값 없음 React.Children.count(children) 유효한 자식 노드 개수 반환 React.Children.only(children) children이 정확히 하나 인지 검증. 아니면 에러 toArray가 필요한 이유 React에서 children prop은 타입이 일정하지 않다. 자식이 하나면 ReactElement, 여러 개면 배열, 텍스트면 …",
+      "audioPath": "/tts-artifacts/SEOJing/react-children-api/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/react-children-api/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "SEOJing__react-children-api__core-5m",
+      "kind": "core-5m",
+      "slug": "SEOJing/react-children-api",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/react-children-api",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "Context로 퀴즈 컴포넌트를 만들다 막혀서 React.Children을 공부하게 된 이야기 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "만들고 싶었던 것 이 블로그에 퀴즈 컴포넌트를 추가하고 싶었다. MDX 파일에서 이렇게 쓸 수 있으면 좋겠다고 생각했다. 요구사항은 명확했다. 한 번에 하나의 문제만 보여주고 , 정답 확인 후 다음 문제로 넘기고, 마지막에 점수를 보여준다. 부모인 ArticleQuiz가 현재 단계를 관리하면서, 자식 ArticleQuizItem에 콜백을 전달해야 한다. 첫 번째 시도: Context 기반 Compound Component 처음에는 \"요즘은 Context로 Compound Component 만드는 게 정석이지\"라는 생각으로 Context부터 잡았다. ArticleQuizItem은 Context에서 상태를 꺼내 쓰면 된다. 여기까지는 깔끔했다. 막힌 지점: \"나는 몇 번째 문제인가?\" 문제는 각 QuizItem이 자신의 index를 알 수 없다 는 것이었다. \"한 번에 하나만 보여준다\"는 건, 부모가 currentStep이 0이면 첫 번째 문제만 보여주고 나머지는 숨겨야 한다는 뜻이다. Context 패턴에서는 모든 QuizItem이 동시에 마운트되어 있으니, 각자 \"내가 currentStep 번째인지\" 판단해야 한다. Context에는 자식의 순서 정보가 없다. children이 몇 개이고, 내가 그 중 몇 번째인지는 Context가 알려줄 수 없는 정보다. 생각해본 우회법들 몇 가지 방법을 고민했다. 1. index prop을 수동으로 넘기기 MDX 작성자가 직접 index를 매겨야 한다. 문제를 추가하거나 순서를 바꿀 때마다 index를 다시 계산해야 한다. 실수하기 딱 좋고, MDX 작성 경험을 망친다. 2. ref 기반 등록 패턴 렌더링 중에 ref를 mutate하는 건 React의 규칙에 어긋나고, Strict Mode에서 두 번 호출되면 index가 꼬인다. useEffect로 등록하면 첫 렌더에서 index를 알 수 없어서 깜빡임이 생긴다. \" \" 단순한 퀴즈 컴포넌트에 이 정도 복잡도는 과하다. 전환: React.Children이라는 해법 이 시점에서 발상을 바꿨다. \"자식이 자기 index를 아는\" 모델이 아니라, \" \" 부모가 자식을 골라서 보여주는 모델로 전환하면 어떨까? 찾아보니 React.Children이라는 유틸리티가 있었다. React 공식 문서에서는 레거시 API로 분류하고 있지만, 정확히 이 문제를 해결하기 위해 만들어진 도구였다. 이 코드가 해결해주는 것들을 보자. index 문제 해소 : 부모가 items[currentStep]으로 직접 골라서 보여준다. 자식이 자기 index를 알 필요가 없다 한 번에 하나만 렌더 : 현재 단계의 QuizItem만 마운트된다. 불필요한 렌더링이 없다 props 주입 : cloneElement로 onResult, onNext를 전달한다. QuizItem 입장에서는 그냥 props로 받으면 된다 React.Children API 정리 이 경험을 계기로 React.Children API를 제대로 공부했다. 정리하면 다음과 같다. API 설명 -------------------------------------- ----------------------------------------------------------------- React.Children.toArray(children) children을 평탄화된 배열 로 변환. key를 자동 부여 React.Children.map(children, fn) children을 순회하며 변환. null/undefined는 자동 제거 React.Children.forEach(children, fn) map과 동일하되 반환값 없음 React.Children.count(children) 유효한 자식 노드 개수 반환 React.Children.only(children) children이 정확히 하나 인지 검증. 아니면 에러 toArray가 필요한 이유 React에서 children prop은 타입이 일정하지 않다. 자식이 하나면 ReactElement, 여러 개면 배열, 텍스트면 문자열, 없으면 undefined. React.Children.toArray는 이 불규칙한 타입을 \" \" 항상 배열로 정규화 해준다. 추가로 Fragment 안에 감싸진 중첩 구조도 평탄화하고, 각 원소에 안정적인 key를 자동 부여한다. map — 변환이 필요할 때 React.Children.map은 toArray + Array.map과 비슷하지만, 콜백에서 null을 반환하면 해당 원소를 자동 제거 한다는 차이가 있다. count와 only count는 렌더링 가능한 자식 수를 반환한다. ArticleQuiz에서 프로그레스 바의 전체 단계 수를 계산할 때 items.length 대신 쓸 수도 있다. only는 children이 정확히 하나의 React element 인지 검증하고, 아니면 에러를 던진다. Tooltip 같은 wrapper에서 유용하다. React.Children의 한계 만능은 아니다. 알고 써야 할 한계점들이 있다. 1단계 깊이만 탐색한다. children의 children(손자 노드)까지는 들어가지 않는다. 중간에 로 감싸면 내부를 볼 수 없다 children 구조에 의존한다. 사용하는 쪽에서 children 구조를 바꾸면(감싸기, 조건부 렌더링 등) 깨질 수 있다 cloneElement의 암묵성. 어디서 prop이 주입되는지 코드만 봐서는 추적하기 어렵다 그럼에도 이 선택이 맞는 이유 React 공식 문서가 React.Children을 레거시로 분류한 건 사실이다. 범용 라이브러리에서는 Context 기반 패턴이 더 안전하다는 것도 맞다. 하지만 기술 선택은 환경과 제약 조건에 따라 달라진다. MDX라는 특수한 환경 ArticleQuiz는 일반 React 앱이 아니라 MDX 파일 안에서 사용 된다. MDX에서 컴포넌트를 쓸 때는 마크다운 작성자 입장에서의 \" \" 작성 경험(DX) 이 최우선이다. MDX 안에서 거대한 JavaScript 객체 리터럴 을 작성해야 한다. 중괄호와 대괄호의 중첩, 쉼표 누락, 문자열 이스케이프 — 이런 것들이 글 쓰는 흐름을 끊는다. 반면 children 패턴은 각 문제가 \" \" 독립적인 태그로 분리 되어 있어서 읽기 쉽고 수정하기 편하다. children 구조가 깨질 위험이 없다 React.Children의 가장 큰 약점은 \"사용하는 쪽에서 children 구조를 바꾸면 깨진다\"는 것이다. 하지만 이 컴포넌트는 이 블로그 전용 이다. 사용처가 MDX 파일뿐이고, 항상 을 직접 나열하는 패턴으로만 쓴다. 아무도 ArticleQuiz 안에 를 감싸거나 조건부 렌더링을 하지 않는다. 이 전제가 보장되는 한, React.Children의 한계는 실질적 문제가 되지 않는다. Context는 이 문제에서 오버엔지니어링이었다 되돌아보면, Context를 도입하려 했을 때 늘어났을 보일러플레이트를 생각해보자. QuizContext 정의, Provider 래핑, useContext 훅, null 체크 에러 바운더리 — 그리고 그 모든 걸 해도 index 문제는 여전히 해결되지 않았다. \" \" 결국 React.Children.toArray를 써야 index를 알 수 있었을 것이고, 그러면 Context 레이어는 불필요한 중간 추상화가 된다. \"레거시니까 쓰지 말아야 한다\"는 사고방식은 위험하다. 중요한 건 \" \" 왜 이 API가 존재하는지, 어떤 한계가 있는지 이해한 상태에서 선택하는 것 이다. ArticleQuiz의 경우, MDX 환경 + 고정된 사용 패턴 + 부모 주도 렌더링이라는 세 가지 조건이 맞아떨어져서 React.Children이 최선의 선택이 되었다. 트러블슈팅: cloneElement가 DOM에 prop을 흘린다 구현을 끝내고 브라우저를 열었더니 콘솔에 경고가 떴다. 원인은 cloneElement로 주입한 prop이 ArticleQuizItem 내부에서 ...props 로 DOM까지 전달된 것이었다. cloneElement는 기존 props에 새 props를 merge 한다. ArticleQuizItem에서 명시적으로 destructure하지 않은 prop은 ...props에 포함되고, 이것이 까지 흘러간다. React는 DOM element에 stepIndex 같은 비표준 attribute가 들어오면 경고를 띄운다. 해결은 간단하다. \" \" 내부 전용 prop을 destructure에서 빼내면 된다. 이건 cloneElement 패턴에서 흔히 발생하는 문제다. 부모가 주입하는 prop과 DOM에 전달되는 prop의 경계가 암묵적이기 때문이다. 이 점이 앞서 언급한 \"cloneElement의 암묵성\" 한계와 직결된다. 주입되는 prop이 추가될 때마다 자식 컴포넌트의 destructure 목록도 함께 업데이트해야 한다는 점을 기억해둬야 한다. 참고 문헌 React 공식 문서: React.Children React 공식 문서: cloneElement React 공식 문서: Context로 데이터 깊숙이 전달하기",
+      "audioPath": "/tts-artifacts/SEOJing/react-children-api/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/react-children-api/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

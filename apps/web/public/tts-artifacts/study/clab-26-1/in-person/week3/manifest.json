@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "study/clab-26-1/in-person/week3",
+  "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/in-person/week3",
+  "title": "프론트엔드 스터디 대면 3주차: 박스 모델 실전, Position과 Flexbox",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:study/clab-26-1/in-person/week3",
+  "artifacts": [
+    {
+      "id": "study__clab-26-1__in-person__week3__summary-2m",
+      "kind": "summary-2m",
+      "slug": "study/clab-26-1/in-person/week3",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/in-person/week3",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "프론트엔드 스터디 대면 3주차: 박스 모델 실전, Position과 Flexbox — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "1. 저번 주 복습 지난주에는 CSS의 본격적인 스타일링에 들어갔습니다. 글꼴과 색상을 제어하고, 인라인과 블록 요소의 차이, 그리고 프론트엔드 초심자가 가장 먼저 부딪히는 벽인 박스 모델 을 배웠습니다. 핵심만 빠르게 짚어보겠습니다. 폰트와 색상 font-family : 쉼표로 여러 폰트를 나열하면 앞에서부터 순서대로 사용 가능한 폰트를 적용합니다. 마지막에 sans-serif 같은 일반 패밀리를 넣는 것이 관례입니다. 색상 표기법 : 키워드(red), Hex(#FF5733), RGB(rgb(255, 87, 51)), HSL(hsl(11, 100%, 60%)) 등 다양한 방식으로 표현합니다. 인라인 vs 블록 vs 인라인 블록 인라인(Inline) : 콘텐츠 크기만큼만 차지, width/height 무시, 상하 margin 무시 블록(Block) : 한 줄 전체를 차지, width/height/margin 모두 적용 인라인 블록(Inline-block) : 나란히 배치되면서 width/height/margin 모두 적용 박스 모델 안쪽부터: Content → Padding → Border → Margin box-sizing: content-box (기본값): width는 콘텐츠 영역만 의미, padding과 border가 추가로 더해짐 box-sizing: border-box : width 안에 padding과 border까지 포함, 현대 CSS의 필수 설정 학습 자료에서 다룬 추가 개념 3주차 학습 자료에서 강의 외 개념들을 꽤 많이 다뤘습니다. 중요한 것들을 다시 짚어보겠습니다. px, em, rem 단위 세 단위의 차이는 \"무엇을 기준으로 크기를 계산하느냐\"입니다. px : 고정값. 화면 해상도와 무관하게 항상 같은 크기. em : 부모 요소 의 font-size 기준. 부모가 16px이면 1em = 16px, 2em = 32px. rem : 루트( ) 의 font-size 기준. 기본값은 16px이므로 1rem = 16px. 부모가 누구든 기준이 변하지 않습니다. em의 함정: 중첩이 깊어지면 계산이 복잡해집니다. 손자 요소에서 1.5em을 쓰면 부모가 이미 1.5em인 경우 1.5 × 1.5 = 2.25em이 되어 예상보다 커집니다. 실무에서는 rem을 기본 단위 로 쓰고, px은 1 2px 같은 아주 작은 값(테두리, 그림자)에만 사용합니다. 마진 겹침(Margin Collapsing) 수직으로 인접한 두 블록 요소의 마진은 합산되지 않고, \" \" 더 큰 값 하나만 적용 됩니다. 겹침이 발생하는 세 가지 상황: ① 인접 형제 요소, ② 부모-자식(padding/border 없을 때 자식 마진이 부모 밖으로 새어 나감), ③ 빈 블록 요소(자신의 위아래 마진끼리 겹침). CSS 리셋과 Normalize 브라우저마다 기본 스타일이 다릅니다. Chrome과 Firefox에서 크기나 들여쓰기가 조금씩 다릅니다. 이를 해결하는 두 가지 방법이 있습니다. CSS Reset : 브라우저 기본 스타일을 전부 제거하고 백지에서 시작. margin: 0, padding: 0을 전체 요소에 적용. Normalize.css : 브라우저 간 차이만 통일. 유용한 기본 스타일은 유지. 가상 요소 (::before, ::after) HTML에 태그를 추가하지 않고 CSS만으로 시각적 요소를 삽입합니다. \" \" content 속성이 필수 이며, 빈 장식이라도 content: \"\"를 반드시 써야 합니다. 중요한 콘텐츠(접근성에 필요한 텍스트)는 …",
+      "audioPath": "/tts-artifacts/study/clab-26-1/in-person/week3/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/study/clab-26-1/in-person/week3/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "study__clab-26-1__in-person__week3__core-5m",
+      "kind": "core-5m",
+      "slug": "study/clab-26-1/in-person/week3",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/in-person/week3",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "프론트엔드 스터디 대면 3주차: 박스 모델 실전, Position과 Flexbox — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "1. 저번 주 복습 지난주에는 CSS의 본격적인 스타일링에 들어갔습니다. 글꼴과 색상을 제어하고, 인라인과 블록 요소의 차이, 그리고 프론트엔드 초심자가 가장 먼저 부딪히는 벽인 박스 모델 을 배웠습니다. 핵심만 빠르게 짚어보겠습니다. 폰트와 색상 font-family : 쉼표로 여러 폰트를 나열하면 앞에서부터 순서대로 사용 가능한 폰트를 적용합니다. 마지막에 sans-serif 같은 일반 패밀리를 넣는 것이 관례입니다. 색상 표기법 : 키워드(red), Hex(#FF5733), RGB(rgb(255, 87, 51)), HSL(hsl(11, 100%, 60%)) 등 다양한 방식으로 표현합니다. 인라인 vs 블록 vs 인라인 블록 인라인(Inline) : 콘텐츠 크기만큼만 차지, width/height 무시, 상하 margin 무시 블록(Block) : 한 줄 전체를 차지, width/height/margin 모두 적용 인라인 블록(Inline-block) : 나란히 배치되면서 width/height/margin 모두 적용 박스 모델 안쪽부터: Content → Padding → Border → Margin box-sizing: content-box (기본값): width는 콘텐츠 영역만 의미, padding과 border가 추가로 더해짐 box-sizing: border-box : width 안에 padding과 border까지 포함, 현대 CSS의 필수 설정 학습 자료에서 다룬 추가 개념 3주차 학습 자료에서 강의 외 개념들을 꽤 많이 다뤘습니다. 중요한 것들을 다시 짚어보겠습니다. px, em, rem 단위 세 단위의 차이는 \"무엇을 기준으로 크기를 계산하느냐\"입니다. px : 고정값. 화면 해상도와 무관하게 항상 같은 크기. em : 부모 요소 의 font-size 기준. 부모가 16px이면 1em = 16px, 2em = 32px. rem : 루트( ) 의 font-size 기준. 기본값은 16px이므로 1rem = 16px. 부모가 누구든 기준이 변하지 않습니다. em의 함정: 중첩이 깊어지면 계산이 복잡해집니다. 손자 요소에서 1.5em을 쓰면 부모가 이미 1.5em인 경우 1.5 × 1.5 = 2.25em이 되어 예상보다 커집니다. 실무에서는 rem을 기본 단위 로 쓰고, px은 1 2px 같은 아주 작은 값(테두리, 그림자)에만 사용합니다. 마진 겹침(Margin Collapsing) 수직으로 인접한 두 블록 요소의 마진은 합산되지 않고, \" \" 더 큰 값 하나만 적용 됩니다. 겹침이 발생하는 세 가지 상황: ① 인접 형제 요소, ② 부모-자식(padding/border 없을 때 자식 마진이 부모 밖으로 새어 나감), ③ 빈 블록 요소(자신의 위아래 마진끼리 겹침). CSS 리셋과 Normalize 브라우저마다 기본 스타일이 다릅니다. Chrome과 Firefox에서 크기나 들여쓰기가 조금씩 다릅니다. 이를 해결하는 두 가지 방법이 있습니다. CSS Reset : 브라우저 기본 스타일을 전부 제거하고 백지에서 시작. margin: 0, padding: 0을 전체 요소에 적용. Normalize.css : 브라우저 간 차이만 통일. 유용한 기본 스타일은 유지. 가상 요소 (::before, ::after) HTML에 태그를 추가하지 않고 CSS만으로 시각적 요소를 삽입합니다. \" \" content 속성이 필수 이며, 빈 장식이라도 content: \"\"를 반드시 써야 합니다. 중요한 콘텐츠(접근성에 필요한 텍스트)는 HTML에, 순수 장식은 가상 요소에 작성합니다. 스크린 리더는 ::before/::after의 content를 읽을 수도 있어서 빈 문자열로 두는 것이 안전합니다. BFC (Block Formatting Context) BFC는 \"마진 겹침과 float가 영향을 미치는 독립된 레이아웃 구역\"입니다. 새 BFC를 만들면 그 안에서는 외부 마진 겹침이 차단됩니다. CSS 상속 CSS 속성은 두 종류로 나뉩니다. 상속되는 속성 은 부모에 한 번만 써도 자식 전체에 적용되고, 상속되지 않는 속성 은 각 요소마다 별도로 지정해야 합니다. 분류 상속 여부 대표 속성 :------------ :-------- :------------------------------------------------- 텍스트 관련 상속됨 color, font-family, font-size, line-height 레이아웃 관련 상속 안됨 margin, padding, border, width, display overflow와 텍스트 말줄임 콘텐츠가 요소 크기를 넘칠 때 어떻게 처리할지 결정합니다. 요소 숨기기 세 가지 세 방법은 \"공간을 차지하는가\", \"클릭이 되는가\"에서 차이가 납니다. 속성 공간 차지 클릭 가능 대표 사용처 :------------------- :-------- :-------- :------------------------- display: none ✗ 없음 ✗ 완전 제거, 조건부 렌더링 visibility: hidden ✓ 있음 ✗ 레이아웃 유지하면서 숨기기 opacity: 0 ✓ 있음 ✓ 페이드 인/아웃 애니메이션 cursor와 pointer-events 사용자에게 \"이 요소가 클릭 가능한가\"를 시각적·기능적으로 제어합니다. --- 2. 저번 주 과제 정답 및 풀이 인증 미션 과제 Q1. box-sizing: content-box(기본값) 상태에서 width: 300px, padding: 20px, border: 10px solid black을 준 요소의 실제 화면 너비는 몇 px인가요? 직접 계산 과정을 쓰세요. 정답: 360px content-box에서는 width가 콘텐츠 영역만을 의미합니다. padding과 border가 바깥쪽으로 추가됩니다. 콘텐츠 영역: 300px 좌우 패딩: 20px × 2 = 40px 좌우 보더: 10px × 2 = 20px 실제 화면 너비: 300 + 40 + 20 = 360px 흔한 오답 패턴 padding이나 border 중 하나만 더하거나, 한쪽 방향만 계산해 320px, 340px로 답하는 경우가 많습니다. 좌우 양쪽을 모두 더해야 한다 는 점을 기억하세요. --- Q2. 같은 요소에 box-sizing: border-box를 적용하면 실제 화면 너비와 콘텐츠 영역 너비는 각각 몇 px가 되나요? 직접 계산하세요. 정답: 실제 화면 너비 300px, 콘텐츠 영역 240px border-box에서는 width: 300px 안에 padding과 border가 포함됩니다. 실제 화면 너비: 300px (그대로) 좌우 패딩: 20px × 2 = 40px 좌우 보더: 10px × 2 = 20px 콘텐츠 영역: 300 - 40 - 20 = 240px 이것이 border-box가 편리한 이유입니다. \"내가 300px이라고 썼으니 화면에서도 300px\"이라는 직관적인 결과를 얻을 수 있습니다. content-box에서는 padding이나 border를 변경할 때마다 전체 크기가 바뀌어 레이아웃이 깨지기 쉽습니다. --- Q3. margin-bottom: 30px인 요소와 margin-top: 20px인 요소가 수직으로 붙어있을 때, 두 요소 사이의 실제 간격은 몇 px인가요? 이 현상의 이름과 방지 방법을 설명하세요. 정답: 30px — 마진 겹침(Margin Collapsing) 수직으로 인접한 블록 요소의 마진은 합산(50px)되지 않고, \" \" 더 큰 값(30px)만 남습니다. 이를 마진 겹침(Margin Collapsing)이라 합니다. 방지 방법 부모 요소에 overflow: hidden 적용 부모 요소에 padding 또는 border 추가 display: flex 또는 display: grid 컨테이너 사용 : Flexbox·Grid 안에서는 마진 겹침이 발생하지 않습니다. 흔한 오답 패턴 \"30 + 20 = 50px\"라고 합산하는 경우가 가장 많습니다. \" \" 수직 마진은 더 큰 쪽이 이긴다 는 규칙을 기억하세요. 수평 마진은 겹치지 않으니 혼동하지 마세요. --- 3. 면접 질문 이번 주 범위와 관련된 실제 면접 질문들을 함께 생각해봅시다. 정답을 외우기보다는 자신만의 말로 설명하는 연습을 해보세요. Q1. 마진 겹침(Margin Collapsing) 현상을 설명해주세요. 수직 방향으로 인접한 두 요소의 마진이 만나면, 합산되지 않고 \" \" 둘 중 큰 값만 적용 되는 CSS의 의도적인 동작입니다. 인접 형제 : 위 요소의 margin-bottom과 아래 요소의 margin-top이 겹침 부모와 자식 : 부모에 padding이나 border가 없으면, 자식의 margin이 부모 밖으로 새어 나감 해결법 : 부모에 padding, border, 또는 overflow: hidden을 적용하면 겹침을 방지할 수 있습니다. 면접 팁: \"왜 이런 동작이 존재하느냐\"는 질문이 이어질 수 있습니다. 문단(p) 태그의 상하 …",
+      "audioPath": "/tts-artifacts/study/clab-26-1/in-person/week3/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/study/clab-26-1/in-person/week3/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "SEOJing/web-rendering-performance-fundamentals",
+  "canonicalUrl": "https://seojing.com/blog/SEOJing/web-rendering-performance-fundamentals",
+  "title": "vinext는 왜 빠를까? — SSR, Vite, Edge, 그리고 Web Vitals까지",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:SEOJing/web-rendering-performance-fundamentals",
+  "artifacts": [
+    {
+      "id": "SEOJing__web-rendering-performance-fundamentals__summary-2m",
+      "kind": "summary-2m",
+      "slug": "SEOJing/web-rendering-performance-fundamentals",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/web-rendering-performance-fundamentals",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "vinext는 왜 빠를까? — SSR, Vite, Edge, 그리고 Web Vitals까지 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "시작점: vinext는 왜 빠르다고 할까? vinext는 Cloudflare가 만든 Vite 기반 Next.js 대체 프레임워크다. 빌드 속도 4.4배, 번들 크기 57% 감소를 자랑하고, vinext deploy 한 줄이면 Cloudflare Workers에 배포된다. 그런데 \"빠르다\"라고만 알고, 왜 빠르고 어떻게 빠른지 에 대한 이해가 없었다. Next.js가 빠른 이유가 SSR 때문이라면, SSR은 왜 빠르고 어떻게 빠른 건지. 이 글은 그 질문에서 출발해서 웹 렌더링 성능의 전체 그림을 처음부터 정리한 기록이다. --- CSR vs SSR: 왜 SSR이 빠른가 CSR (Client-Side Rendering) 브라우저가 빈 HTML을 받고, JS를 다운로드하고, 실행해서 DOM을 만든다. JS가 실행될 때까지 사용자는 빈 화면을 본다. SSR (Server-Side Rendering) 서버가 미리 HTML을 완성해서 보낸다. 사용자는 JS가 로드되기 전에 이미 콘텐츠를 볼 수 있다. 지표 CSR SSR :--------------------------- :---------------- :-------------------- FCP (First Contentful Paint) 느림 (JS 실행 후) 빠름 (HTML 도착 즉시) TTI (Time to Interactive) JS 실행 후 Hydration 완료 후 SEO 불리 (빈 HTML) 유리 (완성된 HTML) SSR이 \"빠르다\"는 건 정확히는 \" \" 사용자가 콘텐츠를 처음 보는 시점(FCP)이 빠르다 는 뜻이다. 인터랙션 가능 시점(TTI)은 Hydration이 끝나야 하므로 CSR과 비슷하거나 오히려 느릴 수도 있다. --- Hydration: 정적 HTML에 생명 불어넣기 서버가 보낸 정적 HTML에 JS 이벤트 핸들러를 붙여서 인터랙티브하게 만드는 과정이다. 핵심은 서버가 만든 HTML과 클라이언트 JS가 1:1로 매칭 되어야 한다는 것이다. 서버에서 안녕을 보냈는데 클라이언트 JS가 반가워를 기대하면 불일치가 생겨서 Hydration Error가 발생한다. --- Next.js의 렌더링 전략들 Next.js는 SSR만 하는 게 아니라 여러 렌더링 전략을 페이지별로 조합한다. SSG (Static Site Generation) : 빌드 시점에 HTML 생성. CDN에서 바로 서빙하므로 가장 빠르다. SSR : 요청마다 서버에서 HTML 생성. ISR (Incremental Static Regeneration) : SSG인데 일정 시간마다 재생성. Streaming SSR : HTML을 한번에 보내지 않고 준비된 부분부터 스트리밍. --- 빌드 도구: webpack이 느린 이유, Vite가 빠른 이유 webpack (Next.js 기본) webpack은 모든 모듈을 하나의 의존성 그래프로 묶어서 처리한다. 프로젝트가 커지면 이 그래프가 거대해지고, 빌드 시간이 급격히 늘어난다. 개발 서버도 시작할 때 전체 앱을 번들링하기 때문에 느리다. Vite가 빠른 이유 3가지 1. 개발 시 번들링을 안 한다. 브라우저의 네이티브 ES Modules를 활용한다. import문을 브라우저가 직접 해석하므로, 요청이 온 파일만 그때그때 변환한다. 2. esbuild로 사전 번들링. node modules의 라이브러리만 esbuild(Go로 작성, JS 대비 10-100배 빠름)로 미리 번들링해둔다. 3. 프로덕션 빌드에 Rollup 사용. Rollup은 ES Modules 기반으로 설계되어 tree-shaking(사용하지 않는 코드 제거)이 webpack보다 효율적이다. webpack (Next.js) Vite :------------------- :----------------- :---------------------------- Dev …",
+      "audioPath": "/tts-artifacts/SEOJing/web-rendering-performance-fundamentals/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/web-rendering-performance-fundamentals/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "SEOJing__web-rendering-performance-fundamentals__core-5m",
+      "kind": "core-5m",
+      "slug": "SEOJing/web-rendering-performance-fundamentals",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/web-rendering-performance-fundamentals",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "vinext는 왜 빠를까? — SSR, Vite, Edge, 그리고 Web Vitals까지 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "시작점: vinext는 왜 빠르다고 할까? vinext는 Cloudflare가 만든 Vite 기반 Next.js 대체 프레임워크다. 빌드 속도 4.4배, 번들 크기 57% 감소를 자랑하고, vinext deploy 한 줄이면 Cloudflare Workers에 배포된다. 그런데 \"빠르다\"라고만 알고, 왜 빠르고 어떻게 빠른지 에 대한 이해가 없었다. Next.js가 빠른 이유가 SSR 때문이라면, SSR은 왜 빠르고 어떻게 빠른 건지. 이 글은 그 질문에서 출발해서 웹 렌더링 성능의 전체 그림을 처음부터 정리한 기록이다. --- CSR vs SSR: 왜 SSR이 빠른가 CSR (Client-Side Rendering) 브라우저가 빈 HTML을 받고, JS를 다운로드하고, 실행해서 DOM을 만든다. JS가 실행될 때까지 사용자는 빈 화면을 본다. SSR (Server-Side Rendering) 서버가 미리 HTML을 완성해서 보낸다. 사용자는 JS가 로드되기 전에 이미 콘텐츠를 볼 수 있다. 지표 CSR SSR :--------------------------- :---------------- :-------------------- FCP (First Contentful Paint) 느림 (JS 실행 후) 빠름 (HTML 도착 즉시) TTI (Time to Interactive) JS 실행 후 Hydration 완료 후 SEO 불리 (빈 HTML) 유리 (완성된 HTML) SSR이 \"빠르다\"는 건 정확히는 \" \" 사용자가 콘텐츠를 처음 보는 시점(FCP)이 빠르다 는 뜻이다. 인터랙션 가능 시점(TTI)은 Hydration이 끝나야 하므로 CSR과 비슷하거나 오히려 느릴 수도 있다. --- Hydration: 정적 HTML에 생명 불어넣기 서버가 보낸 정적 HTML에 JS 이벤트 핸들러를 붙여서 인터랙티브하게 만드는 과정이다. 핵심은 서버가 만든 HTML과 클라이언트 JS가 1:1로 매칭 되어야 한다는 것이다. 서버에서 안녕을 보냈는데 클라이언트 JS가 반가워를 기대하면 불일치가 생겨서 Hydration Error가 발생한다. --- Next.js의 렌더링 전략들 Next.js는 SSR만 하는 게 아니라 여러 렌더링 전략을 페이지별로 조합한다. SSG (Static Site Generation) : 빌드 시점에 HTML 생성. CDN에서 바로 서빙하므로 가장 빠르다. SSR : 요청마다 서버에서 HTML 생성. ISR (Incremental Static Regeneration) : SSG인데 일정 시간마다 재생성. Streaming SSR : HTML을 한번에 보내지 않고 준비된 부분부터 스트리밍. --- 빌드 도구: webpack이 느린 이유, Vite가 빠른 이유 webpack (Next.js 기본) webpack은 모든 모듈을 하나의 의존성 그래프로 묶어서 처리한다. 프로젝트가 커지면 이 그래프가 거대해지고, 빌드 시간이 급격히 늘어난다. 개발 서버도 시작할 때 전체 앱을 번들링하기 때문에 느리다. Vite가 빠른 이유 3가지 1. 개발 시 번들링을 안 한다. 브라우저의 네이티브 ES Modules를 활용한다. import문을 브라우저가 직접 해석하므로, 요청이 온 파일만 그때그때 변환한다. 2. esbuild로 사전 번들링. node modules의 라이브러리만 esbuild(Go로 작성, JS 대비 10-100배 빠름)로 미리 번들링해둔다. 3. 프로덕션 빌드에 Rollup 사용. Rollup은 ES Modules 기반으로 설계되어 tree-shaking(사용하지 않는 코드 제거)이 webpack보다 효율적이다. webpack (Next.js) Vite :------------------- :----------------- :---------------------------- Dev 서버 시작 전체 번들링 (느림) 번들링 없음 (빠름) HMR (코드 수정 반영) 모듈 체인 재빌드 수정된 파일만 변환 사전 번들링 도구 JS 기반 esbuild (Go, 10-100x) 프로덕션 번들 webpack Rollup (더 나은 tree-shaking) --- Node.js Runtime vs Edge Runtime Node.js (일반 서버) 서버가 특정 지역(예: 미국 동부)에 있다. 전 세계 어디서든 접근은 가능하지만, 물리적 거리만큼 네트워크 지연이 생긴다. Edge Runtime 전 세계 CDN 엣지 노드(수백 개 지점)에서 코드가 실행된다. 사용자와 가까운 곳에서 실행하니까 네트워크 지연이 줄어든다. 엣지 노드는 개인 PC가 아니라, Cloudflare나 AWS 같은 기업이 전 세계에 설치해둔 \" \" 데이터센터(서버) 다. Cloudflare는 300개 이상 도시에 데이터센터를 두고 있다. 무겁다 vs 가볍다 Edge에서는 가벼운 V8 Isolate 런타임을 쓴다. V8 엔진만 있어서 JS/WASM만 실행 가능하고, 시작 시간이 약 5ms다. Node.js는 V8 위에 파일시스템, 네트워크 등 OS 기능을 붙인 것이라 무겁지만, 뭐든 할 수 있다. Node.js Edge (V8 Isolate) :----------- :--------------------- :--------------------- 기능 전부 가능 (fs, net 등) JS/WASM만 DB 직접 연결 가능 불가 (HTTP API로 우회) 시작 속도 200ms+ 5ms 배포 위치 특정 리전 전 세계 엣지 Vercel은 두 런타임을 모두 제공하고, 페이지별로 선택할 수 있다. --- vinext가 빠른 이유 정리 지금까지의 내용을 합치면 vinext의 구조가 보인다. 빌드 도구 : webpack 대신 Vite를 쓰므로 빌드가 4.4배 빠르다. 번들 크기 : Rollup의 tree-shaking이 더 공격적이어서 번들이 57% 감소한다. 런타임 : Node.js 서버 대신 Edge에서 실행하므로 사용자와 가까운 곳에서 응답한다. --- Web Vitals: \"빠르다\"를 숫자로 말하기 Google이 정한 사용자 체감 성능의 3가지 핵심 지표다. 실제로 검색 순위(SEO)에도 영향을 준다. LCP (Largest Contentful Paint) 가장 큰 콘텐츠가 화면에 나타나는 시간. 메인 이미지, 큰 텍스트 블록, 비디오 썸네일 등이 해당한다. 각 렌더링 방식의 LCP 영향: CSR은 JS 실행 후에야 표시되므로 느리고, SSG는 미리 만든 HTML을 CDN에서 서빙하므로 가장 빠르다. INP (Interaction to Next Paint) 사용자가 클릭/탭/키 입력 후 화면이 반응하기까지의 시간. FID를 대체하여 2024년 3월부터 Core Web Vitals 지표가 됐다. SSR/CSR보다 클라이언트 JS 코드의 효율성 과 관련이 크다. Hydration이 무거우면 JS 메인 스레드가 막혀서 INP가 나빠진다. CLS (Cumulative Layout Shift) 페이지 로딩 중 레이아웃이 얼마나 흔들리는가. 광고가 갑자기 끼어들어서 읽던 텍스트가 밀리는 경험이 대표적이다. 흔한 원인: 이미지 크기 미지정, 폰트 로딩 후 글자 크기 변경, 동적 콘텐츠 삽입. 해결: width/height 명시, font-display: swap + 비슷한 크기의 fallback 폰트, Skeleton으로 공간 미리 확보. 지표 측정하는 것 좋음 기준 개선하는 기술 :--- :----------------- :-------- :-------------------------------------- LCP 콘텐츠 표시 속도 ≤ 2.5s SSR, SSG, Streaming, CDN INP 인터랙션 반응 속도 ≤ 200ms RSC, 코드 스플리팅, 가벼운 Hydration CLS 레이아웃 안정성 ≤ 0.1 이미지 크기 지정, Skeleton, 폰트 최적화 --- RSC (React Server Components) 핵심 질문: 이 컴포넌트가 꼭 브라우저에서 실행돼야 하는가? 대부분의 컴포넌트는 데이터를 받아서 UI를 그리기만 한다. 클릭 이벤트도 없고 상태도 없다. 이런 걸 굳이 브라우저에 JS로 보낼 필요가 없다. Server Component는 JS 번들에 포함되지 않고, Hydration도 필요 없다. 페이지에 컴포넌트가 20개 있을 때 상태/이벤트가 필요한 3개만 Client Component로 두면, 나머지 17개는 JS 번들에서 빠진다. 번들 크기 감소 → LCP 개선 Hydration 대상 감소 → INP 개선 SSR과 RSC의 차이 SSR은 \"HTML을 어디서 만드는가\"이고, RSC는 \"컴포넌트가 어디서 실행되는가\"이다. SSR은 서버에서 HTML을 만들어 보내지만, JS 번들은 전부 보내고 Hydration도 전부 한다. RSC는 Server Component를 JS 번들에서 아예 제외하고, Hydration 자체가 필요 없다. 둘은 경쟁이 아니라 같이 쓰이는 관계다. --- Streaming SSR: 준비된 것부터 보내기 일반 SSR은 페이지 전체가 렌더링될 때까지 기다린 후 한번에 보낸다. DB 조회가 3초 걸리면, 사용자는 3초 동안 아무것도 못 본다. Streaming SSR은 준비된 부분부터 …",
+      "audioPath": "/tts-artifacts/SEOJing/web-rendering-performance-fundamentals/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/web-rendering-performance-fundamentals/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

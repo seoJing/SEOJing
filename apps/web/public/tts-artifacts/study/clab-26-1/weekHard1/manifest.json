@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "study/clab-26-1/weekHard1",
+  "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/weekHard1",
+  "title": "프론트엔드 스터디 심화: this, 실행 컨텍스트, 이터러블",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:study/clab-26-1/weekHard1",
+  "artifacts": [
+    {
+      "id": "study__clab-26-1__weekHard1__summary-2m",
+      "kind": "summary-2m",
+      "slug": "study/clab-26-1/weekHard1",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/weekHard1",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "프론트엔드 스터디 심화: this, 실행 컨텍스트, 이터러블 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "심화 학습 자료 학습 챕터: poiemaweb — this / 실행 컨텍스트 / 이터러블 자료 바로가기: 1. this 2. 실행 컨텍스트 3. 이터러블과 for...of 딥다이브 요약본 (보충용): 딥다이브 요약 GitHub 이 자료는 1학기 커리큘럼에서 빠진 JS 심화 내용으로, React를 배우다가 this가 헷갈리거나 면접 준비가 필요한 시점에 참고하는 자료입니다. \" \" 지금 당장 읽지 않아도 됩니다. 이런 내용이 있다는 것만 알고 넘어가도 좋습니다. --- 스킵 진단 문제 이 자료를 지금 읽을 필요가 없다고 판단되면, 나중에 필요할 때 참고하세요. 아래 문제를 막힘없이 풀 수 있다면 넘어가도 좋습니다. --- 1. this — 상황에 따라 달라지는 참조 JS의 this는 함수가 호출될 때 동적으로 결정 됩니다. 선언 위치가 아니라 호출 방식 에 따라 다릅니다. (화살표 함수만 예외) 네 가지 this 바인딩 규칙 화살표 함수의 this — 렉시컬 this React에서 이벤트 핸들러를 화살표 함수로 쓰는 이유도 이 때문입니다. 클래스 컴포넌트에서 this.handleClick = this.handleClick.bind(this)처럼 bind를 쓰는 것도 같은 문제를 해결하는 방법입니다. --- 2. 실행 컨텍스트 — 코드가 실행되는 환경 실행 컨텍스트는 코드가 실행될 때 JS 엔진이 생성하는 \" \" 환경 정보 묶음 입니다. 스코프, 호이스팅, 클로저, this가 모두 실행 컨텍스트 안에서 관리됩니다. 각 실행 컨텍스트는 외부 렉시컬 환경에 대한 참조 를 가지며, 이것이 스코프 체인과 클로저의 실제 구현 방식입니다. --- 3. 이터러블과 Set / Map 이터러블이란 Symbol.iterator 메서드를 가진 객체는 이터러블입니다. for...of, 스프레드(...), 구조 분해 할당이 내부적으로 이터러블 프로토콜을 사용합니다. Set — 중복 없는 집합 Map — 키-값 저장소 --- 📝 학습 이해 퀴즈 아래 코드를 브라우저 콘솔에서 직접 실행 해보고 결과를 입력해보세요. return this.value 2; , ; console.log(obj.double()); console.log(obj.doubleArrow()); answer=\"20, NaN\" explanation=\"double()은 메서드 호출이므로 this가 obj를 가리켜 10 2=20입니다. doubleArrow는 화살표 함수라 this가 선언 시점의 상위 스코프(전역)를 가리키며, 전역에는 value가 없어 undefined 2 = NaN이 됩니다.\" /> 1) console.log(key); answer=\"b, c\" explanation=\"Map을 for...of로 순회하면 [key, value] 형태로 구조 분해됩니다. value > 1인 항목은 ['b', 2]와 ['c', 3]이므로 b와 c가 순서대로 출력됩니다.\" /> --- 언제 이 내용이 필요한가? 다음 상황에서 이 자료로 돌아오세요. this 관련 : React 클래스 컴포넌트를 읽거나, 이벤트 핸들러에서 this가 예상과 다르게 동작할 때 실행 컨텍스트 : 면접에서 \"호이스팅과 클로저의 원리를 설명하라\"는 질문을 받았을 때 Set/Map : 중복 제거, 빠른 조회가 필요한 데이터 구조가 필요할 때 (지금 바로 써도 됩니다!) 이터러블 : 커스텀 이터레이터를 만들거나, for...of 동작 원리가 궁금할 때",
+      "audioPath": "/tts-artifacts/study/clab-26-1/weekHard1/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/study/clab-26-1/weekHard1/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "study__clab-26-1__weekHard1__core-5m",
+      "kind": "core-5m",
+      "slug": "study/clab-26-1/weekHard1",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/weekHard1",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "프론트엔드 스터디 심화: this, 실행 컨텍스트, 이터러블 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "심화 학습 자료 학습 챕터: poiemaweb — this / 실행 컨텍스트 / 이터러블 자료 바로가기: 1. this 2. 실행 컨텍스트 3. 이터러블과 for...of 딥다이브 요약본 (보충용): 딥다이브 요약 GitHub 이 자료는 1학기 커리큘럼에서 빠진 JS 심화 내용으로, React를 배우다가 this가 헷갈리거나 면접 준비가 필요한 시점에 참고하는 자료입니다. \" \" 지금 당장 읽지 않아도 됩니다. 이런 내용이 있다는 것만 알고 넘어가도 좋습니다. --- 스킵 진단 문제 이 자료를 지금 읽을 필요가 없다고 판단되면, 나중에 필요할 때 참고하세요. 아래 문제를 막힘없이 풀 수 있다면 넘어가도 좋습니다. --- 1. this — 상황에 따라 달라지는 참조 JS의 this는 함수가 호출될 때 동적으로 결정 됩니다. 선언 위치가 아니라 호출 방식 에 따라 다릅니다. (화살표 함수만 예외) 네 가지 this 바인딩 규칙 화살표 함수의 this — 렉시컬 this React에서 이벤트 핸들러를 화살표 함수로 쓰는 이유도 이 때문입니다. 클래스 컴포넌트에서 this.handleClick = this.handleClick.bind(this)처럼 bind를 쓰는 것도 같은 문제를 해결하는 방법입니다. --- 2. 실행 컨텍스트 — 코드가 실행되는 환경 실행 컨텍스트는 코드가 실행될 때 JS 엔진이 생성하는 \" \" 환경 정보 묶음 입니다. 스코프, 호이스팅, 클로저, this가 모두 실행 컨텍스트 안에서 관리됩니다. 각 실행 컨텍스트는 외부 렉시컬 환경에 대한 참조 를 가지며, 이것이 스코프 체인과 클로저의 실제 구현 방식입니다. --- 3. 이터러블과 Set / Map 이터러블이란 Symbol.iterator 메서드를 가진 객체는 이터러블입니다. for...of, 스프레드(...), 구조 분해 할당이 내부적으로 이터러블 프로토콜을 사용합니다. Set — 중복 없는 집합 Map — 키-값 저장소 --- 📝 학습 이해 퀴즈 아래 코드를 브라우저 콘솔에서 직접 실행 해보고 결과를 입력해보세요. return this.value 2; , ; console.log(obj.double()); console.log(obj.doubleArrow()); answer=\"20, NaN\" explanation=\"double()은 메서드 호출이므로 this가 obj를 가리켜 10 2=20입니다. doubleArrow는 화살표 함수라 this가 선언 시점의 상위 스코프(전역)를 가리키며, 전역에는 value가 없어 undefined 2 = NaN이 됩니다.\" /> 1) console.log(key); answer=\"b, c\" explanation=\"Map을 for...of로 순회하면 [key, value] 형태로 구조 분해됩니다. value > 1인 항목은 ['b', 2]와 ['c', 3]이므로 b와 c가 순서대로 출력됩니다.\" /> --- 언제 이 내용이 필요한가? 다음 상황에서 이 자료로 돌아오세요. this 관련 : React 클래스 컴포넌트를 읽거나, 이벤트 핸들러에서 this가 예상과 다르게 동작할 때 실행 컨텍스트 : 면접에서 \"호이스팅과 클로저의 원리를 설명하라\"는 질문을 받았을 때 Set/Map : 중복 제거, 빠른 조회가 필요한 데이터 구조가 필요할 때 (지금 바로 써도 됩니다!) 이터러블 : 커스텀 이터레이터를 만들거나, for...of 동작 원리가 궁금할 때",
+      "audioPath": "/tts-artifacts/study/clab-26-1/weekHard1/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/study/clab-26-1/weekHard1/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

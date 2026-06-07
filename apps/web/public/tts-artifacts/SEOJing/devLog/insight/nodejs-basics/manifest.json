@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "SEOJing/devLog/insight/nodejs-basics",
+  "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/nodejs-basics",
+  "title": "결국 Node.js 까지 와버렸다",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:SEOJing/devLog/insight/nodejs-basics",
+  "artifacts": [
+    {
+      "id": "SEOJing__devLog__insight__nodejs-basics__summary-2m",
+      "kind": "summary-2m",
+      "slug": "SEOJing/devLog/insight/nodejs-basics",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/nodejs-basics",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "결국 Node.js 까지 와버렸다 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "왜 Node.js? MDX 파일 구조를 JSON 객체로 바꾸기 위해선 Node.js의 fs가 필요하다고 해서 Node.js를 짤막하게 배워볼려고 한다. --- Node.js란? JavaScript를 브라우저 밖에서 실행할 수 있게 해주는 런타임 환경 이다. 원래 JavaScript는 브라우저 안에서만 동작했는데, Node.js가 등장하면서 서버, CLI 도구, 스크립트 등을 JavaScript로 작성할 수 있게 되었다. --- 모듈 시스템 --- 내장 모듈 모듈 역할 :----- :---------------------- fs 파일 시스템 (읽기/쓰기) path 파일 경로 처리 os 운영체제 정보 http HTTP 서버/클라이언트 --- fs 모듈 fs는 File System 의 약자로, 파일과 디렉토리를 다루는 모듈이다. --- Sync vs Async --- 프로젝트에서의 사용 generate-content-tree.ts 파일에서 fs가 쓰이는 부분: 흐름을 요약하면: content 폴더 존재 확인 (없으면 에러) content 폴더를 스캔해서 트리 구조 생성 출력 폴더가 없으면 생성 트리를 JSON 파일로 저장",
+      "audioPath": "/tts-artifacts/SEOJing/devLog/insight/nodejs-basics/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/devLog/insight/nodejs-basics/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "SEOJing__devLog__insight__nodejs-basics__core-5m",
+      "kind": "core-5m",
+      "slug": "SEOJing/devLog/insight/nodejs-basics",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/nodejs-basics",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "결국 Node.js 까지 와버렸다 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "왜 Node.js? MDX 파일 구조를 JSON 객체로 바꾸기 위해선 Node.js의 fs가 필요하다고 해서 Node.js를 짤막하게 배워볼려고 한다. --- Node.js란? JavaScript를 브라우저 밖에서 실행할 수 있게 해주는 런타임 환경 이다. 원래 JavaScript는 브라우저 안에서만 동작했는데, Node.js가 등장하면서 서버, CLI 도구, 스크립트 등을 JavaScript로 작성할 수 있게 되었다. --- 모듈 시스템 --- 내장 모듈 모듈 역할 :----- :---------------------- fs 파일 시스템 (읽기/쓰기) path 파일 경로 처리 os 운영체제 정보 http HTTP 서버/클라이언트 --- fs 모듈 fs는 File System 의 약자로, 파일과 디렉토리를 다루는 모듈이다. --- Sync vs Async --- 프로젝트에서의 사용 generate-content-tree.ts 파일에서 fs가 쓰이는 부분: 흐름을 요약하면: content 폴더 존재 확인 (없으면 에러) content 폴더를 스캔해서 트리 구조 생성 출력 폴더가 없으면 생성 트리를 JSON 파일로 저장",
+      "audioPath": "/tts-artifacts/SEOJing/devLog/insight/nodejs-basics/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/devLog/insight/nodejs-basics/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

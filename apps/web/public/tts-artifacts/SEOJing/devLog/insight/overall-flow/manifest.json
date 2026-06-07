@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "SEOJing/devLog/insight/overall-flow",
+  "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/overall-flow",
+  "title": "전체적인 플로우",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:SEOJing/devLog/insight/overall-flow",
+  "artifacts": [
+    {
+      "id": "SEOJing__devLog__insight__overall-flow__summary-2m",
+      "kind": "summary-2m",
+      "slug": "SEOJing/devLog/insight/overall-flow",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/overall-flow",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "전체적인 플로우 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "기술 스택 선정 처음으로 배포를 본격적으로 해본거라 여러 선택 사항이 많았지만, 키워드는 최신의 스택으로 만들어보자 . 왜냐하면 AI 어시스턴트가 많은 영향을 미치지 않게 할려면, 자료가 적은 최신의 스택이 좋아보이기에. --- 선택한 스택 - vinext : Next와 Vite의 장점을 합친 프레임워크 - \" \" got/ky : axios를 대체할 수 있는 HTTP 기반 - \" \" TanStack Query : 이건 뭐 대체가 없다 --- CSS 고민 고민 중인건 CSS인데... Tailwind Vanilla Extract Panda CSS? 사실 디자인 시스템을 구현하지 않고, 가져다 쓴다면 Tailwind가 정배긴하다. --- 배포와 백엔드 그리고 vinext를 쓰기에, Vercel이 아닌 Cloudflare로 배포하고. 하는 김에 Worker로 API DB 쿼리 구축하거나, MDX 파일로 SSR이니깐, 그냥 CRUD도 Giscus로 댓글만 구현해보면 될듯?",
+      "audioPath": "/tts-artifacts/SEOJing/devLog/insight/overall-flow/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/devLog/insight/overall-flow/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "SEOJing__devLog__insight__overall-flow__core-5m",
+      "kind": "core-5m",
+      "slug": "SEOJing/devLog/insight/overall-flow",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/overall-flow",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "전체적인 플로우 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "기술 스택 선정 처음으로 배포를 본격적으로 해본거라 여러 선택 사항이 많았지만, 키워드는 최신의 스택으로 만들어보자 . 왜냐하면 AI 어시스턴트가 많은 영향을 미치지 않게 할려면, 자료가 적은 최신의 스택이 좋아보이기에. --- 선택한 스택 - vinext : Next와 Vite의 장점을 합친 프레임워크 - \" \" got/ky : axios를 대체할 수 있는 HTTP 기반 - \" \" TanStack Query : 이건 뭐 대체가 없다 --- CSS 고민 고민 중인건 CSS인데... Tailwind Vanilla Extract Panda CSS? 사실 디자인 시스템을 구현하지 않고, 가져다 쓴다면 Tailwind가 정배긴하다. --- 배포와 백엔드 그리고 vinext를 쓰기에, Vercel이 아닌 Cloudflare로 배포하고. 하는 김에 Worker로 API DB 쿼리 구축하거나, MDX 파일로 SSR이니깐, 그냥 CRUD도 Giscus로 댓글만 구현해보면 될듯?",
+      "audioPath": "/tts-artifacts/SEOJing/devLog/insight/overall-flow/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/devLog/insight/overall-flow/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

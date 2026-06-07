@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "study/clab-26-1/week4",
+  "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week4",
+  "title": "프론트엔드 스터디 4주차: 자유자재 레이아웃 (포지션과 플렉스박스)",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:study/clab-26-1/week4",
+  "artifacts": [
+    {
+      "id": "study__clab-26-1__week4__summary-2m",
+      "kind": "summary-2m",
+      "slug": "study/clab-26-1/week4",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week4",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "프론트엔드 스터디 4주차: 자유자재 레이아웃 (포지션과 플렉스박스) — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "4주차 영상 학습 구간: [04:28:10 05:28:02] 배경 이미지 제어부터 Flexbox 레이아웃까지 강의 바로가기: 제대로 파는 HTML & CSS - 4주차 진도 시청하기 안녕하세요. 프론트엔드 스터디 4주차에 오신 것을 환영합니다. 이번 주차에서는 CSS의 꽃이라 할 수 있는 레이아웃 을 본격적으로 다뤘습니다. 배경 이미지를 자유롭게 제어하는 법, Position 으로 요소를 문서 흐름에서 꺼내 원하는 곳에 배치하는 법, 그리고 현대 웹 레이아웃의 핵심인 \" \" Flexbox 를 배웠습니다. 3주차까지 \"칸 하나\"를 다뤘다면, 이번 주부터는 \"칸들을 어떻게 배열할 것인가\"를 다루는 거예요. --- 스킵 진단 문제 아래 10문제를 막힘없이 풀 수 있다면, \" \" 이번 주 학습 영상을 생략하거나, 필요한 부분만 선택적으로 시청하셔도 좋습니다. \" \" 바로 하단의 제가 추가로 알면 좋은 개념들을 확인해보세요. --- 1\\. background 속성 한 줄로 합치기 (Shorthand) 배경 이미지를 다룰 때 background-image, background-size, background-repeat, background-position을 하나씩 쓰다 보면 코드가 길어집니다. CSS는 이것들을 background 하나로 합쳐 쓸 수 있는 \" \" 단축 속성(Shorthand) 을 제공합니다. 단축 속성을 쓸 때 주의할 점이 하나 있습니다. background-size는 반드시 background-position 바로 뒤에 슬래시(/)로 구분해서 써야 합니다. center / cover처럼요. 이 규칙을 모르면 \"단축 속성으로 바꿨더니 배경이 안 나와요\"라는 상황을 마주하게 됩니다. 2\\. Position 완벽 정리 — static, relative, absolute, fixed Position은 처음 배울 때 가장 혼란스러운 속성 중 하나입니다. 핵심은 \" \" \"기준점이 어디인가\" 를 이해하는 것입니다. absolute를 사용할 때 가장 흔한 실수는 부모에 position: relative를 빼먹는 것입니다. 기준이 될 조상 요소에 position: relative를 줘야 자식의 absolute가 그 부모를 기준으로 배치됩니다. 이걸 잊으면 요소가 의도치 않게 페이지 끝으로 날아가버립니다. 3\\. z-index — 겹치는 요소의 앞뒤 순서 Position을 사용하면 요소들이 서로 겹치는 상황이 생깁니다. 이때 \" \" 어떤 요소가 위에 보일지 결정하는 것이 z-index입니다. 숫자가 클수록 앞쪽(위쪽)에 보입니다. 다만 z-index는 position: static(기본값)인 요소에는 작동하지 않습니다. 반드시 position이 relative, absolute, fixed 중 하나로 설정된 요소에만 적용됩니다. 또한 z-index: 9999 같은 터무니없이 큰 값을 남발하면 나중에 관리가 불가능해지니, 위 예시처럼 역할별로 범위를 정해두는 것 이 좋습니다. 4\\. Flexbox 핵심 — 주축과 교차축만 이해하면 끝 Flexbox는 속성이 많아 보이지만, 딱 하나만 이해하면 나머지가 전부 자연스럽게 따라옵니다. 바로 주축(Main Axis)과 교차축(Cross Axis) 의 개념입니다. - flex-direction: row(기본값)일 때 → 주축은 가로 , 교차축은 \" \" 세로 - flex-direction: column일 때 → 주축은 \" \" 세로 , 교차축은 가로 이 축을 기준으로 정렬 속성이 나뉩니다. - justify-content : 주축 방향 정렬 …",
+      "audioPath": "/tts-artifacts/study/clab-26-1/week4/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/study/clab-26-1/week4/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "study__clab-26-1__week4__core-5m",
+      "kind": "core-5m",
+      "slug": "study/clab-26-1/week4",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week4",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "프론트엔드 스터디 4주차: 자유자재 레이아웃 (포지션과 플렉스박스) — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "4주차 영상 학습 구간: [04:28:10 05:28:02] 배경 이미지 제어부터 Flexbox 레이아웃까지 강의 바로가기: 제대로 파는 HTML & CSS - 4주차 진도 시청하기 안녕하세요. 프론트엔드 스터디 4주차에 오신 것을 환영합니다. 이번 주차에서는 CSS의 꽃이라 할 수 있는 레이아웃 을 본격적으로 다뤘습니다. 배경 이미지를 자유롭게 제어하는 법, Position 으로 요소를 문서 흐름에서 꺼내 원하는 곳에 배치하는 법, 그리고 현대 웹 레이아웃의 핵심인 \" \" Flexbox 를 배웠습니다. 3주차까지 \"칸 하나\"를 다뤘다면, 이번 주부터는 \"칸들을 어떻게 배열할 것인가\"를 다루는 거예요. --- 스킵 진단 문제 아래 10문제를 막힘없이 풀 수 있다면, \" \" 이번 주 학습 영상을 생략하거나, 필요한 부분만 선택적으로 시청하셔도 좋습니다. \" \" 바로 하단의 제가 추가로 알면 좋은 개념들을 확인해보세요. --- 1\\. background 속성 한 줄로 합치기 (Shorthand) 배경 이미지를 다룰 때 background-image, background-size, background-repeat, background-position을 하나씩 쓰다 보면 코드가 길어집니다. CSS는 이것들을 background 하나로 합쳐 쓸 수 있는 \" \" 단축 속성(Shorthand) 을 제공합니다. 단축 속성을 쓸 때 주의할 점이 하나 있습니다. background-size는 반드시 background-position 바로 뒤에 슬래시(/)로 구분해서 써야 합니다. center / cover처럼요. 이 규칙을 모르면 \"단축 속성으로 바꿨더니 배경이 안 나와요\"라는 상황을 마주하게 됩니다. 2\\. Position 완벽 정리 — static, relative, absolute, fixed Position은 처음 배울 때 가장 혼란스러운 속성 중 하나입니다. 핵심은 \" \" \"기준점이 어디인가\" 를 이해하는 것입니다. absolute를 사용할 때 가장 흔한 실수는 부모에 position: relative를 빼먹는 것입니다. 기준이 될 조상 요소에 position: relative를 줘야 자식의 absolute가 그 부모를 기준으로 배치됩니다. 이걸 잊으면 요소가 의도치 않게 페이지 끝으로 날아가버립니다. 3\\. z-index — 겹치는 요소의 앞뒤 순서 Position을 사용하면 요소들이 서로 겹치는 상황이 생깁니다. 이때 \" \" 어떤 요소가 위에 보일지 결정하는 것이 z-index입니다. 숫자가 클수록 앞쪽(위쪽)에 보입니다. 다만 z-index는 position: static(기본값)인 요소에는 작동하지 않습니다. 반드시 position이 relative, absolute, fixed 중 하나로 설정된 요소에만 적용됩니다. 또한 z-index: 9999 같은 터무니없이 큰 값을 남발하면 나중에 관리가 불가능해지니, 위 예시처럼 역할별로 범위를 정해두는 것 이 좋습니다. 4\\. Flexbox 핵심 — 주축과 교차축만 이해하면 끝 Flexbox는 속성이 많아 보이지만, 딱 하나만 이해하면 나머지가 전부 자연스럽게 따라옵니다. 바로 주축(Main Axis)과 교차축(Cross Axis) 의 개념입니다. - flex-direction: row(기본값)일 때 → 주축은 가로 , 교차축은 \" \" 세로 - flex-direction: column일 때 → 주축은 \" \" 세로 , 교차축은 가로 이 축을 기준으로 정렬 속성이 나뉩니다. - justify-content : 주축 방향 정렬 (flex-start, center, space-between 등) - align-items : 교차축 방향 정렬 (flex-start, center, stretch 등) \"주축 정렬은 justify, 교차축 정렬은 align\"이라는 규칙만 외우면, flex-direction이 바뀌어도 헷갈리지 않습니다. direction이 column이면 justify가 세로 정렬이 되고, align이 가로 정렬이 됩니다. 5\\. flex-grow, flex-shrink, flex-basis — 유연한 크기 제어 Flexbox의 진짜 강력함은 자식 요소들이 \" \" 남은 공간을 자동으로 나눠 가지는 것 에 있습니다. 이것을 제어하는 세 가지 속성이 있습니다. - flex-basis : 아이템의 기본 크기를 지정합니다. width와 비슷하지만, Flex 컨테이너 안에서의 기본 크기입니다. - \" \" flex-grow : 남는 공간을 얼마나 가져갈지 비율을 정합니다. 기본값은 0(안 늘어남)입니다. - flex-shrink : 공간이 부족할 때 얼마나 줄어들지 비율을 정합니다. 기본값은 1(줄어듦)입니다. flex: 1은 실무에서 가장 많이 쓰이는 패턴입니다. \"이 요소가 남은 공간을 전부 가져가라\"는 뜻이에요. 사이드바와 메인 콘텐츠 레이아웃, 동일 너비 컬럼 배치 등에서 항상 등장합니다. 6\\. Reflow와 Repaint — 브라우저가 화면을 다시 그리는 비용 Position이나 Flexbox로 레이아웃을 변경하면, 브라우저 내부에서는 꽤 복잡한 과정이 일어납니다. 브라우저가 화면을 그리는 과정을 크게 세 단계로 나눌 수 있습니다. Layout (Reflow) : 각 요소의 크기와 위치를 계산합니다. width, height, margin, padding, position 등이 변경되면 이 단계가 다시 실행됩니다. Paint (Repaint) : 계산된 위치에 색상, 그림자, 테두리 등 시각적인 부분을 칠합니다. background-color, box-shadow, color 등이 변경되면 이 단계가 다시 실행됩니다. Composite : 여러 레이어를 합성해서 최종 화면을 만듭니다. transform, opacity 변경은 이 단계만 다시 실행합니다. 여기서 중요한 포인트는 비용 차이 입니다. Reflow가 가장 비싸고, Repaint가 그 다음, Composite가 가장 가볍습니다. 그래서 애니메이션을 만들 때 top/left를 변경하면 매 프레임마다 Reflow가 발생해서 버벅이지만, transform: translate()를 사용하면 Composite만 발생해서 부드럽게 동작합니다. 지금은 \"애니메이션에는 transform과 opacity를 사용하는 것이 성능에 좋다\"는 것만 기억해두면 됩니다. 참고로 React 같은 프레임워크는 Virtual DOM을 통해 실제 DOM 변경을 최소화해주고, CSS 애니메이션 라이브러리(Framer Motion 등)도 내부적으로 transform을 사용하기 때문에 직접 최적화할 일은 줄어들지만, \"왜 부드러운지\" 원리를 아는 것과 모르는 것은 디버깅 능력에서 차이가 납니다. 7\\. transition — 부드러운 전환 효과 주기 위에서 transition: transform 0.3s를 잠깐 사용했는데, 이 속성을 제대로 이해하면 CSS만으로도 다양한 인터랙션 효과를 만들 수 있습니다. transition은 \" \" 속성의 값이 변할 때 즉시 바뀌지 않고 일정 시간에 걸쳐 부드럽게 변하도록 \" \" 만들어줍니다. transition을 구성하는 네 가지 값을 알아봅시다. transition-property : 어떤 속성에 전환 효과를 줄지 (all, background-color, transform 등) transition-duration : 전환에 걸리는 시간 (0.3s, 200ms) transition-timing-function : 전환의 속도 곡선 (ease, linear, ease-in-out) transition-delay : 전환이 시작되기 전 대기 시간 (0s, 0.1s) transition: all은 편리하지만, 의도하지 않은 속성(width, height 등)까지 전환되어 성능 문제가 생길 수 있습니다. 가능하면 \" \" 전환할 속성을 명시적으로 지정 하는 것이 좋습니다. 자주 쓰이는 transition 패턴 React / Tailwind에서는? Tailwind CSS에서는 transition-colors, transition-transform, transition-all 같은 유틸리티와 duration-200, ease-in-out을 조합합니다. 예를 들어 처럼 사용합니다. 더 복잡한 애니메이션(마운트/언마운트 시 전환 등)이 필요하면 Framer Motion 같은 라이브러리를 사용합니다. 8\\. 미디어 쿼리 (@media) — 화면 크기에 따라 레이아웃 바꾸기 지금까지 배운 Flexbox로 유연한 레이아웃을 만들 수 있지만, 데스크톱에서는 가로로 3열 배치하던 카드를 모바일에서는 세로로 1열 배치하고 싶다면 어떻게 할까요? 이때 사용하는 것이 미디어 쿼리(@media) 입니다. 모바일 퍼스트 전략 위 코드처럼 작은 화면(모바일)을 기본으로 작성 하고, min-width 미디어 쿼리로 점점 큰 화면에 대응하는 방식을 \" \" 모바일 퍼스트(Mobile First) 라고 합니다. 반대로 데스크톱을 기본으로 하고 max-width로 줄여나가는 방식도 있지만, 모바일 퍼스트가 현재 업계 표준입니다. 그 이유는 간단합니다. 트래픽 : 전 세계 웹 트래픽의 약 60%가 모바일에서 발생합니다. 성능 : 모바일 기기는 성능이 제한적이므로, 기본 스타일을 가볍게 유지하고 큰 화면에서만 추가 스타일을 로드하는 것이 효율적입니다. 점진적 향상 : …",
+      "audioPath": "/tts-artifacts/study/clab-26-1/week4/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/study/clab-26-1/week4/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

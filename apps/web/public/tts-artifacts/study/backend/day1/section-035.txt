@@ -1,0 +1,1 @@
+Controller가 요청을 받는 입구 역할만 하는가? 너무 많은 로직이 Controller에 들어가 있지 않은가? @RequestBody, @PathVariable이 필요한 위치에 있는가? 응답 DTO를 반환하는가?

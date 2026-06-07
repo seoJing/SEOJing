@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "okayJing/voice/voice-mode-report-style-breaks",
+  "canonicalUrl": "https://seojing.com/blog/okayJing/voice/voice-mode-report-style-breaks",
+  "title": "voice mode에서는 보고서 문체가 깨진다 — 오케이징 답변 정책을 다시 잡은 날",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:okayJing/voice/voice-mode-report-style-breaks",
+  "artifacts": [
+    {
+      "id": "okayJing__voice__voice-mode-report-style-breaks__summary-2m",
+      "kind": "summary-2m",
+      "slug": "okayJing/voice/voice-mode-report-style-breaks",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/voice/voice-mode-report-style-breaks",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "voice mode에서는 보고서 문체가 깨진다 — 오케이징 답변 정책을 다시 잡은 날 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "0. 문제는 목소리가 아니라 문체였다 처음에는 TTS 문제라고 생각했다. 목소리가 자연스럽지 않거나, 속도가 조금 느리거나, 말끝이 기계적으로 들리는 문제라고 봤다. 그래서 Edge TTS, Qwen3-TTS, Supertonic3를 비교했고, 피치와 속도, style embedding까지 만졌다. 그런데 막상 Discord voice mode에서 들어보니 다른 문제가 더 크게 보였다. 오케이징이 말하는 내용이 너무 문서처럼 생겨 있었다. 번호가 많고, bullet이 많고, \"작업 / 결과 / 변경파일 / 검증\" 같은 보고서 구조가 그대로 음성으로 읽혔다. 텍스트로 보면 깔끔한데, 귀로 들으면 끊긴다. 사람이 옆에서 말하는 느낌이 아니라, 마크다운 문서를 낭독하는 느낌이 났다. 이 지점에서 기준을 다시 잡았다. voice mode의 품질은 TTS 모델만으로 결정되지 않는다. 답변 정책이 같이 바뀌어야 한다. --- 1. 텍스트 답변은 훑어볼 수 있지만 음성은 되감기 어렵다 텍스트 채팅에서는 구조화가 장점이다. 사용자는 긴 답변을 훑어보고, 필요한 줄만 다시 보고, 파일명이나 명령어를 복사할 수 있다. 그래서 목록과 표, 코드블럭이 많아도 괜찮다. 오히려 작업 보고에서는 그런 구조가 필요하다. 그런데 음성은 다르다. 사용자는 한 문장을 순서대로 듣는다. 중간에 놓치면 다시 찾기 어렵고, 번호가 많아지면 앞뒤 관계가 쉽게 흐려진다. \"첫 번째는\", \"두 번째는\"이 반복되면 듣는 사람은 다음 항목을 기다리느라 핵심을 놓친다. 특히 오케이징처럼 작업을 대신 수행하는 에이전트는 더 조심해야 한다. 텍스트에서는 \"검증: pnpm build 성공\" 한 줄이면 충분하지만, 음성에서는 \"빌드까지 돌려봤고, 통과했어\"가 더 자연스럽다. 정보량은 비슷하지만 수신 방식이 다르다. --- 2. 보고서는 남기되, 말할 때는 압축해야 한다 그렇다고 보고서 형식을 버리면 안 된다. 오케이징은 작업 결과를 추적해야 하고, 나중에 session search나 ticket으로 복구할 수 있어야 한다. 실행한 명령, 수정한 파일, 실패한 시도, 남은 문제는 구조적으로 남아야 한다. 그래서 결론은 단순히 \"보고서를 쓰지 말자\"가 아니었다. 내부 기록과 외부 발화를 분리해야 한다. ticket에는 자세한 보고서를 남기고, Discord voice 답변에서는 그중 사용자가 지금 들어야 하는 부분만 자연어로 말한다. 예를 들면 이런 식이다. 텍스트 보고서에서는 \"변경파일: apps/web/content/...\"라고 쓰지만, 음성에서는 \"글 여섯 개는 voice 폴더에 새로 넣었고, 포맷이랑 빌드도 확인했어\"라고 말한다. 파일 경로가 필요하면 텍스트로 같이 남기면 된다. 귀로 들어야 하는 것과 눈으로 확인해야 하는 것을 섞지 않는 게 중요했다. --- 3. 말끝도 운영 정책이다 TTS를 튜닝하면서 말끝이 계속 신경 쓰였다. 한국어 TTS는 문장 끝에서 어색함이 많이 드러난다. 너무 딱딱한 \"다\"가 반복되면 보고서 낭독처럼 들리고, 반대로 과하게 늘어지면 일부러 감정을 넣는 것처럼 들린다. 그래서 voice mode에서는 짧고 자연스러운 요체가 더 맞았다. \"했어\", \"보여\", \"괜찮아\"처럼 사람 사이 대화에 가까운 끝맺음이 필요했다. 이것도 단순한 말투 취향이 아니라 인터페이스 문제다. …",
+      "audioPath": "/tts-artifacts/okayJing/voice/voice-mode-report-style-breaks/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/okayJing/voice/voice-mode-report-style-breaks/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "okayJing__voice__voice-mode-report-style-breaks__core-5m",
+      "kind": "core-5m",
+      "slug": "okayJing/voice/voice-mode-report-style-breaks",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/voice/voice-mode-report-style-breaks",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "voice mode에서는 보고서 문체가 깨진다 — 오케이징 답변 정책을 다시 잡은 날 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "0. 문제는 목소리가 아니라 문체였다 처음에는 TTS 문제라고 생각했다. 목소리가 자연스럽지 않거나, 속도가 조금 느리거나, 말끝이 기계적으로 들리는 문제라고 봤다. 그래서 Edge TTS, Qwen3-TTS, Supertonic3를 비교했고, 피치와 속도, style embedding까지 만졌다. 그런데 막상 Discord voice mode에서 들어보니 다른 문제가 더 크게 보였다. 오케이징이 말하는 내용이 너무 문서처럼 생겨 있었다. 번호가 많고, bullet이 많고, \"작업 / 결과 / 변경파일 / 검증\" 같은 보고서 구조가 그대로 음성으로 읽혔다. 텍스트로 보면 깔끔한데, 귀로 들으면 끊긴다. 사람이 옆에서 말하는 느낌이 아니라, 마크다운 문서를 낭독하는 느낌이 났다. 이 지점에서 기준을 다시 잡았다. voice mode의 품질은 TTS 모델만으로 결정되지 않는다. 답변 정책이 같이 바뀌어야 한다. --- 1. 텍스트 답변은 훑어볼 수 있지만 음성은 되감기 어렵다 텍스트 채팅에서는 구조화가 장점이다. 사용자는 긴 답변을 훑어보고, 필요한 줄만 다시 보고, 파일명이나 명령어를 복사할 수 있다. 그래서 목록과 표, 코드블럭이 많아도 괜찮다. 오히려 작업 보고에서는 그런 구조가 필요하다. 그런데 음성은 다르다. 사용자는 한 문장을 순서대로 듣는다. 중간에 놓치면 다시 찾기 어렵고, 번호가 많아지면 앞뒤 관계가 쉽게 흐려진다. \"첫 번째는\", \"두 번째는\"이 반복되면 듣는 사람은 다음 항목을 기다리느라 핵심을 놓친다. 특히 오케이징처럼 작업을 대신 수행하는 에이전트는 더 조심해야 한다. 텍스트에서는 \"검증: pnpm build 성공\" 한 줄이면 충분하지만, 음성에서는 \"빌드까지 돌려봤고, 통과했어\"가 더 자연스럽다. 정보량은 비슷하지만 수신 방식이 다르다. --- 2. 보고서는 남기되, 말할 때는 압축해야 한다 그렇다고 보고서 형식을 버리면 안 된다. 오케이징은 작업 결과를 추적해야 하고, 나중에 session search나 ticket으로 복구할 수 있어야 한다. 실행한 명령, 수정한 파일, 실패한 시도, 남은 문제는 구조적으로 남아야 한다. 그래서 결론은 단순히 \"보고서를 쓰지 말자\"가 아니었다. 내부 기록과 외부 발화를 분리해야 한다. ticket에는 자세한 보고서를 남기고, Discord voice 답변에서는 그중 사용자가 지금 들어야 하는 부분만 자연어로 말한다. 예를 들면 이런 식이다. 텍스트 보고서에서는 \"변경파일: apps/web/content/...\"라고 쓰지만, 음성에서는 \"글 여섯 개는 voice 폴더에 새로 넣었고, 포맷이랑 빌드도 확인했어\"라고 말한다. 파일 경로가 필요하면 텍스트로 같이 남기면 된다. 귀로 들어야 하는 것과 눈으로 확인해야 하는 것을 섞지 않는 게 중요했다. --- 3. 말끝도 운영 정책이다 TTS를 튜닝하면서 말끝이 계속 신경 쓰였다. 한국어 TTS는 문장 끝에서 어색함이 많이 드러난다. 너무 딱딱한 \"다\"가 반복되면 보고서 낭독처럼 들리고, 반대로 과하게 늘어지면 일부러 감정을 넣는 것처럼 들린다. 그래서 voice mode에서는 짧고 자연스러운 요체가 더 맞았다. \"했어\", \"보여\", \"괜찮아\"처럼 사람 사이 대화에 가까운 끝맺음이 필요했다. 이것도 단순한 말투 취향이 아니라 인터페이스 문제다. 사용자가 음성으로 듣는 순간, 오케이징은 문서 작성자가 아니라 대화 상대가 된다. 여성 한국어 TTS를 선호하게 된 이유도 여기와 연결된다. 성별 자체가 목적이라기보다, 현재 한국어 TTS에서는 여성 voice가 더 자연스럽게 들리는 경우가 많았다. 말끝, 억양, 문장 연결이 덜 뻣뻣하게 느껴졌다. 실사용 기준에서는 그 차이가 꽤 컸다. --- 4. 결국 voice mode는 출력 채널이 아니라 제품 형태다 처음엔 voice mode를 \"텍스트 답변을 TTS로 읽는 기능\" 정도로 생각하기 쉽다. 하지만 실제로 써보면 그렇지 않다. 출력 채널이 바뀌면 답변의 길이, 구조, 말투, 확인 방식이 전부 바뀐다. 오케이징에게 필요한 기준은 이렇게 정리됐다. 작업 보고는 남겨야 한다. 하지만 음성으로 말할 때는 핵심부터 짧게 말해야 한다. 목록은 줄이고, 경로와 명령어는 필요한 경우 텍스트로 남겨야 한다. 그리고 말끝은 사람이 대화하는 리듬에 맞춰야 한다. 돌이켜보면 이건 TTS 튜닝보다 더 큰 변화였다. 목소리를 조금 더 좋게 만드는 일은 중요하다. 하지만 오케이징이 실제로 옆에서 말하는 동료처럼 느껴지려면, 먼저 문체가 음성에 맞아야 한다. voice mode는 단순한 낭독기가 아니라, 오케이징의 답변 정책을 다시 설계하게 만든 인터페이스였다.",
+      "audioPath": "/tts-artifacts/okayJing/voice/voice-mode-report-style-breaks/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/okayJing/voice/voice-mode-report-style-breaks/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

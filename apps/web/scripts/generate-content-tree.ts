@@ -3,11 +3,13 @@ import fs from "node:fs";
 import { compile } from "@mdx-js/mdx";
 import remarkGfm from "remark-gfm";
 import rehypePrismPlus from "rehype-prism-plus";
+import { buildMdxSearchIndex } from "@app/utils";
 import { scanContentDir, getContentBySlug } from "@app/utils/content";
 
 const CONTENT_DIR = path.resolve(import.meta.dirname, "../content");
 const GENERATED_DIR = path.resolve(import.meta.dirname, "../src/generated");
 const TREE_OUTPUT = path.join(GENERATED_DIR, "content-tree.json");
+const SEARCH_INDEX_OUTPUT = path.join(GENERATED_DIR, "mdx-search-index.json");
 const CONTENT_OUTPUT_DIR = path.join(GENERATED_DIR, "content");
 
 function collectSlugs(contentDir: string, basePath: string = ""): string[] {
@@ -121,6 +123,25 @@ async function main() {
 
   // content-loader.ts 생성
   const slugs = collectSlugs(CONTENT_DIR);
+  const searchInputs = slugs.flatMap((slug) => {
+    const result = getContentBySlug(CONTENT_DIR, slug.split("/"));
+    if (!result) return [];
+    return [
+      {
+        slug,
+        frontmatter: result.frontmatter,
+        source: result.source,
+      },
+    ];
+  });
+  const searchIndex = buildMdxSearchIndex(searchInputs);
+  fs.writeFileSync(
+    SEARCH_INDEX_OUTPUT,
+    JSON.stringify(searchIndex, null, 2),
+    "utf-8",
+  );
+  console.log(`mdx-search-index.json 생성 완료: ${searchIndex.length}개 chunk`);
+
   const loaderLines = [
     `import type { ContentFrontmatter } from "@app/utils";`,
     `import type { MDXModule } from "mdx/types";`,

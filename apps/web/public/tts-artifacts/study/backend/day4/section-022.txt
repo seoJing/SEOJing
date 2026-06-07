@@ -1,0 +1,1 @@
+가능한 백엔드 원인: 저장은 됐지만 조회 조건이 다르다. roomId, userId, categoryId 필터가 잘못됐다. 삭제 여부 조건이 반대로 되어 있다. 응답 DTO가 필요한 필드를 빼고 있다. 정렬/페이지네이션 때문에 첫 페이지에 안 보인다. 볼 파일: 목록 API Controller 목록 Service Repository의 findBy... 메서드 Response DTO mapper

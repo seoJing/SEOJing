@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "slug": "SEOJing/devLog/insight/what-is-mdx",
+  "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/what-is-mdx",
+  "title": "MDX가 뭘까?",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:SEOJing/devLog/insight/what-is-mdx",
+  "artifacts": [
+    {
+      "id": "SEOJing__devLog__insight__what-is-mdx__summary-2m",
+      "kind": "summary-2m",
+      "slug": "SEOJing/devLog/insight/what-is-mdx",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/what-is-mdx",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "MDX가 뭘까? — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "MDX란? 한 줄로 요약하면 \" \" Markdown + React 컴포넌트를 같이 쓸 수 있는 파일 형식 이다. --- Markdown부터 먼저 아마 README.md 써보셨죠? 그게 Markdown이다. 이걸 HTML로 자동 변환해줘서 글 쓰기 편한 형식이다. --- MDX = Markdown + JSX Markdown의 불편한 점이 정적 이라는 거다. 근데 MDX는 안에 React 컴포넌트를 그냥 넣을 수 있다. --- 실제로 뭐가 가능하냐면 1. 코드 하이라이팅 컴포넌트 파일명, 하이라이트 줄 번호 같은 props를 넘겨서 커스텀 코드 블럭을 만들 수 있다. 2. 경고/팁 박스 Callout 같은 컴포넌트로 경고, 팁, 정보 박스를 자유롭게 넣을 수 있다. 3. 탭 UI npm, yarn, pnpm 같은 설치 방법을 탭으로 구분할 수 있다. 4. 글 상단 메타데이터 (frontmatter) 이 --- 안에 있는 데이터를 코드에서 읽어서 목록 페이지, SEO 태그 등에 활용한다. --- 일반 블로그 플랫폼이랑 비교 티스토리/벨로그 MDX 블로그 :------ :-------------- :-------------------------- 글 작성 에디터에서 작성 VSCode에서 .mdx 파일 작성 저장 서버 DB GitHub 레포 커스텀 제한적 무제한 (내 컴포넌트 삽입) 디자인 테마 선택 직접 구현 이식성 플랫폼 종속 파일이라 어디서든 이동 가능 --- 결론 개발 블로그에 MDX가 좋은 이유는: 글 = 코드 파일이라 git으로 버전 관리 가 됨 코드 하이라이팅, 인터랙티브 데모 같은 개발자 특화 기능 만들기 쉬움 직접 만든 컴포넌트를 글 안에 자유롭게 넣을 수 있음 요즘 개발자 블로그 (Josh Comeau, Kent C. Dodds 등) 대부분 MDX 기반이다!",
+      "audioPath": "/tts-artifacts/SEOJing/devLog/insight/what-is-mdx/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/devLog/insight/what-is-mdx/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "SEOJing__devLog__insight__what-is-mdx__core-5m",
+      "kind": "core-5m",
+      "slug": "SEOJing/devLog/insight/what-is-mdx",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/what-is-mdx",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "MDX가 뭘까? — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "MDX란? 한 줄로 요약하면 \" \" Markdown + React 컴포넌트를 같이 쓸 수 있는 파일 형식 이다. --- Markdown부터 먼저 아마 README.md 써보셨죠? 그게 Markdown이다. 이걸 HTML로 자동 변환해줘서 글 쓰기 편한 형식이다. --- MDX = Markdown + JSX Markdown의 불편한 점이 정적 이라는 거다. 근데 MDX는 안에 React 컴포넌트를 그냥 넣을 수 있다. --- 실제로 뭐가 가능하냐면 1. 코드 하이라이팅 컴포넌트 파일명, 하이라이트 줄 번호 같은 props를 넘겨서 커스텀 코드 블럭을 만들 수 있다. 2. 경고/팁 박스 Callout 같은 컴포넌트로 경고, 팁, 정보 박스를 자유롭게 넣을 수 있다. 3. 탭 UI npm, yarn, pnpm 같은 설치 방법을 탭으로 구분할 수 있다. 4. 글 상단 메타데이터 (frontmatter) 이 --- 안에 있는 데이터를 코드에서 읽어서 목록 페이지, SEO 태그 등에 활용한다. --- 일반 블로그 플랫폼이랑 비교 티스토리/벨로그 MDX 블로그 :------ :-------------- :-------------------------- 글 작성 에디터에서 작성 VSCode에서 .mdx 파일 작성 저장 서버 DB GitHub 레포 커스텀 제한적 무제한 (내 컴포넌트 삽입) 디자인 테마 선택 직접 구현 이식성 플랫폼 종속 파일이라 어디서든 이동 가능 --- 결론 개발 블로그에 MDX가 좋은 이유는: 글 = 코드 파일이라 git으로 버전 관리 가 됨 코드 하이라이팅, 인터랙티브 데모 같은 개발자 특화 기능 만들기 쉬움 직접 만든 컴포넌트를 글 안에 자유롭게 넣을 수 있음 요즘 개발자 블로그 (Josh Comeau, Kent C. Dodds 등) 대부분 MDX 기반이다!",
+      "audioPath": "/tts-artifacts/SEOJing/devLog/insight/what-is-mdx/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/devLog/insight/what-is-mdx/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "SEOJing__devLog__insight__what-is-mdx__section-001",
+      "kind": "section",
+      "slug": "SEOJing/devLog/insight/what-is-mdx",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/what-is-mdx",
+      "sectionId": "직접-눌러보세요",
+      "chunkId": "직접-눌러보세요",
+      "title": "MDX가 뭘까? — 직접 눌러보세요",
+      "locale": "ko-KR",
+      "targetDurationSeconds": null,
+      "text": "/ 실제로 동작하는 컴포넌트! / yaml --- title: TanStack Query 완벽 정리 date: 2024-03-14 tags: [react, query] thumbnail: /images/tanstack.png --- `` 이 ---` 안에 있는 데이터를 코드에서 읽어서 목록 페이지, SEO 태그 등에 활용한다. --- 일반 블로그 플랫폼이랑 비교 티스토리/벨로그 MDX 블로그 :------ :-------------- :-------------------------- 글 작성 에디터에서 작성 VSCode에서 .mdx 파일 작성 저장 서버 DB GitHub 레포 커스텀 제한적 무제한 (내 컴포넌트 삽입) 디자인 테마 선택 직접 구현 이식성 플랫폼 종속 파일이라 어디서든 이동 가능 --- 결론 개발 블로그에 MDX가 좋은 이유는: 글 = 코드 파일이라 git으로 버전 관리 가 됨 코드 하이라이팅, 인터랙티브 데모 같은 개발자 특화 기능 만들기 쉬움 직접 만든 컴포넌트를 글 안에 자유롭게 넣을 수 있음 요즘 개발자 블로그 (Josh Comeau, Kent C. Dodds 등) 대부분 MDX 기반이다!",
+      "audioPath": "/tts-artifacts/SEOJing/devLog/insight/what-is-mdx/section-001.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/devLog/insight/what-is-mdx/section-001.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": [
+    {
+      "id": "직접-눌러보세요",
+      "title": "직접 눌러보세요",
+      "level": 2,
+      "text": "/ 실제로 동작하는 컴포넌트! / yaml --- title: TanStack Query 완벽 정리 date: 2024-03-14 tags: [react, query] thumbnail: /images/tanstack.png --- `` 이 ---` 안에 있는 데이터를 코드에서 읽어서 목록 페이지, SEO 태그 등에 활용한다. --- 일반 블로그 플랫폼이랑 비교 티스토리/벨로그 MDX 블로그 :------ :-------------- :-------------------------- 글 작성 에디터에서 작성 VSCode에서 .mdx 파일 작성 저장 서버 DB GitHub 레포 커스텀 제한적 무제한 (내 컴포넌트 삽입) 디자인 테마 선택 직접 구현 이식성 플랫폼 종속 파일이라 어디서든 이동 가능 --- 결론 개발 블로그에 MDX가 좋은 이유는: 글 = 코드 파일이라 git으로 버전 관리 가 됨 코드 하이라이팅, 인터랙티브 데모 같은 개발자 특화 기능 만들기 쉬움 직접 만든 컴포넌트를 글 안에 자유롭게 넣을 수 있음 요즘 개발자 블로그 (Josh Comeau, Kent C. Dodds 등) 대부분 MDX 기반이다!",
+      "order": 1
+    }
+  ]
+}

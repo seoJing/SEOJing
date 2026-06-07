@@ -1,0 +1,1 @@
+가능한 백엔드 원인: 요청 DTO의 authorId를 그대로 사용한다. 현재 로그인 사용자 추출이 빠졌다. 테스트용 하드코딩 사용자가 남아 있다. 볼 파일: CreateRequest DTO create Service 인증/보안 컨텍스트 접근 코드 ---

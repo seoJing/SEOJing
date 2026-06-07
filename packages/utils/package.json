@@ -6,7 +6,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./content": "./src/content.ts"
+    "./content": "./src/content.ts",
+    "./content-chunks": "./src/content-chunks.ts"
   },
   "scripts": {
     "lint": "eslint .",

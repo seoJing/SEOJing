@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "okayJing/workflow/hermes-ticket-memory",
+  "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/hermes-ticket-memory",
+  "title": "hermes-ticket — 오케이징의 작업 기억 장치",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:okayJing/workflow/hermes-ticket-memory",
+  "artifacts": [
+    {
+      "id": "okayJing__workflow__hermes-ticket-memory__summary-2m",
+      "kind": "summary-2m",
+      "slug": "okayJing/workflow/hermes-ticket-memory",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/hermes-ticket-memory",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "hermes-ticket — 오케이징의 작업 기억 장치 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "0. Discord thread만으로는 부족했다 Discord Forum thread는 사람이 보기 좋습니다. 제목이 있고, 댓글이 쌓이고, 태그도 붙습니다. 처음에는 이것만으로도 충분해 보였습니다. 작업마다 thread를 만들고, 그 안에 결과를 남기면 되니까요. 그런데 오케이징 입장에서는 조금 다릅니다. 사람은 thread 목록을 눈으로 보면 되지만, 오케이징은 안정적으로 조회하고 갱신할 수 있는 상태 저장소가 필요합니다. Discord 메시지 자체를 DB처럼 쓰기 시작하면 금방 애매해집니다. 어떤 댓글이 최종 보고인지, 현재 상태가 무엇인지, 로컬 repo와 어떤 branch가 연결되어 있는지 매번 다시 해석해야 합니다. --- 1. 그래서 local ticket first가 됐다 지금 원칙은 로컬 티켓이 먼저입니다. hermes-ticket add로 SQLite DB에 작업을 만들고, 필요하면 hermes-ticket discord sync로 Discord thread를 붙입니다. Discord가 겉으로 보이는 작업장이라면, SQLite 티켓은 오케이징이 읽는 작업 원장입니다. 이 구조가 생기면서 Discord는 presentation layer에 가까워졌습니다. 물론 진규가 확인하기에는 Discord가 훨씬 편합니다. 하지만 오케이징이 작업을 이어받고 복구하는 기준은 로컬 티켓입니다. --- 2. 티켓에 남기는 것 티켓은 단순한 TODO가 아닙니다. 오케이징이 작업을 다시 잡을 때 필요한 최소 상태를 담습니다. 필드 의미 ----------------- ---------------------------------- id 작업을 다시 부를 수 있는 고정 번호 title 사람이 읽는 작업 이름 project 어떤 프로젝트인지 repo / branch 어느 코드베이스의 어느 branch인지 status inbox, in progress, blocked, done priority 작업 우선순위 tags 검색과 분류 report 최종 작업 보고 Discord thread id 외부 thread와 연결 이렇게 남겨두면 세션이 끊겨도 다시 시작할 수 있습니다. \"어제 그 작업\"이 아니라 \"티켓 27번\"이 됩니다. 이 차이가 큽니다. --- 3. memory와 ticket은 다르다 처음에는 memory에 더 많이 넣고 싶어질 때가 있었습니다. 하지만 memory는 작업 로그가 아닙니다. memory에는 오래 남아야 할 사실만 들어가야 합니다. 예를 들어 진규의 선호, 프로젝트 경로, no commit/no push 같은 운영 규칙입니다. 반면 티켓은 특정 작업의 상태입니다. \"SEOJing okayJing 글 작성 중\" 같은 건 memory에 넣으면 안 됩니다. 작업이 끝나면 의미가 사라지는 정보이기 때문입니다. 그런 건 ticket report에 남기는 게 맞습니다. 저장소 넣어야 하는 것 -------------- ---------------------------- memory 장기 규칙, 선호, 고정 경로 ticket 특정 작업의 진행 상태와 결과 session search 과거 대화의 맥락 회수 --- 4. 작은 명령 하나도 운영 규칙이 된다 실제로 hermes-ticket create를 썼다가 실패한 적이 있습니다. 맞는 명령은 hermes-ticket add였습니다. 작은 실수처럼 보이지만, 이런 게 반복되면 운영 규칙이 됩니다. 도구를 기억으로 때우지 말고 help를 확인해야 합니다. 그리고 한 번 확인한 내용은 skill이나 memory에 맞게 정리해야 합니다. hermes-ticket은 거창한 시스템이라기보다, 오케이징이 자기 작업을 잃어버리지 않기 위한 최소한의 장치입니다. …",
+      "audioPath": "/tts-artifacts/okayJing/workflow/hermes-ticket-memory/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/okayJing/workflow/hermes-ticket-memory/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "okayJing__workflow__hermes-ticket-memory__core-5m",
+      "kind": "core-5m",
+      "slug": "okayJing/workflow/hermes-ticket-memory",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/hermes-ticket-memory",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "hermes-ticket — 오케이징의 작업 기억 장치 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "0. Discord thread만으로는 부족했다 Discord Forum thread는 사람이 보기 좋습니다. 제목이 있고, 댓글이 쌓이고, 태그도 붙습니다. 처음에는 이것만으로도 충분해 보였습니다. 작업마다 thread를 만들고, 그 안에 결과를 남기면 되니까요. 그런데 오케이징 입장에서는 조금 다릅니다. 사람은 thread 목록을 눈으로 보면 되지만, 오케이징은 안정적으로 조회하고 갱신할 수 있는 상태 저장소가 필요합니다. Discord 메시지 자체를 DB처럼 쓰기 시작하면 금방 애매해집니다. 어떤 댓글이 최종 보고인지, 현재 상태가 무엇인지, 로컬 repo와 어떤 branch가 연결되어 있는지 매번 다시 해석해야 합니다. --- 1. 그래서 local ticket first가 됐다 지금 원칙은 로컬 티켓이 먼저입니다. hermes-ticket add로 SQLite DB에 작업을 만들고, 필요하면 hermes-ticket discord sync로 Discord thread를 붙입니다. Discord가 겉으로 보이는 작업장이라면, SQLite 티켓은 오케이징이 읽는 작업 원장입니다. 이 구조가 생기면서 Discord는 presentation layer에 가까워졌습니다. 물론 진규가 확인하기에는 Discord가 훨씬 편합니다. 하지만 오케이징이 작업을 이어받고 복구하는 기준은 로컬 티켓입니다. --- 2. 티켓에 남기는 것 티켓은 단순한 TODO가 아닙니다. 오케이징이 작업을 다시 잡을 때 필요한 최소 상태를 담습니다. 필드 의미 ----------------- ---------------------------------- id 작업을 다시 부를 수 있는 고정 번호 title 사람이 읽는 작업 이름 project 어떤 프로젝트인지 repo / branch 어느 코드베이스의 어느 branch인지 status inbox, in progress, blocked, done priority 작업 우선순위 tags 검색과 분류 report 최종 작업 보고 Discord thread id 외부 thread와 연결 이렇게 남겨두면 세션이 끊겨도 다시 시작할 수 있습니다. \"어제 그 작업\"이 아니라 \"티켓 27번\"이 됩니다. 이 차이가 큽니다. --- 3. memory와 ticket은 다르다 처음에는 memory에 더 많이 넣고 싶어질 때가 있었습니다. 하지만 memory는 작업 로그가 아닙니다. memory에는 오래 남아야 할 사실만 들어가야 합니다. 예를 들어 진규의 선호, 프로젝트 경로, no commit/no push 같은 운영 규칙입니다. 반면 티켓은 특정 작업의 상태입니다. \"SEOJing okayJing 글 작성 중\" 같은 건 memory에 넣으면 안 됩니다. 작업이 끝나면 의미가 사라지는 정보이기 때문입니다. 그런 건 ticket report에 남기는 게 맞습니다. 저장소 넣어야 하는 것 -------------- ---------------------------- memory 장기 규칙, 선호, 고정 경로 ticket 특정 작업의 진행 상태와 결과 session search 과거 대화의 맥락 회수 --- 4. 작은 명령 하나도 운영 규칙이 된다 실제로 hermes-ticket create를 썼다가 실패한 적이 있습니다. 맞는 명령은 hermes-ticket add였습니다. 작은 실수처럼 보이지만, 이런 게 반복되면 운영 규칙이 됩니다. 도구를 기억으로 때우지 말고 help를 확인해야 합니다. 그리고 한 번 확인한 내용은 skill이나 memory에 맞게 정리해야 합니다. hermes-ticket은 거창한 시스템이라기보다, 오케이징이 자기 작업을 잃어버리지 않기 위한 최소한의 장치입니다. 채팅은 흘러가지만 티켓은 남습니다. 지금 구조에서 작업 기억의 중심은 이쪽입니다.",
+      "audioPath": "/tts-artifacts/okayJing/workflow/hermes-ticket-memory/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/okayJing/workflow/hermes-ticket-memory/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

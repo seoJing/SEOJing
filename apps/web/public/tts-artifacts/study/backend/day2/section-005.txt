@@ -1,0 +1,1 @@
+@PostMapping에 별도 경로가 없으므로 전체 주소는 다음과 같습니다. 아래 코드는 다릅니다. 기본 주소 /api/posts에 / postId 가 붙습니다. 실제 호출은 이런 모양입니다. AI가 만든 Controller를 볼 때는 먼저 이 두 가지를 확인하면 됩니다. 전체 URL이 무엇인가? HTTP Method가 무엇인가? 이 단계에서 프론트엔드 API 호출 코드와 비교해야 합니다. 백엔드가 POST /api/posts를 열고 있고 프론트엔드도 POST /api/posts를 호출하면 첫 번째 약속은 맞습니다. ---

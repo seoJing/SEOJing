@@ -22,9 +22,11 @@ export default defineConfig({
         "src/app/**",
         "src/generated/**",
         "src/shared/config/**",
+        "src/shared/seo/**",
         "src/widgets/header/header.constants.ts",
         "src/widgets/mdx-renderer/MdxRenderer.tsx",
         "src/shared/lib/cn.ts",
+        "src/widgets/article-analytics/useArticleAnalytics.ts",
       ],
       thresholds: {
         statements: 80,

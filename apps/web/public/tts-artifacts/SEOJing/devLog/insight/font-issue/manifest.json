@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "SEOJing/devLog/insight/font-issue",
+  "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/font-issue",
+  "title": "폰트는 왜 메인 페이지에서만 적용이 안되고 있었을까?",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:SEOJing/devLog/insight/font-issue",
+  "artifacts": [
+    {
+      "id": "SEOJing__devLog__insight__font-issue__summary-2m",
+      "kind": "summary-2m",
+      "slug": "SEOJing/devLog/insight/font-issue",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/font-issue",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "폰트는 왜 메인 페이지에서만 적용이 안되고 있었을까? — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "1. 폰트 미적용 문제 증상 : 스토리북에서는 A2z/Paperlogy 폰트 정상인데, Next.js 메인 페이지에서는 폰트가 안 먹힘. 원인 2가지 - globals.css의 @theme에서 --font-sans: \"A2z\", var(--font-geist-sans), ...로 정의했는데, --font-geist-sans가 실제로 정의되지 않아서 CSS 변수 체인 전체가 실패 - body에 font-family: var(--font-sans)를 수동으로 지정했는데, Tailwind v4는 @theme의 --font-sans를 html에 자동 매핑하므로 불필요 + 레이어 우선순위 충돌 수정 - --font-sans에서 var(--font-geist-sans) 참조 제거 - body의 font-family 줄 제거 --- 2. Hydration Mismatch 증상 : Hydration failed 에러, 서버는 / 클라이언트는 /frontend 원인 : useState(getPathFromUrl) 초기값 함수에서 typeof window === \"undefined\" 분기로 서버/클라이언트 초기값이 다름. 수정 : useState(\"/\")로 고정하고, useEffect에서 마운트 후 URL 동기화.",
+      "audioPath": "/tts-artifacts/SEOJing/devLog/insight/font-issue/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/devLog/insight/font-issue/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "SEOJing__devLog__insight__font-issue__core-5m",
+      "kind": "core-5m",
+      "slug": "SEOJing/devLog/insight/font-issue",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/font-issue",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "폰트는 왜 메인 페이지에서만 적용이 안되고 있었을까? — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "1. 폰트 미적용 문제 증상 : 스토리북에서는 A2z/Paperlogy 폰트 정상인데, Next.js 메인 페이지에서는 폰트가 안 먹힘. 원인 2가지 - globals.css의 @theme에서 --font-sans: \"A2z\", var(--font-geist-sans), ...로 정의했는데, --font-geist-sans가 실제로 정의되지 않아서 CSS 변수 체인 전체가 실패 - body에 font-family: var(--font-sans)를 수동으로 지정했는데, Tailwind v4는 @theme의 --font-sans를 html에 자동 매핑하므로 불필요 + 레이어 우선순위 충돌 수정 - --font-sans에서 var(--font-geist-sans) 참조 제거 - body의 font-family 줄 제거 --- 2. Hydration Mismatch 증상 : Hydration failed 에러, 서버는 / 클라이언트는 /frontend 원인 : useState(getPathFromUrl) 초기값 함수에서 typeof window === \"undefined\" 분기로 서버/클라이언트 초기값이 다름. 수정 : useState(\"/\")로 고정하고, useEffect에서 마운트 후 URL 동기화.",
+      "audioPath": "/tts-artifacts/SEOJing/devLog/insight/font-issue/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/devLog/insight/font-issue/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}
