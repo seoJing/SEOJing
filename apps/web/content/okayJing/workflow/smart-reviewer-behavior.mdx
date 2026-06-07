@@ -1,0 +1,108 @@
+---
+title: "좋은 리뷰어는 많이 의심하는 사람이 아니다 — smart reviewer behavior 기준"
+date: "2026-06-18"
+tags:
+  - okayJing
+  - review
+  - notjing
+  - workflow
+  - quality
+description: 오케이징의 리뷰 루틴이 모든 것을 막는 검문소가 아니라, 위험도와 변경 범위에 맞게 증거를 요구하는 smart reviewer가 되어야 한다는 기준을 정리합니다.
+---
+
+<Subtitle level={2}>0. 리뷰를 세게 한다는 말은 애매하다</Subtitle>
+
+<Paragraph>
+  낫징 final gate를 만들면서 처음에는 "더 의심하는 리뷰어"가 필요하다고
+  생각했다. 구현이 끝났다고 말하기 전에 한 번 더 보고, security나 build, diff를
+  확인하고, 이상하면 막는 역할이다. 이 방향 자체는 맞았다. 문제는 시간이
+  지나면서 리뷰의 강도를 항상 최대로 두면 오히려 작업이 느려진다는 점이었다.
+</Paragraph>
+
+<Paragraph>
+  좋은 리뷰어는 모든 변경을 같은 강도로 의심하지 않는다. content-only MDX 글과
+  auth 로직 변경, gateway config 수정, secret 처리 코드는 위험도가 다르다. 같은
+  Notjing이라는 이름 아래 있어도 요구해야 할 증거가 달라야 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. 막는 리뷰어보다 조절하는 리뷰어가 필요하다</Subtitle>
+
+<Paragraph>
+  smart reviewer의 핵심은 조절이다. 위험도가 낮은 변경에는 빠른 hygiene check와
+  build evidence를 요구하고, 위험한 변경에는 더 많은 재현과 security check를
+  요구한다. 즉 리뷰의 목표는 많이 막는 것이 아니라, 변경의 위험에 맞는 증거를
+  요구하는 것이다.
+</Paragraph>
+
+| 변경                    | 필요한 리뷰                                                  |
+| ----------------------- | ------------------------------------------------------------ |
+| 블로그 MDX content-only | frontmatter, 문맥, format, lint/build                        |
+| UI 컴포넌트 수정        | browser evidence, responsive check, lint/build               |
+| API/DTO 변경            | contract, caller impact, tests, MSW/real API 비교            |
+| auth/security           | secret scan, threat model, negative tests, Notjing full gate |
+| cron/gateway config     | rollback path, delivery target, dry-run or next-run evidence |
+
+<Paragraph>
+  이 표가 있으면 리뷰어가 과하게 굴지 않아도 된다. content-only 글에 full
+  security gate를 요구하지 않고, 반대로 auth 변경을 단순 lint 통과로 끝내지도
+  않는다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. 질문보다 증거를 요구한다</Subtitle>
+
+<Paragraph>
+  리뷰어가 계속 질문만 하면 작업자는 멈춘다. "이거 괜찮나요?", "더 볼까요?"를
+  반복하는 대신, smart reviewer는 필요한 증거를 직접 요구해야 한다. 예를 들어
+  브라우저 UI 변경이면 screenshot이나 devtools log, content post면 build slug,
+  cron 변경이면 job id와 next_run_at이 필요하다.
+</Paragraph>
+
+<Paragraph>그래서 리뷰 코멘트도 이렇게 바뀌어야 한다.</Paragraph>
+
+```text
+나쁨: 이 변경 괜찮은지 확인이 필요합니다.
+좋음: /blog/okayJing/... slug가 generate:content에 나타났고 pnpm build가 통과했는지 증거가 필요합니다.
+```
+
+<Paragraph>
+  질문을 줄이고 증거를 명확히 하면 approval fatigue도 줄어든다. 사용자는
+  리뷰어의 불안을 처리하는 사람이 아니라, 정말 판단이 필요한 순간에만 개입하면
+  된다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. 리뷰어도 scope를 지켜야 한다</Subtitle>
+
+<Paragraph>
+  smart reviewer의 또 다른 기준은 scope다. 리뷰하다 보면 주변 문제가 보인다.
+  기존 lint warning, 오래된 TODO, unrelated draft, 다른 폴더의 naming 문제 같은
+  것들이다. 모두 중요할 수 있지만, 지금 변경을 막을 이유인지 따로 봐야 한다.
+</Paragraph>
+
+<Paragraph>
+  이번 변경이 만들지 않은 warning은 보고하되 blocker로 부풀리지 않는다. 반대로
+  이번 변경이 새 route를 만들었다면 build에서 slug가 생성됐는지는 blocker다. 이
+  구분이 있어야 리뷰가 실제 품질을 올리지, 작업 범위를 계속 키우는 장치가 되지
+  않는다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. 이번에 남은 기준</Subtitle>
+
+<Paragraph>
+  좋은 리뷰어는 많이 의심하는 사람이 아니다. 위험을 분류하고, 필요한 증거를
+  요구하고, scope를 지키는 사람이다. 오케이징의 리뷰 루틴도 이쪽으로 가야 한다.
+</Paragraph>
+
+<Paragraph>
+  낫징은 여전히 필요하다. 다만 모든 작업에 같은 낫징을 들이대는 것이 아니라,
+  변경의 성격에 맞는 gate를 선택해야 한다. content post에는 lightweight content
+  reviewer, release나 auth에는 full final gate. 이 구분이 생기면 오케이징은 더
+  빠르게 움직이면서도 더 정확하게 멈출 수 있다.
+</Paragraph>

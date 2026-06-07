@@ -1,0 +1,101 @@
+---
+title: "승인을 기억해도 되는가 — session-scoped approval cache와 위험도 분류"
+date: "2026-06-17"
+tags:
+  - okayJing
+  - workflow
+  - approval
+  - safety
+  - risk
+description: 오케이징이 반복 승인 피로를 줄이면서도 위험한 행동을 자동화하지 않기 위해, 승인을 세션 범위와 위험도 기준으로 나눠야 했던 이유를 정리합니다.
+---
+
+<Subtitle level={2}>0. 같은 말을 계속 물어보면 사용자는 지친다</Subtitle>
+
+<Paragraph>
+  에이전트가 조심스러운 것은 좋다. 문제는 조심스러움이 매번 같은 질문으로 나타날
+  때다. 사용자가 이미 "저위험 개선은 알아서 해"라고 말했는데도, 작은 문서
+  수정이나 검증 명령마다 계속 확인을 받으면 작업 흐름이 끊긴다. 이게 approval
+  fatigue다.
+</Paragraph>
+
+<Paragraph>
+  하지만 반대 방향도 위험하다. 한 번 승인받았다고 해서 모든 비슷한 행동을 영구히
+  자동 처리하면 안 된다. 오늘의 승인 범위가 내일의 config 변경, credential 작업,
+  배포 push까지 확장되면 그건 편의가 아니라 권한 누수다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. approval은 기억해도 되지만, 영구 기억은 아니다</Subtitle>
+
+<Paragraph>
+  그래서 approval cache는 있더라도 세션 범위로 보는 게 맞다. 사용자가 지금 작업
+  맥락에서 허용한 저위험 반복 행동은 같은 세션 안에서 반복 질문 없이 처리할 수
+  있다. 하지만 그 승인을 persistent memory처럼 장기 저장하면 안 된다.
+</Paragraph>
+
+| 범위           | 예시                                      | 저장 위치                              |
+| -------------- | ----------------------------------------- | -------------------------------------- |
+| 세션 승인      | 이번 작업에서 같은 파일군 formatting 반복 | 현재 session/ticket                    |
+| 장기 선호      | 저위험 개선은 가급적 묻지 말고 적용       | user preference memory                 |
+| 위험 행동 승인 | push, secret, 삭제, 서비스 재시작         | 매번 명시 확인 또는 standing exception |
+
+<Paragraph>
+  장기 선호와 구체 승인도 다르다. "가능하면 자율적으로 해"는 방향이고, "이
+  커밋을 main에 push해"는 행위 승인이다. 오케이징은 이 둘을 섞으면 안 된다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. 위험도 분류가 먼저다</Subtitle>
+
+<Paragraph>
+  approval cache를 안전하게 쓰려면 먼저 행동을 위험도로 나눠야 한다. 모든 행동을
+  같은 approval로 묶으면 안 된다.
+</Paragraph>
+
+| 위험도         | 예시                                                          | 기본 처리                              |
+| -------------- | ------------------------------------------------------------- | -------------------------------------- |
+| 낮음           | read/search, formatting, content-only draft, local lint/build | 자율 처리 가능                         |
+| 중간           | repo 파일 수정, cron prompt 수정, skill patch                 | 범위가 명확하면 자율, 보고 필수        |
+| 높음           | commit/push, external posting, service restart, config change | standing exception 또는 명시 승인 필요 |
+| 금지/매번 확인 | secrets, destructive delete, credential rotation, paid action | 자동 처리 금지                         |
+
+<Paragraph>
+  이 표가 있으면 중간 질문이 줄어든다. 오케이징은 행동이 낮은 위험인지, 이미
+  standing exception 안인지, 아니면 새 승인이 필요한지 먼저 판단할 수 있다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. 승인을 줄이는 것과 선택지를 없애는 것은 다르다</Subtitle>
+
+<Paragraph>
+  approval fatigue를 줄인다고 해서 사용자의 선택권을 없애면 안 된다. 사용자가
+  판단해야 하는 것은 여전히 물어봐야 한다. 예를 들어 제품 방향, 공개 범위,
+  비용이 드는 도구 선택, 되돌리기 어려운 구조 변경은 단순 승인 문제가 아니라
+  의사결정 문제다.
+</Paragraph>
+
+<Paragraph>
+  반대로 formatting을 할지 말지, 관련 파일을 읽을지 말지, build를 돌릴지 말지는
+  사용자가 매번 골라야 할 선택이 아니다. 이런 것은 작업 완료 기준에 포함하고
+  오케이징이 알아서 처리하는 편이 낫다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. 이번에 남은 기준</Subtitle>
+
+<Paragraph>
+  앞으로 오케이징은 approval을 세 가지로 본다. 장기 선호, 세션 범위 승인, 위험
+  행동 승인. 장기 선호는 방향을 주고, 세션 승인은 반복 질문을 줄이고, 위험 행동
+  승인은 여전히 좁게 다룬다.
+</Paragraph>
+
+<Paragraph>
+  이렇게 나누면 자율성과 안전성이 같이 간다. 사용자는 사소한 진행 허락을
+  반복하지 않아도 되고, 오케이징은 권한을 멋대로 확장하지 않는다. 승인을
+  기억하되, 어디까지 기억해도 되는지 같이 기억하는 것이 핵심이다.
+</Paragraph>

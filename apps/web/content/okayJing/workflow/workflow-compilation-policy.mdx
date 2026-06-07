@@ -1,0 +1,126 @@
+---
+title: "워크플로우를 모델에 넣기 전에 — 오케이징의 workflow compilation 기준"
+date: "2026-06-12"
+tags:
+  - okayJing
+  - workflow
+  - memory
+  - fine-tuning
+  - evaluation
+description: 반복되는 에이전트 작업을 바로 파인튜닝으로 넘기지 않고, source-linked workflow trace와 평가 기준부터 모으기로 한 이유를 정리합니다.
+---
+
+<Subtitle level={2}>0. 반복 작업을 보면 바로 자동화하고 싶어진다</Subtitle>
+
+<Paragraph>
+  오케이징을 굴리다 보면 같은 패턴이 계속 나온다. SEOJing 포스트를 만들고,
+  Prettier를 돌리고, lint/build를 확인하고, 공개 URL 형식으로 보고한다. 실패한
+  skill을 고치고, 다음 작업에서 다시 같은 실수를 막는다. 이런 흐름이 반복되면
+  자연스럽게 "이걸 모델에 넣으면 되지 않을까"라는 생각이 든다.
+</Paragraph>
+
+<Paragraph>
+  그런데 이 생각은 조심해야 한다. 반복된다고 해서 바로 파인튜닝할 수 있는 것은
+  아니다. 반복 작업 안에는 도구 실행, 파일 검증, 권한 판단, 위험도 분류가 섞여
+  있다. 이걸 전부 모델 weight 안으로 밀어 넣으면, 편해지는 게 아니라 통제점을
+  잃을 수 있다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. 내려갈 수는 있지만 한 번에 내려가면 안 된다</Subtitle>
+
+<Paragraph>
+  지금 잡은 기준은 단계적이다. 어떤 절차가 반복되면 곧바로 fine-tune으로 보내지
+  않고, 먼저 skill과 memory로 고정한다. 그 다음 source-linked workflow trace를
+  모으고, 충분히 안정적이면 compile candidate로 분류한다. 모델 학습은 그 다음
+  이야기다.
+</Paragraph>
+
+<Paragraph>내려가는 순서는 이렇게 본다.</Paragraph>
+
+1. runtime prompt / ad-hoc execution
+2. skill과 memory-backed procedure
+3. source-linked workflow trace
+4. compile candidate와 eval criteria
+5. local policy model / adapter / full fine-tune
+
+<Paragraph>
+  여기서 중요한 건 5번이 목표가 아니라는 점이다. 많은 workflow는 2번이나 3번에서
+  멈추는 게 더 안전하다. tool execution, source verification, safety gate,
+  destructive-action permission은 모델 밖에 남아야 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. trace에는 성공담이 아니라 검증을 남긴다</Subtitle>
+
+<Paragraph>
+  workflow trace를 남길 때도 단순히 "성공했다"고 적으면 의미가 약하다. 나중에 이
+  절차를 dataset이나 evaluation으로 바꾸려면 어떤 skill을 썼고, 어떤 toolset을
+  썼고, 어떤 검증이 실제로 통과했는지가 필요하다.
+</Paragraph>
+
+```bash
+hermes-memory workflow trace-add \
+  --workflow-key seojing-blog-publish \
+  --title "SEOJing post generated, verified, and published" \
+  --outcome success \
+  --skills seojing,notjing-final-gate \
+  --toolsets terminal,file \
+  --verification-json '{"score": 0.9, "checks": [{"name": "pnpm build", "status": "pass"}]}' \
+  --source-ref ticket:123
+```
+
+<Paragraph>
+  이 정도로 남겨야 나중에 "정말 반복 가능한가"를 볼 수 있다. trace는 자랑용
+  로그가 아니라 평가 데이터의 씨앗이다. 그래서 source_ref도 필요하다. ticket,
+  session, cron output 같은 근거가 있어야 나중에 다시 확인할 수 있다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. 후보가 됐다는 말은 학습하자는 뜻이 아니다</Subtitle>
+
+<Paragraph>
+  `workflow candidates`에 올라왔다는 말은 곧바로 모델을 학습하자는 뜻이 아니다.
+  이 부분을 일부러 엄격하게 나눴다. candidate는 "dataset/eval 계획을 세워볼 만한
+  반복 절차"라는 뜻이지, 자동 배포 허가는 아니다.
+</Paragraph>
+
+| 후보                               | 먼저 해야 할 일                                     |
+| ---------------------------------- | --------------------------------------------------- |
+| skill_dataset_candidate            | skill reference와 예시를 보강한다                   |
+| local_policy_model_candidate       | 작은 classifier/judge/router 평가셋을 만든다        |
+| adapter_or_full_finetune_candidate | 많은 성공 trace와 안정된 eval이 있을 때만 검토한다  |
+| do_not_compile_yet                 | runtime orchestration으로 유지하고 근거를 더 모은다 |
+
+<Paragraph>
+  특히 권한 판단이나 destructive action은 bad candidate다. 사용자의 파일을
+  지우거나 외부에 push하거나 credential을 다루는 판단은 모델 내부 습관으로
+  만들면 안 된다. 그런 것은 계속 명시적 gate와 도구 결과 위에 있어야 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. 오케이징에 먼저 맞는 후보들</Subtitle>
+
+<Paragraph>
+  지금 기준에서 early candidate로 볼 만한 것은 몇 가지다. SEOJing 포스트 생성과
+  검증, memory promotion/stale-check 판단, skill patching after corrected
+  workflow, morning briefing wording/dedupe discipline 같은 것들이다. 공통점은
+  반복되고, 검증 가능하고, 실패했을 때 되돌릴 수 있다는 점이다.
+</Paragraph>
+
+<Paragraph>
+  반대로 fresh project debugging, 한 번뿐인 코딩 작업, tool execution 자체,
+  permission decision은 아직 아니다. 이런 것들은 매번 문맥이 다르고 위험도가
+  달라서 trace를 더 모으기 전에는 compile하면 안 된다.
+</Paragraph>
+
+<Paragraph>
+  결국 workflow compilation은 "에이전트를 더 똑똑하게 만들자"가 아니라 "반복되는
+  절차 중 무엇을 더 낮은 레이어로 내려도 안전한가"를 따지는 일이다. 이 기준을
+  세워두면 오케이징은 자동화 욕심을 내면서도, 검증과 권한의 위치를 잃지 않을 수
+  있다.
+</Paragraph>
