@@ -24,7 +24,7 @@ export function GET() {
       <link>${escapeXml(entry.url)}</link>
       <guid isPermaLink="true">${escapeXml(entry.url)}</guid>
       <pubDate>${date}</pubDate>
-      <description>${escapeXml(entry.frontmatter.description)}</description>
+      <description>${escapeXml(entry.frontmatter.description ?? "")}</description>
       ${(entry.frontmatter.tags ?? [])
         .map((tag) => `<category>${escapeXml(tag)}</category>`)
         .join("\n      ")}

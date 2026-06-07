@@ -1,7 +1,7 @@
 import type { Metadata } from "vinext/shims/metadata";
 import type { ContentFrontmatter } from "@app/utils";
 import { absoluteUrl, blogUrl, siteConfig } from "@/shared/config/site";
-import { firstParagraphDescription, folderTitle } from "./content";
+import { folderTitle, getArticleDescription } from "./content";
 
 const defaultOgImage = {
   url: siteConfig.logoPath,
@@ -110,10 +110,7 @@ export function buildArticleMetadata(
   frontmatter: ContentFrontmatter,
   source: string,
 ): Metadata {
-  const description =
-    frontmatter.description ||
-    firstParagraphDescription(source) ||
-    siteConfig.description;
+  const description = getArticleDescription(frontmatter, source);
   const url = blogUrl(slug);
   const tags = frontmatter.tags ?? [];
 

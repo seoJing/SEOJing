@@ -1,6 +1,6 @@
 import contentTree from "@/generated/content-tree.json";
 import type { ContentNode, ContentTree } from "@app/utils";
-import { blogUrl } from "@/shared/config/site";
+import { blogUrl, siteConfig } from "@/shared/config/site";
 
 export interface SeoContentEntry {
   slug: string;
@@ -79,6 +79,17 @@ export function firstParagraphDescription(source: string): string | undefined {
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 160);
+}
+
+export function getArticleDescription(
+  frontmatter: SeoContentEntry["frontmatter"],
+  source: string,
+): string {
+  return (
+    frontmatter.description ||
+    firstParagraphDescription(source) ||
+    siteConfig.description
+  );
 }
 
 export function folderTitle(slug: string[]): string {

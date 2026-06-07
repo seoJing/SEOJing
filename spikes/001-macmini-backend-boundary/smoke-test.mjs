@@ -37,22 +37,26 @@ async function fetchJson(url, options = {}) {
 }
 
 async function run() {
-  const origin = createMacminiOrigin({
-    proxyToken: PROXY_TOKEN,
-    adminToken: ADMIN_TOKEN,
-  });
-  const originBase = await listen(origin);
-  const proxy = createWorkerProxy({
-    originBase,
-    proxyToken: PROXY_TOKEN,
-    siteOrigin: SITE_ORIGIN,
-    timeoutMs: 500,
-  });
-  const proxyBase = await listen(proxy);
-
+  let origin;
+  let proxy;
+  let originBase;
+  let proxyBase;
   const results = [];
 
   try {
+    origin = createMacminiOrigin({
+      proxyToken: PROXY_TOKEN,
+      adminToken: ADMIN_TOKEN,
+    });
+    originBase = await listen(origin);
+    proxy = createWorkerProxy({
+      originBase,
+      proxyToken: PROXY_TOKEN,
+      siteOrigin: SITE_ORIGIN,
+      timeoutMs: 500,
+    });
+    proxyBase = await listen(proxy);
+
     {
       const { response, body } = await fetchJson(`${originBase}/healthz`);
       assert.equal(response.status, 200);
@@ -231,8 +235,10 @@ async function run() {
       );
     }
   } finally {
-    await close(proxy);
-    await close(origin);
+    await Promise.allSettled([
+      proxy ? close(proxy) : Promise.resolve(),
+      origin ? close(origin) : Promise.resolve(),
+    ]);
   }
 
   console.log(JSON.stringify({ ok: true, checks: results }, null, 2));

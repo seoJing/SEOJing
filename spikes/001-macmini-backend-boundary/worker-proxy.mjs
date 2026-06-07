@@ -144,7 +144,10 @@ export function createWorkerProxy(options = {}) {
   return http.createServer(async (req, res) => {
     const requestId = normalizeRequestId(req.headers["x-request-id"]);
     const url = new URL(req.url ?? "/", "http://worker.local");
-    const headers = corsHeaders(req, siteOrigin);
+    const headers = {
+      ...corsHeaders(req, siteOrigin),
+      "x-request-id": requestId,
+    };
 
     if (req.method === "OPTIONS") {
       res.writeHead(204, headers);

@@ -1,5 +1,6 @@
 import { absoluteUrl, blogUrl, siteConfig } from "@/shared/config/site";
 import type { ContentFrontmatter } from "@app/utils";
+import { folderTitle } from "./content";
 
 function safeJsonLd(value: unknown): string {
   return JSON.stringify(value).replace(/</g, "\\u003c");
@@ -80,11 +81,12 @@ export function breadcrumbJsonLd(slug: string[]) {
   ];
 
   slug.forEach((segment, index) => {
+    const partialSlug = slug.slice(0, index + 1);
     items.push({
       "@type": "ListItem",
       position: index + 3,
-      name: segment,
-      item: blogUrl(slug.slice(0, index + 1)),
+      name: index === slug.length - 1 ? segment : folderTitle(partialSlug),
+      item: blogUrl(partialSlug),
     });
   });
 

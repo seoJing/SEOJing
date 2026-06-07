@@ -23,7 +23,7 @@
 
 ### Repo / 배포
 
-- repo path: `/Users/seojing/.hermes/workspace/projects/SEOJing`
+- repo path: `<repo-root>`
 - 현재 브랜치: `docs/okayjing-posts-reading-guide`
 - monorepo 스크립트:
   - root `pnpm build` → `turbo build`
@@ -94,7 +94,7 @@ DNS 확인:
 
 - title: `SEOJing`
 - description: `SEOJing's 프론트엔드 개발 블로그 플랫폼`
-- metadataBase: `https://seojing.tjwlsrb1021.workers.dev`
+- metadataBase/current canonical origin: `https://seojing.com` (`apps/web/src/shared/config/site.ts`의 `siteConfig.origin` 기준)
 - openGraph: site-level title/description/url/logo
 - twitter: summary card/logo
 
@@ -226,8 +226,8 @@ DNS 확인:
 
 대상 파일 후보:
 
-- `apps/web/src/app/robots.txt/route.ts` 또는 vinext에서 지원되는 route handler 위치
-- `apps/web/src/app/sitemap.xml/route.ts`
+- `apps/web/src/app/robots.ts`
+- `apps/web/src/app/sitemap.ts`
 - `apps/web/src/app/rss.xml/route.ts`
 - `apps/web/src/shared/config/site.ts`
 

@@ -1,6 +1,6 @@
 # ADR: SEOJing Cloudflare 공개 프론트 + Mac mini 동적 백엔드 분리
 
-작성일: 2026-06-08
+작성일: 2026-06-07
 관련 티켓: local #50 / kanban t_ac638550
 상태: Accepted
 
@@ -91,17 +91,17 @@ A1 감사 결과 현재 상태는 다음과 같다.
 
 ### 4.1 현재 단계
 
-현재는 `https://seojing.tjwlsrb1021.workers.dev`를 canonical site origin으로 유지한다.
+현재 canonical site origin은 `https://seojing.com`이다.
 
-이유:
+근거:
 
-- 이미 공개 응답이 확인된 origin이다.
-- custom domain DNS가 아직 이 환경에서 확인되지 않았다.
-- sitemap/robots/rss/canonical/metadata 작업을 먼저 끝내야 custom domain 전환 시 중복 URL 리스크를 줄일 수 있다.
+- `apps/web/src/shared/config/site.ts`의 `siteConfig.origin`이 `https://seojing.com`으로 설정되어 있다.
+- metadataBase, canonical URL, sitemap, robots, RSS, JSON-LD, OG URL은 이 `siteConfig.origin`/`absoluteUrl`/`blogUrl` 계약에서 파생된다.
+- `workers.dev` 도메인은 배포 확인/백업 URL로 유지하되 검색 canonical은 custom domain으로 통일한다.
 
-### 4.2 custom domain 전환 기준
+### 4.2 API custom domain 전환 기준
 
-custom domain은 SEO foundation이 준비된 뒤 한 번에 전환한다.
+Mac mini 동적 API용 custom domain은 별도 검증 뒤 전환한다.
 
 전환 시 권장값:
 
@@ -111,10 +111,9 @@ custom domain은 SEO foundation이 준비된 뒤 한 번에 전환한다.
 
 전환 수용 기준:
 
-- `layout.tsx` 또는 site config의 `metadataBase`가 canonical custom domain을 사용한다.
-- sitemap, robots, RSS, JSON-LD, OG url이 같은 canonical origin에서 파생된다.
+- `apps/web/src/shared/config/site.ts`의 `siteConfig.origin`과 metadata/sitemap/robots/RSS/JSON-LD/OG 생성 경로가 canonical front를 사용한다.
 - workers.dev와 다른 custom domain은 301 redirect 또는 canonical로 중복 색인을 방지한다.
-- Cloudflare DNS에서 `seojing`과 `api.seojing` 레코드가 모두 의도한 대상에 연결된다.
+- Cloudflare DNS에서 `seojing.com`과 `api.seojing.com` 레코드가 모두 의도한 대상에 연결된다.
 
 ### 4.3 apex/root 도메인 처리
 

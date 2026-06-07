@@ -27,13 +27,13 @@ Given SEOJing public HTML/SEO surface stays on Cloudflare, when a dynamic API ca
 
 ## API 경계 초안
 
-| 기능                     | public front 경로                 | Mac mini origin 경로   | 공개 브라우저 직접 호출         | 인증/운영 원칙                                          |
-| ------------------------ | --------------------------------- | ---------------------- | ------------------------------- | ------------------------------------------------------- |
-| origin health            | `/api/healthz` 또는 내부 모니터링 | `/healthz`             | 제한적으로 가능하나 no-store    | public HTML과 분리된 상태 점검                          |
-| analytics collect        | `/api/analytics/events`           | `/v1/analytics/events` | Worker proxy만                  | raw IP/UA 저장 금지, 최소 이벤트/짧은 retention         |
-| post RAG/Q&A             | `/api/rag/query`                  | `/v1/rag/query`        | Worker proxy 또는 API subdomain | rate limit, cache/abuse budget, 실패 시 widget degraded |
-| TTS learning mode        | `/api/tts/jobs`                   | `/v1/tts/jobs`         | API subdomain/Worker proxy      | job id + polling/SSE/queue 우선, 긴 요청 금지           |
-| admin mutation/dashboard | 노출하지 않음                     | `/admin/*`             | 금지                            | Cloudflare Access 또는 강한 별도 인증 뒤                |
+| 기능                     | public front 경로                 | Mac mini origin 경로   | 공개 브라우저 직접 호출        | 인증/운영 원칙                                                                               |
+| ------------------------ | --------------------------------- | ---------------------- | ------------------------------ | -------------------------------------------------------------------------------------------- |
+| origin health            | `/api/healthz` 또는 내부 모니터링 | `/healthz`             | 제한적으로 가능하나 no-store   | public HTML과 분리된 상태 점검                                                               |
+| analytics collect        | `/api/analytics/events`           | `/v1/analytics/events` | Worker proxy만                 | raw IP/UA 저장 금지, 최소 이벤트/짧은 retention                                              |
+| post RAG/Q&A             | `/api/rag/query`                  | `/v1/rag/query`        | 현재 스파이크는 Worker proxy만 | rate limit, cache/abuse budget, 실패 시 widget degraded; API subdomain은 후속 설계/검증 항목 |
+| TTS learning mode        | `/api/tts/jobs`                   | `/v1/tts/jobs`         | 현재 스파이크는 Worker proxy만 | job id + polling/SSE/queue 우선, 긴 요청 금지; API subdomain은 후속 설계/검증 항목           |
+| admin mutation/dashboard | 노출하지 않음                     | `/admin/*`             | 금지                           | Cloudflare Access 또는 강한 별도 인증 뒤                                                     |
 
 ## 실행
 

@@ -13,7 +13,7 @@ import {
   buildArticleMetadata,
   buildFolderMetadata,
 } from "@/shared/seo/metadata";
-import { firstParagraphDescription } from "@/shared/seo/content";
+import { getArticleDescription } from "@/shared/seo/content";
 import { articleJsonLd, breadcrumbJsonLd, JsonLd } from "@/shared/seo/json-ld";
 
 interface BlogPostPageProps {
@@ -66,10 +66,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const MDXContent = content.compiled.default;
   const wayFindingPath = `/blog/${slug.join("/")}`;
   const rootPath = `/${slug.slice(0, -1).join("/")}`;
-  const description =
-    content.frontmatter.description ||
-    firstParagraphDescription(content.source) ||
-    "SEOJing 블로그 글";
+  const description = getArticleDescription(
+    content.frontmatter,
+    content.source,
+  );
 
   return (
     <div className="relative min-h-[calc(100vh-25rem)]">
