@@ -110,8 +110,10 @@ function PostQaPanelInner({
   storageKey = DEFAULT_STORAGE_KEY,
 }: PostQaPanelProps) {
   const [question, setQuestion] = useState("");
-  const [result, setResult] = useState<PostQaResult | null>(null);
-  const resultSlug = useRef(slug);
+  const [resultState, setResultState] = useState<{
+    slug: string;
+    result: PostQaResult;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [log, setLog] = useState<QuestionLogEntry[]>(() =>
@@ -143,7 +145,7 @@ function PostQaPanelInner({
     const handleContext = (event: WindowEventMap["seojing:qa-context"]) => {
       const nextContext = event.detail;
       setSectionContext(nextContext);
-      setResult(null);
+      setResultState(null);
       setError(null);
       window.setTimeout(() => {
         panelRef.current?.scrollIntoView({
@@ -164,7 +166,7 @@ function PostQaPanelInner({
       question.trim().length > 0 && question.trim().length <= 500 && !pending,
     [pending, question],
   );
-  const visibleResult = resultSlug.current === slug ? result : null;
+  const visibleResult = resultState?.slug === slug ? resultState.result : null;
 
   const submitQuestion = async () => {
     const trimmedQuestion = question.trim();
@@ -193,8 +195,7 @@ function PostQaPanelInner({
         throw new Error(`qa request failed: ${response.status}`);
       const body = (await response.json()) as PostQaResult;
       if (requestSeq.current !== currentRequestSeq) return;
-      resultSlug.current = slug;
-      setResult(body);
+      setResultState({ slug, result: body });
       setQuestion("");
 
       const nextLog = [
