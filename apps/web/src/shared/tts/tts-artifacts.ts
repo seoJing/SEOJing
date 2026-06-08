@@ -1,3 +1,7 @@
+import {
+  nextCodeFenceState,
+  type CodeFenceState,
+} from "@/shared/lib/code-fence";
 import { blogUrl } from "@/shared/config/site";
 
 export type TtsArtifactKind = "summary-2m" | "core-5m" | "section";
@@ -116,9 +120,14 @@ export function extractTtsSections(source: string): TtsSection[] {
   const sections: TtsSection[] = [];
   let current: TtsSection | null = null;
   const seenIds = new Map<string, number>();
+  let codeFence: CodeFenceState | null = null;
 
   for (const line of lines) {
-    const heading = /^(#{2,4})\s+(.+?)\s*$/.exec(line.trim());
+    codeFence = nextCodeFenceState(codeFence, line);
+
+    const heading = codeFence
+      ? null
+      : /^(#{2,4})\s+(.+?)\s*$/.exec(line.trim());
     if (heading) {
       if (current) current.text = normalizeText(stripMdx(current.text));
       const title = stripInlineMdx(heading[2] ?? "섹션");
@@ -148,7 +157,7 @@ export function extractTtsSections(source: string): TtsSection[] {
 
 export function stripMdx(source: string): string {
   return source
-    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/(`{3,}|~{3,})[\s\S]*?\1/g, " ")
     .replace(/^---\s*\n[\s\S]*?\n---\s*(?:\n|$)/, " ")
     .replace(/^import\s+.+$/gm, " ")
     .replace(/^export\s+.+$/gm, " ")

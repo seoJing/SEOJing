@@ -99,39 +99,53 @@ function safeAnalyticsDetail(
   return { action, question_length_bucket: questionLengthBucket };
 }
 
-export function PostQaPanel({
+export function PostQaPanel(props: PostQaPanelProps) {
+  return <PostQaPanelInner {...props} />;
+}
+
+function PostQaPanelInner({
   slug,
   title,
   endpoint = DEFAULT_ENDPOINT,
   storageKey = DEFAULT_STORAGE_KEY,
 }: PostQaPanelProps) {
   const [question, setQuestion] = useState("");
-  const [result, setResult] = useState<PostQaResult | null>(null);
+  const [resultState, setResultState] = useState<{
+    slug: string;
+    result: PostQaResult;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [log, setLog] = useState<QuestionLogEntry[]>([]);
+  const [log, setLog] = useState<QuestionLogEntry[]>(() =>
+    safeReadLog(storageKey).filter((entry) => entry.slug === slug),
+  );
   const [sectionContext, setSectionContext] = useState<SectionQaContext | null>(
     null,
   );
   const requestSeq = useRef(0);
+  const requestAbortController = useRef<AbortController | null>(null);
   const panelRef = useRef<HTMLElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     requestSeq.current += 1;
-    setQuestion("");
-    setResult(null);
-    setError(null);
-    setPending(false);
-    setSectionContext(null);
-    setLog(safeReadLog(storageKey).filter((entry) => entry.slug === slug));
+    requestAbortController.current?.abort();
+    requestAbortController.current = null;
   }, [slug, storageKey]);
+
+  useEffect(() => {
+    return () => {
+      requestSeq.current += 1;
+      requestAbortController.current?.abort();
+      requestAbortController.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     const handleContext = (event: WindowEventMap["seojing:qa-context"]) => {
       const nextContext = event.detail;
       setSectionContext(nextContext);
-      setResult(null);
+      setResultState(null);
       setError(null);
       window.setTimeout(() => {
         panelRef.current?.scrollIntoView({
@@ -152,6 +166,7 @@ export function PostQaPanel({
       question.trim().length > 0 && question.trim().length <= 500 && !pending,
     [pending, question],
   );
+  const visibleResult = resultState?.slug === slug ? resultState.result : null;
 
   const submitQuestion = async () => {
     const trimmedQuestion = question.trim();
@@ -161,6 +176,9 @@ export function PostQaPanel({
       : trimmedQuestion;
 
     requestSeq.current += 1;
+    requestAbortController.current?.abort();
+    const controller = new AbortController();
+    requestAbortController.current = controller;
     const currentRequestSeq = requestSeq.current;
 
     setPending(true);
@@ -171,12 +189,13 @@ export function PostQaPanel({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ slug, question: apiQuestion }),
+        signal: controller.signal,
       });
       if (!response.ok)
         throw new Error(`qa request failed: ${response.status}`);
       const body = (await response.json()) as PostQaResult;
       if (requestSeq.current !== currentRequestSeq) return;
-      setResult(body);
+      setResultState({ slug, result: body });
       setQuestion("");
 
       const nextLog = [
@@ -203,15 +222,18 @@ export function PostQaPanel({
           }),
         );
       }
-    } catch {
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      if (error instanceof DOMException && error.name === "AbortError") return;
       if (requestSeq.current !== currentRequestSeq) return;
       setError(
         "질문 API가 잠시 불안정해요. 글 읽기는 그대로 가능하니 잠시 후 다시 시도해주세요.",
       );
     } finally {
       if (requestSeq.current === currentRequestSeq) {
-        setPending(false);
+        requestAbortController.current = null;
       }
+      setPending(false);
     }
   };
 
@@ -291,18 +313,18 @@ export function PostQaPanel({
         </p>
       )}
 
-      {result && (
+      {visibleResult && (
         <div className="mt-5 space-y-4 rounded-xl bg-gray-50 p-4 dark:bg-gray-900/70">
           <p className="whitespace-pre-wrap text-sm leading-7 text-gray-800 dark:text-gray-200">
-            {result.answer}
+            {visibleResult.answer}
           </p>
-          {result.sources.length > 0 && (
+          {visibleResult.sources.length > 0 && (
             <div className="space-y-2">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 출처
               </h3>
               <ul className="space-y-2">
-                {result.sources.map((source) => {
+                {visibleResult.sources.map((source) => {
                   const href = sourceHref(source.href, source.chunkId);
                   return (
                     <li
@@ -330,13 +352,13 @@ export function PostQaPanel({
               </ul>
             </div>
           )}
-          {result.relatedPosts.length > 0 && (
+          {visibleResult.relatedPosts.length > 0 && (
             <div className="space-y-2">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 관련 글
               </h3>
               <ul className="flex flex-wrap gap-2">
-                {result.relatedPosts.map((post) => {
+                {visibleResult.relatedPosts.map((post) => {
                   const href = safeInternalBlogHref(post.href);
                   return (
                     <li key={post.slug}>
