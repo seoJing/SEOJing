@@ -26,6 +26,7 @@ type QaAnalyticsDetail = PostQaResult["analytics"]["event"];
 declare global {
   interface WindowEventMap {
     "seojing:qa-interaction": CustomEvent<QaAnalyticsDetail>;
+    "seojing:open-comments": CustomEvent<{ source: "post_qa" }>;
   }
 }
 
@@ -122,6 +123,14 @@ export function PostQaPanel({
     } finally {
       setPending(false);
     }
+  };
+
+  const openComments = () => {
+    window.dispatchEvent(
+      new CustomEvent("seojing:open-comments", {
+        detail: { source: "post_qa" },
+      }),
+    );
   };
 
   return (
@@ -231,6 +240,16 @@ export function PostQaPanel({
               </ul>
             </div>
           )}
+          <div className="rounded-xl border border-gray-200 bg-white/70 p-3 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-950/40 dark:text-gray-300">
+            이 질문을 공개 FAQ 후보로 남기고 싶다면 댓글로 남겨주세요.
+            <button
+              type="button"
+              onClick={openComments}
+              className="ml-2 font-medium text-gray-900 underline underline-offset-4 dark:text-gray-100"
+            >
+              댓글 열기
+            </button>
+          </div>
         </div>
       )}
 

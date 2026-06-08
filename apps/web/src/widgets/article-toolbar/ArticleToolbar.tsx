@@ -41,6 +41,17 @@ export function ArticleToolbar({ slug, title }: ArticleToolbarProps) {
   }, [slug, title]);
 
   useEffect(() => {
+    const handleOpenComments = (
+      event: WindowEventMap["seojing:open-comments"],
+    ) => {
+      if (event.detail.source === "post_qa") setCommentOpen(true);
+    };
+    window.addEventListener("seojing:open-comments", handleOpenComments);
+    return () =>
+      window.removeEventListener("seojing:open-comments", handleOpenComments);
+  }, []);
+
+  useEffect(() => {
     articleSectionRef.current = toolbarRef.current?.closest("section") ?? null;
   }, []);
 

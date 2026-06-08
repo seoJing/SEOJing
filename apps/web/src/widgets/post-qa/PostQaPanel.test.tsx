@@ -128,6 +128,30 @@ describe("PostQaPanel", () => {
     window.removeEventListener("seojing:qa-interaction", listener);
   });
 
+  it("dispatches an explicit comment CTA event after answering", async () => {
+    const listener = vi.fn();
+    window.addEventListener("seojing:open-comments", listener);
+
+    render(
+      <PostQaPanel slug="study/backend/day1" title="백엔드 스터디 Day 1" />,
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "이 글에 대해 질문하기" }),
+      {
+        target: { value: "FAQ로 남길 질문" },
+      },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "질문 보내기" }));
+
+    fireEvent.click(await screen.findByRole("button", { name: "댓글 열기" }));
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    const event = listener.mock.calls[0][0] as CustomEvent;
+    expect(event.detail).toEqual({ source: "post_qa" });
+
+    window.removeEventListener("seojing:open-comments", listener);
+  });
+
   it("shows a degraded message when the API fails", async () => {
     vi.stubGlobal(
       "fetch",
