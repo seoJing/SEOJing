@@ -4,7 +4,6 @@ import {
   useState,
   useEffect,
   useCallback,
-  useMemo,
   useRef,
   type RefObject,
 } from "react";
@@ -15,16 +14,9 @@ import {
   IoRemoveOutline,
   IoPhonePortraitOutline,
   IoDesktopOutline,
-  IoListOutline,
-  IoCodeSlashOutline,
-  IoImageOutline,
 } from "react-icons/io5";
 import { FullscreenView } from "@app/ui";
-import {
-  extractSlideOutlineFromSlides,
-  extractSlides,
-  getFillRatio,
-} from "./presentation.utils";
+import { extractSlides, getFillRatio } from "./presentation.utils";
 
 const LONG_PRESS_MS = 1500;
 const LONG_PRESS_THRESHOLD_MS = 300; // 롱프레스 판단 최소 시간
@@ -105,9 +97,6 @@ export function PresentationView({
     : BOTTOM_BAR_HEIGHT_PC;
 
   const [slides, setSlides] = useState<HTMLDivElement[]>([]);
-  const [outlineFilter, setOutlineFilter] = useState<"all" | "code" | "image">(
-    "all",
-  );
 
   useEffect(() => {
     if (!articleRef.current) return;
@@ -139,21 +128,6 @@ export function PresentationView({
   ]);
 
   const totalSlides = slides.length;
-  const slideOutline = useMemo(
-    () => extractSlideOutlineFromSlides(slides),
-    [slides],
-  );
-  const filteredSlideOutline = useMemo(() => {
-    if (outlineFilter === "code") {
-      return slideOutline.filter((item) => item.hasCode);
-    }
-    if (outlineFilter === "image") {
-      return slideOutline.filter((item) => item.hasImage);
-    }
-    return slideOutline;
-  }, [outlineFilter, slideOutline]);
-  const codeSlideCount = slideOutline.filter((item) => item.hasCode).length;
-  const imageSlideCount = slideOutline.filter((item) => item.hasImage).length;
   const closingRef = useRef(false);
 
   const safeClose = useCallback(() => {
@@ -174,10 +148,6 @@ export function PresentationView({
 
   const goToPrev = useCallback(() => {
     setCurrentSlide((p) => Math.max(p - 1, 0));
-  }, []);
-
-  const goToSlide = useCallback((slideIndex: number) => {
-    setCurrentSlide(slideIndex);
   }, []);
 
   useEffect(() => {
@@ -321,113 +291,21 @@ export function PresentationView({
       style={{ height: "100dvh" }}
     >
       <div className="absolute flex flex-col" style={containerStyle}>
-        {/* 덱 레이아웃: PC는 좌측 목차/탐색 + 우측 16:9 슬라이드, 모바일은 슬라이드만 */}
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          {!isMobile && (
-            <aside className="relative z-20 flex w-72 shrink-0 flex-col border-r border-gray-200 bg-gray-50/95 px-4 py-5 text-gray-700 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-950/95 dark:text-gray-200">
-              <div className="mb-4 flex items-center gap-2 text-sm font-semibold">
-                <IoListOutline className="size-4" />
-                슬라이드 목차
-              </div>
-
-              <div className="mb-4 grid grid-cols-3 gap-1 rounded-xl bg-gray-200/70 p-1 text-[11px] font-medium dark:bg-gray-800/80">
-                {[
-                  { key: "all" as const, label: "전체", count: totalSlides },
-                  {
-                    key: "code" as const,
-                    label: "코드",
-                    count: codeSlideCount,
-                  },
-                  {
-                    key: "image" as const,
-                    label: "이미지",
-                    count: imageSlideCount,
-                  },
-                ].map((filter) => (
-                  <button
-                    key={filter.key}
-                    type="button"
-                    className={`rounded-lg px-2 py-1.5 transition-colors ${
-                      outlineFilter === filter.key
-                        ? "bg-white text-gray-950 shadow-sm dark:bg-gray-700 dark:text-white"
-                        : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100"
-                    }`}
-                    onClick={() => setOutlineFilter(filter.key)}
-                    aria-pressed={outlineFilter === filter.key}
-                  >
-                    {filter.label} {filter.count}
-                  </button>
-                ))}
-              </div>
-
-              <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
-                {filteredSlideOutline.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={`group flex w-full items-start gap-3 rounded-xl border px-3 py-2 text-left transition-colors ${
-                      item.slideIndex === currentSlide
-                        ? "border-blue-300 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-950/60 dark:text-blue-100"
-                        : "border-transparent hover:border-gray-200 hover:bg-white dark:hover:border-gray-800 dark:hover:bg-gray-900"
-                    }`}
-                    onClick={() => goToSlide(item.slideIndex)}
-                    aria-current={
-                      item.slideIndex === currentSlide ? "step" : undefined
-                    }
-                  >
-                    <span className="mt-0.5 min-w-[2ch] text-xs tabular-nums text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300">
-                      {item.slideIndex + 1}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="line-clamp-2 text-xs font-medium leading-5">
-                        {item.title}
-                      </span>
-                      <span className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400">
-                        {item.kind === "heading" ? `H${item.level}` : "본문"}
-                        {item.hasCode && (
-                          <span className="inline-flex items-center gap-0.5 rounded-full bg-gray-900 px-1.5 py-0.5 text-white dark:bg-gray-100 dark:text-gray-900">
-                            <IoCodeSlashOutline className="size-3" />
-                            {item.codeBlockCount}
-                          </span>
-                        )}
-                        {item.hasImage && (
-                          <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200">
-                            <IoImageOutline className="size-3" />
-                            {item.imageCount}
-                          </span>
-                        )}
-                      </span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </aside>
-          )}
-
-          <main
-            className={`relative z-0 flex flex-1 items-center justify-center overflow-hidden ${
-              isMobile ? "px-5 py-12" : "px-10 py-8"
-            }`}
-          >
-            <div className="relative aspect-[16/9] w-full max-w-6xl overflow-hidden rounded-[2rem] border border-gray-200 bg-white shadow-2xl shadow-gray-950/10 dark:border-gray-800 dark:bg-gray-950 dark:shadow-black/40">
-              <div className="pointer-events-none absolute left-7 top-5 z-10 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500 dark:bg-gray-900 dark:text-gray-400">
-                Deck {currentSlide + 1} / {totalSlides}
-              </div>
-              <div className="flex h-full items-center justify-center px-14 py-16">
-                <div
-                  ref={slideContentRef}
-                  className="mx-auto w-full max-w-5xl overflow-hidden"
-                  style={isMobile ? undefined : { zoom: pcScale }}
-                />
-              </div>
-            </div>
-          </main>
+        {/* 슬라이드 콘텐츠 */}
+        <div
+          className={`flex flex-1 items-center justify-center overflow-hidden py-12 ${isMobile ? "px-5" : "px-16"}`}
+        >
+          <div
+            ref={slideContentRef}
+            className="mx-auto w-full max-w-5xl overflow-hidden"
+            style={isMobile ? undefined : { zoom: pcScale }}
+          />
         </div>
 
         {/* 네비게이션 영역 (양쪽 사이드만, 가운데는 콘텐츠 클릭 가능) */}
         <div
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex"
-          style={{ bottom: `${bottomBarHeight}px`, left: isMobile ? 0 : 288 }}
+          className="pointer-events-none absolute inset-0 flex"
+          style={{ bottom: `${bottomBarHeight}px` }}
         >
           <button
             type="button"
@@ -452,7 +330,7 @@ export function PresentationView({
 
         {/* 하단 바 */}
         <div
-          className={`relative z-30 flex shrink-0 items-center bg-gray-100 dark:bg-gray-900 ${isMobile ? "px-4" : "px-6"}`}
+          className={`relative flex shrink-0 items-center bg-gray-100 dark:bg-gray-900 ${isMobile ? "px-4" : "px-6"}`}
           style={{ height: `${bottomBarHeight}px` }}
         >
           <span className="flex items-center gap-2 text-xs text-gray-500">
