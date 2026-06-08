@@ -303,10 +303,24 @@ export function useArticleAnalytics({
       );
     };
 
-    const handleQaInteraction = (
-      event: WindowEventMap["seojing:qa-interaction"],
-    ) => {
-      emit("qa_interaction", event.detail);
+    const handleQaInteraction = (event: Event) => {
+      if (!(event instanceof CustomEvent)) return;
+      const { action, question_length_bucket: questionLengthBucket } =
+        event.detail ?? {};
+      const validAction = [
+        "answer_shown",
+        "insufficient_context",
+        "invalid_request",
+      ].includes(action);
+      const validBucket = ["1-40", "41-120", "121+"].includes(
+        questionLengthBucket,
+      );
+      if (!validAction || !validBucket) return;
+
+      emit("qa_interaction", {
+        action,
+        question_length_bucket: questionLengthBucket,
+      });
     };
 
     const handleClick = (event: MouseEvent) => {

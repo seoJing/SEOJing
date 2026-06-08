@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { PostQaResult } from "@/shared/rag/post-qa";
 
 type QuestionLogEntry = {
@@ -49,8 +49,38 @@ function safeWriteLog(storageKey: string, entries: QuestionLogEntry[]) {
   }
 }
 
+function safeInternalBlogHref(href: string): string | null {
+  try {
+    const origin = window.location.origin;
+    const url = new URL(href, origin);
+    if (url.origin !== origin) return null;
+    if (!url.pathname.startsWith("/blog/")) return null;
+    if (url.search || url.hash) return null;
+    return url.pathname;
+  } catch {
+    return null;
+  }
+}
+
 function sourceHref(href: string, chunkId: string) {
-  return `${href}#${encodeURIComponent(chunkId)}`;
+  const safeHref = safeInternalBlogHref(href);
+  return safeHref ? `${safeHref}#${encodeURIComponent(chunkId)}` : null;
+}
+
+function safeAnalyticsDetail(
+  detail: PostQaResult["analytics"]["event"] | undefined,
+): QaAnalyticsDetail | null {
+  if (!detail) return null;
+  const { action, question_length_bucket: questionLengthBucket } = detail;
+  if (
+    !["answer_shown", "insufficient_context", "invalid_request"].includes(
+      action,
+    ) ||
+    !["1-40", "41-120", "121+"].includes(questionLengthBucket)
+  ) {
+    return null;
+  }
+  return { action, question_length_bucket: questionLengthBucket };
 }
 
 export function PostQaPanel({
@@ -64,8 +94,14 @@ export function PostQaPanel({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [log, setLog] = useState<QuestionLogEntry[]>([]);
+  const requestSeq = useRef(0);
 
   useEffect(() => {
+    requestSeq.current += 1;
+    setQuestion("");
+    setResult(null);
+    setError(null);
+    setPending(false);
     setLog(safeReadLog(storageKey).filter((entry) => entry.slug === slug));
   }, [slug, storageKey]);
 
@@ -79,6 +115,8 @@ export function PostQaPanel({
     const trimmedQuestion = question.trim();
     if (!trimmedQuestion || pending) return;
 
+    const currentRequestSeq = requestSeq.current;
+
     setPending(true);
     setError(null);
 
@@ -91,6 +129,7 @@ export function PostQaPanel({
       if (!response.ok)
         throw new Error(`qa request failed: ${response.status}`);
       const body = (await response.json()) as PostQaResult;
+      if (requestSeq.current !== currentRequestSeq) return;
       setResult(body);
       setQuestion("");
 
@@ -109,19 +148,23 @@ export function PostQaPanel({
       safeWriteLog(storageKey, nextLog);
       setLog(nextLog.filter((entry) => entry.slug === slug));
 
-      if (body.analytics?.event) {
+      const analyticsDetail = safeAnalyticsDetail(body.analytics?.event);
+      if (analyticsDetail) {
         window.dispatchEvent(
           new CustomEvent("seojing:qa-interaction", {
-            detail: body.analytics.event,
+            detail: analyticsDetail,
           }),
         );
       }
     } catch {
+      if (requestSeq.current !== currentRequestSeq) return;
       setError(
         "질문 API가 잠시 불안정해요. 글 읽기는 그대로 가능하니 잠시 후 다시 시도해주세요.",
       );
     } finally {
-      setPending(false);
+      if (requestSeq.current === currentRequestSeq) {
+        setPending(false);
+      }
     }
   };
 
@@ -202,22 +245,31 @@ export function PostQaPanel({
                 출처
               </h3>
               <ul className="space-y-2">
-                {result.sources.map((source) => (
-                  <li
-                    key={source.chunkId}
-                    className="text-sm text-gray-600 dark:text-gray-300"
-                  >
-                    <a
-                      href={sourceHref(source.href, source.chunkId)}
-                      className="font-medium text-gray-900 underline underline-offset-4 dark:text-gray-100"
+                {result.sources.map((source) => {
+                  const href = sourceHref(source.href, source.chunkId);
+                  return (
+                    <li
+                      key={source.chunkId}
+                      className="text-sm text-gray-600 dark:text-gray-300"
                     >
-                      {source.heading}
-                    </a>
-                    <p className="mt-1 line-clamp-2 text-xs text-gray-500 dark:text-gray-400">
-                      {source.excerpt}
-                    </p>
-                  </li>
-                ))}
+                      {href ? (
+                        <a
+                          href={href}
+                          className="font-medium text-gray-900 underline underline-offset-4 dark:text-gray-100"
+                        >
+                          {source.heading}
+                        </a>
+                      ) : (
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                          {source.heading}
+                        </span>
+                      )}
+                      <p className="mt-1 line-clamp-2 text-xs text-gray-500 dark:text-gray-400">
+                        {source.excerpt}
+                      </p>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
@@ -227,16 +279,25 @@ export function PostQaPanel({
                 관련 글
               </h3>
               <ul className="flex flex-wrap gap-2">
-                {result.relatedPosts.map((post) => (
-                  <li key={post.slug}>
-                    <a
-                      href={post.href}
-                      className="rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-600 hover:border-gray-400 dark:border-gray-700 dark:text-gray-300"
-                    >
-                      {post.title}
-                    </a>
-                  </li>
-                ))}
+                {result.relatedPosts.map((post) => {
+                  const href = safeInternalBlogHref(post.href);
+                  return (
+                    <li key={post.slug}>
+                      {href ? (
+                        <a
+                          href={href}
+                          className="rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-600 hover:border-gray-400 dark:border-gray-700 dark:text-gray-300"
+                        >
+                          {post.title}
+                        </a>
+                      ) : (
+                        <span className="rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-600 dark:border-gray-700 dark:text-gray-300">
+                          {post.title}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}

@@ -207,7 +207,8 @@ describe("post QA API handler", () => {
       new Request("https://seojing.com/api/rag/query", { method: "GET" }),
       { chunks },
     );
-    expect(getResponse.status).toBe(404);
+    expect(getResponse.status).toBe(405);
+    expect(getResponse.headers.get("Allow")).toBe("POST");
 
     const invalidJsonResponse = await handlePostQaRequest(
       new Request("https://seojing.com/api/rag/query", {

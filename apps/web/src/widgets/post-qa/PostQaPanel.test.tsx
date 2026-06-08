@@ -128,6 +128,71 @@ describe("PostQaPanel", () => {
     window.removeEventListener("seojing:qa-interaction", listener);
   });
 
+  it("drops invalid analytics detail and unsafe server-provided links", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              ...successResponse,
+              sources: [
+                {
+                  ...successResponse.sources[0]!,
+                  href: "/blog/../../admin",
+                },
+              ],
+              relatedPosts: [
+                {
+                  slug: "bad",
+                  href: "data:text/html,phishing",
+                  title: "악성 링크",
+                },
+              ],
+              analytics: {
+                event_type: "qa_interaction",
+                event: {
+                  action: "answer_shown",
+                  question_length_bucket: "1-40",
+                  question: "raw leak",
+                },
+              },
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+      ),
+    );
+    const listener = vi.fn();
+    window.addEventListener("seojing:qa-interaction", listener);
+
+    render(
+      <PostQaPanel slug="study/backend/day1" title="백엔드 스터디 Day 1" />,
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "이 글에 대해 질문하기" }),
+      { target: { value: "링크 안전성 확인" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "질문 보내기" }));
+
+    await screen.findByText(/현재 인덱스에서 찾은 근거/);
+    expect(
+      screen.queryByRole("link", { name: /Controller는 요청을 받는다/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "악성 링크" }),
+    ).not.toBeInTheDocument();
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect((listener.mock.calls[0][0] as CustomEvent).detail).toEqual({
+      action: "answer_shown",
+      question_length_bucket: "1-40",
+    });
+    expect(
+      JSON.stringify((listener.mock.calls[0][0] as CustomEvent).detail),
+    ).not.toContain("raw leak");
+
+    window.removeEventListener("seojing:qa-interaction", listener);
+  });
+
   it("dispatches an explicit comment CTA event after answering", async () => {
     const listener = vi.fn();
     window.addEventListener("seojing:open-comments", listener);
@@ -150,6 +215,31 @@ describe("PostQaPanel", () => {
     expect(event.detail).toEqual({ source: "post_qa" });
 
     window.removeEventListener("seojing:open-comments", listener);
+  });
+
+  it("clears stale answers when the rendered post slug changes", async () => {
+    const { rerender } = render(
+      <PostQaPanel slug="study/backend/day1" title="백엔드 스터디 Day 1" />,
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "이 글에 대해 질문하기" }),
+      { target: { value: "Controller는 Service랑 어떻게 연결돼?" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "질문 보내기" }));
+    expect(
+      await screen.findByText(/현재 인덱스에서 찾은 근거/),
+    ).toBeInTheDocument();
+
+    rerender(
+      <PostQaPanel slug="study/backend/day2" title="백엔드 스터디 Day 2" />,
+    );
+
+    expect(
+      screen.queryByText(/현재 인덱스에서 찾은 근거/),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: "이 글에 대해 질문하기" }),
+    ).toHaveValue("");
   });
 
   it("shows a degraded message when the API fails", async () => {

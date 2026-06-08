@@ -41,10 +41,10 @@ export function ArticleToolbar({ slug, title }: ArticleToolbarProps) {
   }, [slug, title]);
 
   useEffect(() => {
-    const handleOpenComments = (
-      event: WindowEventMap["seojing:open-comments"],
-    ) => {
-      if (event.detail.source === "post_qa") setCommentOpen(true);
+    const handleOpenComments = (event: Event) => {
+      if (event instanceof CustomEvent && event.detail?.source === "post_qa") {
+        setCommentOpen(true);
+      }
     };
     window.addEventListener("seojing:open-comments", handleOpenComments);
     return () =>

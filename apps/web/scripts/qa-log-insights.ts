@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   buildQaLogInsights,
+  isQaLogEntry,
   renderQaLogInsightsMarkdown,
   type QaLogEntry,
 } from "../src/shared/rag/qa-log-insights";
@@ -29,7 +30,14 @@ function readLogs(filePath: string): QaLogEntry[] {
     throw new Error("질문 로그 JSON은 배열이어야 합니다.");
   }
 
-  return parsed as QaLogEntry[];
+  return parsed.map((entry, index) => {
+    if (!isQaLogEntry(entry)) {
+      throw new Error(
+        `질문 로그 ${index + 1}번째 항목 형식이 올바르지 않습니다.`,
+      );
+    }
+    return entry;
+  });
 }
 
 function main() {
@@ -49,4 +57,13 @@ function main() {
   }
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  console.error(
+    error instanceof Error
+      ? `Q&A 운영 리포트 생성 실패: ${error.message}`
+      : "Q&A 운영 리포트 생성 실패: 알 수 없는 오류가 발생했습니다.",
+  );
+  process.exit(1);
+}

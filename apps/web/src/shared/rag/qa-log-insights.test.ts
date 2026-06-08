@@ -97,4 +97,34 @@ describe("qa-log-insights", () => {
     expect(markdown).toContain("## 콘텐츠 개선 액션");
     expect(markdown).toContain("revise_existing_post");
   });
+
+  it("escapes user-controlled Markdown fields in the operator report", () => {
+    const markdown = renderQaLogInsightsMarkdown(
+      buildQaLogInsights(
+        [
+          {
+            slug: "study/<img src=x>",
+            question:
+              "[click](javascript:alert(1))\n- injected contact me@example.com token ghp_abcdefgh12345678",
+            status: "answered",
+            createdAt: "2026-06-08T01:00:00.000Z",
+          },
+          {
+            slug: "study/<img src=x>",
+            question: "[click](javascript:alert(1)) 두 번째",
+            status: "answered",
+            createdAt: "2026-06-08T01:01:00.000Z",
+          },
+        ],
+        { minQuestionsForFaq: 2 },
+      ),
+    );
+
+    expect(markdown).not.toContain("<img");
+    expect(markdown).not.toContain("\n- injected");
+    expect(markdown).not.toContain("me@example.com");
+    expect(markdown).not.toContain("ghp_ab");
+    expect(markdown).toContain("\\[email\\]");
+    expect(markdown).toContain("\\[click\\]\\(javascript:alert\\(1\\)\\)");
+  });
 });

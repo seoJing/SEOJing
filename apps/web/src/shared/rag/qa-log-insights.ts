@@ -56,8 +56,25 @@ const STOPWORDS = new Set([
   "흐름을",
 ]);
 
+export function isQaLogEntry(entry: unknown): entry is QaLogEntry {
+  if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
+    return false;
+  }
+  const candidate = entry as Partial<QaLogEntry>;
+  return (
+    typeof candidate.slug === "string" &&
+    typeof candidate.question === "string" &&
+    typeof candidate.createdAt === "string" &&
+    ["answered", "insufficient_context", "invalid_request"].includes(
+      String(candidate.status),
+    )
+  );
+}
+
 function validLog(entry: QaLogEntry): boolean {
-  return Boolean(entry.slug.trim() && entry.question.trim());
+  return (
+    isQaLogEntry(entry) && Boolean(entry.slug.trim() && entry.question.trim())
+  );
 }
 
 function tokenizeQuestion(question: string): string[] {
@@ -190,6 +207,30 @@ export function buildQaLogInsights(
   };
 }
 
+function escapeMarkdown(value: string): string {
+  return value
+    .replace(/[\\`*_{}[\]()#+\-.!|>]/g, "\\$&")
+    .replace(/\r?\n/g, " ")
+    .replace(/<[^>]*>/g, "")
+    .trim();
+}
+
+function redactSensitiveText(value: string): string {
+  return value
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email]")
+    .replace(/(?:\+?\d[\d\s().-]{7,}\d)/g, "[phone]")
+    .replace(
+      /\b(?:sk|pk|ghp|github_pat|xox[baprs])-?[A-Za-z0-9_.=-]{6,}\b/g,
+      "[token]",
+    )
+    .replace(/\b[A-Za-z0-9_-]{32,}\b/g, "[token]")
+    .replace(/https?:\/\/\S+/gi, "[url]");
+}
+
+function safeReportText(value: string): string {
+  return escapeMarkdown(redactSensitiveText(value));
+}
+
 export function renderQaLogInsightsMarkdown(insights: QaLogInsights): string {
   const lines = [
     "# SEOJing Q&A 운영 루프",
@@ -205,9 +246,9 @@ export function renderQaLogInsightsMarkdown(insights: QaLogInsights): string {
   } else {
     for (const candidate of insights.faqCandidates) {
       lines.push(
-        `- [${candidate.priority}] ${candidate.slug}: ${candidate.representativeQuestion}`,
+        `- [${candidate.priority}] ${safeReportText(candidate.slug)}: ${safeReportText(candidate.representativeQuestion)}`,
         `  - 질문 수: ${candidate.questionCount}`,
-        `  - 핵심어: ${candidate.topTerms.join(", ") || "없음"}`,
+        `  - 핵심어: ${candidate.topTerms.map(safeReportText).join(", ") || "없음"}`,
       );
     }
   }
@@ -218,9 +259,9 @@ export function renderQaLogInsightsMarkdown(insights: QaLogInsights): string {
   } else {
     for (const action of insights.contentActions) {
       lines.push(
-        `- ${action.action}: ${action.slug}`,
-        `  - 이유: ${action.reason}`,
-        `  - 샘플: ${action.sampleQuestions.join(" / ")}`,
+        `- ${action.action}: ${safeReportText(action.slug)}`,
+        `  - 이유: ${safeReportText(action.reason)}`,
+        `  - 샘플: ${action.sampleQuestions.map(safeReportText).join(" / ")}`,
       );
     }
   }
@@ -228,7 +269,7 @@ export function renderQaLogInsightsMarkdown(insights: QaLogInsights): string {
   lines.push("", "## 슬러그별 요약");
   for (const summary of insights.bySlug) {
     lines.push(
-      `- ${summary.slug}: 질문 ${summary.questionCount}개, 근거 부족 ${summary.insufficientContextCount}개, top=${summary.topTerms.join(", ") || "없음"}`,
+      `- ${safeReportText(summary.slug)}: 질문 ${summary.questionCount}개, 근거 부족 ${summary.insufficientContextCount}개, top=${summary.topTerms.map(safeReportText).join(", ") || "없음"}`,
     );
   }
 

@@ -68,12 +68,17 @@ const MIN_SCORE = 3;
 const WORD_PATTERN = /[\p{L}\p{N}][\p{L}\p{N}._+-]*/gu;
 const MARKUP_PATTERN = /<[^>]+>|```[\s\S]*?```|`([^`]+)`/g;
 
-function jsonResponse(status: number, body: unknown): Response {
+function jsonResponse(
+  status: number,
+  body: unknown,
+  headers?: Record<string, string>,
+): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
       "cache-control": "private, no-store",
+      ...headers,
     },
   });
 }
@@ -245,6 +250,16 @@ export function answerPostQuestion({
   };
 }
 
+function concatChunks(chunks: Uint8Array[], totalBytes: number): Uint8Array {
+  const result = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return result;
+}
+
 async function readJsonBody(
   request: Request,
   maxBodyBytes: number,
@@ -254,10 +269,24 @@ async function readJsonBody(
     throw Object.assign(new Error("payload too large"), { status: 413 });
   }
 
-  const body = await request.text();
-  if (new TextEncoder().encode(body).byteLength > maxBodyBytes) {
-    throw Object.assign(new Error("payload too large"), { status: 413 });
+  const reader = request.body?.getReader();
+  if (!reader) return {};
+
+  const chunks: Uint8Array[] = [];
+  let receivedBytes = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    receivedBytes += value.byteLength;
+    if (receivedBytes > maxBodyBytes) {
+      await reader.cancel();
+      throw Object.assign(new Error("payload too large"), { status: 413 });
+    }
+    chunks.push(value);
   }
+
+  const body = new TextDecoder().decode(concatChunks(chunks, receivedBytes));
   if (!body.trim()) return {};
   return JSON.parse(body);
 }
@@ -271,7 +300,11 @@ export async function handlePostQaRequest(
   options: PostQaHandlerOptions,
 ): Promise<Response> {
   if (request.method !== "POST") {
-    return jsonResponse(404, { status: "not_found" });
+    return jsonResponse(
+      405,
+      { status: "method_not_allowed" },
+      { Allow: "POST" },
+    );
   }
 
   let body: unknown;
