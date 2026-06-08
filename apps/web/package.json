@@ -18,7 +18,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "export:presentation": "tsx scripts/export-presentation-pptx.ts"
   },
   "dependencies": {
     "@app/ui": "workspace:*",
@@ -51,6 +52,7 @@
     "@vitest/coverage-v8": "^4.1.0",
     "eslint": "^9",
     "jsdom": "^28.1.0",
+    "pptxgenjs": "^4.0.1",
     "rehype-prism-plus": "^2.0.2",
     "remark-gfm": "^4.0.1",
     "tailwindcss": "^4.2.1",

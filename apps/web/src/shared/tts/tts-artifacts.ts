@@ -46,6 +46,11 @@ export interface BuildTtsManifestInput {
   generatedAt?: string;
 }
 
+interface CodeFenceState {
+  char: "`" | "~";
+  length: number;
+}
+
 const TWO_MINUTE_MAX_WORDS = 360;
 const FIVE_MINUTE_MAX_WORDS = 900;
 const SECTION_MAX_WORDS = 520;
@@ -116,9 +121,14 @@ export function extractTtsSections(source: string): TtsSection[] {
   const sections: TtsSection[] = [];
   let current: TtsSection | null = null;
   const seenIds = new Map<string, number>();
+  let codeFence: CodeFenceState | null = null;
 
   for (const line of lines) {
-    const heading = /^(#{2,4})\s+(.+?)\s*$/.exec(line.trim());
+    codeFence = nextCodeFenceState(codeFence, line);
+
+    const heading = codeFence
+      ? null
+      : /^(#{2,4})\s+(.+?)\s*$/.exec(line.trim());
     if (heading) {
       if (current) current.text = normalizeText(stripMdx(current.text));
       const title = stripInlineMdx(heading[2] ?? "섹션");
@@ -148,7 +158,7 @@ export function extractTtsSections(source: string): TtsSection[] {
 
 export function stripMdx(source: string): string {
   return source
-    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/(`{3,}|~{3,})[\s\S]*?\1/g, " ")
     .replace(/^---\s*\n[\s\S]*?\n---\s*(?:\n|$)/, " ")
     .replace(/^import\s+.+$/gm, " ")
     .replace(/^export\s+.+$/gm, " ")
@@ -224,4 +234,27 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9가-힣]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
+}
+
+function nextCodeFenceState(
+  current: CodeFenceState | null,
+  line: string,
+): CodeFenceState | null {
+  const fence = /^\s*(`{3,}|~{3,})/.exec(line);
+  if (!fence) return current;
+
+  const marker = fence[1] ?? "";
+  const char = marker[0] as "`" | "~";
+  if (!current) return { char, length: marker.length };
+
+  const closingFence = /^\s*(`{3,}|~{3,})\s*$/.exec(line);
+  const closingMarker = closingFence?.[1] ?? "";
+  if (
+    closingMarker[0] === current.char &&
+    closingMarker.length >= current.length
+  ) {
+    return null;
+  }
+
+  return current;
 }

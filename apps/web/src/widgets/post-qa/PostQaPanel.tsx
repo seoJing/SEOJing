@@ -99,7 +99,12 @@ function safeAnalyticsDetail(
   return { action, question_length_bucket: questionLengthBucket };
 }
 
-export function PostQaPanel({
+export function PostQaPanel(props: PostQaPanelProps) {
+  const storageKey = props.storageKey ?? DEFAULT_STORAGE_KEY;
+  return <PostQaPanelInner key={`${props.slug}:${storageKey}`} {...props} />;
+}
+
+function PostQaPanelInner({
   slug,
   title,
   endpoint = DEFAULT_ENDPOINT,
@@ -109,7 +114,9 @@ export function PostQaPanel({
   const [result, setResult] = useState<PostQaResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [log, setLog] = useState<QuestionLogEntry[]>([]);
+  const [log, setLog] = useState<QuestionLogEntry[]>(() =>
+    safeReadLog(storageKey).filter((entry) => entry.slug === slug),
+  );
   const [sectionContext, setSectionContext] = useState<SectionQaContext | null>(
     null,
   );
@@ -119,12 +126,6 @@ export function PostQaPanel({
 
   useEffect(() => {
     requestSeq.current += 1;
-    setQuestion("");
-    setResult(null);
-    setError(null);
-    setPending(false);
-    setSectionContext(null);
-    setLog(safeReadLog(storageKey).filter((entry) => entry.slug === slug));
   }, [slug, storageKey]);
 
   useEffect(() => {

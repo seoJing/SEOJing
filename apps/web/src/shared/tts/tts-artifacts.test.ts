@@ -60,11 +60,25 @@ describe("TTS artifact manifest", () => {
     expect(sections.map((section) => section.id)).toEqual(["반복", "반복-2"]);
   });
 
+  it("does not create section artifacts from headings inside fenced code blocks", () => {
+    const sections = extractTtsSections(
+      `## 실제 섹션\n\n\`\`\`md\n## 코드 안 제목\n\`\`\`\n\n설명`,
+    );
+    expect(sections.map((section) => section.id)).toEqual(["실제-섹션"]);
+  });
+
+  it("respects markdown fence marker length and tilde fences", () => {
+    const sections = extractTtsSections(
+      `## 실제 섹션\n\n~~~~md\n## 코드 안 제목\n\`\`\`\n### 여전히 코드\n~~~~\n\n설명`,
+    );
+    expect(sections.map((section) => section.id)).toEqual(["실제-섹션"]);
+  });
+
   it("strips MDX syntax before feeding text to TTS", () => {
     expect(
       normalizeText(
         stripMdx(
-          "```ts\nconst x = 1\n```\n## 제목\n- [링크](https://example.com)와 `코드`",
+          "```ts\nconst x = 1\n```\n~~~md\n## 코드 안 제목\n~~~\n## 제목\n- [링크](https://example.com)와 `코드`",
         ),
       ),
     ).toContain("제목 링크와 코드");
