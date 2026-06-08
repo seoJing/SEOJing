@@ -10,7 +10,14 @@ const contentRoot = path.join(webRoot, "content");
 const publicRoot = path.join(webRoot, "public");
 const contentImageRoot = path.join(publicRoot, "images/content");
 
-const allowedExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
+const allowedExtensions = new Set([
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".webp",
+  ".svg",
+  ".gif",
+]);
 
 const sectionRules = [
   { prefix: "okayJing/", section: "okayjing" },

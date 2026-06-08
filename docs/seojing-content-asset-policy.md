@@ -110,6 +110,19 @@ image_final_FINAL.png
 - 출처가 외부이면 caption 끝에 출처를 명시한다.
 - UI 캡처는 시점이나 화면 상태가 중요하면 함께 적는다.
 
+다이어그램/설명용 이미지 추천 템플릿:
+
+```mdx
+<ArticleImage
+  src="/images/content/<section>/<post-slug>/<semantic-name>-01.svg"
+  alt="핵심 객체 A가 중간 단계 B를 거쳐 결과 C로 이어지는 구조를 보여주는 다이어그램"
+  caption="이 그림은 본문에서 설명한 판단 기준을 한 화면에 묶어, 독자가 다음 절의 코드/흐름을 따라가기 전에 전체 구조를 먼저 잡게 한다."
+/>
+```
+
+`alt`에는 이미지 안의 모든 글자를 옮기기보다 “무엇이 어떻게 연결되는지”를 쓰고,
+`caption`에는 그 그림을 왜 그 위치에서 봐야 하는지를 쓴다.
+
 ### 4.2 Markdown image 허용 범위
 
 간단한 이미지에는 markdown image도 허용한다. 이때 title을 caption 후보로 취급한다.

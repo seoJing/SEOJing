@@ -60,7 +60,10 @@ function getHeadingLevel(element: Element): number | null {
 }
 
 function getElementTitle(element: Element, fallback: string): string {
-  const text = element.textContent?.replace(/\s+/g, " ").trim();
+  const heading = element.matches("h1,h2,h3,h4,h5,h6")
+    ? element
+    : element.querySelector("h1,h2,h3,h4,h5,h6");
+  const text = (heading ?? element).textContent?.replace(/\s+/g, " ").trim();
   return text || fallback;
 }
 
@@ -160,6 +163,14 @@ export function extractSlideOutline(
   flushContent();
 
   return outline;
+}
+
+export function extractSlideOutlineFromSlides(
+  slides: HTMLElement[],
+): PresentationSlideOutlineItem[] {
+  return slides.map((slide, index) =>
+    buildSlideOutlineItem(Array.from(slide.children), index),
+  );
 }
 
 export function extractSlides(

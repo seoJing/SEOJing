@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Mobile viewport unit comparison</title>
+  <desc id="desc">Comparison of vh, svh, lvh, and dvh against visible mobile browser chrome.</desc>
+  <defs>
+    <linearGradient id="phone" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#111827"/>
+      <stop offset="1" stop-color="#020617"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#020617" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="720" rx="42" fill="#f8fafc"/>
+  <text x="80" y="78" font-family="Inter, Pretendard, Apple SD Gothic Neo, sans-serif" font-size="38" font-weight="800" fill="#0f172a">모바일 뷰포트 단위 비교</text>
+  <text x="80" y="120" font-family="Inter, Pretendard, Apple SD Gothic Neo, sans-serif" font-size="20" fill="#475569">주소창/하단 바가 보이는 순간에는 100vh와 실제 보이는 높이가 달라진다.</text>
+
+  <g transform="translate(92 168)" filter="url(#shadow)">
+    <rect width="285" height="466" rx="42" fill="url(#phone)"/>
+    <rect x="23" y="44" width="239" height="378" rx="24" fill="#e2e8f0"/>
+    <rect x="23" y="44" width="239" height="58" rx="24" fill="#cbd5e1"/>
+    <rect x="23" y="382" width="239" height="40" rx="20" fill="#cbd5e1"/>
+    <rect x="46" y="118" width="193" height="248" rx="18" fill="#3b82f6" opacity="0.92"/>
+    <text x="142" y="252" text-anchor="middle" font-family="Inter, Pretendard, sans-serif" font-size="28" font-weight="800" fill="white">dvh</text>
+    <text x="142" y="284" text-anchor="middle" font-family="Inter, Pretendard, sans-serif" font-size="15" fill="#dbeafe">현재 보이는 영역</text>
+    <text x="142" y="454" text-anchor="middle" font-family="Inter, Pretendard, sans-serif" font-size="15" fill="#94a3b8">브라우저 UI가 보이는 상태</text>
+  </g>
+
+  <g transform="translate(450 190)">
+    <rect x="0" y="0" width="275" height="380" rx="24" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+    <rect x="30" y="44" width="70" height="292" rx="14" fill="#f97316" opacity="0.18"/>
+    <rect x="30" y="18" width="70" height="344" rx="14" fill="none" stroke="#f97316" stroke-width="4" stroke-dasharray="9 8"/>
+    <text x="65" y="386" text-anchor="middle" font-family="Inter, Pretendard, sans-serif" font-size="20" font-weight="800" fill="#c2410c">100vh</text>
+    <text x="65" y="414" text-anchor="middle" font-family="Inter, Pretendard, sans-serif" font-size="15" fill="#7c2d12">주소창을 넘어설 수 있음</text>
+
+    <rect x="115" y="92" width="70" height="244" rx="14" fill="#22c55e" opacity="0.24"/>
+    <rect x="115" y="92" width="70" height="244" rx="14" fill="none" stroke="#16a34a" stroke-width="4"/>
+    <text x="150" y="386" text-anchor="middle" font-family="Inter, Pretendard, sans-serif" font-size="20" font-weight="800" fill="#15803d">100svh</text>
+    <text x="150" y="414" text-anchor="middle" font-family="Inter, Pretendard, sans-serif" font-size="15" fill="#166534">가장 안전한 최소 높이</text>
+
+    <rect x="200" y="44" width="70" height="292" rx="14" fill="#3b82f6" opacity="0.24"/>
+    <rect x="200" y="44" width="70" height="292" rx="14" fill="none" stroke="#2563eb" stroke-width="4"/>
+    <text x="235" y="386" text-anchor="middle" font-family="Inter, Pretendard, sans-serif" font-size="20" font-weight="800" fill="#1d4ed8">100dvh</text>
+    <text x="235" y="414" text-anchor="middle" font-family="Inter, Pretendard, sans-serif" font-size="15" fill="#1e3a8a">현재 상태에 맞춰 변함</text>
+  </g>
+
+  <g transform="translate(805 188)">
+    <rect width="305" height="384" rx="28" fill="#0f172a"/>
+    <text x="34" y="62" font-family="Inter, Pretendard, sans-serif" font-size="24" font-weight="800" fill="#f8fafc">선택 기준</text>
+    <g font-family="Inter, Pretendard, Apple SD Gothic Neo, sans-serif" font-size="18" fill="#cbd5e1">
+      <text x="34" y="112">• 전체화면 모달/슬라이드: dvh</text>
+      <text x="34" y="158">• 히어로/랜딩 첫 화면: svh</text>
+      <text x="34" y="204">• 배경 채움: lvh</text>
+      <text x="34" y="250">• legacy vh는 모바일 UI를</text>
+      <text x="52" y="280">고려하지 못할 수 있음</text>
+    </g>
+    <rect x="34" y="314" width="237" height="36" rx="18" fill="#1d4ed8"/>
+    <text x="152" y="338" text-anchor="middle" font-family="Inter, Pretendard, sans-serif" font-size="16" font-weight="700" fill="white">프레젠테이션 모드 → 100dvh</text>
+  </g>
+</svg>
