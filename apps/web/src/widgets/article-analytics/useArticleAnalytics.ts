@@ -42,6 +42,27 @@ declare global {
       action: "answer_shown" | "insufficient_context" | "invalid_request";
       question_length_bucket: "1-40" | "41-120" | "121+";
     }>;
+    "seojing:tts-interaction": CustomEvent<{
+      action:
+        | "manifest_loaded"
+        | "artifact_select"
+        | "play"
+        | "pause"
+        | "ended"
+        | "speed_change";
+      slug?: string;
+      artifact_id?: string;
+      artifact_kind?: "summary-2m" | "core-5m" | "section";
+      section_id?: string;
+      section_heading?: string;
+      playback_rate?: number;
+      audio_status?: string;
+      available_artifact_kinds?: string[];
+      section_artifact_count?: number;
+      duration_seconds_bucket?: string;
+      position_seconds_bucket?: string;
+      progress_percent_bucket?: string;
+    }>;
   }
 }
 
@@ -141,6 +162,33 @@ function codeBlockId(block: Element | null, contentSlug: string) {
   return `code_${contentSlug}_${index + 1}`.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
+function safeShortString(value: unknown) {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed.slice(0, 120) : undefined;
+}
+
+function safePlaybackRate(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.round(value * 100) / 100
+    : undefined;
+}
+
+function safeCount(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? Math.floor(value)
+    : undefined;
+}
+
+function safeStringArray(value: unknown) {
+  if (!Array.isArray(value)) return undefined;
+  const safeValues = value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.slice(0, 40))
+    .slice(0, 12);
+  return safeValues.length > 0 ? safeValues : undefined;
+}
+
 export function useArticleAnalytics({
   slug,
   title,
@@ -170,7 +218,9 @@ export function useArticleAnalytics({
 
   useEffect(() => {
     const storage = safeSessionStorage();
-    const dnt = navigator.doNotTrack ?? window.doNotTrack;
+    const dnt =
+      (navigator as Navigator & { doNotTrack?: string }).doNotTrack ??
+      (window as Window & { doNotTrack?: string }).doNotTrack;
     if (!storage || isAnalyticsDisabled(storage, dnt)) {
       if (storage) clearAnalyticsSession(storage);
       return;
@@ -323,6 +373,54 @@ export function useArticleAnalytics({
       });
     };
 
+    const handleTtsInteraction = (event: Event) => {
+      if (!(event instanceof CustomEvent)) return;
+      const detail = event.detail ?? {};
+      const validAction = [
+        "manifest_loaded",
+        "artifact_select",
+        "play",
+        "pause",
+        "ended",
+        "speed_change",
+      ].includes(detail.action);
+      const validKind =
+        detail.artifact_kind === undefined ||
+        ["summary-2m", "core-5m", "section"].includes(detail.artifact_kind);
+      if (!validAction || !validKind) return;
+
+      emit(
+        "tts_interaction",
+        {
+          action: detail.action,
+          artifact_id: safeShortString(detail.artifact_id),
+          artifact_kind: detail.artifact_kind,
+          playback_rate: safePlaybackRate(detail.playback_rate),
+          audio_status: safeShortString(detail.audio_status),
+          available_artifact_kinds: safeStringArray(
+            detail.available_artifact_kinds,
+          ),
+          section_artifact_count: safeCount(detail.section_artifact_count),
+          duration_seconds_bucket: safeShortString(
+            detail.duration_seconds_bucket,
+          ),
+          position_seconds_bucket: safeShortString(
+            detail.position_seconds_bucket,
+          ),
+          progress_percent_bucket: safeShortString(
+            detail.progress_percent_bucket,
+          ),
+        },
+        typeof detail.section_id === "string"
+          ? {
+              id: detail.section_id,
+              heading:
+                safeShortString(detail.section_heading) ?? detail.section_id,
+            }
+          : undefined,
+      );
+    };
+
     const handleClick = (event: MouseEvent) => {
       const target = event.target instanceof Element ? event.target : null;
       const link = target?.closest<HTMLAnchorElement>(
@@ -344,6 +442,7 @@ export function useArticleAnalytics({
     window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("seojing:code-copy", handleCodeCopy);
     window.addEventListener("seojing:qa-interaction", handleQaInteraction);
+    window.addEventListener("seojing:tts-interaction", handleTtsInteraction);
     article.addEventListener("click", handleClick);
     window.addEventListener("pagehide", handlePageHide, { once: true });
     handleScroll();
@@ -352,6 +451,10 @@ export function useArticleAnalytics({
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("seojing:code-copy", handleCodeCopy);
       window.removeEventListener("seojing:qa-interaction", handleQaInteraction);
+      window.removeEventListener(
+        "seojing:tts-interaction",
+        handleTtsInteraction,
+      );
       article.removeEventListener("click", handleClick);
       window.removeEventListener("pagehide", handlePageHide);
       window.clearInterval(heartbeat);

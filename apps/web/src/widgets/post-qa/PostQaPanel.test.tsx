@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PostQaPanel } from "./PostQaPanel";
 
@@ -240,6 +246,53 @@ describe("PostQaPanel", () => {
     expect(
       screen.getByRole("textbox", { name: "이 글에 대해 질문하기" }),
     ).toHaveValue("");
+  });
+
+  it("prefills section context from floating section prompts", async () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    const focusSpy = vi.spyOn(HTMLTextAreaElement.prototype, "focus");
+
+    render(
+      <PostQaPanel slug="study/backend/day1" title="백엔드 스터디 Day 1" />,
+    );
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent("seojing:qa-context", {
+          detail: { sectionTitle: "2. 백엔드는 요청과 응답을 다룬다" },
+        }),
+      );
+    });
+
+    expect(
+      await screen.findByText(
+        /「2\. 백엔드는 요청과 응답을 다룬다」 부분을 기준으로 먼저 답해볼게요/,
+      ),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(focusSpy).toHaveBeenCalled());
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "이 글에 대해 질문하기" }),
+      { target: { value: "요청과 응답이 뭐야?" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "질문 보내기" }));
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/rag/query",
+      expect.objectContaining({
+        body: JSON.stringify({
+          slug: "study/backend/day1",
+          question:
+            "[2. 백엔드는 요청과 응답을 다룬다 부분에 대한 질문] 요청과 응답이 뭐야?",
+        }),
+      }),
+    );
+    expect(
+      screen.getByText(/이 내용을 댓글로 달아서 서징에게도 물어볼까요/),
+    ).toBeInTheDocument();
+
+    focusSpy.mockRestore();
   });
 
   it("shows a degraded message when the API fails", async () => {

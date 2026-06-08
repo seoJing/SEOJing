@@ -10,6 +10,10 @@ type QuestionLogEntry = {
   createdAt: string;
 };
 
+type SectionQaContext = {
+  sectionTitle: string;
+};
+
 interface PostQaPanelProps {
   slug: string;
   title: string;
@@ -27,6 +31,7 @@ declare global {
   interface WindowEventMap {
     "seojing:qa-interaction": CustomEvent<QaAnalyticsDetail>;
     "seojing:open-comments": CustomEvent<{ source: "post_qa" }>;
+    "seojing:qa-context": CustomEvent<SectionQaContext>;
   }
 }
 
@@ -105,7 +110,12 @@ export function PostQaPanel({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [log, setLog] = useState<QuestionLogEntry[]>([]);
+  const [sectionContext, setSectionContext] = useState<SectionQaContext | null>(
+    null,
+  );
   const requestSeq = useRef(0);
+  const panelRef = useRef<HTMLElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     requestSeq.current += 1;
@@ -113,8 +123,29 @@ export function PostQaPanel({
     setResult(null);
     setError(null);
     setPending(false);
+    setSectionContext(null);
     setLog(safeReadLog(storageKey).filter((entry) => entry.slug === slug));
   }, [slug, storageKey]);
+
+  useEffect(() => {
+    const handleContext = (event: WindowEventMap["seojing:qa-context"]) => {
+      const nextContext = event.detail;
+      setSectionContext(nextContext);
+      setResult(null);
+      setError(null);
+      window.setTimeout(() => {
+        panelRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        textareaRef.current?.focus();
+      }, 0);
+    };
+
+    window.addEventListener("seojing:qa-context", handleContext);
+    return () =>
+      window.removeEventListener("seojing:qa-context", handleContext);
+  }, []);
 
   const canSubmit = useMemo(
     () =>
@@ -125,6 +156,9 @@ export function PostQaPanel({
   const submitQuestion = async () => {
     const trimmedQuestion = question.trim();
     if (!trimmedQuestion || pending) return;
+    const apiQuestion = sectionContext
+      ? `[${sectionContext.sectionTitle} 부분에 대한 질문] ${trimmedQuestion}`
+      : trimmedQuestion;
 
     requestSeq.current += 1;
     const currentRequestSeq = requestSeq.current;
@@ -136,7 +170,7 @@ export function PostQaPanel({
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ slug, question: trimmedQuestion }),
+        body: JSON.stringify({ slug, question: apiQuestion }),
       });
       if (!response.ok)
         throw new Error(`qa request failed: ${response.status}`);
@@ -159,6 +193,7 @@ export function PostQaPanel({
       ].slice(0, MAX_LOG_ENTRIES);
       safeWriteLog(storageKey, nextLog);
       setLog(nextLog.filter((entry) => entry.slug === slug));
+      setSectionContext(null);
 
       const analyticsDetail = safeAnalyticsDetail(body.analytics?.event);
       if (analyticsDetail) {
@@ -190,6 +225,7 @@ export function PostQaPanel({
 
   return (
     <section
+      ref={panelRef}
       aria-labelledby="post-qa-title"
       className="my-10 rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/60"
     >
@@ -201,11 +237,14 @@ export function PostQaPanel({
           id="post-qa-title"
           className="text-xl font-semibold text-gray-900 dark:text-gray-100"
         >
-          이 글에 대해 질문하기
+          오케이징에게 물어보기
         </h2>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          {title} 안의 섹션 인덱스를 먼저 찾고, 필요하면 관련 글 출처도 함께
-          보여줘요.
+          {sectionContext
+            ? `「${sectionContext.sectionTitle}」 부분을 기준으로 먼저 답해볼게요.`
+            : `${title} 전체를 기준으로 질문과 피드백을 받아요.`}
+          답을 본 뒤에는 이 내용을 댓글로 달아서 서징에게도 물어볼 수 있어요.
+          작성자가 직접 볼 수 있어요!
         </p>
       </div>
 
@@ -214,12 +253,17 @@ export function PostQaPanel({
           이 글에 대해 질문하기
         </label>
         <textarea
+          ref={textareaRef}
           id="post-qa-question"
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
           rows={3}
           maxLength={500}
-          placeholder="예: 이 섹션에서 말하는 Controller와 Service 흐름을 다시 설명해줘"
+          placeholder={
+            sectionContext
+              ? "예: 이 부분에서 헷갈리는 흐름을 더 쉽게 다시 설명해줘"
+              : "예: 이 글 전체에서 Controller와 Service 흐름을 다시 설명해줘"
+          }
           className="w-full resize-y rounded-xl border border-gray-200 bg-background px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
         />
         <div className="flex items-center justify-between gap-3">
@@ -228,11 +272,12 @@ export function PostQaPanel({
           </span>
           <button
             type="button"
+            aria-label="질문 보내기"
             disabled={!canSubmit}
             onClick={submitQuestion}
             className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-300 dark:bg-gray-100 dark:text-gray-950 dark:hover:bg-gray-300 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
           >
-            {pending ? "답변 찾는 중..." : "질문 보내기"}
+            {pending ? "답변 찾는 중..." : "오케이징에게 묻기"}
           </button>
         </div>
       </div>
@@ -314,13 +359,15 @@ export function PostQaPanel({
             </div>
           )}
           <div className="rounded-xl border border-gray-200 bg-white/70 p-3 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-950/40 dark:text-gray-300">
-            이 질문을 공개 FAQ 후보로 남기고 싶다면 댓글로 남겨주세요.
+            이 내용을 댓글로 달아서 서징에게도 물어볼까요? 작성자가 직접 볼 수
+            있어요!
             <button
               type="button"
+              aria-label="댓글 열기"
               onClick={openComments}
               className="ml-2 font-medium text-gray-900 underline underline-offset-4 dark:text-gray-100"
             >
-              댓글 열기
+              댓글로 남기기
             </button>
           </div>
         </div>

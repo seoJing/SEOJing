@@ -9,7 +9,8 @@ import { RecentlyRead } from "@/widgets/recently-read/RecentlyRead";
 import { PostExplorer } from "@/widgets/post-explorer/PostExplorer";
 import { ArticleToolbar } from "@/widgets/article-toolbar/ArticleToolbar";
 import { ArticleAnalytics } from "@/widgets/article-analytics";
-import { PostQaPanel } from "@/widgets/post-qa";
+import { PostQaPanel, SectionQaPrompts } from "@/widgets/post-qa";
+import { BlogAudioPlayer } from "@/widgets/blog-audio-player/BlogAudioPlayer";
 import type { Metadata } from "vinext/shims/metadata";
 import {
   buildArticleMetadata,
@@ -86,14 +87,18 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           slug={slug.join("/")}
           title={content.frontmatter.title}
         />
-        <div data-article-content>
+        <div className="relative">
           <ArticleHeader
             title={content.frontmatter.title}
             date={content.frontmatter.date}
             tags={content.frontmatter.tags}
             readingTime={calculateReadingTime(content.source)}
           />
-          <MDXContent components={mdxComponents as MDXComponents} />
+          <BlogAudioPlayer slug={slug.join("/")} />
+          <div data-article-content>
+            <MDXContent components={mdxComponents as MDXComponents} />
+          </div>
+          <SectionQaPrompts slug={slug.join("/")} />
         </div>
         <PostQaPanel slug={slug.join("/")} title={content.frontmatter.title} />
         <ArticleToolbar

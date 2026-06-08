@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   getFillRatio,
   extractSlideOutline,
+  extractSlideOutlineFromSlides,
   extractSlides,
 } from "./presentation.utils";
 
@@ -134,6 +135,44 @@ describe("extractSlideOutline", () => {
 
     expect(outline).toHaveLength(1);
     expect(outline[0]).toMatchObject({ title: "Visible", kind: "heading" });
+  });
+});
+
+describe("extractSlideOutlineFromSlides", () => {
+  it("builds slide-accurate outline metadata from final deck slides", () => {
+    const first = document.createElement("div");
+    first.innerHTML = "<section><h1>Deck title</h1><p>Lead</p></section>";
+    const second = document.createElement("div");
+    second.innerHTML = `
+      <p>Example content</p>
+      <div data-code-block><pre><code>const answer = 42;</code></pre></div>
+      <figure><img src="/diagram.png" alt="Diagram" /></figure>
+    `;
+
+    const outline = extractSlideOutlineFromSlides([first, second]);
+
+    expect(outline).toMatchObject([
+      {
+        title: "Deck title",
+        kind: "heading",
+        level: 1,
+        slideIndex: 0,
+        elementCount: 1,
+        hasCode: false,
+        hasImage: false,
+      },
+      {
+        title: "Example content",
+        kind: "content",
+        level: 0,
+        slideIndex: 1,
+        elementCount: 3,
+        hasCode: true,
+        codeBlockCount: 1,
+        hasImage: true,
+        imageCount: 1,
+      },
+    ]);
   });
 });
 
