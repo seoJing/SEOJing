@@ -73,8 +73,14 @@ export function isQaLogEntry(entry: unknown): entry is QaLogEntry {
 
 function validLog(entry: QaLogEntry): boolean {
   return (
-    isQaLogEntry(entry) && Boolean(entry.slug.trim() && entry.question.trim())
+    isQaLogEntry(entry) &&
+    Boolean(entry.slug.trim() && entry.question.trim()) &&
+    !Number.isNaN(Date.parse(entry.createdAt))
   );
+}
+
+function createdAtMs(entry: QaLogEntry): number {
+  return new Date(entry.createdAt).getTime();
 }
 
 function tokenizeQuestion(question: string): string[] {
@@ -103,8 +109,8 @@ function topTerms(entries: QaLogEntry[], limit = 5): string[] {
 function latestQuestionAt(entries: QaLogEntry[]): string {
   return (
     entries
-      .map((entry) => entry.createdAt)
-      .sort((a, b) => b.localeCompare(a))[0] ?? ""
+      .map((entry) => [entry.createdAt, createdAtMs(entry)] as const)
+      .sort((a, b) => b[1] - a[1])[0]?.[0] ?? ""
   );
 }
 
@@ -119,7 +125,7 @@ function representativeQuestion(
     const bScore = terms.filter((term) =>
       b.question.toLocaleLowerCase("ko-KR").includes(term),
     ).length;
-    return bScore - aScore || a.createdAt.localeCompare(b.createdAt);
+    return bScore - aScore || createdAtMs(a) - createdAtMs(b);
   });
 
   return best?.question ?? "";

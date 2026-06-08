@@ -184,7 +184,7 @@ describe("post QA API handler", () => {
     expect(JSON.stringify(body.analytics)).not.toContain("Repository는");
   });
 
-  it("rejects oversized or malformed questions", async () => {
+  it("returns validation failures as parseable invalid_request results", async () => {
     const response = await handlePostQaRequest(
       new Request("https://seojing.com/api/rag/query", {
         method: "POST",
@@ -196,7 +196,7 @@ describe("post QA API handler", () => {
       { chunks },
     );
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
       status: "invalid_request",
     });
@@ -250,7 +250,7 @@ describe("post QA API handler", () => {
     });
   });
 
-  it("rejects non-object request bodies and missing slugs", async () => {
+  it("returns invalid_request for non-object request bodies and missing slugs", async () => {
     const arrayBody = await handlePostQaRequest(
       new Request("https://seojing.com/api/rag/query", {
         method: "POST",
@@ -258,7 +258,7 @@ describe("post QA API handler", () => {
       }),
       { chunks },
     );
-    expect(arrayBody.status).toBe(400);
+    expect(arrayBody.status).toBe(200);
 
     const missingSlug = await handlePostQaRequest(
       new Request("https://seojing.com/api/rag/query", {
@@ -267,6 +267,6 @@ describe("post QA API handler", () => {
       }),
       { chunks },
     );
-    expect(missingSlug.status).toBe(400);
+    expect(missingSlug.status).toBe(200);
   });
 });

@@ -115,6 +115,7 @@ export function PostQaPanel({
     const trimmedQuestion = question.trim();
     if (!trimmedQuestion || pending) return;
 
+    requestSeq.current += 1;
     const currentRequestSeq = requestSeq.current;
 
     setPending(true);

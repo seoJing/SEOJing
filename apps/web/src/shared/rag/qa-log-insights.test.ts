@@ -78,9 +78,36 @@ describe("qa-log-insights", () => {
         status: "answered",
         createdAt: "bad",
       },
+      {
+        slug: "study/backend/day1",
+        question: "createdAt만 잘못된 로그",
+        status: "answered",
+        createdAt: "bad",
+      },
     ]);
 
     expect(insights.totalQuestions).toBe(4);
+  });
+
+  it("compares timestamps by parsed time instead of raw strings", () => {
+    const insights = buildQaLogInsights([
+      {
+        slug: "study/backend/day1",
+        question: "오래된 질문",
+        status: "answered",
+        createdAt: "2026-06-08T09:00:00+09:00",
+      },
+      {
+        slug: "study/backend/day1",
+        question: "최신 질문",
+        status: "answered",
+        createdAt: "2026-06-08T01:01:00.000Z",
+      },
+    ]);
+
+    expect(insights.bySlug[0]?.latestQuestionAt).toBe(
+      "2026-06-08T01:01:00.000Z",
+    );
   });
 
   it("renders an operator-friendly Markdown report", () => {

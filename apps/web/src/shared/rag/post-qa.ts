@@ -321,7 +321,7 @@ export async function handlePostQaRequest(
   }
 
   if (!isRecord(body)) {
-    return jsonResponse(400, invalidResult(""));
+    return jsonResponse(200, invalidResult(""));
   }
 
   const slug = typeof body.slug === "string" ? body.slug.trim() : "";
@@ -331,7 +331,7 @@ export async function handlePostQaRequest(
     !question.trim() ||
     question.trim().length > MAX_QUESTION_CHARS
   ) {
-    return jsonResponse(400, invalidResult(question));
+    return jsonResponse(200, invalidResult(question));
   }
 
   const result = answerPostQuestion({
@@ -340,7 +340,7 @@ export async function handlePostQaRequest(
     chunks: options.chunks,
   });
 
-  return jsonResponse(result.status === "invalid_request" ? 400 : 200, {
+  return jsonResponse(200, {
     ...result,
     generated_at: options.now?.() ?? new Date().toISOString(),
   });
