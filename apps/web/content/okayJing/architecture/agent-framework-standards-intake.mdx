@@ -1,0 +1,108 @@
+---
+title: "새 에이전트 도구를 바로 설치하지 않는 이유 — 표준 정렬로 먼저 보기"
+date: "2026-06-09"
+tags:
+  - okayJing
+  - architecture
+  - agents
+  - standards
+  - dreaming
+description: Dreaming이 새 에이전트 프레임워크와 도구를 발견했을 때, 오케이징이 설치보다 표준 정렬·watch·검증 기준을 먼저 남기기로 한 이유를 정리합니다.
+---
+
+<Subtitle level={2}>0. 좋은 도구를 발견하면 설치하고 싶어진다</Subtitle>
+
+<Paragraph>
+  Dreaming이 매일 새 도구를 본다. MCP registry, computer-use sandbox, temporal
+  knowledge graph, human-in-the-loop UI 같은 이름은 전부 오케이징에 도움이 될 수
+  있어 보인다. 그런데 이때 바로 설치하면 시스템이 빨리 좋아지는 것처럼 보이지만,
+  실제로는 운영 표면만 넓어질 수 있다.
+</Paragraph>
+
+<Paragraph>
+  그래서 이번 기준은 단순하다. 새 도구를 먼저 "쓸 것인가"로 묻지 않는다. 먼저
+  "어떤 표준 방향을 강화하는가"로 본다. 설치는 마지막 단계다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. 분류가 먼저이고 설치는 나중이다</Subtitle>
+
+<Paragraph>
+  오케이징의 Dreaming watch는 후보를 네 가지로 나눈다. 이 분류는 추천 목록을
+  예쁘게 만들기 위한 라벨이 아니라, 자동화가 과열되지 않게 막는 안전장치다.
+</Paragraph>
+
+| 분류                      | 의미                                                             | 오케이징에서의 행동                            |
+| ------------------------- | ---------------------------------------------------------------- | ---------------------------------------------- |
+| `standard_alignment`      | 업계 표준 방향을 확인해준다                                      | skill, architecture note, checklist에 반영한다 |
+| `okayjing_differentiator` | 오케이징만의 local-first/portfolio/self-reflection 강점을 키운다 | 작은 prototype이나 포트폴리오 노드로 검증한다  |
+| `watch_only`              | 흥미롭지만 아직 구체 작업 필요가 약하다                          | dedupe state에 남기고 반복 추천을 막는다       |
+| `avoid_for_now`           | 중복·고위험·표면적이 크다                                        | 설치하지 않고 판단 이유만 남긴다               |
+
+<Paragraph>
+  예를 들어 MCP registry는 tool/context protocol 표준화라는 방향을 강화한다.
+  그래서 `standard_alignment`로 볼 수 있다. 반면 desktop computer-use sandbox는
+  흥미롭지만 권한과 privacy 표면이 크다. 실제 반복 실패가 나오기 전까지는
+  `watch_only`가 더 맞다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. 오케이징이 보는 12개의 렌즈</Subtitle>
+
+<Paragraph>
+  새 프레임워크를 볼 때 기준 없이 "좋아 보인다"고 하면 매일 설치 후보가 생긴다.
+  그래서 오케이징은 agent framework standards 문서에 12개 렌즈를 세워뒀다.
+  simple primitives, workflow와 agent의 분리, durable state, MCP, A2A, handoff,
+  human control, observability/eval, memory provenance, tool safety, artifact
+  lifecycle, simple-baseline discipline이다.
+</Paragraph>
+
+<Paragraph>
+  이 렌즈는 유행을 따라가기 위한 체크리스트가 아니다. 새 도구가 좋아 보일 때도
+  "이미 Hermes와 local SQLite, cron, ticket, skill로 해결되는가"를 먼저 묻기
+  위한 장치다. 겹치면 설치하지 않는다. 부족한 원칙만 흡수한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. watch는 흡수가 아니다</Subtitle>
+
+<Paragraph>
+  중요한 언어 구분이 있다. Dreaming state에 기록됐다고 해서 현재 적용된 것은
+  아니다. watch는 발견과 중복 방지다. 현재 적용은 skill, 문서, cron prompt,
+  script, config, 검증된 prototype에 실제로 반영됐을 때만 쓴다.
+</Paragraph>
+
+<Paragraph>
+  이 구분이 없으면 아침 브리핑이 거짓으로 부풀려진다. "봤다"와 "썼다"가 섞이면
+  오케이징은 자기 성숙도를 과대평가하게 된다. 그래서 evolution tree에는
+  evidence가 있는 변화만 올리고, 기술 후보는 설치가 아니라 분류와 판단 근거로
+  먼저 남긴다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>4. 오늘 성숙한 부분</Subtitle>
+
+<Paragraph>
+  오늘 성숙한 것은 특정 외부 도구가 아니다. 새 도구를 받아들이는 방식이다. MCP
+  registry, CUA, Graphiti, Magentic-UI 같은 후보를 보면서도, 오케이징은 각각을
+  설치 목록이 아니라 표준 정렬·watch-only·메모리 비교·human-in-loop UX 참고로
+  분리했다.
+</Paragraph>
+
+<Paragraph>
+  이 기준 덕분에 오케이징은 더 느리게 보일 수 있다. 하지만 운영 시스템에서는
+  그게 맞다. 설치보다 중요한 것은 어떤 능력을 왜 키우는지, 그 변화가 어느
+  evidence에 연결되는지, 그리고 사용자가 보는 portfolio graph에 어떤 node와
+  edge로 남는지다.
+</Paragraph>
+
+<Paragraph>
+  결론은 이렇다. 오케이징은 새 프레임워크를 "도입할 것인가"보다 "내 운영 원칙의
+  어느 부분을 더 선명하게 만드는가"로 먼저 본다. 도구는 바뀌지만,
+  evidence-linked self-reflection과 local-first 운영 원칙은 남아야 하기
+  때문이다.
+</Paragraph>
