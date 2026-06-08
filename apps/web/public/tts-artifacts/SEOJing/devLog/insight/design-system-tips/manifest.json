@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "SEOJing/devLog/insight/design-system-tips",
+  "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/design-system-tips",
+  "title": "디자인 시스템을 구축할 때 주의할 점",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:SEOJing/devLog/insight/design-system-tips",
+  "artifacts": [
+    {
+      "id": "SEOJing__devLog__insight__design-system-tips__summary-2m",
+      "kind": "summary-2m",
+      "slug": "SEOJing/devLog/insight/design-system-tips",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/design-system-tips",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "디자인 시스템을 구축할 때 주의할 점 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "디자인 시스템이란 컴포넌트, 디자인 토큰(색상·간격·타이포그래피), 규칙을 \" \" 하나의 패키지로 통일 해서 여러 앱에서 일관된 UI를 만드는 체계다. 이 프로젝트에서는 packages/ui가 그 역할을 한다. --- 파일 구조 — 컴포넌트 단위로 폴더 분리 이렇게 하면: - 컴포넌트끼리 의존성이 명확 - 타입·상수·스토리가 함께 있어서 찾기 쉬움 - index.ts 배럴로 외부에서 import Paper from \"@app/ui\" 가능 --- 디자인 토큰 — CSS 변수로 관리 globals.css의 @theme 블록에 색상·간격·폰트·애니메이션을 정의하고, 컴포넌트에서는 Tailwind 유틸리티로 참조한다. 하드코딩된 값 대신 토큰을 쓰면 테마 변경이 한 곳에서 가능. --- 컴포넌트 API 설계 — props를 제한된 프리셋으로 사용자가 임의 값을 넣는 게 아니라 padding=\"md\" 같은 프리셋을 선택하게 한다. 일관성이 보장되고, 타입 자동완성도 된다. --- 유의할 점 서버 컴포넌트 vs 클라이언트 컴포넌트 Next.js(vinext) 환경에서 \"use client\"를 붙이면 해당 컴포넌트와 그 하위 트리가 클라이언트 번들에 포함된다. 디자인 시스템에서는: useState, useEffect 등 훅이 필요한 컴포넌트만 \"use client\" - 순수 렌더링 컴포넌트(ArticleHeader, Subtitle, Paragraph 등)는 서버 컴포넌트로 유지 CSS 애니메이션에서 transform 충돌 같은 요소에 두 개의 애니메이션을 걸면 둘 다 transform을 건드릴 때 마지막 것만 적용된다. 해결법: - 별도 DOM 레이어로 분리 (바깥 div에 이동, 안쪽 div에 회전) - 또는 하나의 키프레임에 모든 transform을 합침 Tailwind v4 @theme 토큰과 클래스 매핑 -animate-elliptic-in: ...으로 등록하면 animate-elliptic-in 클래스가 자동 생성된다. 키프레임 이름과 토큰 이름이 일치하지 않아도 되지만, 토큰 값 안에서 참조하는 키프레임 이름은 @keyframes 정의와 정확히 일치해야 한다. --- Skeleton 구조 실제 콘텐츠가 로딩되기 전에 보여주는 뼈대(placeholder) UI 다. 콘텐츠와 비슷한 형태를 가진 회색 박스에 animate-pulse를 적용한다. 로딩 방식 사용자 경험 :--------------- :----------------------------------------------- 아무것도 안 보임 \"고장났나?\" 스피너 \"로딩 중이구나\" Skeleton \"곧 콘텐츠가 채워지겠구나\" — 체감 로딩 시간 감소 Skeleton은 최종 레이아웃과 같은 공간을 미리 차지하므로 \" \" 레이아웃 시프트(CLS)가 없다 . React Suspense의 fallback으로 연결하면 콘텐츠 로딩 중에는 스켈레톤이 보이다가, 로딩 완료 시 실제 컴포넌트로 교체된다.",
+      "audioPath": "/tts-artifacts/SEOJing/devLog/insight/design-system-tips/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/devLog/insight/design-system-tips/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "SEOJing__devLog__insight__design-system-tips__core-5m",
+      "kind": "core-5m",
+      "slug": "SEOJing/devLog/insight/design-system-tips",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/design-system-tips",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "디자인 시스템을 구축할 때 주의할 점 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "디자인 시스템이란 컴포넌트, 디자인 토큰(색상·간격·타이포그래피), 규칙을 \" \" 하나의 패키지로 통일 해서 여러 앱에서 일관된 UI를 만드는 체계다. 이 프로젝트에서는 packages/ui가 그 역할을 한다. --- 파일 구조 — 컴포넌트 단위로 폴더 분리 이렇게 하면: - 컴포넌트끼리 의존성이 명확 - 타입·상수·스토리가 함께 있어서 찾기 쉬움 - index.ts 배럴로 외부에서 import Paper from \"@app/ui\" 가능 --- 디자인 토큰 — CSS 변수로 관리 globals.css의 @theme 블록에 색상·간격·폰트·애니메이션을 정의하고, 컴포넌트에서는 Tailwind 유틸리티로 참조한다. 하드코딩된 값 대신 토큰을 쓰면 테마 변경이 한 곳에서 가능. --- 컴포넌트 API 설계 — props를 제한된 프리셋으로 사용자가 임의 값을 넣는 게 아니라 padding=\"md\" 같은 프리셋을 선택하게 한다. 일관성이 보장되고, 타입 자동완성도 된다. --- 유의할 점 서버 컴포넌트 vs 클라이언트 컴포넌트 Next.js(vinext) 환경에서 \"use client\"를 붙이면 해당 컴포넌트와 그 하위 트리가 클라이언트 번들에 포함된다. 디자인 시스템에서는: useState, useEffect 등 훅이 필요한 컴포넌트만 \"use client\" - 순수 렌더링 컴포넌트(ArticleHeader, Subtitle, Paragraph 등)는 서버 컴포넌트로 유지 CSS 애니메이션에서 transform 충돌 같은 요소에 두 개의 애니메이션을 걸면 둘 다 transform을 건드릴 때 마지막 것만 적용된다. 해결법: - 별도 DOM 레이어로 분리 (바깥 div에 이동, 안쪽 div에 회전) - 또는 하나의 키프레임에 모든 transform을 합침 Tailwind v4 @theme 토큰과 클래스 매핑 -animate-elliptic-in: ...으로 등록하면 animate-elliptic-in 클래스가 자동 생성된다. 키프레임 이름과 토큰 이름이 일치하지 않아도 되지만, 토큰 값 안에서 참조하는 키프레임 이름은 @keyframes 정의와 정확히 일치해야 한다. --- Skeleton 구조 실제 콘텐츠가 로딩되기 전에 보여주는 뼈대(placeholder) UI 다. 콘텐츠와 비슷한 형태를 가진 회색 박스에 animate-pulse를 적용한다. 로딩 방식 사용자 경험 :--------------- :----------------------------------------------- 아무것도 안 보임 \"고장났나?\" 스피너 \"로딩 중이구나\" Skeleton \"곧 콘텐츠가 채워지겠구나\" — 체감 로딩 시간 감소 Skeleton은 최종 레이아웃과 같은 공간을 미리 차지하므로 \" \" 레이아웃 시프트(CLS)가 없다 . React Suspense의 fallback으로 연결하면 콘텐츠 로딩 중에는 스켈레톤이 보이다가, 로딩 완료 시 실제 컴포넌트로 교체된다.",
+      "audioPath": "/tts-artifacts/SEOJing/devLog/insight/design-system-tips/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/devLog/insight/design-system-tips/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

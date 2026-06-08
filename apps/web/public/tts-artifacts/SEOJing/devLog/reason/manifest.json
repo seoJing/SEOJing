@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "SEOJing/devLog/reason",
+  "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/reason",
+  "title": "기술 블로그를 직접 제작하게 된 이유",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:SEOJing/devLog/reason",
+  "artifacts": [
+    {
+      "id": "SEOJing__devLog__reason__summary-2m",
+      "kind": "summary-2m",
+      "slug": "SEOJing/devLog/reason",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/reason",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "기술 블로그를 직접 제작하게 된 이유 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "개인 블로그를 개발하게 된 이유 SEO Jing, 이제 어느 정도 취업을 준비하고 싶단 생각이 들었고, 그렇기 위해선 자기 pr을 위해 나를 정리하는 시간이 필요하다고 느꼈다. 무엇보다, 최근 씨랩의 동아리 렌딩 페이지, 활동 웹앱(Members), KD 팀의 졸업 논문 페이지 까지 마무리에 들어가고 있고. 개인적으로 준비하던 WARdle, whale-dashboard 모두 개발 중단을 한 상태라, 앞으로 준비할 껀 다음주 부터 진행하기로한, 프론트 스터디 뿐이다. 왜 자꾸 프로젝트가 중단되는지 그래서 자기 PR 및 노션에 정리한 글들을 보여주고, 스터디 원들에게 조금 감흥이 되고자, 03.23 이 첫 스터디 대면 날짜인데, 14, 15, 16 삼일 동안 해커톤의 마음으로 개발을 해보고자 한다. (또 의지박약이 되면 안되기에, 가장 집중이 좋은 초기에 몰아치기) 최대한 ai를 활용하되, 바이브 코딩의 단계까진 가지말고, 반복 작업을 수행하는 정도에서 사용하며, 개발 로그는 손수 적어보자. 맨날 mcp로 적으니깐 프로젝트에 정이 안가는 느낌. --- 공부한 스택과 인사이트 개발 과정에서 공부하고 정리한 내용들이다. 전체적인 플로우 MDX가 뭘까? Storybook으로 디자인 시스템 테스팅하기 디자인 시스템을 구축할 때 주의할 점 MDX DOM 트리 파싱하기 결국 Node.js 까지 와버렸다 --- 일일 개발 로그 Day 1 - 디자인 컨셉과 디자인 시스템 (03.13) Day 2 - 블로그 스켈레톤과 MDX 파싱 (03.14) Day 3 - MDX 이슈, 반응형, 다크모드 (03.15) Day 4 - 배포와 CI/CD (03.16) Day 5 - shiki 제거, MDX 모듈화, 대량 포스팅 (03.17) Day 6 - 스터디 자료 작성 (03.18) Day 7 - Front Matter CMS와 관련 게시물 탐색기 (03.20) Day 8 - 아티클 퀴즈와 스터디 자료 (03.21) Day 9 - 프레젠테이션 모드, 테스팅 (03.22)",
+      "audioPath": "/tts-artifacts/SEOJing/devLog/reason/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/devLog/reason/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "SEOJing__devLog__reason__core-5m",
+      "kind": "core-5m",
+      "slug": "SEOJing/devLog/reason",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/reason",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "기술 블로그를 직접 제작하게 된 이유 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "개인 블로그를 개발하게 된 이유 SEO Jing, 이제 어느 정도 취업을 준비하고 싶단 생각이 들었고, 그렇기 위해선 자기 pr을 위해 나를 정리하는 시간이 필요하다고 느꼈다. 무엇보다, 최근 씨랩의 동아리 렌딩 페이지, 활동 웹앱(Members), KD 팀의 졸업 논문 페이지 까지 마무리에 들어가고 있고. 개인적으로 준비하던 WARdle, whale-dashboard 모두 개발 중단을 한 상태라, 앞으로 준비할 껀 다음주 부터 진행하기로한, 프론트 스터디 뿐이다. 왜 자꾸 프로젝트가 중단되는지 그래서 자기 PR 및 노션에 정리한 글들을 보여주고, 스터디 원들에게 조금 감흥이 되고자, 03.23 이 첫 스터디 대면 날짜인데, 14, 15, 16 삼일 동안 해커톤의 마음으로 개발을 해보고자 한다. (또 의지박약이 되면 안되기에, 가장 집중이 좋은 초기에 몰아치기) 최대한 ai를 활용하되, 바이브 코딩의 단계까진 가지말고, 반복 작업을 수행하는 정도에서 사용하며, 개발 로그는 손수 적어보자. 맨날 mcp로 적으니깐 프로젝트에 정이 안가는 느낌. --- 공부한 스택과 인사이트 개발 과정에서 공부하고 정리한 내용들이다. 전체적인 플로우 MDX가 뭘까? Storybook으로 디자인 시스템 테스팅하기 디자인 시스템을 구축할 때 주의할 점 MDX DOM 트리 파싱하기 결국 Node.js 까지 와버렸다 --- 일일 개발 로그 Day 1 - 디자인 컨셉과 디자인 시스템 (03.13) Day 2 - 블로그 스켈레톤과 MDX 파싱 (03.14) Day 3 - MDX 이슈, 반응형, 다크모드 (03.15) Day 4 - 배포와 CI/CD (03.16) Day 5 - shiki 제거, MDX 모듈화, 대량 포스팅 (03.17) Day 6 - 스터디 자료 작성 (03.18) Day 7 - Front Matter CMS와 관련 게시물 탐색기 (03.20) Day 8 - 아티클 퀴즈와 스터디 자료 (03.21) Day 9 - 프레젠테이션 모드, 테스팅 (03.22)",
+      "audioPath": "/tts-artifacts/SEOJing/devLog/reason/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/devLog/reason/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

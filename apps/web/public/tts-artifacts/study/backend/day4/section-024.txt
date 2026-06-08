@@ -1,0 +1,1 @@
+가능한 백엔드 원인: 삭제 API는 deleted = true로 바꾸지만 목록 API가 deleted = false 조건을 안 쓴다. 프론트엔드 캐시 문제처럼 보이지만 실제로 백엔드가 삭제된 데이터를 다시 내려준다. 삭제 후 응답은 성공인데 DB 상태 변경이 트랜잭션 밖에서 실패한다. 볼 파일: delete Service Entity의 삭제 상태 필드 목록 Repository 메서드 전역 예외 처리/트랜잭션 로그

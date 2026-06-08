@@ -1,0 +1,1 @@
+Entity는 DB 테이블과 연결되는 객체입니다. 이 코드를 완벽히 외울 필요는 없습니다. 대신 표시를 읽으면 됩니다. @Entity: DB 테이블과 연결되는 객체 @Id: 기본키 @GeneratedValue: ID를 자동 생성 title, content, authorId: 테이블의 컬럼에 가까운 필드 Entity는 프로젝트의 핵심 데이터 구조입니다. 그래서 AI가 Entity를 바꿨다면 더 조심해야 합니다. Entity 변경은 DB 구조 변경과 연결될 수 있기 때문입니다.

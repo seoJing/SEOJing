@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "SEOJing/presentation-scale-stabilization",
+  "canonicalUrl": "https://seojing.com/blog/SEOJing/presentation-scale-stabilization",
+  "title": "100vh가 100%가 아닌 이유 — 모바일 뷰포트 단위 완전 정리",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:SEOJing/presentation-scale-stabilization",
+  "artifacts": [
+    {
+      "id": "SEOJing__presentation-scale-stabilization__summary-2m",
+      "kind": "summary-2m",
+      "slug": "SEOJing/presentation-scale-stabilization",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/presentation-scale-stabilization",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "100vh가 100%가 아닌 이유 — 모바일 뷰포트 단위 완전 정리 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "height: 100vh인데 스크롤이 생긴다 전체화면 UI를 만들 때 대부분 height: 100vh부터 시작한다. \"뷰포트 높이의 100%니까 화면 전체를 채우겠지\"라고 생각하지만, 모바일 브라우저에서 열어보면 하단이 잘리거나 스크롤이 생긴다. 특히 iOS Safari에서 이 현상이 두드러진다. 이유는 100vh가 실제로 보이는 화면 높이가 아니기 때문 이다. 모바일 브라우저에는 주소창, 탭 바, 하단 네비게이션 같은 UI 요소가 있다. 이 요소들은 스크롤에 따라 나타났다 사라진다. vh 단위는 이 브라우저 UI가 숨겨진 상태 의 최대 높이를 기준으로 계산된다. 그래서 주소창이 보이는 상태에서 100vh는 실제 화면보다 크다. 이 문제는 2015년부터 보고되어 왔고, CSS Working Group이 2022년에 새로운 뷰포트 단위를 표준화하면서 공식적인 해결책이 생겼다. 나는 이 블로그에 프레젠테이션 모드를 만들면서 이 문제를 직접 겪었다. 블로그 글을 PPT처럼 슬라이드로 보여주는 전체화면 기능인데, 모바일 Safari에서 열면 하단 바가 화면 밖으로 밀려나서 페이지 인디케이터가 보이지 않았다. --- 뷰포트 단위 4종 비교 — vh, svh, lvh, dvh 새로운 뷰포트 단위를 이해하려면 모바일 브라우저의 UI 상태 두 가지를 알아야 한다. 주소창이 완전히 펼쳐진 상태(Small Viewport)와, 스크롤로 주소창이 숨겨진 상태(Large Viewport)이다. 단위 이름 기준 값 변화 :---- :---------------------- :---------------------------------------------- :-------------------- vh Viewport Height UA 결정 (보통 Large 기준) 고정 svh Small Viewport Height 브라우저 UI가 모두 보이는 상태 고정 lvh Large Viewport Height 브라우저 UI가 모두 숨겨진 상태 고정 dvh Dynamic Viewport Height 현재 실제 가시 영역 동적 svh와 lvh는 고정값이다. 브라우저 UI 상태와 무관하게 항상 같은 값을 반환한다. 차이는 어느 쪽을 기준으로 잡느냐일 뿐이다. 반면 dvh는 브라우저 UI가 나타나고 사라질 때마다 값이 바뀐다. 어떤 단위를 써야 하는가 상황에 따라 다르다. 핵심은 \"이 요소가 브라우저 UI 변화에 반응해야 하는가\"이다. 전체화면 오버레이, 모달 : dvh가 적합하다. 주소창이 나타나도 레이아웃이 자동으로 줄어들어서 콘텐츠가 잘리지 않는다. 히어로 섹션, 랜딩 페이지 : svh가 안전하다. 가장 작은 뷰포트 기준이므로 콘텐츠가 절대 넘치지 않는다. 배경 이미지 영역 : lvh가 낫다. 주소창이 사라졌을 때 빈 공간이 보이지 않도록 최대 크기로 잡아두는 것이다. dvh에는 주의점이 있다. 값이 동적으로 변하기 때문에 스크롤할 때마다 레이아웃 재계산이 발생한다. 성능에 민감한 애니메이션이나 빈번하게 리사이즈되는 요소에는 svh나 lvh로 고정하는 게 나을 수 있다. 전체화면 UI처럼 스크롤이 없는 상황에서 dvh가 가장 빛난다. 프레젠테이션 모드에 적용하기 프레젠테이션 모드는 전체화면 오버레이이므로 dvh로 바꿨다. 기존 height: 100vh를 height: 100dvh로 교체하는 것만으로 모바일 Safari에서 하단이 잘리는 문제가 해결됐다. 이 프레젠테이션 모드에는 모바일에서 화면을 CSS rotate(90deg)로 강제 가로 회전하는 기능이 있다. 이 경우 물리적 width와 …",
+      "audioPath": "/tts-artifacts/SEOJing/presentation-scale-stabilization/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/presentation-scale-stabilization/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "SEOJing__presentation-scale-stabilization__core-5m",
+      "kind": "core-5m",
+      "slug": "SEOJing/presentation-scale-stabilization",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/presentation-scale-stabilization",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "100vh가 100%가 아닌 이유 — 모바일 뷰포트 단위 완전 정리 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "height: 100vh인데 스크롤이 생긴다 전체화면 UI를 만들 때 대부분 height: 100vh부터 시작한다. \"뷰포트 높이의 100%니까 화면 전체를 채우겠지\"라고 생각하지만, 모바일 브라우저에서 열어보면 하단이 잘리거나 스크롤이 생긴다. 특히 iOS Safari에서 이 현상이 두드러진다. 이유는 100vh가 실제로 보이는 화면 높이가 아니기 때문 이다. 모바일 브라우저에는 주소창, 탭 바, 하단 네비게이션 같은 UI 요소가 있다. 이 요소들은 스크롤에 따라 나타났다 사라진다. vh 단위는 이 브라우저 UI가 숨겨진 상태 의 최대 높이를 기준으로 계산된다. 그래서 주소창이 보이는 상태에서 100vh는 실제 화면보다 크다. 이 문제는 2015년부터 보고되어 왔고, CSS Working Group이 2022년에 새로운 뷰포트 단위를 표준화하면서 공식적인 해결책이 생겼다. 나는 이 블로그에 프레젠테이션 모드를 만들면서 이 문제를 직접 겪었다. 블로그 글을 PPT처럼 슬라이드로 보여주는 전체화면 기능인데, 모바일 Safari에서 열면 하단 바가 화면 밖으로 밀려나서 페이지 인디케이터가 보이지 않았다. --- 뷰포트 단위 4종 비교 — vh, svh, lvh, dvh 새로운 뷰포트 단위를 이해하려면 모바일 브라우저의 UI 상태 두 가지를 알아야 한다. 주소창이 완전히 펼쳐진 상태(Small Viewport)와, 스크롤로 주소창이 숨겨진 상태(Large Viewport)이다. 단위 이름 기준 값 변화 :---- :---------------------- :---------------------------------------------- :-------------------- vh Viewport Height UA 결정 (보통 Large 기준) 고정 svh Small Viewport Height 브라우저 UI가 모두 보이는 상태 고정 lvh Large Viewport Height 브라우저 UI가 모두 숨겨진 상태 고정 dvh Dynamic Viewport Height 현재 실제 가시 영역 동적 svh와 lvh는 고정값이다. 브라우저 UI 상태와 무관하게 항상 같은 값을 반환한다. 차이는 어느 쪽을 기준으로 잡느냐일 뿐이다. 반면 dvh는 브라우저 UI가 나타나고 사라질 때마다 값이 바뀐다. 어떤 단위를 써야 하는가 상황에 따라 다르다. 핵심은 \"이 요소가 브라우저 UI 변화에 반응해야 하는가\"이다. 전체화면 오버레이, 모달 : dvh가 적합하다. 주소창이 나타나도 레이아웃이 자동으로 줄어들어서 콘텐츠가 잘리지 않는다. 히어로 섹션, 랜딩 페이지 : svh가 안전하다. 가장 작은 뷰포트 기준이므로 콘텐츠가 절대 넘치지 않는다. 배경 이미지 영역 : lvh가 낫다. 주소창이 사라졌을 때 빈 공간이 보이지 않도록 최대 크기로 잡아두는 것이다. dvh에는 주의점이 있다. 값이 동적으로 변하기 때문에 스크롤할 때마다 레이아웃 재계산이 발생한다. 성능에 민감한 애니메이션이나 빈번하게 리사이즈되는 요소에는 svh나 lvh로 고정하는 게 나을 수 있다. 전체화면 UI처럼 스크롤이 없는 상황에서 dvh가 가장 빛난다. 프레젠테이션 모드에 적용하기 프레젠테이션 모드는 전체화면 오버레이이므로 dvh로 바꿨다. 기존 height: 100vh를 height: 100dvh로 교체하는 것만으로 모바일 Safari에서 하단이 잘리는 문제가 해결됐다. 이 프레젠테이션 모드에는 모바일에서 화면을 CSS rotate(90deg)로 강제 가로 회전하는 기능이 있다. 이 경우 물리적 width와 height가 뒤바뀌므로, 회전된 컨테이너의 크기도 dvh/dvw를 교차해서 지정해야 한다. --- JavaScript에서 실제 뷰포트 구하기 — visualViewport API CSS 단위로 레이아웃을 잡는 것과 별개로, JavaScript에서 뷰포트 크기를 계산해야 할 때가 있다. 슬라이드 분할처럼 콘텐츠 높이를 측정해서 페이지를 나누는 로직이 대표적이다. 그런데 window.innerHeight는 vh와 같은 문제를 가지고 있다. 브라우저 UI를 무시한 고정 높이를 반환한다. window.visualViewport은 실제로 사용자에게 보이는 영역의 크기를 알려준다. 주소창, 소프트 키보드, 핀치 줌 등 모든 브라우저 UI 요소를 고려한 값이다. visualViewport의 프로퍼티 프로퍼티 설명 :------------------------- :-------------------------- width / height 가시 영역의 크기 (CSS 픽셀) offsetLeft / offsetTop 핀치 줌으로 이동한 오프셋 pageLeft / pageTop 페이지 기준 절대 좌표 scale 핀치 줌 배율 (기본 1.0) resize 이벤트도 지원한다. 소프트 키보드가 올라오거나 주소창이 변할 때 visualViewport.addEventListener('resize', handler)로 반응할 수 있다. 다만 전체화면 UI에서는 초기 한 번만 측정하면 충분한 경우가 많으므로, 이벤트 리스너가 반드시 필요한 것은 아니다. 슬라이드 분할에 적용한 사례 프레젠테이션 모드에서는 블로그 글의 DOM을 복제해서, 화면 높이에 맞게 자동으로 슬라이드를 분할한다. 이때 \"화면 높이\"를 window.innerHeight로 잡으면 모바일 에서 마지막 줄이 하단 바 뒤에 숨는 문제가 생겼다. visualViewport으로 교체하니 브라우저 UI를 뺀 실제 가용 높이로 분할되어 문제가 사라졌다. 회전 상태에서는 축이 뒤집히기 때문에 vv?.width가 슬라이드 높이가 되고, vv?.height가 슬라이드 너비가 된다는 점에 주의해야 한다. 물리적 기기의 가로세로와 CSS 레이아웃의 가로세로가 일치하지 않는 것이다. --- CSS zoom vs transform: scale — 무엇이 다른가 전체화면 UI에서 콘텐츠를 확대해야 할 때, transform: scale()과 CSS zoom 중 하나를 선택해야 한다. 시각적으로는 비슷해 보이지만 레이아웃에 미치는 영향이 전혀 다르다. transform: scale() transform은 시각적 변환 이다. 요소의 렌더링된 모습만 바꾸고, 레이아웃 공간은 원래 크기 그대로 유지된다. scale(2)로 2배 확대해도 주변 요소는 원래 위치에 그대로 있다. 요소 자체는 커졌는데 차지하는 공간은 같으니, 확대된 부분이 다른 요소 위에 겹쳐 그려진다. CSS zoom zoom은 레이아웃 변환 이다. 요소의 실제 레이아웃 크기 자체를 바꾼다. zoom: 2로 2배 확대하면 요소가 차지하는 공간도 2배가 된다. 주변 요소가 밀려나고, 부모 컨테이너의 스크롤도 정상적으로 동작한다. 속성 레이아웃 영향 주변 요소 스크롤 브라우저 지원 :------------------- :------------ :-------- :--------------- :---------------------------------- transform: scale() 없음 겹침 원래 크기 기준 모든 브라우저 zoom 있음 밀려남 확대된 크기 기준 Chrome, Safari, Edge (Firefox 126+) 프레젠테이션에서 zoom을 선택한 이유 프레젠테이션 모드는 발표용이다. 빔프로젝터에 띄우거나 큰 모니터에서 멀리서 보는 상황을 고려하면 글자를 키울 수 있어야 했다. 처음에는 transform: scale()을 시도했는데, 슬라이드 콘텐츠가 확대되면서 하단 바 위에 겹쳐 그려지는 문제가 생겼다. 레이아웃 공간이 원래 크기 그대로이기 때문이다. zoom으로 바꾸니 콘텐츠가 확대되면서 자연스럽게 overflow 처리가 되었다. 다만 zoom을 쓰면 한 가지 함정이 있다. 슬라이드 분할 로직에서 콘텐츠 높이를 getBoundingClientRect()로 측정하는데, 이 값은 zoom 전의 원래 크기를 반환한다. zoom: 2에서 화면 높이가 800px이면 실제로 콘텐츠가 들어갈 공간은 400px인데, 측정 함수에 800px을 전달하면 콘텐츠가 넘친다. 가용 공간을 zoom 배율로 나눠서 전달해야 한다. 이것을 역스케일링 이라고 부른다. 하단 바에는 확대/축소 버튼을 추가했다. 스케일을 변경하면 슬라이드 분할이 달라지므로 currentSlide를 0으로 리셋한다. 갑자기 중간 슬라이드로 점프하는 것보다 처음부터 다시 보는 게 자연스럽기 때문이다. --- 모바일 판정 — width만 보면 안 되는 이유 반응형 웹에서 모바일 판정은 보통 max-width: 768px 미디어 쿼리로 한다. CSS에서는 이게 충분하지만, JavaScript에서 모바일/PC를 구분해서 동작(behavior) 을 바꿔야 할 때는 부족하다. 가로 모드(landscape) 태블릿이 대표적인 반례이다. iPad를 가로로 들면 innerWidth가 1024px이므로 max-width: 768px에 해당하지 않는다. PC로 판정되면서 마우스 기반 인터랙션이 적용된다. 터치 기기인데 호버 효과를 기대하게 되는 것이다. 반대로 이미 가로 모드인 스마트폰에서 max-width: 768px에 걸리면, 세로 모드 전용 회전 로직이 적용되어 화면이 뒤집힐 수 있다. 문제는 \"모바일이다\"와 \"회전이 필요하다\"를 하나의 조건으로 묶었기 때문 이다. 짧은 변 …",
+      "audioPath": "/tts-artifacts/SEOJing/presentation-scale-stabilization/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/SEOJing/presentation-scale-stabilization/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

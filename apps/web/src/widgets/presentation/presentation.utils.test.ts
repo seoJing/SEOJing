@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { getFillRatio, extractSlides } from "./presentation.utils";
+import {
+  getFillRatio,
+  extractSlideOutline,
+  extractSlides,
+} from "./presentation.utils";
 
 describe("getFillRatio", () => {
   it("returns 0.82 for small screens (≤600)", () => {
@@ -22,6 +26,114 @@ describe("getFillRatio", () => {
   it("returns 0.7 for large monitors (>1200)", () => {
     expect(getFillRatio(1201)).toBe(0.7);
     expect(getFillRatio(2160)).toBe(0.7);
+  });
+});
+
+describe("extractSlideOutline", () => {
+  function makeArticle(html: string): HTMLElement {
+    const article = document.createElement("article");
+    article.innerHTML = html;
+    return article;
+  }
+
+  it("builds a presentation outline from MDX heading structure", () => {
+    const article = makeArticle(`
+      <h2>Intro</h2>
+      <p>Why this matters</p>
+      <h3>Request flow</h3>
+      <p>Browser to server</p>
+    `);
+
+    const outline = extractSlideOutline(article);
+
+    expect(outline).toMatchObject([
+      {
+        kind: "heading",
+        title: "Intro",
+        level: 2,
+        slideIndex: 0,
+        elementCount: 1,
+      },
+      {
+        kind: "content",
+        title: "Why this matters",
+        level: 0,
+        slideIndex: 1,
+        elementCount: 1,
+      },
+      {
+        kind: "heading",
+        title: "Request flow",
+        level: 3,
+        slideIndex: 2,
+        elementCount: 1,
+      },
+      {
+        kind: "content",
+        title: "Browser to server",
+        level: 0,
+        slideIndex: 3,
+        elementCount: 1,
+      },
+    ]);
+  });
+
+  it("annotates code blocks and images for deck layout decisions", () => {
+    const article = makeArticle(`
+      <h2>Examples</h2>
+      <section>
+        <div data-code-block><pre><code>const answer = 42;</code></pre></div>
+        <figure><img src="/diagram.png" alt="Diagram" /></figure>
+      </section>
+    `);
+
+    const outline = extractSlideOutline(article);
+
+    expect(outline[1]).toMatchObject({
+      kind: "content",
+      hasCode: true,
+      codeBlockCount: 1,
+      hasImage: true,
+      imageCount: 1,
+    });
+  });
+
+  it("honors custom chapter levels and presentation separators", () => {
+    const article = makeArticle(`
+      <h1>Page title</h1>
+      <p>Lead</p>
+      <div data-presentation-slide></div>
+      <h2>Section is content when chapterLevels only includes h3</h2>
+      <h3>Nested chapter</h3>
+      <p>Body</p>
+      <hr />
+      <p>After separator</p>
+    `);
+
+    const outline = extractSlideOutline(article, { chapterLevels: [3] });
+
+    expect(outline.map((item) => item.title)).toEqual([
+      "Page title",
+      "Section is content when chapterLevels only includes h3",
+      "Nested chapter",
+      "Body",
+      "After separator",
+    ]);
+    expect(outline[2]).toMatchObject({ kind: "heading", level: 3 });
+  });
+
+  it("skips non-presentational sticky nav and explicitly skipped elements", () => {
+    const article = makeArticle(`
+      <nav>Table of contents</nav>
+      <div class="sticky">Floating controls</div>
+      <p data-presentation-skip>Hidden</p>
+      <h2>Visible</h2>
+    `);
+
+    const outline = extractSlideOutline(article);
+
+    expect(outline).toHaveLength(1);
+    expect(outline[0]).toMatchObject({ title: "Visible", kind: "heading" });
   });
 });
 

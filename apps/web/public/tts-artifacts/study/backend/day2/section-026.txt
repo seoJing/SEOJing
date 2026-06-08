@@ -1,0 +1,1 @@
+[ ] @RequestMapping과 @GetMapping/@PostMapping을 합친 전체 URL을 적어 봤는가? [ ] HTTP Method가 행동과 맞는가? [ ] 프론트엔드 API 클라이언트가 같은 URL과 Method를 호출하는가? [ ] @PathVariable 이름이 URL 경로 변수와 맞는가? [ ] @RequestParam 이름과 기본값이 프론트엔드와 맞는가? [ ] 요청 본문을 받는 곳에 @RequestBody가 있는가? [ ] 검증이 필요한 요청에 @Valid가 있는가?

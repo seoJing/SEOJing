@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "okayJing/voice/tts-selection-operational-criteria",
+  "canonicalUrl": "https://seojing.com/blog/okayJing/voice/tts-selection-operational-criteria",
+  "title": "TTS 품질 튜닝은 모델 선택보다 운영 기준 문제였다",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:okayJing/voice/tts-selection-operational-criteria",
+  "artifacts": [
+    {
+      "id": "okayJing__voice__tts-selection-operational-criteria__summary-2m",
+      "kind": "summary-2m",
+      "slug": "okayJing/voice/tts-selection-operational-criteria",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/voice/tts-selection-operational-criteria",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "TTS 품질 튜닝은 모델 선택보다 운영 기준 문제였다 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "0. 좋은 목소리를 찾는 일처럼 보였다 처음에는 단순히 더 좋은 TTS를 찾는 문제처럼 보였다. Discord voice mode에서 오케이징이 말하려면 목소리가 필요했고, 기존 목소리가 조금 기계적으로 들리면 다른 모델을 찾으면 된다고 생각했다. Edge TTS도 있었고, Qwen3-TTS도 있었고, 로컬에서 돌릴 수 있는 Supertonic3도 있었다. 그런데 비교를 시작하자 기준이 흐려졌다. 어떤 목소리는 자연스럽지만 느렸다. 어떤 모델은 한국어 억양이 좋아 보였지만 RAM을 많이 먹었다. 어떤 TTS는 빠르지만 말끝이 뻣뻣했다. 단순히 \"가장 예쁜 목소리\"를 고르면 되는 문제가 아니었다. 오케이징에게 필요한 건 데모용 TTS가 아니라 매일 쓰는 운영용 TTS였다. 이 차이가 컸다. --- 1. 운영용 TTS는 네 가지를 같이 봐야 한다 실제로 비교하면서 기준은 네 가지로 좁혀졌다. 첫 번째는 지연이다. 사용자가 음성으로 대화하는데 답변마다 오래 기다리면 흐름이 깨진다. 두 번째는 RAM이다. Mac mini에서 오케이징은 TTS만 돌리는 게 아니라 repo 작업, 브라우저, 로컬 memory, 여러 CLI를 같이 돌린다. 세 번째는 말끝이다. 한국어 TTS는 문장 끝에서 자연스러움이 크게 갈린다. 본문 중간은 괜찮아도 마지막 \"요\", \"다\", \"어\"가 어색하면 전체가 기계처럼 들린다. 네 번째는 Discord 실사용성이다. 파일을 만들어 붙이는지, 바로 voice bubble처럼 전달되는지, 긴 답변에서 속도가 버티는지까지 봐야 했다. 기준 질문 -------- ---------------------------------------------- 지연 대화 흐름을 끊지 않을 만큼 빠른가 RAM 다른 오케이징 작업과 같이 돌려도 부담이 적은가 말끝 한국어 문장 끝이 기계적으로 굳지 않는가 실사용성 Discord voice mode에서 매번 쓰기 편한가 이 기준으로 보면 TTS 선택은 취향 문제가 아니라 운영 설계 문제가 된다. --- 2. 여성 voice 선호도 같은 기준에서 나왔다 여기서 여성 목소리를 선호하는 이유도 정리됐다. 단순히 여성 voice가 좋아서가 아니라, 현재 한국어 TTS에서는 여성 voice가 더 자연스럽게 들리는 경우가 많았다. 특히 문장 연결과 말끝에서 차이가 났다. 남성 voice가 나쁘다는 뜻은 아니다. 다만 지금 오케이징의 대화형 사용에서는 여성 voice가 덜 뻣뻣하게 느껴졌다. 이건 꽤 현실적인 기준이다. TTS는 모델 스펙표만 보고 고르는 게 아니다. 사용자가 매일 듣는 인터페이스라면, 조금 더 자연스럽게 들리는 쪽을 택하는 게 맞다. 오케이징의 목소리는 사용자의 피로도와 직접 연결된다. 그래서 voice style을 비교할 때도 \"성별\" 자체보다 \"한국어 말끝이 얼마나 자연스러운가\"를 먼저 봤다. 결과적으로 F1 계열을 기반으로 두고, 피치와 속도, 다른 style의 ending을 실험하는 쪽으로 갔다. --- 3. steps는 품질과 지연 사이의 손잡이였다 Supertonic3에서는 quality steps도 중요한 기준이었다. steps를 올리면 품질이 좋아질 가능성이 있지만, 생성 시간이 늘어난다. 짧은 샘플에서는 괜찮아 보여도, 실제 대화에서 매번 16 steps를 쓰면 답변 지연이 체감될 수 있다. 그래서 상시 voice mode에서는 8에서 …",
+      "audioPath": "/tts-artifacts/okayJing/voice/tts-selection-operational-criteria/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/okayJing/voice/tts-selection-operational-criteria/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "okayJing__voice__tts-selection-operational-criteria__core-5m",
+      "kind": "core-5m",
+      "slug": "okayJing/voice/tts-selection-operational-criteria",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/voice/tts-selection-operational-criteria",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "TTS 품질 튜닝은 모델 선택보다 운영 기준 문제였다 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "0. 좋은 목소리를 찾는 일처럼 보였다 처음에는 단순히 더 좋은 TTS를 찾는 문제처럼 보였다. Discord voice mode에서 오케이징이 말하려면 목소리가 필요했고, 기존 목소리가 조금 기계적으로 들리면 다른 모델을 찾으면 된다고 생각했다. Edge TTS도 있었고, Qwen3-TTS도 있었고, 로컬에서 돌릴 수 있는 Supertonic3도 있었다. 그런데 비교를 시작하자 기준이 흐려졌다. 어떤 목소리는 자연스럽지만 느렸다. 어떤 모델은 한국어 억양이 좋아 보였지만 RAM을 많이 먹었다. 어떤 TTS는 빠르지만 말끝이 뻣뻣했다. 단순히 \"가장 예쁜 목소리\"를 고르면 되는 문제가 아니었다. 오케이징에게 필요한 건 데모용 TTS가 아니라 매일 쓰는 운영용 TTS였다. 이 차이가 컸다. --- 1. 운영용 TTS는 네 가지를 같이 봐야 한다 실제로 비교하면서 기준은 네 가지로 좁혀졌다. 첫 번째는 지연이다. 사용자가 음성으로 대화하는데 답변마다 오래 기다리면 흐름이 깨진다. 두 번째는 RAM이다. Mac mini에서 오케이징은 TTS만 돌리는 게 아니라 repo 작업, 브라우저, 로컬 memory, 여러 CLI를 같이 돌린다. 세 번째는 말끝이다. 한국어 TTS는 문장 끝에서 자연스러움이 크게 갈린다. 본문 중간은 괜찮아도 마지막 \"요\", \"다\", \"어\"가 어색하면 전체가 기계처럼 들린다. 네 번째는 Discord 실사용성이다. 파일을 만들어 붙이는지, 바로 voice bubble처럼 전달되는지, 긴 답변에서 속도가 버티는지까지 봐야 했다. 기준 질문 -------- ---------------------------------------------- 지연 대화 흐름을 끊지 않을 만큼 빠른가 RAM 다른 오케이징 작업과 같이 돌려도 부담이 적은가 말끝 한국어 문장 끝이 기계적으로 굳지 않는가 실사용성 Discord voice mode에서 매번 쓰기 편한가 이 기준으로 보면 TTS 선택은 취향 문제가 아니라 운영 설계 문제가 된다. --- 2. 여성 voice 선호도 같은 기준에서 나왔다 여기서 여성 목소리를 선호하는 이유도 정리됐다. 단순히 여성 voice가 좋아서가 아니라, 현재 한국어 TTS에서는 여성 voice가 더 자연스럽게 들리는 경우가 많았다. 특히 문장 연결과 말끝에서 차이가 났다. 남성 voice가 나쁘다는 뜻은 아니다. 다만 지금 오케이징의 대화형 사용에서는 여성 voice가 덜 뻣뻣하게 느껴졌다. 이건 꽤 현실적인 기준이다. TTS는 모델 스펙표만 보고 고르는 게 아니다. 사용자가 매일 듣는 인터페이스라면, 조금 더 자연스럽게 들리는 쪽을 택하는 게 맞다. 오케이징의 목소리는 사용자의 피로도와 직접 연결된다. 그래서 voice style을 비교할 때도 \"성별\" 자체보다 \"한국어 말끝이 얼마나 자연스러운가\"를 먼저 봤다. 결과적으로 F1 계열을 기반으로 두고, 피치와 속도, 다른 style의 ending을 실험하는 쪽으로 갔다. --- 3. steps는 품질과 지연 사이의 손잡이였다 Supertonic3에서는 quality steps도 중요한 기준이었다. steps를 올리면 품질이 좋아질 가능성이 있지만, 생성 시간이 늘어난다. 짧은 샘플에서는 괜찮아 보여도, 실제 대화에서 매번 16 steps를 쓰면 답변 지연이 체감될 수 있다. 그래서 상시 voice mode에서는 8에서 12 정도가 더 현실적이었다. 품질을 아주 우선하는 샘플이나 저장용 음성이라면 16도 볼 수 있지만, Discord 대화에서는 너무 무거울 수 있다. TTS는 한 번 예쁘게 만드는 것보다 매번 적당히 빠르게 만드는 게 더 중요할 때가 많다. 이 판단도 결국 운영 기준이다. 품질이 3% 좋아져도 답변이 2배 느려지면 실제 사용성은 나빠질 수 있다. 오케이징은 데모가 아니라 대화 흐름 안에서 계속 쓰이는 시스템이기 때문이다. --- 4. 모델 선택보다 기준을 먼저 남겨야 한다 돌이켜보면 이번 TTS 실험에서 제일 중요한 산출물은 특정 모델명이 아니었다. Supertonic3가 지금은 가장 맞아 보였지만, 나중에 더 좋은 모델이 나오면 바뀔 수 있다. 반대로 기준을 남겨두면 다음 모델도 같은 방식으로 평가할 수 있다. 오케이징의 TTS 기준은 이렇게 정리된다. 한국어 말끝이 자연스러워야 한다. 여성 voice가 더 자연스럽게 들리면 그쪽을 우선한다. 지연은 대화 흐름을 깨지 않아야 한다. RAM은 다른 로컬 작업과 공존해야 한다. 그리고 답변 문체는 TTS가 읽기 좋은 형태로 바뀌어야 한다. 결국 TTS 품질 튜닝은 목소리를 고르는 일이 아니라, 오케이징이 어떤 방식으로 말해야 하는지를 정하는 일이었다.",
+      "audioPath": "/tts-artifacts/okayJing/voice/tts-selection-operational-criteria/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/okayJing/voice/tts-selection-operational-criteria/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

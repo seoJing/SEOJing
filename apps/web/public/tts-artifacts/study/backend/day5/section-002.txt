@@ -1,0 +1,1 @@
+Controller는 HTTP 세계에 가깝습니다. 여기서 Controller가 하는 일은 비교적 얇습니다. /posts로 온 요청을 받는다. 요청 JSON을 CreatePostRequest로 바꾼다. 로그인 사용자 ID를 꺼낸다. Service를 호출한다. 결과를 HTTP 응답으로 감싼다. 진짜 기능 규칙은 postService.createPost(...) 안쪽에 있습니다. 이 코드를 처음 보면 길어 보일 수 있지만, 문장으로 바꾸면 단순합니다. Service를 읽을 때는 Java 문법을 모두 외우려 하지 말고, 먼저 이 문장 흐름으로 바꾸면 됩니다. ---

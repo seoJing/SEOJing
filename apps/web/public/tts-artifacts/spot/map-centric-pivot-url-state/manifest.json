@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "spot/map-centric-pivot-url-state",
+  "canonicalUrl": "https://seojing.com/blog/spot/map-centric-pivot-url-state",
+  "title": "탭을 버리고 지도를 남겼다 — URL 이 상태의 진실이 된 이유",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:spot/map-centric-pivot-url-state",
+  "artifacts": [
+    {
+      "id": "spot__map-centric-pivot-url-state__summary-2m",
+      "kind": "summary-2m",
+      "slug": "spot/map-centric-pivot-url-state",
+      "canonicalUrl": "https://seojing.com/blog/spot/map-centric-pivot-url-state",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "탭을 버리고 지도를 남겼다 — URL 이 상태의 진실이 된 이유 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "시작은 탭이었다 Spot 의 처음 와이어프레임은 평범했다. 하단 탭 바에 \" \" 홈 · 피드 · 채팅 · 내 정보 . 각 탭이 자기 라우트를 가진 전형적인 소셜 앱 구조. 홈에는 근처 인기 Spot, 피드에는 전체 요청/모집 리스트, 내 정보는 내가 연 Spot 과 참여 중인 Spot. 익숙한 형태라 당연한 선택처럼 보였다. 그런데 서비스 흐름을 따라가 보니 이상했다. 사용자가 피드에서 흥미로운 Spot 을 발견한다. 누르면 상세 페이지로 이동한다. 상세에서 \"어디서 하는 건지\" 가 제일 궁금하다. 지도를 연다. 그런데 그 순간 피드에서 보던 맥락이 사라진다 . 뒤로가면 다시 지도에서 피드로, 그리고 또 상세로. 탭 전환이 context 이탈 이었다. 결정적이었던 건 이거였다 — \" \" \"지도를 한 번 보면, 지도를 안 보는 상태로 돌아가고 싶지 않다\" . 로컬 커뮤니티 서비스의 본질은 공간 이고, 공간이 주 화면이어야 했다. 그래서 탭을 버렸다. --- 피봇 이후 구조 / 는 /map 으로 redirect. 실질적인 홈이 지도가 됐다. 피드는 지도 위에 얹히는 바텀시트 로, 채팅도 드로어로, 필터도 지도 상단의 chip bar 로. 모든 주요 인터랙션이 지도 컨텍스트를 유지한 채 \" \" 진행된다. 바텀시트는 펼친 상태(half, full) 와 접힌 상태(peek)를 넘나들고, 뒤에는 지도가 계속 살아있다 . 상세를 열어도 지도는 그대로. 채팅을 열어도 지도는 그대로. 사용자는 한 번도 공간 감각을 잃지 않는다. --- 그런데 상태가 너무 많아졌다 한 라우트 안에 모든 게 들어오면서 새로운 문제가 생겼다. \" \" 상태 조합이 폭발 한다. 어떤 Spot 이 선택됐나? (selectedSpotId) 바텀시트가 얼만큼 열려있나? (sheetSnap = 'peek' 'half' 'full') 채팅 드로어는 열려있나? (chat = 'open' 'closed') 어떤 페르소나를 따라가고 있나? (followingPersonaId) 필터는 무슨 카테고리인가? (categories) 이걸 전부 Zustand store 에 넣고 시작했다. 잘 돌아갔다. 잠깐은. --- Zustand 만 쓰다가 깨진 지점들 1. 링크 공유가 안 됐다 \"이 Spot 보내줄게\" 하고 /map URL 을 복사해서 보내면, 받은 사람은 \" \" 지도의 기본 상태 를 본다. 내가 보고 있던 Spot 도 안 열려있고, 바텀시트는 peek. 로컬 커뮤니티 서비스에서 \" \" \"지금 이 Spot\" 을 공유할 수 없다는 건 치명적 이다. 2. 새로고침하면 상태가 증발했다 Zustand 는 메모리 기반이다. 새로고침하면 selectedSpotId 가 null 로. localStorage 에 persist 할 수는 있는데, 그건 \" \" URL 에 있어야 할 상태를 storage 에 숨기는 것 이다. 사용자가 URL 로 해당 페이지를 다시 열 방법이 없다. 3. 뒤로가기 버튼이 무의미해졌다 사용자가 Spot A 를 열고, 닫고, Spot B 를 열었다. …",
+      "audioPath": "/tts-artifacts/spot/map-centric-pivot-url-state/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/spot/map-centric-pivot-url-state/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "spot__map-centric-pivot-url-state__core-5m",
+      "kind": "core-5m",
+      "slug": "spot/map-centric-pivot-url-state",
+      "canonicalUrl": "https://seojing.com/blog/spot/map-centric-pivot-url-state",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "탭을 버리고 지도를 남겼다 — URL 이 상태의 진실이 된 이유 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "시작은 탭이었다 Spot 의 처음 와이어프레임은 평범했다. 하단 탭 바에 \" \" 홈 · 피드 · 채팅 · 내 정보 . 각 탭이 자기 라우트를 가진 전형적인 소셜 앱 구조. 홈에는 근처 인기 Spot, 피드에는 전체 요청/모집 리스트, 내 정보는 내가 연 Spot 과 참여 중인 Spot. 익숙한 형태라 당연한 선택처럼 보였다. 그런데 서비스 흐름을 따라가 보니 이상했다. 사용자가 피드에서 흥미로운 Spot 을 발견한다. 누르면 상세 페이지로 이동한다. 상세에서 \"어디서 하는 건지\" 가 제일 궁금하다. 지도를 연다. 그런데 그 순간 피드에서 보던 맥락이 사라진다 . 뒤로가면 다시 지도에서 피드로, 그리고 또 상세로. 탭 전환이 context 이탈 이었다. 결정적이었던 건 이거였다 — \" \" \"지도를 한 번 보면, 지도를 안 보는 상태로 돌아가고 싶지 않다\" . 로컬 커뮤니티 서비스의 본질은 공간 이고, 공간이 주 화면이어야 했다. 그래서 탭을 버렸다. --- 피봇 이후 구조 / 는 /map 으로 redirect. 실질적인 홈이 지도가 됐다. 피드는 지도 위에 얹히는 바텀시트 로, 채팅도 드로어로, 필터도 지도 상단의 chip bar 로. 모든 주요 인터랙션이 지도 컨텍스트를 유지한 채 \" \" 진행된다. 바텀시트는 펼친 상태(half, full) 와 접힌 상태(peek)를 넘나들고, 뒤에는 지도가 계속 살아있다 . 상세를 열어도 지도는 그대로. 채팅을 열어도 지도는 그대로. 사용자는 한 번도 공간 감각을 잃지 않는다. --- 그런데 상태가 너무 많아졌다 한 라우트 안에 모든 게 들어오면서 새로운 문제가 생겼다. \" \" 상태 조합이 폭발 한다. 어떤 Spot 이 선택됐나? (selectedSpotId) 바텀시트가 얼만큼 열려있나? (sheetSnap = 'peek' 'half' 'full') 채팅 드로어는 열려있나? (chat = 'open' 'closed') 어떤 페르소나를 따라가고 있나? (followingPersonaId) 필터는 무슨 카테고리인가? (categories) 이걸 전부 Zustand store 에 넣고 시작했다. 잘 돌아갔다. 잠깐은. --- Zustand 만 쓰다가 깨진 지점들 1. 링크 공유가 안 됐다 \"이 Spot 보내줄게\" 하고 /map URL 을 복사해서 보내면, 받은 사람은 \" \" 지도의 기본 상태 를 본다. 내가 보고 있던 Spot 도 안 열려있고, 바텀시트는 peek. 로컬 커뮤니티 서비스에서 \" \" \"지금 이 Spot\" 을 공유할 수 없다는 건 치명적 이다. 2. 새로고침하면 상태가 증발했다 Zustand 는 메모리 기반이다. 새로고침하면 selectedSpotId 가 null 로. localStorage 에 persist 할 수는 있는데, 그건 \" \" URL 에 있어야 할 상태를 storage 에 숨기는 것 이다. 사용자가 URL 로 해당 페이지를 다시 열 방법이 없다. 3. 뒤로가기 버튼이 무의미해졌다 사용자가 Spot A 를 열고, 닫고, Spot B 를 열었다. 뒤로가기 버튼을 누르면 \"A 를 열었던 상태\" 로 갔으면 좋겠다. 그런데 URL 이 /map 하나에 고정돼있으니 브라우저 history 에 아무 엔트리도 안 쌓인다. 뒤로가기 버튼이 그냥 이전 페이지로 튕겨나간다. 브라우저가 주는 무료 UX 를 포기 하는 셈이었다. 4. 딥 링크가 안 됐다 푸시 알림이나 공지에서 \"이 Spot 으로 바로 가기\" 를 구현하려면 URL 만으로 특정 상태에 착지해야 한다. 스토어 기반이면 착지 뒤 별도 액션을 호출해야 한다. 복잡도만 올라간다. --- 그래서 URL 을 진실의 원천으로 만들었다 Next.js App Router 의 useSearchParams 가 이 결정의 실질적 기반이다. URL 쿼리를 읽고 쓰는 hook 을 만들고, 주요 UI 상태를 전부 쿼리에 올렸다. 이걸 관리하는 hook 은 useMapUrlState 다. 두 가지 책임이 있다. 현재 URL 을 파싱해서 타입 있는 상태 객체로 반환 한다. patch 를 받아 머지한 뒤 router.replace 로 URL 에 반영 한다. 이 짧은 hook 에 들어간 판단이 몇 개 있다. 왜 router.push 가 아니라 router.replace? push 는 브라우저 history 에 새 엔트리를 쌓는다. replace 는 현재 엔트리를 교체한다. Spot 에서는 바텀시트 스냅을 바꿀 때마다 history 가 쌓이면 안 된다 . 뒤로가기를 다섯 번 눌러야 지도 탈출이 되는 사태. 그래서 기본은 replace. \"다른 Spot 으로 이동\" 같이 논리적으로 새 화면 전환 에 해당하는 경우에만 별도로 push 를 호출한다. 왜 scroll: false? App Router 의 기본값은 라우트 변경 시 스크롤을 맨 위로 올린다. 바텀시트를 열었는데 갑자기 지도가 스크롤되면 방해다. 우리는 URL 을 바꾸지만 \" \" 시각적으론 한 페이지 안에서의 전환 이므로 스크롤 리셋을 꺼둔다. 왜 외부 쿼리를 보존하는 복잡한 머지? ?sim=swarm&n=500 같은 시뮬레이션 옵션이나, 나중에 A/B 테스트 변수가 붙을 수 있다. 이런 것까지 매번 덮어쓰면 안 된다. 그래서 \" \" 우리가 관리하는 키들만 지우고, 나머지는 그대로 두고 덮어쓴다 . serialize 결과를 그대로 URL 에 박지 않고 기존 params 에 머지하는 이유다. 왜 finalQuery === searchParams.toString() 체크? 같은 URL 로 router.replace 를 호출하면 React 가 이를 useSearchParams 의 변경으로 인식해 렌더가 한 번 더 돈다. Loop 걸릴 가능성 이 있다. 문자열 비교로 동일하면 아예 호출을 스킵한다. 작은 디테일이지만 이게 없으면 인터랙션 중 가끔씩 발생하는 더블 커밋을 Profiler 로 발견하게 된다. --- useSearchParams 의 한계와 그 대가 App Router 에서 useSearchParams 를 쓰는 컴포넌트는 반드시 \" \" Suspense 경계로 감싸야 한다. 안 그러면 빌드가 깨진다. 또한 이 hook 은 \" \" Client Component 전용 이라, RSC 구조 이점을 일부 포기한다. 그래서 /map 의 루트는 얇은 서버 컴포넌트로 두고 그 안에 를 Suspense 와 함께 들여놓는 구조다. RSC 혜택을 못 가져오는 대가가 있긴 하지만, \" \" /map 은 이미 거의 전부가 인터랙티브 하다. 서버에서 할 일이 metadata 생성 정도밖에 없다. 현실적인 타협점이었다. --- 대안과의 비교를 다시 정리 선택지 딥링크 뒤로가기 새로고침 복원 구현 복잡도 :------------------------ :----------- :---------------- :--------------- :------------------- Zustand only ❌ ❌ 부분적 (persist) 낮음 History API 직접 조작 ⚠️ 파싱 지옥 ✅ ✅ 높음 — 라우터와 충돌 useSearchParams + replace ✅ ✅ (push 선택 시) ✅ 중간 순수 History API 를 쓰면 Next.js 라우터와 상태가 꼬인다. window.history.pushState 가 쏘는 popstate 는 Next 의 내부 router 가 보지 못하기 때문이다. useSearchParams 경로가 \" \" 프레임워크와 가장 잘 섞이는 경로 였다. --- URL 을 갖고 난 뒤, 나머지 상태는 어디로 갔나 URL 이 상태의 진실이 된 뒤에 생긴 자연스러운 후속 질문이 있었다. \" \" 그럼 URL 에 안 올릴 상태들은 어디에 둬야 하나 . 피봇 직전엔 모든 UI 상태가 Zustand 에 있었고, URL 을 도입한 뒤엔 \"링크에 담을 것\" 만 URL 로 올리고 나머지는 관성적으로 Zustand 에 …",
+      "audioPath": "/tts-artifacts/spot/map-centric-pivot-url-state/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/spot/map-centric-pivot-url-state/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

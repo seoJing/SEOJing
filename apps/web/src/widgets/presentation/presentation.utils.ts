@@ -1,5 +1,24 @@
 const SPLITTABLE_LIST_TAGS = new Set(["UL", "OL"]);
 
+const DEFAULT_CHAPTER_LEVELS = [2, 3, 4];
+
+const HEADING_TAG_PATTERN = /^H([1-6])$/;
+
+export type PresentationOutlineItemKind = "heading" | "content";
+
+export interface PresentationSlideOutlineItem {
+  id: string;
+  kind: PresentationOutlineItemKind;
+  title: string;
+  level: number;
+  slideIndex: number;
+  elementCount: number;
+  hasCode: boolean;
+  codeBlockCount: number;
+  hasImage: boolean;
+  imageCount: number;
+}
+
 /** 화면 높이에 따라 채움 비율을 반환 — 큰 화면일수록 보수적으로 채움 */
 export function getFillRatio(viewH: number): number {
   if (viewH <= 600) return 0.82;
@@ -14,15 +33,143 @@ export interface ExtractSlidesOptions {
   codeBlockSplitRatio?: number;
 }
 
+export interface ExtractSlideOutlineOptions {
+  chapterLevels?: number[];
+}
+
+function getChapterTagSet(chapterLevels?: number[]): Set<string> {
+  return new Set(
+    (chapterLevels ?? DEFAULT_CHAPTER_LEVELS).map((level) => `h${level}`),
+  );
+}
+
+function shouldSkipPresentationElement(child: Element): boolean {
+  const tag = child.tagName.toLowerCase();
+
+  return (
+    child.classList.contains("sticky") ||
+    tag === "nav" ||
+    child.hasAttribute("data-presentation-skip")
+  );
+}
+
+function getHeadingLevel(element: Element): number | null {
+  const match = HEADING_TAG_PATTERN.exec(element.tagName);
+  if (!match) return null;
+  return Number(match[1]);
+}
+
+function getElementTitle(element: Element, fallback: string): string {
+  const text = element.textContent?.replace(/\s+/g, " ").trim();
+  return text || fallback;
+}
+
+function makeOutlineId(title: string, index: number): string {
+  const slug = title
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{Letter}\p{Number}]+/gu, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
+
+  return slug ? `${index + 1}-${slug}` : `slide-${index + 1}`;
+}
+
+function countCodeBlocks(element: Element): number {
+  if (element.hasAttribute("data-code-block")) return 1;
+
+  const explicitCodeBlocks = element.querySelectorAll("[data-code-block]");
+  if (explicitCodeBlocks.length > 0) return explicitCodeBlocks.length;
+
+  return element.querySelectorAll("pre").length;
+}
+
+function countImages(element: Element): number {
+  return element.tagName === "IMG" ? 1 : element.querySelectorAll("img").length;
+}
+
+function buildSlideOutlineItem(
+  elements: Element[],
+  slideIndex: number,
+): PresentationSlideOutlineItem {
+  const firstElement = elements[0];
+  const headingLevel = firstElement ? getHeadingLevel(firstElement) : null;
+  const kind: PresentationOutlineItemKind = headingLevel
+    ? "heading"
+    : "content";
+  const title = firstElement
+    ? getElementTitle(firstElement, `Slide ${slideIndex + 1}`)
+    : `Slide ${slideIndex + 1}`;
+  const codeBlockCount = elements.reduce(
+    (total, element) => total + countCodeBlocks(element),
+    0,
+  );
+  const imageCount = elements.reduce(
+    (total, element) => total + countImages(element),
+    0,
+  );
+
+  return {
+    id: makeOutlineId(title, slideIndex),
+    kind,
+    title,
+    level: headingLevel ?? 0,
+    slideIndex,
+    elementCount: elements.length,
+    hasCode: codeBlockCount > 0,
+    codeBlockCount,
+    hasImage: imageCount > 0,
+    imageCount,
+  };
+}
+
+export function extractSlideOutline(
+  article: HTMLElement,
+  options?: ExtractSlideOutlineOptions,
+): PresentationSlideOutlineItem[] {
+  const chapterTagSet = getChapterTagSet(options?.chapterLevels);
+  const outline: PresentationSlideOutlineItem[] = [];
+  let currentContent: Element[] = [];
+
+  const flushContent = () => {
+    if (currentContent.length === 0) return;
+    outline.push(buildSlideOutlineItem(currentContent, outline.length));
+    currentContent = [];
+  };
+
+  for (const child of Array.from(article.children)) {
+    if (shouldSkipPresentationElement(child)) continue;
+
+    const tag = child.tagName.toLowerCase();
+
+    if (child.hasAttribute("data-presentation-slide") || tag === "hr") {
+      flushContent();
+      continue;
+    }
+
+    if (chapterTagSet.has(tag)) {
+      flushContent();
+      outline.push(buildSlideOutlineItem([child], outline.length));
+      continue;
+    }
+
+    currentContent.push(child);
+  }
+
+  flushContent();
+
+  return outline;
+}
+
 export function extractSlides(
   article: HTMLElement,
   availableHeight: number,
   slideWidth: number,
   options?: ExtractSlidesOptions,
 ): HTMLDivElement[] {
-  const chapterLevels = options?.chapterLevels ?? [2, 3, 4];
   const codeBlockSplitRatio = options?.codeBlockSplitRatio ?? 0.5;
-  const chapterTagSet = new Set(chapterLevels.map((l) => `h${l}`));
+  const chapterTagSet = getChapterTagSet(options?.chapterLevels);
 
   const allChildren = Array.from(article.children);
 
@@ -32,11 +179,7 @@ export function extractSlides(
   for (const child of allChildren) {
     const tag = child.tagName.toLowerCase();
 
-    if (
-      child.classList.contains("sticky") ||
-      tag === "nav" ||
-      child.getAttribute("data-presentation-skip") != null
-    ) {
+    if (shouldSkipPresentationElement(child)) {
       continue;
     }
 

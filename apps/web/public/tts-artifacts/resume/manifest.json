@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "resume",
+  "canonicalUrl": "https://seojing.com/blog/resume",
+  "title": "이력서",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:resume",
+  "artifacts": [
+    {
+      "id": "resume__summary-2m",
+      "kind": "summary-2m",
+      "slug": "resume",
+      "canonicalUrl": "https://seojing.com/blog/resume",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "이력서 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "About Email. [tjwlsrb1021@kyonggi.ac.kr] GitHub. github.com/seoJing Education 경기대학교 컴퓨터공학과 (2022.03 재학 중) Skills Core React 19, TypeScript, JavaScript (ES6+) Styling Tailwind CSS 4, shadcn/ui State Management Zustand (Persist Middleware) Build & Architecture Vite Feature-Based Architecture, FSD (Feature-Sliced Design) Collaboration Git/GitHub (PR-based), Swagger, MSW, Figma Learning TanStack Query, TanStack Router, Next.js / ===== 프로젝트 ===== / Projects Whale Dashboard 2025.12 present · 개인 프로젝트 (기여도 100%) / ✏️ TODO: 프로젝트 설명을 입력하세요 / [TODO: Whale Dashboard 프로젝트 설명 입력] React 19, TypeScript, Vite, Zustand, Tailwind CSS, shadcn/ui, Whale Extension API KGU Developers — csHome 2025.06 2026.01 · 팀 프로젝트 (FE 5+, BE 3+) · FE 기여도 35% 경기대학교 컴퓨터공학과 공식 홈페이지 개발 프로젝트입니다. React, TypeScript, FSD Architecture HLMN 어드민 페이지 리팩토링 — 4개 기능(hero-images, lab, main, news)의 파일 구조 통일, camelCase 네이밍 컨벤션 적용, 공유 컴포넌트 분리 졸업 논문 제출 사이트 — 오프라인 졸업 논문 제출 프로세스를 디지털화. 증명서 관리 UI, 논문 신청 관리 UI, 논문 현황 추적 시스템 구축 디자이너 없이 프론트엔드 관점에서 UI 설계를 주도 기획(1개월) → 개발(3개월) → 유지보수까지 전체 라이프사이클 참여 C-Lab Platforms 2025.03 present · 팀 프로젝트 (CoreTeam) · FE 기여도 25% C-Lab 동아리 플랫폼 개발 프로젝트입니다. React, TypeScript, Swagger, GitHub PR-based 협업 MyPage — 프로필, 내 활동, 내 댓글, 도서 대여 목록, 내 게시글 등 5개 서브페이지 설계 및 구현 RE-MEMBER 프로젝트 — 신규 프로젝트 셋업 및 디자인 시스템 정의 (PR #285) RE-MEMBER 랜딩 페이지 — 2026년 신입생 모집을 위한 랜딩 페이지 개발 (Next.js 첫 적용) / ===== 활동 ===== / Activities C-Lab CoreTeam 2025.03 present · Frontend Developer 경기대학교 중앙 IT 동아리 C-Lab의 CoreTeam으로 활동하며 동아리 플랫폼(clab-platforms)을 개발하고 있습니다. Swagger 기반 프론트-백엔드 API 연동, Feature Branch 전략 + PR 기반 개발, 코드 리뷰 문화에 참여하고 있습니다. C-Lab Front Study 2026.03 present · 스터디 리더 C-Lab 프론트엔드 스터디를 운영하며 신입생 및 2학년 대상으로 프론트엔드 교육을 진행하고 있습니다. 매주 대면 세션(90분)으로 진행됩니다. 1학기: HTML / CSS / JavaScript (필수) 여름방학: TypeScript 기초 (선택) 2학기: TypeScript + React + 라이브러리 (필수) 겨울방학: TS 심화 + 인증 + 최적화 (선택) 세션 구성: 사전 학습 과제 → 복습 퀴즈(10분) → 핵심 개념 정리(25분) → 면접 질문 연습(15분) → 다음 주 미리보기(10분) KGU Developers — 졸업 논문 프로젝트 2025.09 2026.01 · …",
+      "audioPath": "/tts-artifacts/resume/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/resume/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "resume__core-5m",
+      "kind": "core-5m",
+      "slug": "resume",
+      "canonicalUrl": "https://seojing.com/blog/resume",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "이력서 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "About Email. [tjwlsrb1021@kyonggi.ac.kr] GitHub. github.com/seoJing Education 경기대학교 컴퓨터공학과 (2022.03 재학 중) Skills Core React 19, TypeScript, JavaScript (ES6+) Styling Tailwind CSS 4, shadcn/ui State Management Zustand (Persist Middleware) Build & Architecture Vite Feature-Based Architecture, FSD (Feature-Sliced Design) Collaboration Git/GitHub (PR-based), Swagger, MSW, Figma Learning TanStack Query, TanStack Router, Next.js / ===== 프로젝트 ===== / Projects Whale Dashboard 2025.12 present · 개인 프로젝트 (기여도 100%) / ✏️ TODO: 프로젝트 설명을 입력하세요 / [TODO: Whale Dashboard 프로젝트 설명 입력] React 19, TypeScript, Vite, Zustand, Tailwind CSS, shadcn/ui, Whale Extension API KGU Developers — csHome 2025.06 2026.01 · 팀 프로젝트 (FE 5+, BE 3+) · FE 기여도 35% 경기대학교 컴퓨터공학과 공식 홈페이지 개발 프로젝트입니다. React, TypeScript, FSD Architecture HLMN 어드민 페이지 리팩토링 — 4개 기능(hero-images, lab, main, news)의 파일 구조 통일, camelCase 네이밍 컨벤션 적용, 공유 컴포넌트 분리 졸업 논문 제출 사이트 — 오프라인 졸업 논문 제출 프로세스를 디지털화. 증명서 관리 UI, 논문 신청 관리 UI, 논문 현황 추적 시스템 구축 디자이너 없이 프론트엔드 관점에서 UI 설계를 주도 기획(1개월) → 개발(3개월) → 유지보수까지 전체 라이프사이클 참여 C-Lab Platforms 2025.03 present · 팀 프로젝트 (CoreTeam) · FE 기여도 25% C-Lab 동아리 플랫폼 개발 프로젝트입니다. React, TypeScript, Swagger, GitHub PR-based 협업 MyPage — 프로필, 내 활동, 내 댓글, 도서 대여 목록, 내 게시글 등 5개 서브페이지 설계 및 구현 RE-MEMBER 프로젝트 — 신규 프로젝트 셋업 및 디자인 시스템 정의 (PR #285) RE-MEMBER 랜딩 페이지 — 2026년 신입생 모집을 위한 랜딩 페이지 개발 (Next.js 첫 적용) / ===== 활동 ===== / Activities C-Lab CoreTeam 2025.03 present · Frontend Developer 경기대학교 중앙 IT 동아리 C-Lab의 CoreTeam으로 활동하며 동아리 플랫폼(clab-platforms)을 개발하고 있습니다. Swagger 기반 프론트-백엔드 API 연동, Feature Branch 전략 + PR 기반 개발, 코드 리뷰 문화에 참여하고 있습니다. C-Lab Front Study 2026.03 present · 스터디 리더 C-Lab 프론트엔드 스터디를 운영하며 신입생 및 2학년 대상으로 프론트엔드 교육을 진행하고 있습니다. 매주 대면 세션(90분)으로 진행됩니다. 1학기: HTML / CSS / JavaScript (필수) 여름방학: TypeScript 기초 (선택) 2학기: TypeScript + React + 라이브러리 (필수) 겨울방학: TS 심화 + 인증 + 최적화 (선택) 세션 구성: 사전 학습 과제 → 복습 퀴즈(10분) → 핵심 개념 정리(25분) → 면접 질문 연습(15분) → 다음 주 미리보기(10분) KGU Developers — 졸업 논문 프로젝트 2025.09 2026.01 · Frontend Developer 경기대학교 컴퓨터공학과 졸업 논문 제출 프로세스를 디지털화하는 프로젝트에 참여했습니다. 이메일/출력 기반 오프라인 제출 방식을 온라인 시스템으로 전환하여, 학생은 제출 현황을 실시간으로 추적하고 교수/관리자는 효율적으로 관리할 수 있게 했습니다. 증명서 관리 UI, 논문 신청 관리 UI, 논문 현황 추적 시스템(제출 → 심사 → 완료) 구축 디자이너 없이 프론트엔드 관점에서 UI 설계 주도 기획(1개월) → 개발(3개월) → 유지보수까지 전체 라이프사이클 참여 논문 상태값 버그 수정, 논문 유형 요청 추가, API 연동 등 지속적 유지보수",
+      "audioPath": "/tts-artifacts/resume/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/resume/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

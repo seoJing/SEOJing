@@ -1,0 +1,1 @@
+Spring Boot 프로젝트에는 보통 이런 파일이 있습니다. 처음 보면 Java 문법도 낯설고 어노테이션도 낯섭니다. 하지만 Day 1에서는 이렇게만 이해해도 충분합니다. main: Java 프로그램이 시작되는 함수 SpringApplication.run: Spring Boot 서버를 실행하는 명령 @SpringBootApplication: "이 클래스가 Spring Boot 앱의 시작점"이라는 표시 여기서 중요한 것은 이 파일에 실제 API 로직을 넣지 않는다는 점입니다. 이 파일은 서버를 켜는 스위치에 가깝습니다. AI가 여기에 댓글 작성 로직이나 게시글 조회 로직을 넣었다면 구조가 이상한 것입니다. ---

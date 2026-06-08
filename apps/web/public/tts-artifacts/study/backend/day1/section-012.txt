@@ -1,0 +1,1 @@
+이 Controller의 기본 주소입니다. 클래스 위에 /api/posts가 있고, 메서드 위에 / postId 가 있으면 합쳐서 /api/posts/ postId 가 됩니다. 이 둘을 합치면 다음 주소입니다.

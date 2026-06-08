@@ -8,6 +8,7 @@ import { NewPostsCarousel } from "@/widgets/new-posts-carousel/NewPostsCarousel"
 import { RecentlyRead } from "@/widgets/recently-read/RecentlyRead";
 import { PostExplorer } from "@/widgets/post-explorer/PostExplorer";
 import { ArticleToolbar } from "@/widgets/article-toolbar/ArticleToolbar";
+import { ArticleAnalytics } from "@/widgets/article-analytics";
 import type { Metadata } from "vinext/shims/metadata";
 import {
   buildArticleMetadata,
@@ -80,13 +81,19 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         ]}
       />
       <Paper>
-        <ArticleHeader
+        <ArticleAnalytics
+          slug={slug.join("/")}
           title={content.frontmatter.title}
-          date={content.frontmatter.date}
-          tags={content.frontmatter.tags}
-          readingTime={calculateReadingTime(content.source)}
         />
-        <MDXContent components={mdxComponents as MDXComponents} />
+        <div data-article-content>
+          <ArticleHeader
+            title={content.frontmatter.title}
+            date={content.frontmatter.date}
+            tags={content.frontmatter.tags}
+            readingTime={calculateReadingTime(content.source)}
+          />
+          <MDXContent components={mdxComponents as MDXComponents} />
+        </div>
         <ArticleToolbar
           slug={slug.join("/")}
           title={content.frontmatter.title}

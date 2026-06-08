@@ -1,0 +1,1 @@
+Controller가 너무 많은 기능 규칙을 들고 있지 않은가? Service가 기능 규칙을 중심으로 들고 있는가? Repository는 DB 조회/저장 역할에 집중하는가? Entity와 DTO가 구분되어 있는가?

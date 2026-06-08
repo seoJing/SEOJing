@@ -1,0 +1,1185 @@
+{
+  "version": 1,
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "entries": [
+    {
+      "slug": "kd-team/graduate/docker-compose-evolution",
+      "title": "도커 배포, 한 번 더 뒤집었다 — compose와 내부 네트워크로",
+      "canonicalUrl": "https://seojing.com/blog/kd-team/graduate/docker-compose-evolution",
+      "manifestPath": "/tts-artifacts/kd-team/graduate/docker-compose-evolution/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "kd-team/graduate/docker-deep-dive",
+      "title": "도커 배포, 교수님 메일 한 통으로 파고든 개념들",
+      "canonicalUrl": "https://seojing.com/blog/kd-team/graduate/docker-deep-dive",
+      "manifestPath": "/tts-artifacts/kd-team/graduate/docker-deep-dive/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "kd-team/graduate/overview",
+      "title": "졸업 논문 제출 사이트, 4개월 반의 기록",
+      "canonicalUrl": "https://seojing.com/blog/kd-team/graduate/overview",
+      "manifestPath": "/tts-artifacts/kd-team/graduate/overview/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "kd-team/reason",
+      "title": "KGU Developers 팀장을 맡으면서",
+      "canonicalUrl": "https://seojing.com/blog/kd-team/reason",
+      "manifestPath": "/tts-artifacts/kd-team/reason/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "kd-team/toy-project/hlmn-refactor",
+      "title": "HLMN 리팩토링, 코드를 고친다는 게 뭔지 처음 배웠다",
+      "canonicalUrl": "https://seojing.com/blog/kd-team/toy-project/hlmn-refactor",
+      "manifestPath": "/tts-artifacts/kd-team/toy-project/hlmn-refactor/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "kd-team/toy-project/pre-toy",
+      "title": "디스코드 클론 코딩, 3주짜리 토이프로젝트 회고",
+      "canonicalUrl": "https://seojing.com/blog/kd-team/toy-project/pre-toy",
+      "manifestPath": "/tts-artifacts/kd-team/toy-project/pre-toy/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/architecture/jing-factory-hermes-redesign",
+      "title": "Jing Factory를 Hermes 시대에 다시 만든다면 — 공장보다 상태 흐름이 먼저다",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/architecture/jing-factory-hermes-redesign",
+      "manifestPath": "/tts-artifacts/okayJing/architecture/jing-factory-hermes-redesign/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/architecture/jing-studio-contract-pipeline",
+      "title": "Jing Studio는 목업 생성기가 아니다 — 계약을 먼저 남기는 징팩토리",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/architecture/jing-studio-contract-pipeline",
+      "manifestPath": "/tts-artifacts/okayJing/architecture/jing-studio-contract-pipeline/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/automation/briefing-automation-report-skill",
+      "title": "아침브리핑: 내가 자동화를 하루 운영에 사용하는 방식",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/automation/briefing-automation-report-skill",
+      "manifestPath": "/tts-artifacts/okayJing/automation/briefing-automation-report-skill/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/automation/cron-prompt-self-contained",
+      "title": "cron prompt는 왜 self-contained여야 하나 — 미래의 오케이징은 지금 대화를 모른다",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/automation/cron-prompt-self-contained",
+      "manifestPath": "/tts-artifacts/okayJing/automation/cron-prompt-self-contained/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/automation/okejing-dreaming-loop",
+      "title": "OkejING Dreaming — 오케이징이 스스로를 점검하는 루프",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/automation/okejing-dreaming-loop",
+      "manifestPath": "/tts-artifacts/okayJing/automation/okejing-dreaming-loop/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/discord/discord-free-response-channel-prompt",
+      "title": "멘션 없이 대화하는 채널 — Discord free-response와 channel prompt",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/discord/discord-free-response-channel-prompt",
+      "manifestPath": "/tts-artifacts/okayJing/discord/discord-free-response-channel-prompt/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/discord/discord-migration-and-hermes-identity",
+      "title": "디스코드 이사 — 4-페르소나 체계와 헤르메스 정체성 확립",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/discord/discord-migration-and-hermes-identity",
+      "manifestPath": "/tts-artifacts/okayJing/discord/discord-migration-and-hermes-identity/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/discord/discord-startup-auto-resume",
+      "title": "빈 이벤트에 대답하지 않기 — Discord startup auto-resume을 끈 이유",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/discord/discord-startup-auto-resume",
+      "manifestPath": "/tts-artifacts/okayJing/discord/discord-startup-auto-resume/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/evolution/logic-evolution-map",
+      "title": "오케이징 로직 변천사 — 지금 구조를 먼저 그려보기",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/evolution/logic-evolution-map",
+      "manifestPath": "/tts-artifacts/okayJing/evolution/logic-evolution-map/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/evolution/okejing-vnext",
+      "title": "오케이징 vNext — 더 많은 에이전트보다 더 나은 상태 관리",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/evolution/okejing-vnext",
+      "manifestPath": "/tts-artifacts/okayJing/evolution/okejing-vnext/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/evolution/openclaw-big-picture",
+      "title": "Layer 0 — OpenClaw 큰 그림",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/evolution/openclaw-big-picture",
+      "manifestPath": "/tts-artifacts/okayJing/evolution/openclaw-big-picture/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/evolution/openclaw-operating-series-overview",
+      "title": "okayJing — 오케이징이 풀어주는 OpenClaw 운영기",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/evolution/openclaw-operating-series-overview",
+      "manifestPath": "/tts-artifacts/okayJing/evolution/openclaw-operating-series-overview/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/evolution/openclaw-ops-decisions",
+      "title": "운영 결정 로그 — 에이전트 팀·메모리·보고 라우팅·스킬을 어떻게 정리했나",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/evolution/openclaw-ops-decisions",
+      "manifestPath": "/tts-artifacts/okayJing/evolution/openclaw-ops-decisions/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/evolution/openclaw-runtime-core",
+      "title": "Layer 1 — Runtime 코어: gateway, sessions, tools",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/evolution/openclaw-runtime-core",
+      "manifestPath": "/tts-artifacts/okayJing/evolution/openclaw-runtime-core/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/evolution/openclaw-systemd-remnants",
+      "title": "죽은 OpenClaw가 계속 재시작되던 이유 — gateway migration에서 배운 것",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/evolution/openclaw-systemd-remnants",
+      "manifestPath": "/tts-artifacts/okayJing/evolution/openclaw-systemd-remnants/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/evolution/openclaw-to-hermes-single-system",
+      "title": "다중 에이전트에서 단일 체계로 — 오케이징이 Hermes가 된 이유",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/evolution/openclaw-to-hermes-single-system",
+      "manifestPath": "/tts-artifacts/okayJing/evolution/openclaw-to-hermes-single-system/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/memory/hermes-memory-cli-start-routine",
+      "title": "작업 시작 전에 기억을 먼저 조회한다 — hermes-memory CLI를 붙인 이유",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/memory/hermes-memory-cli-start-routine",
+      "manifestPath": "/tts-artifacts/okayJing/memory/hermes-memory-cli-start-routine/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/memory/local-first-hermes-memory-architecture",
+      "title": "기억은 요약이 아니라 증거여야 했다 — local-first Hermes memory를 만든 이유",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/memory/local-first-hermes-memory-architecture",
+      "manifestPath": "/tts-artifacts/okayJing/memory/local-first-hermes-memory-architecture/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/memory/local-llm-worker-evaluation",
+      "title": "로컬 LLM worker를 믿기 전에 — summary, classification, reranking 평가 기준",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/memory/local-llm-worker-evaluation",
+      "manifestPath": "/tts-artifacts/okayJing/memory/local-llm-worker-evaluation/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/memory/mac-mini-storage-memory-architecture",
+      "title": "맥미니 M4 2TB를 산 이유 — 오케이징의 기억은 디스크에서 시작한다",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/memory/mac-mini-storage-memory-architecture",
+      "manifestPath": "/tts-artifacts/okayJing/memory/mac-mini-storage-memory-architecture/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/memory/memory-backend-honcho-criteria",
+      "title": "Honcho를 다시 검토할 때 — 오케이징의 장기 기억을 어디에 둘 것인가",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/memory/memory-backend-honcho-criteria",
+      "manifestPath": "/tts-artifacts/okayJing/memory/memory-backend-honcho-criteria/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/memory/memory-should-not-auto-edit-skills",
+      "title": "기억이 skill을 자동으로 고치면 안 되는 이유",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/memory/memory-should-not-auto-edit-skills",
+      "manifestPath": "/tts-artifacts/okayJing/memory/memory-should-not-auto-edit-skills/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/memory/memory-ticket-session-search",
+      "title": "오케이징의 기억은 하나가 아니다 — memory, ticket, session_search의 역할 분담",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/memory/memory-ticket-session-search",
+      "manifestPath": "/tts-artifacts/okayJing/memory/memory-ticket-session-search/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/memory/source-linked-context-packs",
+      "title": "context pack은 요약본이 아니다 — 오케이징 기억에 source_id를 붙인 이유",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/memory/source-linked-context-packs",
+      "manifestPath": "/tts-artifacts/okayJing/memory/source-linked-context-packs/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/memory/stale-check-promotion-queue",
+      "title": "오래된 기억을 어떻게 믿을 것인가 — stale-check와 promotion queue 기준",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/memory/stale-check-promotion-queue",
+      "manifestPath": "/tts-artifacts/okayJing/memory/stale-check-promotion-queue/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/memory/vector-search-after-fts",
+      "title": "벡터 검색을 지금 붙이지 않는 이유 — FTS와 source discipline 이후의 순서",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/memory/vector-search-after-fts",
+      "manifestPath": "/tts-artifacts/okayJing/memory/vector-search-after-fts/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/reading-guide",
+      "title": "okayJing 읽는 법 — 폴더별 접근과 시간순 로드맵",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/reading-guide",
+      "manifestPath": "/tts-artifacts/okayJing/reading-guide/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/skills/notjing-final-gate",
+      "title": "낫징은 리뷰어가 아니라 검문소가 됐다 — final gate로 재정의한 이유",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/skills/notjing-final-gate",
+      "manifestPath": "/tts-artifacts/okayJing/skills/notjing-final-gate/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/skills/ouroboros-planning-skill",
+      "title": "우로보로스는 사라지지 않았다 — planning skill로 남은 이유",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/skills/ouroboros-planning-skill",
+      "manifestPath": "/tts-artifacts/okayJing/skills/ouroboros-planning-skill/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/voice/qwen3-tts-mlx-to-supertonic3",
+      "title": "Qwen3-TTS MLX를 검토했지만 Supertonic3로 돌아온 이유",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/voice/qwen3-tts-mlx-to-supertonic3",
+      "manifestPath": "/tts-artifacts/okayJing/voice/qwen3-tts-mlx-to-supertonic3/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/voice/supertonic3-custom-voice-json",
+      "title": "Supertonic3 custom voice JSON을 직접 빚어보기 — F1 톤에 말끝을 섞는 실험",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/voice/supertonic3-custom-voice-json",
+      "manifestPath": "/tts-artifacts/okayJing/voice/supertonic3-custom-voice-json/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/voice/text-chat-to-voice-colleague",
+      "title": "채팅봇에서 음성 동료로 — 오케이징이 말하기 시작하면서 바뀐 기준",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/voice/text-chat-to-voice-colleague",
+      "manifestPath": "/tts-artifacts/okayJing/voice/text-chat-to-voice-colleague/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/voice/tts-selection-operational-criteria",
+      "title": "TTS 품질 튜닝은 모델 선택보다 운영 기준 문제였다",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/voice/tts-selection-operational-criteria",
+      "manifestPath": "/tts-artifacts/okayJing/voice/tts-selection-operational-criteria/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/voice/voice-mode-report-style-breaks",
+      "title": "voice mode에서는 보고서 문체가 깨진다 — 오케이징 답변 정책을 다시 잡은 날",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/voice/voice-mode-report-style-breaks",
+      "manifestPath": "/tts-artifacts/okayJing/voice/voice-mode-report-style-breaks/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/voice/voice-request-ticket-post-routine",
+      "title": "음성 요청이 포스트 기획으로 바뀌는 과정 — 오케이징의 ticket-first 글쓰기 루틴",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/voice/voice-request-ticket-post-routine",
+      "manifestPath": "/tts-artifacts/okayJing/voice/voice-request-ticket-post-routine/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/workflow/approval-fatigue-requirement-discipline",
+      "title": "승인을 줄이는 게 아니라 요구사항을 선명하게 만든다 — 오케이징의 approval fatigue 정리",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/approval-fatigue-requirement-discipline",
+      "manifestPath": "/tts-artifacts/okayJing/workflow/approval-fatigue-requirement-discipline/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/workflow/forum-tickets-hermes-gateway",
+      "title": "운영이 채팅에서 티켓으로 — 헤르메스 게이트웨이 연결과 포럼 티켓 워크플로우",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/forum-tickets-hermes-gateway",
+      "manifestPath": "/tts-artifacts/okayJing/workflow/forum-tickets-hermes-gateway/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/workflow/hermes-report-format",
+      "title": "Hermes Report는 왜 생겼나 — 끝났다고 말하기 위한 조건",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/hermes-report-format",
+      "manifestPath": "/tts-artifacts/okayJing/workflow/hermes-report-format/manifest.json",
+      "artifactCount": 3,
+      "sectionCount": 1,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/workflow/hermes-ticket-memory",
+      "title": "hermes-ticket — 오케이징의 작업 기억 장치",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/hermes-ticket-memory",
+      "manifestPath": "/tts-artifacts/okayJing/workflow/hermes-ticket-memory/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/workflow/jing-bridge-pipeline",
+      "title": "채팅 없이 돌아가는 에이전트 — jing-bridge 파이프라인",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/jing-bridge-pipeline",
+      "manifestPath": "/tts-artifacts/okayJing/workflow/jing-bridge-pipeline/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/workflow/msw-dto-backend-handoff",
+      "title": "MSW를 켜는 순간 백엔드 요구사항이 보인다 — DTO부터 남기는 프로토타입 흐름",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/msw-dto-backend-handoff",
+      "manifestPath": "/tts-artifacts/okayJing/workflow/msw-dto-backend-handoff/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/workflow/multi-agent-ticket-structure",
+      "title": "멀티 에이전트 조율 구조 — 왜 티켓을 선택했나",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/multi-agent-ticket-structure",
+      "manifestPath": "/tts-artifacts/okayJing/workflow/multi-agent-ticket-structure/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/workflow/post-backlog-to-archive-routine",
+      "title": "밀린 글을 폴더로 회수하기 — 오케이징 포스트가 운영 기록이 되는 조건",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/post-backlog-to-archive-routine",
+      "manifestPath": "/tts-artifacts/okayJing/workflow/post-backlog-to-archive-routine/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/workflow/session-scoped-approval-cache",
+      "title": "승인을 기억해도 되는가 — session-scoped approval cache와 위험도 분류",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/session-scoped-approval-cache",
+      "manifestPath": "/tts-artifacts/okayJing/workflow/session-scoped-approval-cache/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/workflow/sessions-and-tickets",
+      "title": "채팅은 세션으로, 작업은 티켓으로 — Discord Forum을 둘로 나눈 이유",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/sessions-and-tickets",
+      "manifestPath": "/tts-artifacts/okayJing/workflow/sessions-and-tickets/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/workflow/smart-reviewer-behavior",
+      "title": "좋은 리뷰어는 많이 의심하는 사람이 아니다 — smart reviewer behavior 기준",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/smart-reviewer-behavior",
+      "manifestPath": "/tts-artifacts/okayJing/workflow/smart-reviewer-behavior/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/workflow/ticket-trigger-logic",
+      "title": "오케이징은 언제 티켓을 여는가 — 자연어와 실행 요청 사이의 경계",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/ticket-trigger-logic",
+      "manifestPath": "/tts-artifacts/okayJing/workflow/ticket-trigger-logic/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "okayJing/workflow/workflow-compilation-policy",
+      "title": "워크플로우를 모델에 넣기 전에 — 오케이징의 workflow compilation 기준",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/workflow/workflow-compilation-policy",
+      "manifestPath": "/tts-artifacts/okayJing/workflow/workflow-compilation-policy/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "resume",
+      "title": "이력서",
+      "canonicalUrl": "https://seojing.com/blog/resume",
+      "manifestPath": "/tts-artifacts/resume/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/cloudflare-workers-fs-issue",
+      "title": "Cloudflare Workers에서 fs 모듈이 안 되는 이유와 해결법",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/cloudflare-workers-fs-issue",
+      "manifestPath": "/tts-artifacts/SEOJing/cloudflare-workers-fs-issue/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/day1",
+      "title": "Day 1 - 디자인 컨셉과 디자인 시스템",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/day1",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/day1/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/day2",
+      "title": "Day 2 - 블로그 스켈레톤과 MDX 파싱",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/day2",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/day2/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/day3",
+      "title": "Day 3 - MDX 이슈, 반응형, 다크모드",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/day3",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/day3/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/day4",
+      "title": "Day 4 - 배포와 CI/CD",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/day4",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/day4/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/day5",
+      "title": "Day 5 - shiki 제거, MDX 모듈화, 그리고 대량 포스팅",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/day5",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/day5/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/day6",
+      "title": "Day 6 - 스터디 자료 작성과 데스크탑 비율 수정",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/day6",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/day6/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/day7",
+      "title": "Day 7 - Front Matter CMS와 관련 게시물 탐색기",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/day7",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/day7/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/day8",
+      "title": "Day 8 - 아티클 퀴즈와 스터디 자료",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/day8",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/day8/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/day9",
+      "title": "Day 9 - 프레젠테이션 모드, 코드블럭 개선, 테스팅",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/day9",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/day9/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/day10",
+      "title": "Day 10 - 프레젠테이션 모드 안정화",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/day10",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/day10/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/day11",
+      "title": "Day 11 - 프레젠테이션 확대 기능, FullscreenView 개선",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/day11",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/day11/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/day12",
+      "title": "Day 12 - 테스트 커버리지 개선, 모바일 프레젠테이션 버그 2건 수정",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/day12",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/day12/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/insight/code-review-feedback",
+      "title": "엄청난 피드백",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/code-review-feedback",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/insight/code-review-feedback/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/insight/comment-read-tracking",
+      "title": "생각보다 어려웠던 댓글, 완독 로컬스토리지",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/comment-read-tracking",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/insight/comment-read-tracking/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/insight/design-system-tips",
+      "title": "디자인 시스템을 구축할 때 주의할 점",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/design-system-tips",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/insight/design-system-tips/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/insight/font-issue",
+      "title": "폰트는 왜 메인 페이지에서만 적용이 안되고 있었을까?",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/font-issue",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/insight/font-issue/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/insight/mdx-dom-tree-parsing",
+      "title": "MDX DOM 트리 파싱하기",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/mdx-dom-tree-parsing",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/insight/mdx-dom-tree-parsing/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/insight/mdx-library-issue",
+      "title": "MDX 관련 이슈 노트",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/mdx-library-issue",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/insight/mdx-library-issue/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/insight/nodejs-basics",
+      "title": "결국 Node.js 까지 와버렸다",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/nodejs-basics",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/insight/nodejs-basics/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/insight/overall-flow",
+      "title": "전체적인 플로우",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/overall-flow",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/insight/overall-flow/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/insight/storybook-design-system",
+      "title": "Storybook으로 디자인 시스템 테스팅하기",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/storybook-design-system",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/insight/storybook-design-system/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/insight/what-is-mdx",
+      "title": "MDX가 뭘까?",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/insight/what-is-mdx",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/insight/what-is-mdx/manifest.json",
+      "artifactCount": 3,
+      "sectionCount": 1,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/reason",
+      "title": "기술 블로그를 직접 제작하게 된 이유",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/reason",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/reason/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/devLog/why-projects-stop",
+      "title": "왜 자꾸 프로젝트가 중단되는지",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/devLog/why-projects-stop",
+      "manifestPath": "/tts-artifacts/SEOJing/devLog/why-projects-stop/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/mobile-landscape-code-viewer",
+      "title": "모바일 웹에서 가로 모드를 강제하는 5가지 방법 — iOS Safari에서도 동작하는 코드 뷰어 만들기",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/mobile-landscape-code-viewer",
+      "manifestPath": "/tts-artifacts/SEOJing/mobile-landscape-code-viewer/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/mobile-presentation-mode",
+      "title": "블로그 글을 PPT로 만들기 — DOM 클로닝 기반 프레젠테이션 모드",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/mobile-presentation-mode",
+      "manifestPath": "/tts-artifacts/SEOJing/mobile-presentation-mode/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/presentation-scale-stabilization",
+      "title": "100vh가 100%가 아닌 이유 — 모바일 뷰포트 단위 완전 정리",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/presentation-scale-stabilization",
+      "manifestPath": "/tts-artifacts/SEOJing/presentation-scale-stabilization/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/react-children-api",
+      "title": "Context로 퀴즈 컴포넌트를 만들다 막혀서 React.Children을 공부하게 된 이야기",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/react-children-api",
+      "manifestPath": "/tts-artifacts/SEOJing/react-children-api/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/use-sync-external-store-hydration",
+      "title": "localStorage 읽기에서 하이드레이션 에러가 터지는 이유 useSyncExternalStore로 해결",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/use-sync-external-store-hydration",
+      "manifestPath": "/tts-artifacts/SEOJing/use-sync-external-store-hydration/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/useeffect-cleanup-dependency-bug",
+      "title": "useEffect cleanup과 의존성 배열 — 실전 버그 사례로 이해하는 생애주기",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/useeffect-cleanup-dependency-bug",
+      "manifestPath": "/tts-artifacts/SEOJing/useeffect-cleanup-dependency-bug/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/vinext-github-actions-deploy",
+      "title": "vinext + GitHub Actions로 Cloudflare Workers 배포하기",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/vinext-github-actions-deploy",
+      "manifestPath": "/tts-artifacts/SEOJing/vinext-github-actions-deploy/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/vinext-non-ascii-bug-contribution",
+      "title": "vinext 오픈소스 기여기: 한국어 slug가 RSC에서 이슈를 일으킨 이유",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/vinext-non-ascii-bug-contribution",
+      "manifestPath": "/tts-artifacts/SEOJing/vinext-non-ascii-bug-contribution/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/wasm-shiki-rsc-issue",
+      "title": "RSC 환경에서 WebAssembly가 차단되는 이유 — Shiki에서 rehype-prism-plus로",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/wasm-shiki-rsc-issue",
+      "manifestPath": "/tts-artifacts/SEOJing/wasm-shiki-rsc-issue/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "SEOJing/web-rendering-performance-fundamentals",
+      "title": "vinext는 왜 빠를까? — SSR, Vite, Edge, 그리고 Web Vitals까지",
+      "canonicalUrl": "https://seojing.com/blog/SEOJing/web-rendering-performance-fundamentals",
+      "manifestPath": "/tts-artifacts/SEOJing/web-rendering-performance-fundamentals/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "spot/map-centric-pivot-url-state",
+      "title": "탭을 버리고 지도를 남겼다 — URL 이 상태의 진실이 된 이유",
+      "canonicalUrl": "https://seojing.com/blog/spot/map-centric-pivot-url-state",
+      "manifestPath": "/tts-artifacts/spot/map-centric-pivot-url-state/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "spot/map-judgment-log",
+      "title": "Spot 을 만들며 반복해서 내린 판단 세 가지",
+      "canonicalUrl": "https://seojing.com/blog/spot/map-judgment-log",
+      "manifestPath": "/tts-artifacts/spot/map-judgment-log/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "spot/naver-map-sync-init",
+      "title": "지도가 회색 화면만 찍던 날 — async useEffect 와 StrictMode 의 race",
+      "canonicalUrl": "https://seojing.com/blog/spot/naver-map-sync-init",
+      "manifestPath": "/tts-artifacts/spot/naver-map-sync-init/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "spot/overview",
+      "title": "Spot — 지도 위에 만든 로컬 커뮤니티, 그 기록의 시작",
+      "canonicalUrl": "https://seojing.com/blog/spot/overview",
+      "manifestPath": "/tts-artifacts/spot/overview/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "spot/persona-cluster-rendering-optimization",
+      "title": "60fps 페르소나가 맵을 뛰어다닐 때, React 를 어떻게 덜 깨우나",
+      "canonicalUrl": "https://seojing.com/blog/spot/persona-cluster-rendering-optimization",
+      "manifestPath": "/tts-artifacts/spot/persona-cluster-rendering-optimization/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "spot/sim-replay-and-locality-modes",
+      "title": "70만 줄짜리 시뮬레이터 로그를 지도에 띄우기 — 줄이고, 쪼개고, 줌 레벨로 가르기",
+      "canonicalUrl": "https://seojing.com/blog/spot/sim-replay-and-locality-modes",
+      "manifestPath": "/tts-artifacts/spot/sim-replay-and-locality-modes/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "spot/spot-clustering-shape-vs-cause",
+      "title": "점들이 모였다고 모임이 아니다 — 클러스터의 모양과 원인을 갈라낸 기록",
+      "canonicalUrl": "https://seojing.com/blog/spot/spot-clustering-shape-vs-cause",
+      "manifestPath": "/tts-artifacts/spot/spot-clustering-shape-vs-cause/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/backend/day1",
+      "title": "백엔드 스터디 Day 1: 스프링 프로젝트를 읽기 위한 최소 지도",
+      "canonicalUrl": "https://seojing.com/blog/study/backend/day1",
+      "manifestPath": "/tts-artifacts/study/backend/day1/manifest.json",
+      "artifactCount": 44,
+      "sectionCount": 42,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/backend/day2",
+      "title": "백엔드 스터디 Day 2: API 계약과 DTO를 읽는 법",
+      "canonicalUrl": "https://seojing.com/blog/study/backend/day2",
+      "manifestPath": "/tts-artifacts/study/backend/day2/manifest.json",
+      "artifactCount": 32,
+      "sectionCount": 30,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/backend/day3",
+      "title": "백엔드 스터디 Day 3: 검증과 에러 응답을 읽는 법",
+      "canonicalUrl": "https://seojing.com/blog/study/backend/day3",
+      "manifestPath": "/tts-artifacts/study/backend/day3/manifest.json",
+      "artifactCount": 26,
+      "sectionCount": 24,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/backend/day4",
+      "title": "백엔드 스터디 Day 4: Entity와 Repository로 DB 흐름 읽기",
+      "canonicalUrl": "https://seojing.com/blog/study/backend/day4",
+      "manifestPath": "/tts-artifacts/study/backend/day4/manifest.json",
+      "artifactCount": 35,
+      "sectionCount": 33,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/backend/day5",
+      "title": "백엔드 스터디 Day 5: Service와 트랜잭션으로 비즈니스 흐름 읽기",
+      "canonicalUrl": "https://seojing.com/blog/study/backend/day5",
+      "manifestPath": "/tts-artifacts/study/backend/day5/manifest.json",
+      "artifactCount": 26,
+      "sectionCount": 24,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/backend/day6",
+      "title": "백엔드 스터디 Day 6: 로그인과 권한 흐름을 코드에서 읽기",
+      "canonicalUrl": "https://seojing.com/blog/study/backend/day6",
+      "manifestPath": "/tts-artifacts/study/backend/day6/manifest.json",
+      "artifactCount": 22,
+      "sectionCount": 20,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/backend/day7",
+      "title": "백엔드 스터디 Day 7: 테스트 코드로 AI 백엔드 검증하기",
+      "canonicalUrl": "https://seojing.com/blog/study/backend/day7",
+      "manifestPath": "/tts-artifacts/study/backend/day7/manifest.json",
+      "artifactCount": 26,
+      "sectionCount": 24,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/in-person/week0",
+      "title": "프론트엔드 스터디 대면 0주차: 프론트엔드 개발자란? 그리고 우리가 배울 것들",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/in-person/week0",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/in-person/week0/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/in-person/week1",
+      "title": "프론트엔드 스터디 대면 1주차: HTML 마크업과 폼, 그리고 CSS의 시작",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/in-person/week1",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/in-person/week1/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/in-person/week2",
+      "title": "프론트엔드 스터디 대면 2주차: 폼(Form), CSS 선택자, 그리고 박스 모델",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/in-person/week2",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/in-person/week2/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/in-person/week3",
+      "title": "프론트엔드 스터디 대면 3주차: 박스 모델 실전, Position과 Flexbox",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/in-person/week3",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/in-person/week3/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/in-person/week6-1",
+      "title": "프론트엔드 스터디 대면 6주차(1): HTML/CSS/JS 리마인드와 브라우저 렌더링",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/in-person/week6-1",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/in-person/week6-1/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/in-person/week6-2",
+      "title": "프론트엔드 스터디 대면 6주차(2): AI 시대의 개발 방식과 프론트엔드 개발자의 위치",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/in-person/week6-2",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/in-person/week6-2/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/in-person/week7",
+      "title": "프론트엔드 스터디 대면 7주차: React 입문과 프로젝트 구조",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/in-person/week7",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/in-person/week7/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/in-person/week8",
+      "title": "프론트엔드 스터디 대면 8주차: API와 통신 — 프론트엔드와 백엔드의 계약",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/in-person/week8",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/in-person/week8/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/in-person/week9",
+      "title": "프론트엔드 스터디 대면 9주차: Next.js 렌더링 진화와 웹 퍼포먼스",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/in-person/week9",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/in-person/week9/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/preclass/level1",
+      "title": "사전 진단 퀴즈 1단계 (HTML/CSS)",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/preclass/level1",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/preclass/level1/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/preclass/level2",
+      "title": "사전 진단 퀴즈 2단계 (HTML/CSS 활용)",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/preclass/level2",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/preclass/level2/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/preclass/level3",
+      "title": "사전 진단 퀴즈 3단계 (변수와 DOM)",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/preclass/level3",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/preclass/level3/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/preclass/level4",
+      "title": "사전 진단 퀴즈 4단계 (배열, 함수, 비동기)",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/preclass/level4",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/preclass/level4/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/preclass/level5",
+      "title": "사전 진단 퀴즈 5단계 (선언적 UI와 상태)",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/preclass/level5",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/preclass/level5/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/week1",
+      "title": "프론트엔드 스터디 1주차: 마크업 그 이상, 실무를 위한 중급 HTML 가이드",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week1",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/week1/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/week2",
+      "title": "프론트엔드 스터디 2주차: 사용자와 소통하는 폼 & CSS의 시작",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week2",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/week2/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/week3",
+      "title": "프론트엔드 스터디 3주차: 프론트엔드의 첫 번째 벽, 박스 모델과 스타일링",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week3",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/week3/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/week4",
+      "title": "프론트엔드 스터디 4주차: 자유자재 레이아웃 (포지션과 플렉스박스)",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week4",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/week4/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/week5",
+      "title": "프론트엔드 스터디 5주차: JavaScript 시작 — 타입, 변수, 그리고 JS가 이상한 이유",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week5",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/week5/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/week6",
+      "title": "프론트엔드 스터디 6주차: 객체, 함수, 그리고 스코프",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week6",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/week6/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/week7",
+      "title": "프론트엔드 스터디 7주차: 불변성, 프로토타입, 타입 체크",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week7",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/week7/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/week8",
+      "title": "프론트엔드 스터디 8주차: 클로저, Promise, async/await",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week8",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/week8/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/week9",
+      "title": "프론트엔드 스터디 9주차: React 입문 전 필수 JS 문법 — map, 구조 분해, 스프레드",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week9",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/week9/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/week10",
+      "title": "프론트엔드 스터디 10주차: React 기초 1 — 컴포넌트, JSX, props, useState",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week10",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/week10/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/week11",
+      "title": "프론트엔드 스터디 11주차: React 기초 2 — useEffect, 이벤트 처리, 폼",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week11",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/week11/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/weekHard1",
+      "title": "프론트엔드 스터디 심화: this, 실행 컨텍스트, 이터러블",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/weekHard1",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/weekHard1/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    },
+    {
+      "slug": "study/clab-26-1/weekHard2",
+      "title": "프론트엔드 스터디 심화: 에러 처리와 정규 표현식",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/weekHard2",
+      "manifestPath": "/tts-artifacts/study/clab-26-1/weekHard2/manifest.json",
+      "artifactCount": 2,
+      "sectionCount": 0,
+      "generatedAt": "2026-06-07T19:30:18.118Z"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+요청 body의 JSON을 Java 객체로 바꿔 받습니다. 프론트가 이렇게 보내면, 서버는 보통 이런 DTO로 받습니다. 여기서 CreatePostRequest가 요청 DTO입니다.

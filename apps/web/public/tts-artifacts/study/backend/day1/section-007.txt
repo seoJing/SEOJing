@@ -1,0 +1,1 @@
+POST, PUT, PATCH 요청에서는 보통 body에 JSON 데이터를 담습니다. Spring Boot에서는 이 body를 DTO라는 객체로 받는 경우가 많습니다. DTO는 뒤에서 다시 보겠습니다. 지금은 "프론트가 보내는 JSON 모양과 서버의 DTO 필드 이름이 맞아야 한다" 정도만 기억하면 됩니다. ---

@@ -1,0 +1,1 @@
+조회인데 GET인가? 생성인데 POST인가? 수정인데 PUT 또는 PATCH인가? 삭제인데 DELETE인가? 프론트가 호출하는 주소와 Controller 주소가 같은가?

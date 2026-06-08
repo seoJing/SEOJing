@@ -1,0 +1,1 @@
+여러 Controller가 있으면 에러 처리 코드가 흩어지기 쉽습니다. 이렇게 되면 Controller마다 에러 응답 모양이 달라질 수 있습니다. 어떤 API는 message: ... , 어떤 API는 error: ... , 어떤 API는 그냥 문자열을 반환할 수도 있습니다. Spring에서는 전역 예외 처리 클래스를 만들어 이런 처리를 한 곳으로 모을 수 있습니다. 읽는 법은 이렇습니다. AI가 만든 코드에서 GlobalExceptionHandler, ExceptionHandler, ControllerAdvice 같은 이름을 찾으면 에러 처리의 중심을 찾는 데 도움이 됩니다. ---

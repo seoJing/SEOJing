@@ -1,0 +1,1 @@
+Service는 DB에 직접 SQL을 쓰기보다 Repository를 호출하는 경우가 많습니다. Spring Data JPA를 쓰면 findById, save, delete 같은 기본 기능이 Repository에 준비되어 있습니다.

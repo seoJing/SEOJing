@@ -1,0 +1,1 @@
+확인할 것: URL과 HTTP Method가 프론트엔드와 맞는가? 요청 DTO가 있는가? @Valid가 붙어 있는가? 응답 DTO가 있는가?

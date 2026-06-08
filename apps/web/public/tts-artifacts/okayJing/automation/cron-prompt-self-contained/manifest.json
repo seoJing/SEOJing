@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "okayJing/automation/cron-prompt-self-contained",
+  "canonicalUrl": "https://seojing.com/blog/okayJing/automation/cron-prompt-self-contained",
+  "title": "cron prompt는 왜 self-contained여야 하나 — 미래의 오케이징은 지금 대화를 모른다",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:okayJing/automation/cron-prompt-self-contained",
+  "artifacts": [
+    {
+      "id": "okayJing__automation__cron-prompt-self-contained__summary-2m",
+      "kind": "summary-2m",
+      "slug": "okayJing/automation/cron-prompt-self-contained",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/automation/cron-prompt-self-contained",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "cron prompt는 왜 self-contained여야 하나 — 미래의 오케이징은 지금 대화를 모른다 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "0. 예약 작업은 현재 대화를 들고 가지 않는다 cron job을 만들 때 가장 쉽게 놓치는 부분이 있습니다. 지금 대화에서 당연해 보이는 맥락이, 미래 실행 시점에는 없습니다. cron은 새 세션에서 돕니다. 지금 오케이징이 알고 있는 흐름이나 방금 합의한 말투를 그대로 들고 가지 않는다고 봐야 합니다. 그래서 cron prompt는 self-contained여야 합니다. 무엇을 해야 하는지, 무엇을 하면 안 되는지, 어떤 보고 형식을 써야 하는지, 위험한 변경은 어떻게 다뤄야 하는지 prompt 안에 들어가야 합니다. \"아까 말한 대로\"는 미래의 오케이징에게 통하지 않습니다. --- 1. Dreaming에서 이 문제가 바로 보였다 OkejING Dreaming을 만들 때 이 기준이 중요했습니다. 새벽 4시에는 local로 자가점검을 돌리고, 아침 8시에는 Discord로 브리핑을 보냅니다. 이 두 작업은 사람이 옆에서 설명해주지 않습니다. prompt가 곧 운영 매뉴얼입니다. 차이는 단순합니다. 좋은 prompt는 그 자체로 실행 문서입니다. 누가 언제 읽어도 같은 경계로 움직일 수 있어야 합니다. --- 2. cron은 recursive scheduling을 하면 안 된다 예약 작업에는 또 하나의 금지선이 있습니다. cron job이 다시 cron job을 만드는 구조는 피해야 합니다. 자동화가 자동화를 낳기 시작하면, 나중에 어떤 작업이 왜 도는지 알기 어려워집니다. 필요하면 사람이 명시적으로 새 job을 만들고, 기존 job은 list/update/remove로 관리하는 편이 낫습니다. 오케이징이 스스로 job을 계속 늘리는 구조는 재미는 있지만 운영에는 위험합니다. 특히 Discord 브리핑처럼 사용자를 직접 깨우는 작업은 더 조심해야 합니다. --- 3. deliver 방식도 prompt의 일부다 cron에서는 결과를 어디로 보낼지도 중요합니다. local은 조용히 저장하는 방식이고, origin은 현재 Discord 세션으로 결과를 돌려보내는 방식입니다. 둘을 잘못 고르면 조용히 돌아야 할 작업이 채팅을 어지럽히거나, 반대로 꼭 알려야 할 브리핑이 로컬에만 남을 수 있습니다. deliver 쓰임 --------------- ------------------------------------------- local 중간 점검, 긴 로그, 조용한 self-improvement origin 사용자에게 전달해야 하는 브리핑 explicit target 사용자가 특정 대상 지시했을 때만 Dreaming 구조에서 새벽 4시 job은 local, 아침 8시 job은 origin으로 나뉜 것도 이 이유입니다. 점검과 전달은 같은 작업이 아닙니다. --- 4. 좋은 cron prompt의 조건 지금 기준에서 좋은 cron prompt는 아래 조건을 만족해야 합니다. 작업 목적이 한 문장으로 분명하다. 입력으로 봐야 할 소스가 명시되어 있다. 자동 적용 가능 / 승인 필요 / 금지 영역이 나뉘어 있다. 보고 형식이 정해져 있다. 현재 대화에 의존하지 않는다. recursive cron 생성을 금지한다. 실패했을 때 어떻게 보고할지 정해져 있다. 이 정도가 들어가면 길어 보일 수 있습니다. 하지만 cron prompt는 짧은 채팅 메시지가 아니라 미래의 작업 지시서입니다. 조금 길어도 명확한 쪽이 낫습니다. --- 5. 정리 cron은 오케이징을 시간 …",
+      "audioPath": "/tts-artifacts/okayJing/automation/cron-prompt-self-contained/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/okayJing/automation/cron-prompt-self-contained/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "okayJing__automation__cron-prompt-self-contained__core-5m",
+      "kind": "core-5m",
+      "slug": "okayJing/automation/cron-prompt-self-contained",
+      "canonicalUrl": "https://seojing.com/blog/okayJing/automation/cron-prompt-self-contained",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "cron prompt는 왜 self-contained여야 하나 — 미래의 오케이징은 지금 대화를 모른다 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "0. 예약 작업은 현재 대화를 들고 가지 않는다 cron job을 만들 때 가장 쉽게 놓치는 부분이 있습니다. 지금 대화에서 당연해 보이는 맥락이, 미래 실행 시점에는 없습니다. cron은 새 세션에서 돕니다. 지금 오케이징이 알고 있는 흐름이나 방금 합의한 말투를 그대로 들고 가지 않는다고 봐야 합니다. 그래서 cron prompt는 self-contained여야 합니다. 무엇을 해야 하는지, 무엇을 하면 안 되는지, 어떤 보고 형식을 써야 하는지, 위험한 변경은 어떻게 다뤄야 하는지 prompt 안에 들어가야 합니다. \"아까 말한 대로\"는 미래의 오케이징에게 통하지 않습니다. --- 1. Dreaming에서 이 문제가 바로 보였다 OkejING Dreaming을 만들 때 이 기준이 중요했습니다. 새벽 4시에는 local로 자가점검을 돌리고, 아침 8시에는 Discord로 브리핑을 보냅니다. 이 두 작업은 사람이 옆에서 설명해주지 않습니다. prompt가 곧 운영 매뉴얼입니다. 차이는 단순합니다. 좋은 prompt는 그 자체로 실행 문서입니다. 누가 언제 읽어도 같은 경계로 움직일 수 있어야 합니다. --- 2. cron은 recursive scheduling을 하면 안 된다 예약 작업에는 또 하나의 금지선이 있습니다. cron job이 다시 cron job을 만드는 구조는 피해야 합니다. 자동화가 자동화를 낳기 시작하면, 나중에 어떤 작업이 왜 도는지 알기 어려워집니다. 필요하면 사람이 명시적으로 새 job을 만들고, 기존 job은 list/update/remove로 관리하는 편이 낫습니다. 오케이징이 스스로 job을 계속 늘리는 구조는 재미는 있지만 운영에는 위험합니다. 특히 Discord 브리핑처럼 사용자를 직접 깨우는 작업은 더 조심해야 합니다. --- 3. deliver 방식도 prompt의 일부다 cron에서는 결과를 어디로 보낼지도 중요합니다. local은 조용히 저장하는 방식이고, origin은 현재 Discord 세션으로 결과를 돌려보내는 방식입니다. 둘을 잘못 고르면 조용히 돌아야 할 작업이 채팅을 어지럽히거나, 반대로 꼭 알려야 할 브리핑이 로컬에만 남을 수 있습니다. deliver 쓰임 --------------- ------------------------------------------- local 중간 점검, 긴 로그, 조용한 self-improvement origin 사용자에게 전달해야 하는 브리핑 explicit target 사용자가 특정 대상 지시했을 때만 Dreaming 구조에서 새벽 4시 job은 local, 아침 8시 job은 origin으로 나뉜 것도 이 이유입니다. 점검과 전달은 같은 작업이 아닙니다. --- 4. 좋은 cron prompt의 조건 지금 기준에서 좋은 cron prompt는 아래 조건을 만족해야 합니다. 작업 목적이 한 문장으로 분명하다. 입력으로 봐야 할 소스가 명시되어 있다. 자동 적용 가능 / 승인 필요 / 금지 영역이 나뉘어 있다. 보고 형식이 정해져 있다. 현재 대화에 의존하지 않는다. recursive cron 생성을 금지한다. 실패했을 때 어떻게 보고할지 정해져 있다. 이 정도가 들어가면 길어 보일 수 있습니다. 하지만 cron prompt는 짧은 채팅 메시지가 아니라 미래의 작업 지시서입니다. 조금 길어도 명확한 쪽이 낫습니다. --- 5. 정리 cron은 오케이징을 시간 위에 올리는 기능입니다. 지금 부르면 답하는 agent에서, 정해진 시간에 스스로 확인하고 보고하는 운영자로 바뀝니다. 그만큼 prompt의 책임도 커집니다. 미래의 오케이징은 지금 대화를 모릅니다. 그래서 cron prompt는 그 자체로 충분해야 합니다. 이 기준을 지키지 않으면 예약 작업은 금방 \"왜 돌고 있는지 모르는 자동화\"가 됩니다.",
+      "audioPath": "/tts-artifacts/okayJing/automation/cron-prompt-self-contained/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/okayJing/automation/cron-prompt-self-contained/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}

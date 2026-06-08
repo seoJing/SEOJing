@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "slug": "study/clab-26-1/week11",
+  "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week11",
+  "title": "프론트엔드 스터디 11주차: React 기초 2 — useEffect, 이벤트 처리, 폼",
+  "generatedAt": "2026-06-07T19:30:18.118Z",
+  "cacheKey": "tts:v1:study/clab-26-1/week11",
+  "artifacts": [
+    {
+      "id": "study__clab-26-1__week11__summary-2m",
+      "kind": "summary-2m",
+      "slug": "study/clab-26-1/week11",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week11",
+      "sectionId": null,
+      "chunkId": "summary-2m",
+      "title": "프론트엔드 스터디 11주차: React 기초 2 — useEffect, 이벤트 처리, 폼 — 2분 요약",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 120,
+      "text": "11주차 학습 자료 학습 챕터: 한 입 크기로 잘라먹는 리액트 — 라이프 사이클 / useEffect 자료 바로가기: 1. useEffect 안녕하세요. 11주차입니다. 지난 주에 컴포넌트, JSX, props, useState를 배웠습니다. 이번 주는 그 위에 \" \" useEffect, 이벤트 처리, 폼 상태 관리 세 가지를 더합니다. 이 세 가지를 익히면 \"API에서 데이터를 가져와서 화면에 보여주고, 사용자 입력을 받아 처리하는\" 실제 앱에 가까운 코드를 작성할 수 있게 됩니다. 이번 주 대면에서는 배포와 운영을 다룹니다. 비대면에서 작성하는 React 코드는 localhost에서만 도는 예제가 아니라, 결국 빌드되고 배포되어 실제 사용자가 만지는 화면이 됩니다. useEffect로 API를 부르고, 폼으로 사용자 입력을 받는 코드는 배포 후 에러·로딩·빈 상태·잘못된 입력까지 고려해야 한다는 점을 같이 생각해보세요. --- 스킵 진단 문제 아래 8문제를 막힘없이 풀 수 있다면, \" \" 이번 주 학습 자료를 생략하거나, 모르는 부분만 선택적으로 읽으셔도 좋습니다. \" \" 바로 하단의 본문 섹션들을 확인해보세요. ... , [])\", \"useEffect 내부에 async 함수를 정의하고 호출\", \"useEffect 밖에서 async 함수를 정의하고 useEffect 안에서 호출\", \"async/await 대신 반드시 .then()을 사용\", ] answer= 1 explanation=\"useEffect의 콜백 자체를 async로 만들면 Promise를 반환하게 되어 React가 클린업 함수로 인식하지 못합니다. 내부에 별도의 async 함수를 정의하고 호출하는 것이 올바른 패턴입니다.\" /> 클릭 \", \" 클릭 \", \" 클릭 \", \" 클릭 \", ] answer= 1 explanation=\"handleClick()처럼 괄호를 붙이면 렌더링 시점에 즉시 실행됩니다. handleClick처럼 함수 참조를 전달해야 클릭할 때 실행됩니다. 또한 React에서는 onclick이 아닌 onClick(camelCase)을 사용합니다.\" /> --- 1. useEffect — 렌더링 이후 실행되는 작업 컴포넌트의 주 역할은 화면(JSX)을 반환하는 것입니다. 하지만 실제 앱에서는 화면을 그리는 것 외에도 해야 할 일이 있습니다 — API에서 데이터 가져오기, 타이머 설정, 문서 제목 바꾸기 등. 이런 \" \" 컴포넌트 외부에 영향을 주는 작업 을 \" \" 사이드 이펙트(side effect) 라고 하며, useEffect가 이를 담당합니다. 비유하면, 컴포넌트가 \"카페 메뉴판\"이라면, useEffect는 \"주문이 들어온 뒤 주방에서 음료를 만드는 과정\"입니다. 메뉴판(화면)을 보여주는 것과 음료를 만드는 것(사이드 이펙트)은 분리된 작업입니다. 기본 구조 의존성 배열 3가지 패턴 의존성 배열은 \"이 effect가 언제 다시 실행될지 \"를 결정합니다. 클린업 함수 — 뒷정리하기 타이머를 설정했는데 컴포넌트가 화면에서 사라진다면? 타이머는 계속 실행되어 \" \" 메모리 누수 가 발생합니다. 클린업 함수는 이런 상황을 방지합니다. useEffect에서 함수를 return하면 그것이 클린업 함수가 됩니다. 클린업 함수가 실행되는 타이밍은 두 가지입니다: (1) 컴포넌트가 화면에서 사라질 때(언마운트), (2) 의존성이 변경되어 effect가 재실행되기 직전. 비유하면 카페에서 새 메뉴판으로 교체하기 전에 이전 …",
+      "audioPath": "/tts-artifacts/study/clab-26-1/week11/summary-2m.mp3",
+      "transcriptPath": "/tts-artifacts/study/clab-26-1/week11/summary-2m.txt",
+      "status": "pending",
+      "degradedReason": null
+    },
+    {
+      "id": "study__clab-26-1__week11__core-5m",
+      "kind": "core-5m",
+      "slug": "study/clab-26-1/week11",
+      "canonicalUrl": "https://seojing.com/blog/study/clab-26-1/week11",
+      "sectionId": null,
+      "chunkId": "core-5m",
+      "title": "프론트엔드 스터디 11주차: React 기초 2 — useEffect, 이벤트 처리, 폼 — 5분 핵심",
+      "locale": "ko-KR",
+      "targetDurationSeconds": 300,
+      "text": "11주차 학습 자료 학습 챕터: 한 입 크기로 잘라먹는 리액트 — 라이프 사이클 / useEffect 자료 바로가기: 1. useEffect 안녕하세요. 11주차입니다. 지난 주에 컴포넌트, JSX, props, useState를 배웠습니다. 이번 주는 그 위에 \" \" useEffect, 이벤트 처리, 폼 상태 관리 세 가지를 더합니다. 이 세 가지를 익히면 \"API에서 데이터를 가져와서 화면에 보여주고, 사용자 입력을 받아 처리하는\" 실제 앱에 가까운 코드를 작성할 수 있게 됩니다. 이번 주 대면에서는 배포와 운영을 다룹니다. 비대면에서 작성하는 React 코드는 localhost에서만 도는 예제가 아니라, 결국 빌드되고 배포되어 실제 사용자가 만지는 화면이 됩니다. useEffect로 API를 부르고, 폼으로 사용자 입력을 받는 코드는 배포 후 에러·로딩·빈 상태·잘못된 입력까지 고려해야 한다는 점을 같이 생각해보세요. --- 스킵 진단 문제 아래 8문제를 막힘없이 풀 수 있다면, \" \" 이번 주 학습 자료를 생략하거나, 모르는 부분만 선택적으로 읽으셔도 좋습니다. \" \" 바로 하단의 본문 섹션들을 확인해보세요. ... , [])\", \"useEffect 내부에 async 함수를 정의하고 호출\", \"useEffect 밖에서 async 함수를 정의하고 useEffect 안에서 호출\", \"async/await 대신 반드시 .then()을 사용\", ] answer= 1 explanation=\"useEffect의 콜백 자체를 async로 만들면 Promise를 반환하게 되어 React가 클린업 함수로 인식하지 못합니다. 내부에 별도의 async 함수를 정의하고 호출하는 것이 올바른 패턴입니다.\" /> 클릭 \", \" 클릭 \", \" 클릭 \", \" 클릭 \", ] answer= 1 explanation=\"handleClick()처럼 괄호를 붙이면 렌더링 시점에 즉시 실행됩니다. handleClick처럼 함수 참조를 전달해야 클릭할 때 실행됩니다. 또한 React에서는 onclick이 아닌 onClick(camelCase)을 사용합니다.\" /> --- 1. useEffect — 렌더링 이후 실행되는 작업 컴포넌트의 주 역할은 화면(JSX)을 반환하는 것입니다. 하지만 실제 앱에서는 화면을 그리는 것 외에도 해야 할 일이 있습니다 — API에서 데이터 가져오기, 타이머 설정, 문서 제목 바꾸기 등. 이런 \" \" 컴포넌트 외부에 영향을 주는 작업 을 \" \" 사이드 이펙트(side effect) 라고 하며, useEffect가 이를 담당합니다. 비유하면, 컴포넌트가 \"카페 메뉴판\"이라면, useEffect는 \"주문이 들어온 뒤 주방에서 음료를 만드는 과정\"입니다. 메뉴판(화면)을 보여주는 것과 음료를 만드는 것(사이드 이펙트)은 분리된 작업입니다. 기본 구조 의존성 배열 3가지 패턴 의존성 배열은 \"이 effect가 언제 다시 실행될지 \"를 결정합니다. 클린업 함수 — 뒷정리하기 타이머를 설정했는데 컴포넌트가 화면에서 사라진다면? 타이머는 계속 실행되어 \" \" 메모리 누수 가 발생합니다. 클린업 함수는 이런 상황을 방지합니다. useEffect에서 함수를 return하면 그것이 클린업 함수가 됩니다. 클린업 함수가 실행되는 타이밍은 두 가지입니다: (1) 컴포넌트가 화면에서 사라질 때(언마운트), (2) 의존성이 변경되어 effect가 재실행되기 직전. 비유하면 카페에서 새 메뉴판으로 교체하기 전에 이전 메뉴판을 먼저 치우는 것과 같습니다. async/await과 useEffect useEffect의 콜백을 직접 async로 만들면 안 됩니다. async 함수는 Promise를 반환하는데, React는 useEffect의 반환값으로 클린업 함수(또는 undefined)를 기대하기 때문입니다. 실전 패턴: 데이터 fetching 컴포넌트 이 패턴은 React에서 데이터를 가져올 때 가장 기본이 되는 구조입니다. \" \" loading, error, data 세 가지 상태를 관리하고, 각 상태에 따라 다른 UI를 보여줍니다. --- 2. 이벤트 처리 — 사용자와 상호작용하기 React에서 이벤트 처리는 HTML과 비슷하지만 몇 가지 차이가 있습니다. \" \" camelCase 로 이벤트 이름을 쓰고, 함수 참조 를 전달합니다. 기본 이벤트 처리 가장 흔한 실수가 handleClick()처럼 괄호를 붙이는 것 입니다. 괄호를 붙이면 컴포넌트가 렌더링되는 시점에 함수가 즉시 실행됩니다. 클릭했을 때 실행하려면 함수 자체를 참조로 전달해야 합니다. 이벤트 객체 (e) 이벤트 핸들러는 자동으로 이벤트 객체를 인자로 받습니다. React는 브라우저 간 차이를 없앤 합성 이벤트(SyntheticEvent) 를 제공합니다. 자주 사용하는 이벤트 onClick — 클릭 이벤트 (버튼, 링크 등) onChange — 값 변경 이벤트 (input, select, textarea) onSubmit — 폼 제출 이벤트 onFocus / onBlur — 포커스 진입 / 이탈 onKeyDown / onKeyUp — 키보드 입력 --- 3. 폼 상태 관리 — Controlled Component 패턴 HTML에서 input, textarea 등은 자체적으로 값을 관리합니다. 하지만 React에서는 이 값을 state로 관리 하여 React가 유일한 데이터 소스가 되도록 합니다. 이것이 Controlled Component(제어 컴포넌트) \" \" 패턴입니다. 핵심: value + onChange 한 쌍 value 만 지정하고 onChange를 빠뜨리면 입력이 안 되는 읽기 전용 input이 됩니다. 반대로 onChange만 있고 value가 없으면 React가 값을 제어하지 못합니다. 반드시 둘 다 함께 사용해야 합니다. 실전: 로그인 폼 여러 input을 하나의 state로 관리하기 input이 많아지면 각각 useState를 만드는 것이 번거롭습니다. 객체 하나로 관리하면 코드가 깔끔해집니다. 이때 지난 주 배운 \" \" 스프레드 연산자 가 활약합니다. 핵심은 handleChange 함수 하나로 모든 input을 처리 하는 것입니다. 각 input에 name 속성을 주고, e.target.name으로 어떤 필드가 변경되었는지 판단합니다. ...prev, [name]: value 로 해당 필드만 업데이트하고 나머지는 유지합니다. --- 4. 종합 예제 — 할 일 목록 앱 지금까지 배운 useState, useEffect, 이벤트 처리, 폼을 모두 사용하는 작은 앱입니다. 각 줄에 어떤 개념이 적용되었는지 주석을 확인해보세요. --- 📝 학습 이해 퀴즈 아래 코드를 읽고 동작을 예측해보세요. const timer = setInterval(() => setCount(count + 1); , 1000); , []); return count ; answer=\"문제 2가지: (1) 클린업 함수가 없어서 컴포넌트가 사라져도 타이머가 계속 실행됨 (메모리 누수). (2) count가 항상 초기값 0을 참조함 (stale closure). 수정: return () => clearInterval(timer)를 추가하고, setCount(count + 1)을 setCount(prev => prev + 1)로 변경.\" explanation=\"빈 의존성 배열 []로 인해 effect 안의 count는 초기값 0이 클로저로 캡처됩니다. 함수형 업데이트(prev => prev + 1)를 사용하면 항상 최신 상태를 기반으로 업데이트됩니다. 클린업 함수로 clearInterval을 반환해야 메모리 누수를 방지할 수 있습니다.\" /> ); answer=\"onChange 핸들러가 없기 때문입니다. value= query 로 React가 input의 값을 제어하고 있지만, 변경 이벤트를 처리하지 않아 query가 항상 빈 문자열로 유지됩니다. onChange= (e) => setQuery(e.target.value) 를 추가해야 합니다.\" explanation=\"Controlled Component 패턴에서 value만 있고 onChange가 없으면, React가 값을 고정시켜 사용자가 타이핑해도 반영되지 않습니다. 콘솔에 경고 메시지도 표시됩니다. value와 onChange는 반드시 함께 사용해야 합니다.\" /> --- 📝 11주차 스터디 인증 미션 아래 문제를 직접 코드로 작성해보고, 코드와 함께 댓글로 남겨주세요. document.title = count === 0 ? '내 앱' : \\내 앱 (\\$ count )\\; , [count]); return ( 클릭 횟수: count setCount(prev => prev + 1) > 클릭 ); explanation=\"useEffect의 의존성 배열에 count를 넣으면 count가 바뀔 때마다 effect가 재실행됩니다. document.title을 변경하는 것은 DOM 직접 조작이므로 사이드 이펙트에 해당하며, useEffect 안에서 처리하는 것이 올바릅니다.\" /> setEmail(e.target.value) placeholder=\"이메일\" …",
+      "audioPath": "/tts-artifacts/study/clab-26-1/week11/core-5m.mp3",
+      "transcriptPath": "/tts-artifacts/study/clab-26-1/week11/core-5m.txt",
+      "status": "pending",
+      "degradedReason": null
+    }
+  ],
+  "sections": []
+}
