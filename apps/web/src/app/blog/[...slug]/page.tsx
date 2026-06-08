@@ -9,6 +9,7 @@ import { RecentlyRead } from "@/widgets/recently-read/RecentlyRead";
 import { PostExplorer } from "@/widgets/post-explorer/PostExplorer";
 import { ArticleToolbar } from "@/widgets/article-toolbar/ArticleToolbar";
 import { ArticleAnalytics } from "@/widgets/article-analytics";
+import { PostQaPanel } from "@/widgets/post-qa";
 import type { Metadata } from "vinext/shims/metadata";
 import {
   buildArticleMetadata,
@@ -94,6 +95,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           />
           <MDXContent components={mdxComponents as MDXComponents} />
         </div>
+        <PostQaPanel slug={slug.join("/")} title={content.frontmatter.title} />
         <ArticleToolbar
           slug={slug.join("/")}
           title={content.frontmatter.title}
