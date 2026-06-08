@@ -176,11 +176,8 @@ export function extractPresentationScenes(
         (candidate) => candidate.level > 1,
       ).length;
       const baseId = slugify(headingTitle) || `section-${sectionCount + 1}`;
-      const duplicateCount =
-        headingLevel === 1 ? 0 : (seenIds.get(baseId) ?? 0);
-      if (headingLevel > 1) {
-        seenIds.set(baseId, duplicateCount + 1);
-      }
+      const duplicateCount = seenIds.get(baseId) ?? 0;
+      seenIds.set(baseId, duplicateCount + 1);
       current = {
         kind: headingLevel === 1 ? "title" : "section",
         title: headingTitle,
@@ -235,7 +232,7 @@ function findTtsBridgeForScene(
 ): PresentationTtsBridge | null {
   let artifact: TtsArtifact | undefined;
 
-  if (scene.headingId) {
+  if (scene.kind === "section" && scene.headingId) {
     artifact = ttsManifest.artifacts.find(
       (candidate) =>
         candidate.kind === "section" && candidate.sectionId === scene.headingId,
@@ -270,7 +267,8 @@ function inferLayoutHint(
   kind: PresentationSceneKind,
 ): PresentationPptxLayoutHint {
   if (kind === "title") return "title";
-  if (/(?:`{3,}|~{3,})|<pre|data-code-block/.test(rawScene)) return "code";
+  if (/(?:`{3,}|~{3,})|<pre\b|\bdata-code-block\b/.test(rawScene))
+    return "code";
   if (/!\[[^\]]*\]\([^)]+\)|<img|<figure/.test(rawScene)) return "image";
   if (/^\s*(?:[-*+]\s+|\d+\.\s+)/m.test(rawScene)) return "bullets";
   return "section";

@@ -53,13 +53,22 @@ describe("extractPresentationScenes", () => {
     expect(scenes.map((scene) => scene.title)).toEqual(["실제 섹션"]);
   });
 
-  it("keeps H2 section ids aligned with TTS even when H1 has the same title", () => {
+  it("deduplicates repeated H1 scene ids", () => {
+    const scenes = extractPresentationScenes(
+      `# 반복\n\n첫 번째\n\n# 반복\n\n두 번째`,
+      "Fallback title",
+    );
+
+    expect(scenes.map((scene) => scene.headingId)).toEqual(["반복", "반복-2"]);
+  });
+
+  it("does not reuse an H1 id for a later H2 section with the same title", () => {
     const scenes = extractPresentationScenes(
       `# 개요\n\n도입\n\n## 개요\n\n본문`,
       "Fallback title",
     );
 
-    expect(scenes[1]?.headingId).toBe("개요");
+    expect(scenes[1]?.headingId).toBe("개요-2");
   });
 });
 
@@ -105,5 +114,20 @@ describe("buildPresentationExportManifest", () => {
       pptx: { layoutHint: "code" },
       tts: null,
     });
+  });
+
+  it("uses code layout only for bounded HTML code markers", () => {
+    const manifest = buildPresentationExportManifest({
+      slug: "study/backend/day1",
+      title: "레이아웃 테스트",
+      generatedAt: "2026-06-08T00:00:00.000Z",
+      source: `## 코드 블록\n\n<pre><code>const answer = 42</code></pre>\n\n## 코드가 아닌 문장\n\n<prefix>태그 비슷한 텍스트</prefix>\n\n## 코드가 아닌 속성\n\n<div data-code-blocks="false">문장</div>`,
+    });
+
+    expect(manifest.scenes.map((scene) => scene.pptx.layoutHint)).toEqual([
+      "code",
+      "section",
+      "section",
+    ]);
   });
 });

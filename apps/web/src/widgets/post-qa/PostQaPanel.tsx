@@ -100,8 +100,7 @@ function safeAnalyticsDetail(
 }
 
 export function PostQaPanel(props: PostQaPanelProps) {
-  const storageKey = props.storageKey ?? DEFAULT_STORAGE_KEY;
-  return <PostQaPanelInner key={`${props.slug}:${storageKey}`} {...props} />;
+  return <PostQaPanelInner {...props} />;
 }
 
 function PostQaPanelInner({
@@ -121,12 +120,23 @@ function PostQaPanelInner({
     null,
   );
   const requestSeq = useRef(0);
+  const requestAbortController = useRef<AbortController | null>(null);
   const panelRef = useRef<HTMLElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     requestSeq.current += 1;
+    requestAbortController.current?.abort();
+    requestAbortController.current = null;
   }, [slug, storageKey]);
+
+  useEffect(() => {
+    return () => {
+      requestSeq.current += 1;
+      requestAbortController.current?.abort();
+      requestAbortController.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     const handleContext = (event: WindowEventMap["seojing:qa-context"]) => {
@@ -162,6 +172,9 @@ function PostQaPanelInner({
       : trimmedQuestion;
 
     requestSeq.current += 1;
+    requestAbortController.current?.abort();
+    const controller = new AbortController();
+    requestAbortController.current = controller;
     const currentRequestSeq = requestSeq.current;
 
     setPending(true);
@@ -172,6 +185,7 @@ function PostQaPanelInner({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ slug, question: apiQuestion }),
+        signal: controller.signal,
       });
       if (!response.ok)
         throw new Error(`qa request failed: ${response.status}`);
@@ -204,13 +218,16 @@ function PostQaPanelInner({
           }),
         );
       }
-    } catch {
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      if (error instanceof DOMException && error.name === "AbortError") return;
       if (requestSeq.current !== currentRequestSeq) return;
       setError(
         "질문 API가 잠시 불안정해요. 글 읽기는 그대로 가능하니 잠시 후 다시 시도해주세요.",
       );
     } finally {
       if (requestSeq.current === currentRequestSeq) {
+        requestAbortController.current = null;
         setPending(false);
       }
     }
