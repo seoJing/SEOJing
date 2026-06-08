@@ -127,7 +127,7 @@ function SectionQaPrompt({
   slug: string;
   endpoint: string;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<PostQaResult | null>(null);
@@ -177,24 +177,23 @@ function SectionQaPrompt({
   return (
     <div
       style={{ top: `${prompt.top}px` }}
-      className="pointer-events-auto absolute -left-64 w-56"
-      onMouseEnter={() => setExpanded(true)}
+      className="pointer-events-auto absolute -left-[22rem] w-80"
     >
-      {expanded ? (
+      {isFormOpen ? (
         <div className="rounded-2xl border border-gray-200 bg-white/95 p-3 text-left text-xs text-gray-700 shadow-lg backdrop-blur dark:border-gray-800 dark:bg-gray-950/95 dark:text-gray-200">
           <div className="mb-2 flex items-start justify-between gap-2">
             <div>
               <p className="font-semibold text-gray-950 dark:text-gray-50">
                 이 주제에 대한 질문
               </p>
-              <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-[11px] leading-4 text-gray-500 dark:text-gray-400">
                 「{prompt.title}」 부분을 기준으로 오케이징에게 물어봐요.
               </p>
             </div>
             <button
               type="button"
               aria-label="섹션 질문 닫기"
-              onClick={() => setExpanded(false)}
+              onClick={() => setIsFormOpen(false)}
               className="rounded-full px-1.5 py-0.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200"
             >
               ×
@@ -204,10 +203,10 @@ function SectionQaPrompt({
             aria-label={`${prompt.title} 부분에 대해 질문하기`}
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
-            rows={3}
+            rows={2}
             maxLength={500}
             placeholder="이 흐름이 왜 이렇게 되는지 물어보기"
-            className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-900 outline-none transition focus:border-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs leading-5 text-gray-900 outline-none transition focus:border-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
           />
           <div className="mt-2 flex items-center justify-between gap-2">
             <span className="text-[10px] text-gray-400">
@@ -248,11 +247,11 @@ function SectionQaPrompt({
       ) : (
         <button
           type="button"
-          onClick={() => setExpanded(true)}
-          className="group ml-auto flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-sm font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:w-56 hover:justify-between hover:px-4 hover:text-gray-950 hover:shadow-md dark:border-gray-800 dark:bg-gray-950/95 dark:text-gray-200 dark:hover:text-gray-50"
+          onClick={() => setIsFormOpen(true)}
+          className="group ml-auto flex h-9 w-9 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white/95 text-sm font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:w-64 hover:px-4 hover:text-gray-950 hover:shadow-md dark:border-gray-800 dark:bg-gray-950/95 dark:text-gray-200 dark:hover:text-gray-50"
           aria-label="이 부분에 대해 질문하기"
         >
-          <span className="hidden whitespace-nowrap text-xs group-hover:inline">
+          <span className="hidden whitespace-nowrap text-xs group-hover:inline-flex">
             이 부분에 대해 질문하기
           </span>
           <span aria-hidden="true">→</span>

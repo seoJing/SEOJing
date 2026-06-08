@@ -110,6 +110,11 @@ describe("SectionQaPrompts", () => {
     expect(prompts[0]?.parentElement).toHaveStyle({ top: "248px" });
     expect(prompts[0]).toHaveClass("w-9");
 
+    fireEvent.mouseEnter(prompts[0]!);
+    expect(
+      screen.queryByLabelText("오늘의 목표 부분에 대해 질문하기"),
+    ).not.toBeInTheDocument();
+
     fireEvent.click(prompts[0]!);
     expect(screen.getByText("이 주제에 대한 질문")).toBeInTheDocument();
     expect(

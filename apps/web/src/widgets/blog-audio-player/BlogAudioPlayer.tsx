@@ -254,7 +254,7 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
   );
 
   const sectionClass = isDocked
-    ? "fixed bottom-5 right-5 z-40 max-h-[calc(100vh-2.5rem)] w-[min(26rem,calc(100vw-2.5rem))] overflow-y-auto rounded-3xl border border-gray-200 bg-white/95 p-4 text-sm shadow-xl backdrop-blur dark:border-gray-800 dark:bg-gray-950/95 xl:right-[max(1.25rem,calc((100vw-68rem)/2-22rem))]"
+    ? "fixed bottom-5 right-6 z-40 max-h-[calc(100vh-2.5rem)] w-[min(22rem,calc(100vw-2.5rem))] overflow-y-auto rounded-3xl border border-gray-200 bg-white/95 p-4 text-sm shadow-xl backdrop-blur dark:border-gray-800 dark:bg-gray-950/95"
     : "my-8 rounded-3xl border border-gray-200 bg-white/70 p-5 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-950/60";
 
   const player = (
