@@ -259,6 +259,9 @@ describe("post QA API handler", () => {
       { chunks },
     );
     expect(arrayBody.status).toBe(200);
+    await expect(arrayBody.json()).resolves.toMatchObject({
+      status: "invalid_request",
+    });
 
     const missingSlug = await handlePostQaRequest(
       new Request("https://seojing.com/api/rag/query", {
@@ -268,5 +271,8 @@ describe("post QA API handler", () => {
       { chunks },
     );
     expect(missingSlug.status).toBe(200);
+    await expect(missingSlug.json()).resolves.toMatchObject({
+      status: "invalid_request",
+    });
   });
 });

@@ -35,7 +35,18 @@ function safeReadLog(storageKey: string): QuestionLogEntry[] {
     const raw = window.localStorage.getItem(storageKey);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as QuestionLogEntry[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (entry): entry is QuestionLogEntry =>
+        typeof entry === "object" &&
+        entry !== null &&
+        typeof entry.slug === "string" &&
+        typeof entry.question === "string" &&
+        ["answered", "insufficient_context", "invalid_request"].includes(
+          String((entry as Partial<QuestionLogEntry>).status),
+        ) &&
+        typeof (entry as Partial<QuestionLogEntry>).createdAt === "string",
+    );
   } catch {
     return [];
   }
