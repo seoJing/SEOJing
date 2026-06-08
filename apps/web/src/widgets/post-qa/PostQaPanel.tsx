@@ -232,8 +232,8 @@ function PostQaPanelInner({
     } finally {
       if (requestSeq.current === currentRequestSeq) {
         requestAbortController.current = null;
-        setPending(false);
       }
+      setPending(false);
     }
   };
 
