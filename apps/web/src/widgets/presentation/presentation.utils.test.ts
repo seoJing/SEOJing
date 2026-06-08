@@ -154,8 +154,8 @@ describe("extractSlideOutlineFromSlides", () => {
     expect(outline).toMatchObject([
       {
         title: "Deck title",
-        kind: "content",
-        level: 0,
+        kind: "heading",
+        level: 1,
         slideIndex: 0,
         elementCount: 1,
         hasCode: false,

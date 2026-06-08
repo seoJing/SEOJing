@@ -16,8 +16,6 @@ import {
   IoPhonePortraitOutline,
   IoDesktopOutline,
   IoListOutline,
-  IoCodeSlashOutline,
-  IoImageOutline,
   IoExpandOutline,
   IoContractOutline,
 } from "react-icons/io5";
@@ -124,9 +122,6 @@ export function PresentationView({
 
   const [slides, setSlides] = useState<HTMLDivElement[]>([]);
   const [isFullscreenCanvas, setIsFullscreenCanvas] = useState(false);
-  const [outlineFilter, setOutlineFilter] = useState<"all" | "code" | "image">(
-    "all",
-  );
 
   useEffect(() => {
     if (!articleRef.current) return;
@@ -187,17 +182,13 @@ export function PresentationView({
     () => extractSlideOutlineFromSlides(slides),
     [slides],
   );
-  const filteredSlideOutline = useMemo(() => {
-    if (outlineFilter === "code") {
-      return slideOutline.filter((item) => item.hasCode);
-    }
-    if (outlineFilter === "image") {
-      return slideOutline.filter((item) => item.hasImage);
-    }
-    return slideOutline;
-  }, [outlineFilter, slideOutline]);
-  const codeSlideCount = slideOutline.filter((item) => item.hasCode).length;
-  const imageSlideCount = slideOutline.filter((item) => item.hasImage).length;
+  const headingOutline = useMemo(
+    () =>
+      slideOutline.filter(
+        (item) => item.kind === "heading" && item.level >= 1 && item.level <= 2,
+      ),
+    [slideOutline],
+  );
   const closingRef = useRef(false);
 
   const safeClose = useCallback(() => {
@@ -389,38 +380,13 @@ export function PresentationView({
                 슬라이드 목차
               </div>
 
-              <div className="mb-4 grid grid-cols-3 gap-1 rounded-xl bg-[var(--color-cloud-dancer)] p-1 text-[11px] font-medium ring-1 ring-black/10 dark:bg-white/10 dark:ring-white/10">
-                {[
-                  { key: "all" as const, label: "전체", count: totalSlides },
-                  {
-                    key: "code" as const,
-                    label: "코드",
-                    count: codeSlideCount,
-                  },
-                  {
-                    key: "image" as const,
-                    label: "이미지",
-                    count: imageSlideCount,
-                  },
-                ].map((filter) => (
-                  <button
-                    key={filter.key}
-                    type="button"
-                    className={`rounded-lg px-2 py-1.5 transition-colors ${
-                      outlineFilter === filter.key
-                        ? "bg-black text-white shadow-sm dark:bg-white dark:text-black"
-                        : "text-black/55 hover:text-black dark:text-white/55 dark:hover:text-white"
-                    }`}
-                    onClick={() => setOutlineFilter(filter.key)}
-                    aria-pressed={outlineFilter === filter.key}
-                  >
-                    {filter.label} {filter.count}
-                  </button>
-                ))}
+              <div className="mb-4 rounded-xl bg-[var(--color-cloud-dancer)] px-3 py-2 text-[11px] font-medium text-black/55 ring-1 ring-black/10 dark:bg-white/10 dark:text-white/55 dark:ring-white/10">
+                H1/H2 목차 {headingOutline.length}개 · 본문 슬라이드{" "}
+                {totalSlides}장
               </div>
 
               <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
-                {filteredSlideOutline.map((item) => (
+                {headingOutline.map((item) => (
                   <button
                     key={item.id}
                     type="button"
@@ -441,20 +407,8 @@ export function PresentationView({
                       <span className="line-clamp-2 text-xs font-medium leading-5">
                         {item.title}
                       </span>
-                      <span className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-current opacity-70">
-                        {item.kind === "heading" ? `H${item.level}` : "본문"}
-                        {item.hasCode && (
-                          <span className="inline-flex items-center gap-0.5 rounded-full bg-white px-1.5 py-0.5 text-black ring-1 ring-black/10 dark:bg-black dark:text-white dark:ring-white/10">
-                            <IoCodeSlashOutline className="size-3" />
-                            {item.codeBlockCount}
-                          </span>
-                        )}
-                        {item.hasImage && (
-                          <span className="inline-flex items-center gap-0.5 rounded-full bg-[var(--color-cloud-dancer)] px-1.5 py-0.5 text-black ring-1 ring-black/10 dark:bg-white/10 dark:text-white dark:ring-white/10">
-                            <IoImageOutline className="size-3" />
-                            {item.imageCount}
-                          </span>
-                        )}
+                      <span className="mt-1 text-[10px] text-current opacity-70">
+                        H{item.level}
                       </span>
                     </span>
                   </button>

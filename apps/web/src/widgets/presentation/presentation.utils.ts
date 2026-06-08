@@ -59,10 +59,16 @@ function getHeadingLevel(element: Element): number | null {
   return Number(match[1]);
 }
 
+function getPrimaryHeadingElement(element: Element): Element | null {
+  if (element.matches("h1,h2,h3,h4,h5,h6")) {
+    return element;
+  }
+
+  return element.querySelector("h1,h2,h3,h4,h5,h6");
+}
+
 function getElementTitle(element: Element, fallback: string): string {
-  const heading = element.matches("h1,h2,h3,h4,h5,h6")
-    ? element
-    : element.querySelector("h1,h2,h3,h4,h5,h6");
+  const heading = getPrimaryHeadingElement(element);
   const text = (heading ?? element).textContent?.replace(/\s+/g, " ").trim();
   return text || fallback;
 }
@@ -97,7 +103,10 @@ function buildSlideOutlineItem(
   slideIndex: number,
 ): PresentationSlideOutlineItem {
   const firstElement = elements[0];
-  const headingLevel = firstElement ? getHeadingLevel(firstElement) : null;
+  const primaryHeading = firstElement
+    ? getPrimaryHeadingElement(firstElement)
+    : null;
+  const headingLevel = primaryHeading ? getHeadingLevel(primaryHeading) : null;
   const kind: PresentationOutlineItemKind = headingLevel
     ? "heading"
     : "content";
