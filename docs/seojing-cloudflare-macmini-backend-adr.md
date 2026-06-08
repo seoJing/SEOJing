@@ -255,6 +255,8 @@ Cloudflare Worker 또는 Mac mini 서버 내부에서만 쓰는 값:
 
 - TTS 생성은 장기 작업으로 간주하고 job/cache 모델을 우선한다.
 - 글 HTML과 sitemap은 TTS API availability에 의존하지 않는다.
+- 실제 MP3는 초기 MVP에서 R2가 아니라 Mac mini local cache에 저장하고, API는 상태 조회/생성 큐/Range streaming을 담당한다.
+- 세부 계약은 `docs/seojing-tts-local-audio-api-mvp.md`를 따른다.
 
 ## 11. 수용 기준
 
