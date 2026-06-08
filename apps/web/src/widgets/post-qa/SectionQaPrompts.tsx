@@ -62,7 +62,6 @@ export function SectionQaPrompts({
 
     measure();
     window.addEventListener("resize", measure);
-    window.addEventListener("scroll", measure, { passive: true });
 
     const resizeObserver =
       typeof ResizeObserver === "undefined"
@@ -72,7 +71,6 @@ export function SectionQaPrompts({
 
     return () => {
       window.removeEventListener("resize", measure);
-      window.removeEventListener("scroll", measure);
       resizeObserver?.disconnect();
     };
   }, [articleSelector]);

@@ -44,6 +44,7 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
   const [placeholderHeight, setPlaceholderHeight] = useState<
     number | undefined
   >();
+  const lastPositionSaveRef = useRef(0);
   const storageBaseKey = `${STORAGE_PREFIX}:${slug}`;
 
   useEffect(() => {
@@ -161,9 +162,12 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
   const handleTimeUpdate = useCallback(() => {
     const audio = audioRef.current;
     if (!audio || !selectedArtifact) return;
+    const currentSecond = Math.floor(audio.currentTime);
+    if (Math.abs(currentSecond - lastPositionSaveRef.current) < 5) return;
+    lastPositionSaveRef.current = currentSecond;
     writeStoredString(
       positionKey(storageBaseKey, selectedArtifact),
-      String(Math.floor(audio.currentTime)),
+      String(currentSecond),
     );
   }, [selectedArtifact, storageBaseKey]);
 

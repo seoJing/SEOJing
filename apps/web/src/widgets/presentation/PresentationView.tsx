@@ -429,11 +429,6 @@ export function PresentationView({
                   <div
                     ref={slideContentRef}
                     className="mx-auto w-full max-w-5xl overflow-hidden"
-                    style={
-                      isMobile || !isFullscreenCanvas
-                        ? undefined
-                        : { zoom: pcScale }
-                    }
                   />
                 </div>
               </div>
