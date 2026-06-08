@@ -9,7 +9,7 @@
 ![Storybook](https://img.shields.io/badge/Storybook-FF4785?style=flat-square&logo=storybook&logoColor=white)
 
 <div>https://seojing.com/</div>
-
+<div>https://seojing.com/blog</div>
 개인용 기술 블로그입니다.
 
 </div>
