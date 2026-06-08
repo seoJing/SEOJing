@@ -68,6 +68,7 @@ Phase 1은 다음 조건으로 통과한다.
 
 - analytics는 원문 IP/UA 저장을 피하고, 최소 이벤트/익명 세션/짧은 retention으로 시작한다.
 - event model은 analytics, RAG, TTS, presentation 기능이 공유할 수 있게 `session_id`, `content_slug`, `event_type`, optional `section_id`를 중심으로 잡는다.
+- Phase 2 완료 후속 기준은 `docs/seojing-phase2-analytics-gate.md`의 `seojing.analytics.v1` contract를 따른다.
 - 이벤트 수집 경로와 admin dashboard 경로는 인증/노출 정책을 분리한다.
 
 Phase 2 첫 티켓 #54의 gate acceptance:
