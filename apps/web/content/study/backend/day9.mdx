@@ -1,0 +1,558 @@
+---
+title: "백엔드 스터디 Day 9: API 문서와 팀 협업 흐름 읽기"
+date: 2026-06-09
+tags:
+  - 백엔드
+  - 스터디
+  - Spring Boot
+  - Java
+  - API
+  - 협업
+  - Swagger
+  - OpenAPI
+  - AI 코드 읽기
+description: AI가 만든 Spring Boot 백엔드가 실제 팀 작업에 들어갈 수 있는지 보려면 코드만이 아니라 API 문서, README, 변경 이력, 프론트엔드와의 계약 흐름을 읽을 수 있어야 합니다. Day 9에서는 Swagger/OpenAPI, README, 예시 요청, 에러 표, 협업 리뷰 기준을 낮은 단계부터 정리합니다.
+---
+
+> 예상 읽기 시간: 20~30분
+
+## 오늘의 목표
+
+Day 1에서는 Spring Boot 프로젝트 폴더 구조를 봤습니다. Day 2에서는 API 계약을 읽었습니다. Day 3에서는 입력 검증과 에러 응답을 봤고, Day 4에서는 DB 접근을 봤습니다. Day 5에서는 Service와 트랜잭션, Day 6에서는 로그인과 권한, Day 7에서는 테스트, Day 8에서는 배포와 운영 환경을 봤습니다.
+
+오늘은 **API 문서와 팀 협업 흐름**을 봅니다.
+
+AI가 백엔드 코드를 만들어주면 Controller, Service, Repository 같은 구현 파일은 꽤 빠르게 생깁니다. 하지만 실제 프로젝트에서 중요한 질문은 하나 더 있습니다.
+
+> 이 백엔드가 다른 사람이 이해하고 사용할 수 있는 형태로 설명되어 있는가?
+
+프론트엔드 개발자는 백엔드 내부 코드를 전부 읽고 싶지 않습니다. 어떤 URL로 요청해야 하는지, 어떤 필드를 보내야 하는지, 성공하면 무엇을 받는지, 실패하면 어떤 에러가 오는지만 먼저 알고 싶습니다.
+
+기획자나 디자이너도 마찬가지입니다. “닉네임 변경은 언제 실패하나?”, “이미 가입된 이메일이면 어떤 문구가 떠야 하나?”, “삭제 후 복구가 가능한가?” 같은 제품 질문을 확인하고 싶습니다.
+
+진규가 지금 목표로 삼아야 하는 것은 Swagger 설정 문법을 외우는 것이 아닙니다. 목표는 AI가 만든 Spring Boot 백엔드를 보고 “팀이 이 API를 안전하게 쓸 수 있을 만큼 계약과 문서가 정리되어 있는가?”를 판단하는 것입니다.
+
+오늘 글을 읽고 나면 아래 질문에 답할 수 있어야 합니다.
+
+- API 문서는 코드와 무엇이 달라야 하는가?
+- Swagger/OpenAPI 화면에서 어떤 부분을 먼저 봐야 하는가?
+- README에는 어떤 실행/요청 예시가 있어야 하는가?
+- 프론트엔드와 백엔드 사이의 계약은 어디에서 깨지는가?
+- AI가 만든 API 설명에서 자주 빠지는 정보는 무엇인가?
+- 협업 가능한 백엔드인지 리뷰할 때 어떤 체크리스트를 쓰면 되는가?
+
+---
+
+## 1. API 문서는 “코드 설명”이 아니라 “사용 약속”이다
+
+처음에는 API 문서를 이렇게 생각하기 쉽습니다.
+
+```text
+Controller 코드가 있으니까
+그 코드에 주석을 달면 문서다
+```
+
+하지만 협업에서 API 문서는 단순한 코드 설명이 아닙니다. API 문서는 **다른 사람이 이 서버를 사용할 때 믿고 따라야 하는 약속**입니다.
+
+예를 들어 회원가입 API가 있다고 해보겠습니다.
+
+```http
+POST /api/members
+```
+
+코드를 보면 대략 어떤 일을 하는지 알 수 있습니다.
+
+```java
+@PostMapping("/api/members")
+public ResponseEntity<MemberResponse> create(@RequestBody MemberCreateRequest request) {
+    MemberResponse response = memberService.create(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+}
+```
+
+하지만 프론트엔드 입장에서는 아직 모르는 것이 많습니다.
+
+```text
+request에는 어떤 필드가 필요한가?
+email은 필수인가?
+password 최소 길이는 몇 글자인가?
+nickname 중복은 허용되는가?
+성공하면 id만 오는가, 전체 프로필이 오는가?
+이메일 중복이면 HTTP 400인가 409인가?
+에러 응답 body에는 message가 있는가?
+인증 토큰이 필요한 API인가?
+```
+
+이 질문에 답하지 못하면 Controller 코드는 있어도 협업 가능한 API라고 보기 어렵습니다.
+
+좋은 API 문서는 아래를 명확히 합니다.
+
+```text
+1. 누가 호출할 수 있는가
+2. 어떤 URL과 HTTP method를 쓰는가
+3. 어떤 request body/query/path parameter가 필요한가
+4. 성공 status code와 response body는 무엇인가
+5. 실패할 수 있는 조건과 에러 응답은 무엇인가
+6. 인증/권한 조건은 무엇인가
+7. 예시 요청과 예시 응답은 무엇인가
+```
+
+AI가 만든 백엔드를 리뷰할 때는 “문서가 있나요?”보다 “이 문서를 보고 프론트엔드가 구현할 수 있나요?”를 물어봐야 합니다.
+
+---
+
+## 2. Swagger/OpenAPI는 자동 생성되지만 자동으로 좋은 문서가 되지는 않는다
+
+Spring Boot 프로젝트에서는 보통 `springdoc-openapi`를 사용해서 Swagger UI를 붙입니다.
+
+`build.gradle`에 이런 의존성이 있을 수 있습니다.
+
+```gradle
+dependencies {
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+}
+```
+
+서버를 실행한 뒤 보통 이런 주소로 들어갑니다.
+
+```text
+http://localhost:8080/swagger-ui/index.html
+```
+
+Swagger 화면이 뜨면 일단 좋아 보입니다. API 목록이 보이고, 버튼을 눌러 요청도 보낼 수 있습니다. 하지만 여기서 착각하면 안 됩니다.
+
+> Swagger가 보인다는 것과 문서 품질이 좋다는 것은 다르다.
+
+AI가 만든 프로젝트에서 자주 보이는 문제는 이런 식입니다.
+
+```text
+- endpoint 목록은 나오지만 설명이 없다
+- request 필드 설명이 비어 있다
+- 에러 응답이 200 성공만 문서화되어 있다
+- 인증이 필요한 API인데 Swagger에서 인증 방법을 모른다
+- DTO 이름이 CreateRequest, Response처럼 너무 일반적이다
+- 예시 값이 없어서 실제 호출 형태를 상상하기 어렵다
+```
+
+좋은 Swagger 문서는 최소한 이런 정보가 보입니다.
+
+```java
+@Operation(summary = "회원가입", description = "이메일, 비밀번호, 닉네임으로 새 회원을 생성합니다.")
+@ApiResponses({
+    @ApiResponse(responseCode = "201", description = "회원가입 성공"),
+    @ApiResponse(responseCode = "400", description = "입력값 검증 실패"),
+    @ApiResponse(responseCode = "409", description = "이미 사용 중인 이메일")
+})
+@PostMapping("/api/members")
+public ResponseEntity<MemberResponse> create(@Valid @RequestBody MemberCreateRequest request) {
+    MemberResponse response = memberService.create(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+}
+```
+
+DTO에도 필드 설명이 붙어 있으면 더 좋습니다.
+
+```java
+public record MemberCreateRequest(
+    @Schema(description = "로그인에 사용할 이메일", example = "user@example.com")
+    @Email
+    String email,
+
+    @Schema(description = "8자 이상 비밀번호", example = "example-password")
+    @Size(min = 8)
+    String password,
+
+    @Schema(description = "서비스에서 표시할 닉네임", example = "seojing")
+    @NotBlank
+    String nickname
+) {}
+```
+
+여기서 중요한 것은 annotation 자체가 아닙니다. 중요한 것은 **API 사용자에게 필요한 정보가 문서에 드러나는가**입니다.
+
+---
+
+## 3. README는 “설치 설명”을 넘어 첫 협업 계약이어야 한다
+
+API 문서가 Swagger에만 있으면 부족할 때가 많습니다. 프로젝트를 처음 받은 사람이 가장 먼저 여는 파일은 보통 `README.md`입니다.
+
+AI가 만든 백엔드 README가 아래처럼 끝나면 위험합니다.
+
+```md
+# Member API
+
+Spring Boot project.
+
+Run:
+./gradlew bootRun
+```
+
+이 정도로는 팀원이 프로젝트를 이해하기 어렵습니다.
+
+협업 가능한 README에는 최소한 아래가 있어야 합니다.
+
+```text
+프로젝트가 해결하는 문제
+주요 기능 목록
+로컬 실행 방법
+필수 환경 변수
+DB 실행 방법
+테스트 실행 방법
+Swagger 주소
+대표 API 예시
+인증이 필요한 API 호출 방법
+에러 응답 형식
+배포/운영 메모
+```
+
+예를 들어 이런 식입니다.
+
+````md
+## Local Run
+
+```bash
+./gradlew bootRun --args='--spring.profiles.active=local'
+```
+
+## Environment Variables
+
+| name          | required | description                       |
+| ------------- | -------- | --------------------------------- |
+| `DB_URL`      | yes      | PostgreSQL connection URL         |
+| `DB_USERNAME` | yes      | Database user                     |
+| `DB_PASSWORD` | yes      | Database password                 |
+| `JWT_SECRET`  | yes      | Secret used to sign access tokens |
+
+## API Docs
+
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+````
+
+README에 비밀값의 실제 값을 쓰면 안 됩니다. 값은 `.env.example`이나 placeholder로만 안내합니다.
+
+```env
+DB_URL=jdbc:postgresql://localhost:5432/example
+DB_USERNAME=example_user
+DB_PASSWORD=example-password-placeholder
+JWT_SECRET=<secret-placeholder>
+```
+
+진규가 AI 백엔드를 리뷰할 때는 README를 보고 이렇게 질문하면 됩니다.
+
+```text
+내가 처음 이 repo를 받았다고 할 때,
+30분 안에 서버를 실행하고,
+Swagger를 열고,
+대표 API 하나를 호출할 수 있는가?
+```
+
+답이 “아니오”라면 코드가 좋아도 협업 준비가 덜 된 것입니다.
+
+---
+
+## 4. 예시 요청은 프론트엔드와 백엔드 사이의 오해를 줄인다
+
+프론트엔드와 백엔드가 API를 맞출 때 가장 자주 깨지는 부분은 “서로 당연하다고 생각한 필드 이름”입니다.
+
+예를 들어 백엔드는 이렇게 받는다고 생각합니다.
+
+```json
+{
+  "displayName": "서징"
+}
+```
+
+그런데 프론트엔드는 이렇게 보냅니다.
+
+```json
+{
+  "nickname": "서징"
+}
+```
+
+둘 다 사람이 보기에는 비슷한 의미입니다. 하지만 서버 입장에서는 완전히 다른 필드입니다. 이런 문제는 타입스크립트 타입만 보고도 놓칠 수 있습니다. 그래서 API 문서에는 **예시 요청**이 필요합니다.
+
+좋은 문서는 이런 예시를 제공합니다.
+
+```http
+PATCH /api/members/me/profile
+Authorization: Bearer ***
+Content-Type: application/json
+
+{
+  "nickname": "서징",
+  "bio": "프론트엔드와 백엔드를 같이 공부하는 중"
+}
+```
+
+그리고 성공 응답도 보여줍니다.
+
+```json
+{
+  "id": 12,
+  "email": "user@example.com",
+  "nickname": "서징",
+  "bio": "프론트엔드와 백엔드를 같이 공부하는 중",
+  "updatedAt": "2026-06-09T10:15:00"
+}
+```
+
+에러 응답도 마찬가지입니다.
+
+```json
+{
+  "code": "INVALID_INPUT",
+  "message": "닉네임은 비어 있을 수 없습니다.",
+  "fieldErrors": [
+    {
+      "field": "nickname",
+      "reason": "must not be blank"
+    }
+  ]
+}
+```
+
+이렇게 예시가 있으면 프론트엔드 개발자는 화면 상태를 더 정확히 설계할 수 있습니다.
+
+```text
+성공하면 어떤 데이터를 화면에 반영할지
+입력값 에러는 어느 필드 아래에 표시할지
+권한 에러는 로그인 화면으로 보낼지
+중복 에러는 toast로 보여줄지
+```
+
+API 문서는 단순히 백엔드 개발자를 위한 문서가 아닙니다. 제품 경험을 맞추기 위한 협업 장치입니다.
+
+---
+
+## 5. 에러 표가 없으면 프론트엔드 UX가 흔들린다
+
+AI가 만든 백엔드 문서에서 가장 자주 빠지는 것이 에러 케이스입니다.
+
+성공 케이스만 문서화되어 있으면 프론트엔드는 실패 상황을 추측으로 처리하게 됩니다.
+
+```text
+이메일 중복이면 400인가 409인가?
+로그인이 만료되면 401인가 403인가?
+권한은 있는데 리소스가 없으면 404인가?
+삭제된 글에 접근하면 어떤 message가 오는가?
+```
+
+좋은 API 문서는 주요 endpoint마다 에러 표를 둡니다.
+
+| 상황             | HTTP status | code                   | 프론트엔드 처리             |
+| ---------------- | ----------: | ---------------------- | --------------------------- |
+| 입력값 검증 실패 |         400 | `INVALID_INPUT`        | 필드별 에러 표시            |
+| 인증 토큰 없음   |         401 | `UNAUTHENTICATED`      | 로그인 유도                 |
+| 권한 없음        |         403 | `FORBIDDEN`            | 접근 불가 안내              |
+| 대상 없음        |         404 | `NOT_FOUND`            | 빈 상태 또는 이전 화면 이동 |
+| 이메일 중복      |         409 | `EMAIL_ALREADY_EXISTS` | 이메일 필드 아래 중복 안내  |
+
+이 표는 백엔드에게도 좋습니다. Service나 exception handler를 구현할 때 기준이 생기기 때문입니다.
+
+```java
+if (memberRepository.existsByEmail(request.email())) {
+    throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
+}
+```
+
+문서에 에러 코드가 정리되어 있으면 `GlobalExceptionHandler`도 더 일관되게 설계할 수 있습니다.
+
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponse> handleBusiness(BusinessException e) {
+        ErrorCode code = e.getErrorCode();
+        return ResponseEntity.status(code.getStatus()).body(ErrorResponse.from(code));
+    }
+}
+```
+
+진규가 봐야 할 핵심은 “exception handler 코드가 멋진가?”보다 “프론트엔드가 실패 UX를 안정적으로 만들 수 있는가?”입니다.
+
+---
+
+## 6. OpenAPI JSON은 자동화의 출발점이 될 수 있다
+
+Swagger UI는 사람이 보는 화면이고, OpenAPI JSON은 도구가 읽을 수 있는 계약입니다.
+
+보통 이런 주소에서 확인할 수 있습니다.
+
+```text
+http://localhost:8080/v3/api-docs
+```
+
+이 JSON은 길고 복잡해 보이지만 중요한 의미가 있습니다.
+
+```text
+API 계약이 기계가 읽을 수 있는 형태로 정리되어 있다
+```
+
+이 계약이 있으면 여러 자동화를 붙일 수 있습니다.
+
+```text
+프론트엔드 타입 생성
+API 클라이언트 생성
+문서 사이트 생성
+계약 변경 diff 확인
+mock server 생성
+테스트 케이스 보조 생성
+```
+
+예를 들어 프론트엔드에서 OpenAPI 기반 타입을 만들면 이런 실수를 줄일 수 있습니다.
+
+```text
+백엔드는 displayName을 받는데 프론트엔드는 nickname을 보낸다
+백엔드는 page를 number로 기대하는데 프론트엔드는 string으로 보낸다
+응답에는 sourceFeedId가 있는데 프론트엔드 mapper에서 버린다
+```
+
+물론 자동 생성이 만능은 아닙니다. API 문서가 부정확하면 자동 생성 타입도 부정확합니다. 그래서 OpenAPI를 쓸수록 더 중요한 질문은 이것입니다.
+
+> 문서가 실제 코드와 같은가?
+
+AI가 만든 프로젝트에서는 annotation만 그럴듯하고 실제 validation이나 exception 처리와 맞지 않는 경우가 있습니다. 예를 들어 문서에는 `nickname`이 필수라고 되어 있는데 DTO에 `@NotBlank`가 없으면 실제로는 빈 문자열이 들어갈 수 있습니다.
+
+따라서 문서 리뷰는 코드 리뷰와 연결되어야 합니다.
+
+---
+
+## 7. 협업 가능한 백엔드인지 보는 리뷰 순서
+
+AI가 만든 Spring Boot 백엔드를 받았을 때 아래 순서로 보면 좋습니다.
+
+```text
+1. README를 열어 실행 방법과 API 문서 위치를 확인한다
+2. Swagger/OpenAPI가 실제로 뜨는지 확인한다
+3. 대표 endpoint 하나를 문서대로 호출해본다
+4. Controller의 path/method/request/response가 문서와 맞는지 본다
+5. DTO validation이 문서 설명과 맞는지 본다
+6. GlobalExceptionHandler와 에러 표가 맞는지 본다
+7. 인증이 필요한 API의 security scheme이 문서화되어 있는지 본다
+8. 프론트엔드가 필요한 예시 요청/응답이 충분한지 본다
+9. OpenAPI JSON을 저장해 변경 diff를 볼 수 있는지 확인한다
+10. 문서에 없는 동작이 코드에 숨어 있는지 찾는다
+```
+
+이 순서를 실제 파일과 연결하면 이렇게 됩니다.
+
+| 질문                          | 볼 곳                                                  |
+| ----------------------------- | ------------------------------------------------------ |
+| 실행 방법이 있는가?           | `README.md`, `build.gradle`, `application.yml`         |
+| API 목록이 보이는가?          | Swagger UI, `/v3/api-docs`                             |
+| 요청/응답 DTO가 명확한가?     | `controller`, `dto` 패키지                             |
+| 입력 검증이 문서와 맞는가?    | `@Valid`, `@NotBlank`, `@Size`, `@Email`               |
+| 에러 응답이 일관적인가?       | `GlobalExceptionHandler`, `ErrorResponse`, `ErrorCode` |
+| 인증 조건이 보이는가?         | `SecurityConfig`, Swagger security scheme              |
+| 프론트엔드 계약이 유지되는가? | OpenAPI JSON, API client, TypeScript type              |
+
+이 표를 가지고 보면 AI가 만든 코드를 “그럴듯해 보인다”가 아니라 “팀이 쓸 수 있다 / 아직 부족하다”로 판단할 수 있습니다.
+
+---
+
+## 8. 좋은 협업 문서는 완벽한 문서가 아니라 업데이트 가능한 문서다
+
+문서는 한 번 쓰고 끝나지 않습니다. API는 바뀝니다. 필드가 추가되고, 에러 코드가 늘어나고, 인증 조건이 바뀝니다.
+
+그래서 좋은 문서는 완벽하게 긴 문서가 아니라 **변경될 때 같이 업데이트되는 문서**입니다.
+
+AI가 만든 프로젝트에서 이런 흔적을 찾으면 좋습니다.
+
+```text
+- API 변경 시 Swagger/OpenAPI가 자동으로 갱신된다
+- README의 대표 요청 예시가 최신 endpoint와 맞다
+- 테스트가 API 계약을 일부 검증한다
+- OpenAPI JSON을 CI에서 diff로 확인한다
+- breaking change가 있으면 changelog나 PR 설명에 남긴다
+```
+
+반대로 이런 상태는 위험합니다.
+
+```text
+- README 예시는 예전 URL을 가리킨다
+- Swagger에는 200만 있고 실제 코드는 201을 반환한다
+- 프론트엔드는 camelCase를 보내는데 백엔드는 snake_case를 기대한다
+- 에러 code가 문서에는 있지만 실제 응답에는 없다
+- 인증 토큰 예시가 실제 secret처럼 보이는 문자열이다
+```
+
+문서는 코드보다 빨리 낡을 수 있습니다. 그래서 AI에게 백엔드를 만들게 할 때도 이렇게 요청하는 편이 좋습니다.
+
+```text
+Controller, DTO, Service만 만들지 말고
+Swagger/OpenAPI annotation, README 실행 방법,
+대표 요청/응답 예시, 에러 표까지 함께 갱신해줘.
+```
+
+이렇게 요청하면 AI가 만든 결과물을 리뷰할 기준도 선명해집니다.
+
+---
+
+## 9. 진규의 AI 백엔드 리뷰 체크리스트
+
+마지막으로 오늘 내용을 체크리스트로 압축해보겠습니다.
+
+AI가 만든 Spring Boot 백엔드를 볼 때 아래 질문에 답해보면 됩니다.
+
+### 문서 진입점
+
+- [ ] README에 프로젝트 목적과 주요 기능이 적혀 있는가?
+- [ ] 로컬 실행 방법이 30분 안에 따라 할 수 있을 만큼 구체적인가?
+- [ ] 필요한 환경 변수와 DB 준비 방법이 적혀 있는가?
+- [ ] Swagger UI 또는 OpenAPI JSON 위치가 안내되어 있는가?
+
+### API 계약
+
+- [ ] 각 endpoint의 URL, method, request, response가 명확한가?
+- [ ] path parameter, query parameter, request body가 구분되어 있는가?
+- [ ] 성공 status code가 실제 코드와 맞는가?
+- [ ] 예시 요청과 예시 응답이 있는가?
+
+### 입력 검증과 에러
+
+- [ ] DTO validation과 문서 설명이 일치하는가?
+- [ ] 실패 케이스가 status/code/message 단위로 정리되어 있는가?
+- [ ] 프론트엔드가 필드별 에러를 표시할 수 있는가?
+- [ ] 401, 403, 404, 409 같은 상태 코드가 구분되어 있는가?
+
+### 인증과 권한
+
+- [ ] 인증이 필요한 API가 문서에서 표시되는가?
+- [ ] Swagger에서 Bearer token 입력 방식이 제공되는가?
+- [ ] 역할별 접근 권한이 문서 또는 테스트로 드러나는가?
+- [ ] 예시에는 실제 토큰처럼 보이는 값을 쓰지 않았는가?
+
+### 자동화와 변경 관리
+
+- [ ] `/v3/api-docs`가 실제로 생성되는가?
+- [ ] 프론트엔드 타입/API client 생성에 쓸 수 있는가?
+- [ ] API 변경이 테스트나 CI에서 드러나는가?
+- [ ] README와 Swagger가 서로 다른 말을 하지 않는가?
+
+이 체크리스트를 다 통과해야만 좋은 백엔드라는 뜻은 아닙니다. 하지만 이 질문에 많이 막힌다면, 그 백엔드는 “코드는 생성됐지만 협업 준비는 부족한 상태”일 가능성이 큽니다.
+
+---
+
+## 10. 다음에 볼 것
+
+오늘은 API 문서와 협업 흐름을 봤습니다.
+
+이제 진규는 AI가 만든 백엔드를 볼 때 Controller 코드만 읽지 않고, README, Swagger, OpenAPI JSON, 예시 요청/응답, 에러 표까지 함께 볼 수 있습니다.
+
+다음 단계에서는 조금 더 제품에 가까운 질문으로 넘어갈 수 있습니다.
+
+```text
+기능 하나가 들어왔을 때,
+요구사항 → API 계약 → 구현 → 테스트 → 배포 → 운영 확인이
+어떤 순서로 이어지는가?
+```
+
+즉, 단일 파일이 아니라 **작은 백엔드 기능 하나의 생명주기**를 읽는 법입니다.
+
+오늘의 핵심은 하나입니다.
+
+> API 문서는 코드의 부속품이 아니라, 팀이 백엔드를 함께 사용할 수 있게 만드는 계약이다.
+
+AI가 코드를 빠르게 만들어줄수록, 진규에게 더 필요한 능력은 “많이 타이핑하는 능력”이 아니라 “이 계약이 실제 협업에 충분한지 읽는 능력”입니다.
