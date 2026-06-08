@@ -98,7 +98,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <div data-article-content>
             <MDXContent components={mdxComponents as MDXComponents} />
           </div>
-          <SectionQaPrompts />
+          <SectionQaPrompts slug={slug.join("/")} />
         </div>
         <PostQaPanel slug={slug.join("/")} title={content.frontmatter.title} />
         <ArticleToolbar

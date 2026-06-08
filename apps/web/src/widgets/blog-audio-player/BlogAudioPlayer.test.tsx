@@ -2,6 +2,22 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BlogAudioPlayer } from "./BlogAudioPlayer";
 
+function stubDesktopMedia(matches: boolean) {
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn().mockImplementation((query: string) => ({
+      matches,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  );
+}
+
 const manifest = {
   version: 1,
   slug: "study/backend/day1",
@@ -67,6 +83,7 @@ const manifest = {
 describe("BlogAudioPlayer", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    stubDesktopMedia(true);
     vi.stubGlobal(
       "fetch",
       vi.fn(

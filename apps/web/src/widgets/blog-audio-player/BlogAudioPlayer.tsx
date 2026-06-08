@@ -23,6 +23,7 @@ type TtsAnalyticsAction =
 const PLAYBACK_RATES = [1.2, 1.5, 1.8, 2.0] as const;
 const DEFAULT_PLAYBACK_RATE = 1.5;
 const STORAGE_PREFIX = "seojing_blog_audio_player_v1";
+const DESKTOP_QUERY = "(min-width: 1280px)";
 
 /**
  * 블로그별 TTS manifest가 있을 때만 노출되는 로컬 우선 오디오 플레이어.
@@ -44,10 +45,33 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
   const [placeholderHeight, setPlaceholderHeight] = useState<
     number | undefined
   >();
+  const [isDesktop, setIsDesktop] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia(DESKTOP_QUERY).matches,
+  );
   const lastPositionSaveRef = useRef(0);
   const storageBaseKey = `${STORAGE_PREFIX}:${slug}`;
 
   useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+
+    const mediaQuery = window.matchMedia(DESKTOP_QUERY);
+    const updateDesktop = () => {
+      setIsDesktop(mediaQuery.matches);
+      if (!mediaQuery.matches) {
+        setIsDocked(false);
+        setPlaceholderHeight(undefined);
+      }
+    };
+    mediaQuery.addEventListener("change", updateDesktop);
+    return () => mediaQuery.removeEventListener("change", updateDesktop);
+  }, []);
+
+  useEffect(() => {
+    if (!isDesktop) return;
+
     const updateDocking = () => {
       const wrapper = wrapperRef.current;
       const player = playerRef.current;
@@ -73,7 +97,7 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
       window.removeEventListener("resize", updateDocking);
       resizeObserver?.disconnect();
     };
-  }, []);
+  }, [isDesktop]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -231,7 +255,7 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
 
   const sectionClass = isDocked
     ? "fixed bottom-5 right-5 z-40 max-h-[calc(100vh-2.5rem)] w-[min(26rem,calc(100vw-2.5rem))] overflow-y-auto rounded-3xl border border-gray-200 bg-white/95 p-4 text-sm shadow-xl backdrop-blur dark:border-gray-800 dark:bg-gray-950/95 xl:right-[max(1.25rem,calc((100vw-68rem)/2-22rem))]"
-    : "mt-4 rounded-3xl border border-gray-200 bg-transparent p-4 text-sm shadow-sm dark:border-gray-800";
+    : "my-8 rounded-3xl border border-gray-200 bg-white/70 p-5 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-950/60";
 
   const player = (
     <section
@@ -346,7 +370,7 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
       }
       className="relative"
     >
-      {isDocked && typeof document !== "undefined"
+      {isDesktop && isDocked && typeof document !== "undefined"
         ? createPortal(player, document.body)
         : player}
     </div>
