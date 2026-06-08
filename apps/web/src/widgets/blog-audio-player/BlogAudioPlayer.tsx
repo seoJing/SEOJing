@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type {
   TtsArticleManifest,
   TtsArtifact,
@@ -37,8 +38,41 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
     DEFAULT_PLAYBACK_RATE,
   );
   const [resumeNotice, setResumeNotice] = useState<string | null>(null);
-
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<HTMLElement>(null);
+  const [isDocked, setIsDocked] = useState(false);
+  const [placeholderHeight, setPlaceholderHeight] = useState<
+    number | undefined
+  >();
   const storageBaseKey = `${STORAGE_PREFIX}:${slug}`;
+
+  useEffect(() => {
+    const updateDocking = () => {
+      const wrapper = wrapperRef.current;
+      const player = playerRef.current;
+      if (!wrapper || !player) return;
+      const rect = wrapper.getBoundingClientRect();
+      const nextDocked = rect.bottom < 96;
+      setIsDocked(nextDocked);
+      setPlaceholderHeight(player.offsetHeight || undefined);
+    };
+
+    updateDocking();
+    window.addEventListener("scroll", updateDocking, { passive: true });
+    window.addEventListener("resize", updateDocking);
+
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => updateDocking());
+    if (playerRef.current) resizeObserver?.observe(playerRef.current);
+
+    return () => {
+      window.removeEventListener("scroll", updateDocking);
+      window.removeEventListener("resize", updateDocking);
+      resizeObserver?.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -191,14 +225,20 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
     (artifact) => artifact.kind === "section",
   );
 
-  return (
+  const sectionClass = isDocked
+    ? "fixed bottom-5 right-5 z-40 max-h-[calc(100vh-2.5rem)] w-[min(26rem,calc(100vw-2.5rem))] overflow-y-auto rounded-3xl border border-gray-200 bg-white/95 p-4 text-sm shadow-xl backdrop-blur dark:border-gray-800 dark:bg-gray-950/95 xl:right-[max(1.25rem,calc((100vw-68rem)/2-22rem))]"
+    : "mt-4 rounded-3xl border border-gray-200 bg-transparent p-4 text-sm shadow-sm dark:border-gray-800";
+
+  const player = (
     <section
+      ref={playerRef}
       aria-label="블로그 오디오 플레이어"
-      className="mt-8 rounded-3xl border border-blue-200 bg-blue-50/70 p-4 text-sm shadow-sm dark:border-blue-900/60 dark:bg-blue-950/20"
+      className={sectionClass}
+      data-docked={isDocked ? "true" : "false"}
     >
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700 dark:text-blue-300">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
             Listen
           </p>
           <h2 className="text-base font-bold text-gray-950 dark:text-gray-50">
@@ -284,12 +324,28 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
         ) : null}
 
         {resumeNotice ? (
-          <p role="status" className="text-xs text-blue-700 dark:text-blue-300">
+          <p role="status" className="text-xs text-gray-600 dark:text-gray-300">
             {resumeNotice}
           </p>
         ) : null}
       </div>
     </section>
+  );
+
+  return (
+    <div
+      ref={wrapperRef}
+      style={
+        isDocked && placeholderHeight
+          ? { minHeight: placeholderHeight }
+          : undefined
+      }
+      className="relative"
+    >
+      {isDocked && typeof document !== "undefined"
+        ? createPortal(player, document.body)
+        : player}
+    </div>
   );
 }
 
@@ -303,11 +359,11 @@ function buildManifestPath(slug: string) {
 
 function buttonClass(active: boolean) {
   const base =
-    "rounded-full border px-3 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-400";
+    "rounded-full border px-3 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-gray-400";
   if (active) {
-    return `${base} border-blue-600 bg-blue-600 text-white shadow-sm`;
+    return `${base} border-gray-900 bg-gray-900 text-white shadow-sm dark:border-gray-100 dark:bg-gray-100 dark:text-gray-950`;
   }
-  return `${base} border-gray-300 bg-white text-gray-700 hover:border-blue-400 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-200`;
+  return `${base} border-gray-300 bg-white text-gray-700 hover:border-gray-500 hover:text-gray-950 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:text-gray-100`;
 }
 
 function sectionTitle(artifact: TtsArtifact, sections: TtsSection[]) {
