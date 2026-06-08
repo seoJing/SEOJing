@@ -226,6 +226,55 @@ describe("BlogAudioPlayer", () => {
     window.removeEventListener("seojing:tts-interaction", listener);
   });
 
+  it("docks the player to the viewport after the inline area scrolls away", async () => {
+    const originalOffsetHeight = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetHeight",
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+      configurable: true,
+      value: 320,
+    });
+
+    const rectSpy = vi
+      .spyOn(HTMLDivElement.prototype, "getBoundingClientRect")
+      .mockReturnValue({
+        top: -500,
+        bottom: 40,
+        left: 0,
+        right: 800,
+        width: 800,
+        height: 540,
+        x: 0,
+        y: -500,
+        toJSON: () => ({}),
+      });
+
+    render(<BlogAudioPlayer slug="study/backend/day1" />);
+    await screen.findByLabelText("블로그 오디오 플레이어");
+
+    fireEvent.scroll(window);
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("블로그 오디오 플레이어")).toHaveAttribute(
+        "data-docked",
+        "true",
+      ),
+    );
+    expect(screen.getByLabelText("블로그 오디오 플레이어")).toHaveClass(
+      "fixed",
+    );
+
+    rectSpy.mockRestore();
+    if (originalOffsetHeight) {
+      Object.defineProperty(
+        HTMLElement.prototype,
+        "offsetHeight",
+        originalOffsetHeight,
+      );
+    }
+  });
+
   it("stays hidden when a post has no manifest", async () => {
     vi.stubGlobal(
       "fetch",
