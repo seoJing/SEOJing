@@ -4,7 +4,6 @@ import {
   useState,
   useEffect,
   useCallback,
-  useMemo,
   useRef,
   type RefObject,
 } from "react";
@@ -15,16 +14,9 @@ import {
   IoRemoveOutline,
   IoPhonePortraitOutline,
   IoDesktopOutline,
-  IoListOutline,
-  IoExpandOutline,
-  IoContractOutline,
 } from "react-icons/io5";
 import { FullscreenView } from "@app/ui";
-import {
-  extractSlideOutlineFromSlides,
-  extractSlides,
-  getFillRatio,
-} from "./presentation.utils";
+import { extractSlides, getFillRatio } from "./presentation.utils";
 
 const LONG_PRESS_MS = 1500;
 const LONG_PRESS_THRESHOLD_MS = 300; // 롱프레스 판단 최소 시간
@@ -36,24 +28,38 @@ const MIN_SCALE = 1;
 const MAX_SCALE = 3;
 const SCALE_STEP = 0.2;
 const BOTTOM_BAR_HEIGHT_MOBILE = 36;
-const DECK_SIDEBAR_WIDTH = 288;
-const DECK_MAIN_PADDING_X = 80;
-const DECK_MAIN_PADDING_Y = 64;
-const DECK_CARD_PADDING_X = 112;
-const DECK_CARD_PADDING_Y = 128;
-const DECK_MAX_CARD_WIDTH = 1152;
 const MIN_FILL_RATIO = 0.3;
 const MAX_FILL_RATIO = 1.0;
 const FILL_RATIO_STEP = 0.05;
 
 function getPresentationSource(article: HTMLElement): HTMLElement {
-  const firstChild = article.firstElementChild;
+  const shell =
+    article.firstElementChild instanceof HTMLElement
+      ? article.firstElementChild
+      : article;
+  const directChildren = Array.from(shell.children).filter(
+    (child): child is HTMLElement => child instanceof HTMLElement,
+  );
+  const explicitContent = directChildren.find((child) =>
+    child.hasAttribute("data-presentation-content"),
+  );
+  if (explicitContent) return explicitContent;
 
-  if (firstChild instanceof HTMLElement) {
-    return firstChild;
-  }
+  const bodyLikeContent = directChildren.find((child) => {
+    const tag = child.tagName.toLowerCase();
+    if (["header", "nav", "aside", "footer", "section"].includes(tag)) {
+      return false;
+    }
+    if (child.querySelector('[aria-label="블로그 오디오 플레이어"], audio')) {
+      return false;
+    }
 
-  return article;
+    return Boolean(
+      child.querySelector("h2,h3,h4,p,blockquote,ul,ol,pre,[data-code-block]"),
+    );
+  });
+
+  return bodyLikeContent ?? shell;
 }
 
 interface PresentationViewProps {
@@ -121,7 +127,6 @@ export function PresentationView({
     : BOTTOM_BAR_HEIGHT_PC;
 
   const [slides, setSlides] = useState<HTMLDivElement[]>([]);
-  const [isFullscreenCanvas, setIsFullscreenCanvas] = useState(false);
 
   useEffect(() => {
     if (!articleRef.current) return;
@@ -132,36 +137,13 @@ export function PresentationView({
     const viewH = needsRotation
       ? (vv?.width ?? window.innerWidth)
       : (vv?.height ?? window.innerHeight);
-    const scale = isMobile || !isFullscreenCanvas ? 1 : pcScale;
-    let visibleHeight = viewH - bottomBarHeight;
-    let slideW = needsRotation
+    const padding = isMobile ? SLIDE_PADDING_Y_MOBILE : SLIDE_PADDING_Y;
+    const ratio = fillRatioOverride ?? getFillRatio(viewH);
+    const available = (viewH - padding - bottomBarHeight) * ratio;
+    const scale = isMobile ? 1 : pcScale;
+    const slideW = needsRotation
       ? (vv?.height ?? window.innerHeight) - 64
       : Math.min(window.innerWidth - 128, 1024);
-
-    if (!isMobile && !isFullscreenCanvas) {
-      const deckMainWidth = Math.max(
-        320,
-        window.innerWidth - DECK_SIDEBAR_WIDTH - DECK_MAIN_PADDING_X,
-      );
-      const deckMainHeight = Math.max(
-        240,
-        viewH - bottomBarHeight - DECK_MAIN_PADDING_Y,
-      );
-      const cardWidth = Math.min(
-        DECK_MAX_CARD_WIDTH,
-        deckMainWidth,
-        deckMainHeight * (16 / 9),
-      );
-      const cardHeight = Math.min(deckMainHeight, cardWidth * (9 / 16));
-      visibleHeight = cardHeight - DECK_CARD_PADDING_Y;
-      slideW = cardWidth - DECK_CARD_PADDING_X;
-    } else {
-      const padding = isMobile ? SLIDE_PADDING_Y_MOBILE : SLIDE_PADDING_Y;
-      visibleHeight = viewH - padding - bottomBarHeight;
-    }
-
-    const ratio = fillRatioOverride ?? getFillRatio(viewH);
-    const available = visibleHeight * ratio;
     const presentationSource = getPresentationSource(articleRef.current);
     // scale 적용 시 콘텐츠는 원래 크기로 측정되므로, 가용 공간을 scale로 나눠서 전달
     setSlides(
@@ -174,21 +156,9 @@ export function PresentationView({
     bottomBarHeight,
     pcScale,
     fillRatioOverride,
-    isFullscreenCanvas,
   ]);
 
   const totalSlides = slides.length;
-  const slideOutline = useMemo(
-    () => extractSlideOutlineFromSlides(slides),
-    [slides],
-  );
-  const headingOutline = useMemo(
-    () =>
-      slideOutline.filter(
-        (item) => item.kind === "heading" && item.level >= 1 && item.level <= 2,
-      ),
-    [slideOutline],
-  );
   const closingRef = useRef(false);
 
   const safeClose = useCallback(() => {
@@ -209,15 +179,6 @@ export function PresentationView({
 
   const goToPrev = useCallback(() => {
     setCurrentSlide((p) => Math.max(p - 1, 0));
-  }, []);
-
-  const goToSlide = useCallback((slideIndex: number) => {
-    setCurrentSlide(slideIndex);
-  }, []);
-
-  const toggleFullscreenCanvas = useCallback(() => {
-    setIsFullscreenCanvas((prev) => !prev);
-    setCurrentSlide(0);
   }, []);
 
   useEffect(() => {
@@ -270,7 +231,7 @@ export function PresentationView({
       const el = slideContentRef.current;
       const parent = el?.parentElement;
       if (!el || !parent) return;
-      const scale = isMobile || !isFullscreenCanvas ? 1 : pcScale;
+      const scale = isMobile ? 1 : pcScale;
       const contentH = el.scrollHeight * scale;
       const parentH = parent.clientHeight;
       setOverflowing(contentH > parentH + 1);
@@ -294,7 +255,7 @@ export function PresentationView({
     return () => {
       handlers.forEach((cleanup) => cleanup());
     };
-  }, [currentSlide, slides, isMobile, pcScale, isFullscreenCanvas]);
+  }, [currentSlide, slides, isMobile, pcScale]);
 
   const handlePointerDown = useCallback(() => {
     if (!isMobile) return;
@@ -361,88 +322,21 @@ export function PresentationView({
       style={{ height: "100dvh" }}
     >
       <div className="absolute flex flex-col" style={containerStyle}>
-        {/* 덱 레이아웃: PC 기본은 좌측 목차 + 우측 카드 슬라이스, 전체화면 모드는 기존 꽉찬 캔버스 */}
-        {isFullscreenCanvas || isMobile ? (
+        {/* 슬라이드 콘텐츠 */}
+        <div
+          className={`flex flex-1 items-center justify-center overflow-hidden py-12 ${isMobile ? "px-5" : "px-16"}`}
+        >
           <div
-            className={`flex flex-1 items-center justify-center overflow-hidden py-12 ${isMobile ? "px-5" : "px-16"}`}
-          >
-            <div
-              ref={slideContentRef}
-              className="mx-auto w-full max-w-5xl overflow-hidden"
-              style={isMobile ? undefined : { zoom: pcScale }}
-            />
-          </div>
-        ) : (
-          <div className="flex min-h-0 flex-1 overflow-hidden bg-[var(--color-cloud-dancer)] text-black dark:bg-black dark:text-white">
-            <aside className="relative z-20 flex w-72 shrink-0 flex-col border-r border-black/10 bg-white/75 px-4 py-5 text-black shadow-sm backdrop-blur dark:border-white/10 dark:bg-black/80 dark:text-white">
-              <div className="mb-4 flex items-center gap-2 text-sm font-semibold tracking-[-0.01em]">
-                <IoListOutline className="size-4" />
-                슬라이드 목차
-              </div>
-
-              <div className="mb-4 rounded-xl bg-[var(--color-cloud-dancer)] px-3 py-2 text-[11px] font-medium text-black/55 ring-1 ring-black/10 dark:bg-white/10 dark:text-white/55 dark:ring-white/10">
-                H1/H2 목차 {headingOutline.length}개 · 본문 슬라이드{" "}
-                {totalSlides}장
-              </div>
-
-              <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
-                {headingOutline.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={`group flex w-full items-start gap-3 rounded-xl border px-3 py-2 text-left transition-colors ${
-                      item.slideIndex === currentSlide
-                        ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-                        : "border-transparent hover:border-black/10 hover:bg-[var(--color-cloud-dancer)] dark:hover:border-white/10 dark:hover:bg-white/10"
-                    }`}
-                    onClick={() => goToSlide(item.slideIndex)}
-                    aria-current={
-                      item.slideIndex === currentSlide ? "step" : undefined
-                    }
-                  >
-                    <span className="mt-0.5 min-w-[2ch] text-xs tabular-nums text-current opacity-45 group-hover:opacity-70">
-                      {item.slideIndex + 1}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="line-clamp-2 text-xs font-medium leading-5">
-                        {item.title}
-                      </span>
-                      <span className="mt-1 text-[10px] text-current opacity-70">
-                        H{item.level}
-                      </span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </aside>
-
-            <main
-              className={`relative z-0 flex flex-1 items-center justify-center overflow-hidden ${
-                isMobile ? "px-5 py-12" : "px-10 py-8"
-              }`}
-            >
-              <div className="relative aspect-[16/9] w-full max-w-6xl overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-2xl shadow-black/10 dark:border-white/10 dark:bg-black dark:shadow-black/40">
-                <div className="pointer-events-none absolute left-7 top-5 z-10 rounded-full bg-[var(--color-cloud-dancer)] px-3 py-1 text-xs font-medium text-black/60 ring-1 ring-black/10 dark:bg-white/10 dark:text-white/65 dark:ring-white/10">
-                  Deck {currentSlide + 1} / {totalSlides}
-                </div>
-                <div className="flex h-full items-center justify-center px-14 py-16">
-                  <div
-                    ref={slideContentRef}
-                    className="mx-auto w-full max-w-5xl overflow-hidden"
-                  />
-                </div>
-              </div>
-            </main>
-          </div>
-        )}
+            ref={slideContentRef}
+            className="mx-auto w-full max-w-5xl overflow-hidden"
+            style={isMobile ? undefined : { zoom: pcScale }}
+          />
+        </div>
 
         {/* 네비게이션 영역 (양쪽 사이드만, 가운데는 콘텐츠 클릭 가능) */}
         <div
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex"
-          style={{
-            bottom: `${bottomBarHeight}px`,
-            left: isMobile || isFullscreenCanvas ? 0 : DECK_SIDEBAR_WIDTH,
-          }}
+          className="pointer-events-none absolute inset-0 flex"
+          style={{ bottom: `${bottomBarHeight}px` }}
         >
           <button
             type="button"
@@ -467,16 +361,16 @@ export function PresentationView({
 
         {/* 하단 바 */}
         <div
-          className={`relative z-30 flex shrink-0 items-center border-t border-black/10 bg-[var(--color-cloud-dancer)] text-black dark:border-white/10 dark:bg-black dark:text-white ${isMobile ? "px-4" : "px-6"}`}
+          className={`relative flex shrink-0 items-center bg-gray-100 dark:bg-gray-900 ${isMobile ? "px-4" : "px-6"}`}
           style={{ height: `${bottomBarHeight}px` }}
         >
-          <span className="flex items-center gap-2 text-xs text-black/55 dark:text-white/55">
+          <span className="flex items-center gap-2 text-xs text-gray-500">
             {pressing ? (
               "놓지 마세요..."
             ) : isMobile ? (
               `화면을 ${LONG_PRESS_MS / 1000}초간 누르면 종료`
             ) : overflowing ? (
-              <span className="rounded-full bg-white px-2 py-0.5 text-blue-950 ring-1 ring-black/10 dark:bg-white/10 dark:text-white dark:ring-white/10">
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
                 ⚠ 화면 넘침 — 표시 영역을 줄이세요
               </span>
             ) : (
@@ -484,38 +378,14 @@ export function PresentationView({
             )}
           </span>
 
-          <span className="absolute left-1/2 -translate-x-1/2 text-sm font-medium text-black/65 dark:text-white/65">
+          <span className="absolute left-1/2 -translate-x-1/2 text-sm font-medium text-gray-600 dark:text-gray-400">
             {currentSlide + 1} / {totalSlides}
           </span>
 
           <div className="ml-auto flex items-center gap-1">
-            {!isMobile && (
-              <button
-                type="button"
-                className="mr-1 flex size-7 items-center justify-center rounded-full text-black/55 transition-colors hover:bg-white hover:text-blue-950 dark:text-white/55 dark:hover:bg-white/10 dark:hover:text-white"
-                onClick={toggleFullscreenCanvas}
-                aria-pressed={isFullscreenCanvas}
-                aria-label={
-                  isFullscreenCanvas
-                    ? "카드 목차 모드로 전환"
-                    : "전체화면 슬라이드로 전환"
-                }
-                title={
-                  isFullscreenCanvas
-                    ? "카드 목차 모드로 전환"
-                    : "전체화면 슬라이드로 전환"
-                }
-              >
-                {isFullscreenCanvas ? (
-                  <IoContractOutline className="size-4" />
-                ) : (
-                  <IoExpandOutline className="size-4" />
-                )}
-              </button>
-            )}
             <button
               type="button"
-              className="mr-1 flex size-7 items-center justify-center rounded-full text-black/55 transition-colors hover:bg-white hover:text-black dark:text-white/55 dark:hover:bg-white/10 dark:hover:text-white"
+              className="mr-1 flex size-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300"
               onClick={toggleDeviceMode}
               aria-label={
                 isMobile ? "데스크탑 모드로 전환" : "모바일 모드로 전환"
@@ -532,7 +402,7 @@ export function PresentationView({
               <>
                 <button
                   type="button"
-                  className="flex size-7 items-center justify-center rounded-full text-black/55 transition-colors hover:bg-white hover:text-black disabled:opacity-30 dark:text-white/55 dark:hover:bg-white/10 dark:hover:text-white"
+                  className="flex size-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:opacity-30 dark:hover:bg-gray-800 dark:hover:text-gray-300"
                   onClick={() => {
                     setPcScale(
                       (s) =>
@@ -548,14 +418,14 @@ export function PresentationView({
                   <IoRemoveOutline className="size-4" />
                 </button>
                 <span
-                  className="min-w-[3ch] text-center text-xs tabular-nums text-black/55 dark:text-white/55"
+                  className="min-w-[3ch] text-center text-xs tabular-nums text-gray-500"
                   title="글자 배율"
                 >
                   {pcScale.toFixed(1)}
                 </span>
                 <button
                   type="button"
-                  className="flex size-7 items-center justify-center rounded-full text-black/55 transition-colors hover:bg-white hover:text-black disabled:opacity-30 dark:text-white/55 dark:hover:bg-white/10 dark:hover:text-white"
+                  className="flex size-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:opacity-30 dark:hover:bg-gray-800 dark:hover:text-gray-300"
                   onClick={() => {
                     setPcScale(
                       (s) =>
@@ -572,10 +442,10 @@ export function PresentationView({
                 </button>
 
                 {/* 표시 영역 조절 (미러링 등으로 화면 잘릴 때 사용) */}
-                <span className="mx-1 h-4 w-px bg-black/15 dark:bg-white/15" />
+                <span className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-700" />
                 <button
                   type="button"
-                  className="flex size-7 items-center justify-center rounded-full text-black/55 transition-colors hover:bg-white hover:text-black disabled:opacity-30 dark:text-white/55 dark:hover:bg-white/10 dark:hover:text-white"
+                  className="flex size-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:opacity-30 dark:hover:bg-gray-800 dark:hover:text-gray-300"
                   onClick={() => {
                     setFillRatioOverride((r) => {
                       const base = r ?? getFillRatio(window.innerHeight);
@@ -598,7 +468,7 @@ export function PresentationView({
                   <IoRemoveOutline className="size-3.5 opacity-70" />
                 </button>
                 <span
-                  className="min-w-[3.5ch] text-center text-xs tabular-nums text-black/55 dark:text-white/55"
+                  className="min-w-[3.5ch] text-center text-xs tabular-nums text-gray-500"
                   title="슬라이드 표시 영역 비율"
                 >
                   {Math.round(
@@ -611,7 +481,7 @@ export function PresentationView({
                 </span>
                 <button
                   type="button"
-                  className="flex size-7 items-center justify-center rounded-full text-black/55 transition-colors hover:bg-white hover:text-black disabled:opacity-30 dark:text-white/55 dark:hover:bg-white/10 dark:hover:text-white"
+                  className="flex size-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:opacity-30 dark:hover:bg-gray-800 dark:hover:text-gray-300"
                   onClick={() => {
                     setFillRatioOverride((r) => {
                       const base = r ?? getFillRatio(window.innerHeight);
@@ -634,7 +504,7 @@ export function PresentationView({
             )}
             <button
               type="button"
-              className="ml-1 flex size-7 items-center justify-center rounded-full text-black/55 transition-colors hover:bg-white hover:text-black dark:text-white/55 dark:hover:bg-white/10 dark:hover:text-white"
+              className="ml-1 flex size-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300"
               onClick={onClose}
               aria-label="프레젠테이션 종료"
             >
