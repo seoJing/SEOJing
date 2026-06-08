@@ -1,3 +1,7 @@
+import {
+  nextCodeFenceState,
+  type CodeFenceState,
+} from "@/shared/lib/code-fence";
 import { blogUrl } from "@/shared/config/site";
 
 export type TtsArtifactKind = "summary-2m" | "core-5m" | "section";
@@ -44,11 +48,6 @@ export interface BuildTtsManifestInput {
   title: string;
   source: string;
   generatedAt?: string;
-}
-
-interface CodeFenceState {
-  char: "`" | "~";
-  length: number;
 }
 
 const TWO_MINUTE_MAX_WORDS = 360;
@@ -234,27 +233,4 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9가-힣]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
-}
-
-function nextCodeFenceState(
-  current: CodeFenceState | null,
-  line: string,
-): CodeFenceState | null {
-  const fence = /^\s*(`{3,}|~{3,})/.exec(line);
-  if (!fence) return current;
-
-  const marker = fence[1] ?? "";
-  const char = marker[0] as "`" | "~";
-  if (!current) return { char, length: marker.length };
-
-  const closingFence = /^\s*(`{3,}|~{3,})\s*$/.exec(line);
-  const closingMarker = closingFence?.[1] ?? "";
-  if (
-    closingMarker[0] === current.char &&
-    closingMarker.length >= current.length
-  ) {
-    return null;
-  }
-
-  return current;
 }
