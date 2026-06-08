@@ -6,6 +6,7 @@
   "scripts": {
     "generate:content": "tsx scripts/generate-content-tree.ts",
     "generate:tts": "tsx scripts/generate-tts-artifacts.ts",
+    "qa:insights": "tsx scripts/qa-log-insights.ts",
     "asset:insert": "node scripts/insert-content-image.mjs",
     "dev": "pnpm run generate:content && vinext dev",
     "build": "pnpm run generate:content && vinext build",

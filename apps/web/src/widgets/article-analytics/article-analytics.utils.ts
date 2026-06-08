@@ -8,7 +8,10 @@ export type AnalyticsEventTypeV1 =
   | "scroll_depth"
   | "section_engagement"
   | "code_copy"
-  | "toc_interaction";
+  | "toc_interaction"
+  | "tts_interaction"
+  | "presentation_interaction"
+  | "qa_interaction";
 
 export type ContentKind =
   | "blog_post"

@@ -38,6 +38,10 @@ declare global {
       copiedChars?: number;
       blockId?: string;
     }>;
+    "seojing:qa-interaction": CustomEvent<{
+      action: "answer_shown" | "insufficient_context" | "invalid_request";
+      question_length_bucket: "1-40" | "41-120" | "121+";
+    }>;
   }
 }
 
@@ -299,6 +303,26 @@ export function useArticleAnalytics({
       );
     };
 
+    const handleQaInteraction = (event: Event) => {
+      if (!(event instanceof CustomEvent)) return;
+      const { action, question_length_bucket: questionLengthBucket } =
+        event.detail ?? {};
+      const validAction = [
+        "answer_shown",
+        "insufficient_context",
+        "invalid_request",
+      ].includes(action);
+      const validBucket = ["1-40", "41-120", "121+"].includes(
+        questionLengthBucket,
+      );
+      if (!validAction || !validBucket) return;
+
+      emit("qa_interaction", {
+        action,
+        question_length_bucket: questionLengthBucket,
+      });
+    };
+
     const handleClick = (event: MouseEvent) => {
       const target = event.target instanceof Element ? event.target : null;
       const link = target?.closest<HTMLAnchorElement>(
@@ -319,6 +343,7 @@ export function useArticleAnalytics({
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("seojing:code-copy", handleCodeCopy);
+    window.addEventListener("seojing:qa-interaction", handleQaInteraction);
     article.addEventListener("click", handleClick);
     window.addEventListener("pagehide", handlePageHide, { once: true });
     handleScroll();
@@ -326,6 +351,7 @@ export function useArticleAnalytics({
     return () => {
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("seojing:code-copy", handleCodeCopy);
+      window.removeEventListener("seojing:qa-interaction", handleQaInteraction);
       article.removeEventListener("click", handleClick);
       window.removeEventListener("pagehide", handlePageHide);
       window.clearInterval(heartbeat);
