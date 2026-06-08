@@ -248,6 +248,37 @@ describe("PostQaPanel", () => {
     ).toHaveValue("");
   });
 
+  it("aborts in-flight requests without writing stale side effects", async () => {
+    const listener = vi.fn();
+    window.addEventListener("seojing:qa-interaction", listener);
+    let aborted = false;
+    vi.mocked(fetch).mockImplementationOnce((_input, init) => {
+      const signal = init?.signal as AbortSignal | undefined;
+      return new Promise<Response>((_resolve, reject) => {
+        signal?.addEventListener("abort", () => {
+          aborted = true;
+          reject(new DOMException("Aborted", "AbortError"));
+        });
+      });
+    });
+
+    const { unmount } = render(
+      <PostQaPanel slug="study/backend/day1" title="백엔드 스터디 Day 1" />,
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "이 글에 대해 질문하기" }),
+      { target: { value: "느린 요청이면 어떻게 돼?" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "질문 보내기" }));
+
+    unmount();
+
+    await waitFor(() => expect(aborted).toBe(true));
+    expect(listener).not.toHaveBeenCalled();
+    expect(window.localStorage.getItem("seojing_post_qa_log_v1")).toBeNull();
+    window.removeEventListener("seojing:qa-interaction", listener);
+  });
+
   it("prefills section context from floating section prompts", async () => {
     Element.prototype.scrollIntoView = vi.fn();
     const focusSpy = vi.spyOn(HTMLTextAreaElement.prototype, "focus");

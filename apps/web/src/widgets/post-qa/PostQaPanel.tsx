@@ -111,6 +111,7 @@ function PostQaPanelInner({
 }: PostQaPanelProps) {
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState<PostQaResult | null>(null);
+  const resultSlug = useRef(slug);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [log, setLog] = useState<QuestionLogEntry[]>(() =>
@@ -163,6 +164,7 @@ function PostQaPanelInner({
       question.trim().length > 0 && question.trim().length <= 500 && !pending,
     [pending, question],
   );
+  const visibleResult = resultSlug.current === slug ? result : null;
 
   const submitQuestion = async () => {
     const trimmedQuestion = question.trim();
@@ -191,6 +193,7 @@ function PostQaPanelInner({
         throw new Error(`qa request failed: ${response.status}`);
       const body = (await response.json()) as PostQaResult;
       if (requestSeq.current !== currentRequestSeq) return;
+      resultSlug.current = slug;
       setResult(body);
       setQuestion("");
 
@@ -309,18 +312,18 @@ function PostQaPanelInner({
         </p>
       )}
 
-      {result && (
+      {visibleResult && (
         <div className="mt-5 space-y-4 rounded-xl bg-gray-50 p-4 dark:bg-gray-900/70">
           <p className="whitespace-pre-wrap text-sm leading-7 text-gray-800 dark:text-gray-200">
-            {result.answer}
+            {visibleResult.answer}
           </p>
-          {result.sources.length > 0 && (
+          {visibleResult.sources.length > 0 && (
             <div className="space-y-2">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 출처
               </h3>
               <ul className="space-y-2">
-                {result.sources.map((source) => {
+                {visibleResult.sources.map((source) => {
                   const href = sourceHref(source.href, source.chunkId);
                   return (
                     <li
@@ -348,13 +351,13 @@ function PostQaPanelInner({
               </ul>
             </div>
           )}
-          {result.relatedPosts.length > 0 && (
+          {visibleResult.relatedPosts.length > 0 && (
             <div className="space-y-2">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 관련 글
               </h3>
               <ul className="flex flex-wrap gap-2">
-                {result.relatedPosts.map((post) => {
+                {visibleResult.relatedPosts.map((post) => {
                   const href = safeInternalBlogHref(post.href);
                   return (
                     <li key={post.slug}>
