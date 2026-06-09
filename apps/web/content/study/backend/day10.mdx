@@ -1,0 +1,555 @@
+---
+title: "백엔드 스터디 Day 10: 로그와 관측 가능성으로 문제 흐름 읽기"
+date: 2026-06-10
+tags:
+  - 백엔드
+  - 스터디
+  - Spring Boot
+  - Java
+  - 로그
+  - 운영
+  - 관측 가능성
+  - AI 코드 읽기
+description: AI가 만든 Spring Boot 백엔드를 운영 가능한 코드로 보려면 기능 구현뿐 아니라 문제가 났을 때 어디서 막혔는지 추적할 수 있어야 합니다. Day 10에서는 로그, 요청 ID, 에러 추적, 메트릭, 알림을 낮은 단계부터 읽는 법을 정리합니다.
+---
+
+> 예상 읽기 시간: 20~30분
+
+## 오늘의 목표
+
+Day 1에서는 Spring Boot 프로젝트 폴더 구조를 봤습니다. Day 2에서는 API 계약, Day 3에서는 입력 검증과 에러 응답, Day 4에서는 DB 접근, Day 5에서는 Service와 트랜잭션, Day 6에서는 로그인과 권한, Day 7에서는 테스트, Day 8에서는 배포와 운영 환경, Day 9에서는 API 문서와 협업 흐름을 봤습니다.
+
+오늘은 **로그와 관측 가능성**을 봅니다.
+
+백엔드가 로컬에서 한 번 잘 실행된다고 해서 운영 가능한 코드는 아닙니다. 실제 서비스에서는 사용자가 요청을 보내고, 네트워크가 흔들리고, DB가 느려지고, 외부 API가 실패하고, 예외가 발생합니다. 이때 중요한 질문은 하나입니다.
+
+> 문제가 났을 때 어디서 막혔는지 추적할 수 있는가?
+
+AI가 만든 Spring Boot 코드는 Controller, Service, Repository 구조를 꽤 그럴듯하게 만들 수 있습니다. 하지만 로그가 없거나, 모든 에러가 같은 메시지로 묶이거나, 요청 하나를 끝까지 따라갈 단서가 없으면 운영 중에는 거의 눈을 감고 디버깅하는 상태가 됩니다.
+
+진규가 지금 목표로 삼아야 하는 것은 로그 라이브러리 설정을 외우는 것이 아닙니다. 목표는 AI가 만든 백엔드 코드를 보고 “이 서버는 문제가 생겼을 때 원인을 찾을 수 있게 만들어졌나?”를 판단하는 것입니다.
+
+오늘 글을 읽고 나면 아래 질문에 답할 수 있어야 합니다.
+
+- 로그는 `System.out.println`과 무엇이 다른가?
+- 요청 하나를 Controller부터 DB까지 어떻게 따라가는가?
+- 어떤 로그는 남기고 어떤 값은 남기면 안 되는가?
+- 에러 로그와 사용자 응답은 왜 달라야 하는가?
+- 메트릭과 헬스체크는 로그와 무엇이 다른가?
+- AI가 만든 백엔드에서 관측 가능성 부족을 어떻게 리뷰할 수 있는가?
+
+---
+
+## 1. 운영에서 로그는 “나중에 보는 실행 기록”이다
+
+처음 백엔드를 배울 때는 문제가 생기면 코드에 이런 줄을 넣고 다시 실행합니다.
+
+```java
+System.out.println("userId = " + userId);
+```
+
+로컬 공부 단계에서는 이것도 도움이 됩니다. 하지만 운영 서버에서는 부족합니다.
+
+운영 환경에서는 수많은 사용자의 요청이 동시에 들어옵니다. 어떤 요청에서 찍힌 값인지, 언제 찍혔는지, 에러인지 단순 정보인지, 어느 클래스에서 남긴 기록인지 알 수 있어야 합니다.
+
+그래서 Spring Boot에서는 보통 로거를 사용합니다.
+
+```java
+private static final Logger log = LoggerFactory.getLogger(MemberService.class);
+```
+
+그리고 상황에 따라 로그 레벨을 나눕니다.
+
+```java
+log.info("member signup requested. email={}", maskedEmail);
+log.warn("duplicate email signup attempt. email={}", maskedEmail);
+log.error("failed to create member. reason={}", exception.getMessage(), exception);
+```
+
+여기서 중요한 것은 문법이 아니라 **기록의 목적**입니다.
+
+```text
+로그는 지금 화면에 보여주기 위한 출력이 아니라,
+나중에 문제를 추적하기 위해 남기는 실행 기록이다.
+```
+
+AI가 만든 백엔드를 볼 때 `System.out.println`이 여러 곳에 흩어져 있다면 운영 코드로는 아직 덜 다듬어진 신호입니다. 반대로 로거를 쓰더라도 모든 값을 무분별하게 찍고 있다면 그것도 위험합니다.
+
+좋은 로그는 아래 질문에 답합니다.
+
+```text
+무슨 일이 일어났나?
+어느 요청에서 일어났나?
+어느 계층에서 일어났나?
+성공인가, 경고인가, 실패인가?
+사용자가 보낸 민감한 값이 그대로 찍히지는 않았나?
+```
+
+---
+
+## 2. 로그 레벨은 “심각도”와 “운영 소음”을 나누는 기준이다
+
+로그에는 보통 레벨이 있습니다.
+
+```text
+TRACE < DEBUG < INFO < WARN < ERROR
+```
+
+처음에는 `INFO`, `WARN`, `ERROR` 정도만 구분해도 충분합니다.
+
+| 레벨  | 의미                           | 예시                                  |
+| ----- | ------------------------------ | ------------------------------------- |
+| INFO  | 정상적인 주요 흐름             | 회원가입 성공, 결제 요청 시작         |
+| WARN  | 실패는 아니지만 주의할 상황    | 중복 가입 시도, 잘못된 입력 반복      |
+| ERROR | 실제 장애나 복구가 필요한 실패 | DB 연결 실패, 외부 결제 API 호출 실패 |
+
+예를 들어 회원가입 흐름에서 모든 입력 검증 실패를 `ERROR`로 남기면 운영자는 매일 장애가 난 것처럼 보게 됩니다.
+
+```java
+log.error("email format is invalid. email={}", email);
+```
+
+이런 로그는 과합니다. 사용자가 이메일을 잘못 입력한 것은 서버 장애가 아닙니다. 보통은 `WARN` 또는 별도 비즈니스 이벤트로 보는 편이 맞습니다.
+
+반대로 DB 저장이 실패했는데 `INFO`로만 남기면 실제 장애를 놓칠 수 있습니다.
+
+```java
+log.info("database save failed");
+```
+
+이건 너무 약합니다.
+
+AI가 만든 코드를 리뷰할 때는 “로그가 있나?”보다 **레벨이 상황에 맞나?**를 봐야 합니다.
+
+리뷰 질문은 이렇게 바꿀 수 있습니다.
+
+```text
+사용자 실수와 서버 장애를 같은 레벨로 남기고 있지는 않은가?
+성공 로그가 너무 많아서 중요한 실패가 묻히지는 않는가?
+진짜 장애인데 WARN/INFO로만 남아 있지는 않은가?
+```
+
+---
+
+## 3. 요청 하나를 끝까지 따라가려면 요청 ID가 필요하다
+
+운영에서 가장 어려운 문제 중 하나는 로그가 너무 많다는 점입니다.
+
+예를 들어 동시에 100명이 로그인한다고 해보겠습니다. 로그에는 이런 줄들이 섞입니다.
+
+```text
+login requested
+member found
+password matched
+jwt issued
+login failed
+member not found
+```
+
+이렇게만 보면 어떤 줄이 같은 사용자의 요청인지 알기 어렵습니다.
+
+그래서 많은 백엔드에서는 요청마다 고유한 ID를 붙입니다.
+
+```text
+requestId=9f2a... login requested
+requestId=9f2a... member found
+requestId=9f2a... jwt issued
+
+requestId=31be... login requested
+requestId=31be... member not found
+```
+
+Spring Boot에서는 필터나 인터셉터에서 요청 ID를 만들고, MDC라는 로그 컨텍스트에 넣는 방식이 자주 쓰입니다.
+
+```java
+@Component
+public class RequestIdFilter extends OncePerRequestFilter {
+    @Override
+    protected void doFilterInternal(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain filterChain
+    ) throws ServletException, IOException {
+        String requestId = Optional
+            .ofNullable(request.getHeader("X-Request-Id"))
+            .orElse(UUID.randomUUID().toString());
+
+        MDC.put("requestId", requestId);
+        response.setHeader("X-Request-Id", requestId);
+
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            MDC.clear();
+        }
+    }
+}
+```
+
+그리고 로그 패턴에 `requestId`가 들어가면 요청 하나를 끝까지 추적할 수 있습니다.
+
+```text
+2026-06-10 10:15:31 INFO [requestId=9f2a...] MemberController - login requested
+2026-06-10 10:15:31 INFO [requestId=9f2a...] MemberService - member found
+2026-06-10 10:15:31 INFO [requestId=9f2a...] AuthService - token issued
+```
+
+진규가 코드를 리뷰할 때 꼭 구현 세부를 외울 필요는 없습니다. 대신 이런 질문을 던지면 됩니다.
+
+```text
+사용자 문의가 들어왔을 때 요청 하나를 로그에서 찾을 수 있는가?
+프론트엔드가 받은 에러 응답과 서버 로그를 연결할 ID가 있는가?
+외부 API 호출 실패도 같은 요청 ID로 이어지는가?
+```
+
+요청 ID가 없으면 “그 시간대 로그를 다 뒤져보자”가 됩니다. 요청 ID가 있으면 “이 요청을 따라가자”가 됩니다.
+
+---
+
+## 4. 민감한 값은 로그에 남기면 안 된다
+
+로그는 디버깅을 도와주지만 동시에 위험한 저장소가 될 수 있습니다.
+
+절대 그대로 남기면 안 되는 값들이 있습니다.
+
+```text
+비밀번호
+인증 토큰
+세션 쿠키
+API 키
+주민등록번호 같은 개인식별정보
+결제 정보
+전체 이메일/전화번호가 불필요하게 노출되는 값
+```
+
+예를 들어 이런 코드는 위험합니다.
+
+```java
+log.info("login request: email={}, password={}", request.email(), request.password());
+```
+
+로그 파일은 개발자뿐 아니라 운영 도구, 배포 서버, 외부 로그 수집 서비스에 남을 수 있습니다. 비밀번호가 로그에 찍히면 이미 보안 사고에 가깝습니다.
+
+대신 필요한 경우 마스킹된 값만 남깁니다.
+
+```java
+log.info("login requested. email={}", maskEmail(request.email()));
+```
+
+마스킹 예시는 이런 정도면 충분합니다.
+
+```java
+private String maskEmail(String email) {
+    int at = email.indexOf("@");
+    if (at <= 1) {
+        return "***";
+    }
+    return email.charAt(0) + "***" + email.substring(at);
+}
+```
+
+중요한 것은 완벽한 마스킹 함수가 아닙니다. 중요한 것은 AI가 만든 코드가 **문제 추적을 위해 필요한 최소 정보만 남기는가**입니다.
+
+리뷰 체크리스트는 이렇게 볼 수 있습니다.
+
+```text
+로그에 password/token/secret/cookie 값이 직접 들어가지는 않는가?
+에러 객체 전체를 찍으면서 민감한 request body가 함께 노출되지는 않는가?
+사용자 식별이 필요하다면 내부 userId 정도로 충분하지 않은가?
+외부 API 응답을 통째로 로그에 남기고 있지는 않은가?
+```
+
+백엔드 로그는 “많을수록 좋은 기록”이 아닙니다. **필요한 만큼만 안전하게 남긴 기록**이어야 합니다.
+
+---
+
+## 5. 사용자에게 보여주는 에러와 운영자가 보는 에러는 다르다
+
+서버에서 예외가 발생했을 때 사용자에게 내부 에러를 그대로 보여주면 안 됩니다.
+
+나쁜 예시는 이런 흐름입니다.
+
+```java
+catch (Exception e) {
+    return ResponseEntity
+        .status(500)
+        .body(e.getMessage());
+}
+```
+
+`e.getMessage()`에는 내부 DB 테이블명, SQL, 외부 API 주소, 파일 경로 같은 정보가 들어갈 수 있습니다. 사용자는 그 정보를 알아야 할 필요가 없습니다.
+
+사용자에게는 간단하고 안전한 메시지를 줍니다.
+
+```json
+{
+  "code": "INTERNAL_SERVER_ERROR",
+  "message": "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+  "requestId": "9f2a..."
+}
+```
+
+운영자 로그에는 원인을 추적할 수 있게 예외 정보를 남깁니다.
+
+```java
+log.error("unexpected server error. requestId={}", requestId, exception);
+```
+
+이렇게 나누면 사용자는 안전한 메시지를 받고, 운영자는 로그에서 `requestId`로 실제 원인을 찾을 수 있습니다.
+
+AI가 만든 백엔드에서 자주 보이는 문제는 두 가지입니다.
+
+```text
+1. 사용자 응답에 내부 예외 메시지를 그대로 보낸다.
+2. 반대로 서버 로그에는 아무 정보도 남기지 않는다.
+```
+
+둘 다 좋지 않습니다.
+
+좋은 구조는 아래처럼 나뉩니다.
+
+```text
+사용자 응답: 안전하고 짧은 설명 + requestId
+서버 로그: 원인 추적에 필요한 예외 정보 + requestId
+```
+
+이 분리는 Day 3에서 본 에러 응답과 오늘의 로그가 만나는 지점입니다.
+
+---
+
+## 6. 로그만으로는 부족하다: 헬스체크와 메트릭
+
+로그는 “무슨 일이 있었는가”를 자세히 보여줍니다. 하지만 운영자가 매번 모든 로그를 읽을 수는 없습니다. 그래서 서버 상태를 빠르게 확인하는 장치가 필요합니다.
+
+대표적인 것이 헬스체크입니다.
+
+```text
+GET /actuator/health
+```
+
+Spring Boot에서는 `spring-boot-starter-actuator`를 사용해 헬스체크, 메트릭, 애플리케이션 정보를 노출할 수 있습니다.
+
+```gradle
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+}
+```
+
+헬스체크는 보통 서버가 살아 있는지, DB 연결이 가능한지, 외부 의존성이 정상인지 확인하는 데 쓰입니다.
+
+```json
+{
+  "status": "UP"
+}
+```
+
+메트릭은 숫자로 보는 운영 신호입니다.
+
+```text
+요청 수
+응답 시간
+에러 비율
+DB 커넥션 사용량
+JVM 메모리 사용량
+```
+
+로그가 사건 기록이라면, 메트릭은 상태 계기판에 가깝습니다.
+
+```text
+로그: 10:15:31에 로그인 요청이 실패했다.
+메트릭: 최근 5분 동안 로그인 API 에러율이 20%로 올랐다.
+헬스체크: 현재 DB 연결은 정상이다.
+```
+
+AI가 만든 프로젝트에서 Actuator가 없다고 해서 무조건 틀린 것은 아닙니다. 작은 과제나 로컬 실습에서는 없어도 됩니다. 하지만 실제 배포를 전제로 한다면 최소한 아래 질문은 필요합니다.
+
+```text
+서버가 살아 있는지 외부에서 확인할 방법이 있는가?
+배포 후 응답 시간이나 에러율을 볼 수 있는가?
+장애가 났을 때 로그 외에 빠르게 확인할 상태 지표가 있는가?
+```
+
+---
+
+## 7. 외부 API 호출은 별도로 관측해야 한다
+
+백엔드는 혼자만 동작하지 않는 경우가 많습니다.
+
+```text
+결제 API
+이메일 발송 API
+OAuth 로그인 API
+파일 업로드 스토리지
+지도/검색 API
+```
+
+이런 외부 API 호출은 장애 원인이 되기 쉽습니다. 우리 서버 코드는 정상인데 외부 서비스가 느리거나 실패할 수 있습니다.
+
+AI가 만든 코드에서 흔한 문제는 외부 호출 실패를 너무 단순하게 처리하는 것입니다.
+
+```java
+PaymentResponse response = paymentClient.pay(request);
+order.completePayment(response.transactionId());
+```
+
+여기에는 많은 질문이 빠져 있습니다.
+
+```text
+외부 API 호출이 timeout되면 어떻게 되는가?
+실패 응답은 로그에 남는가?
+재시도는 하는가?
+중복 결제가 생기지 않게 idempotency key를 쓰는가?
+실패한 요청을 운영자가 나중에 찾을 수 있는가?
+```
+
+처음부터 모든 것을 구현할 필요는 없습니다. 하지만 적어도 외부 호출 전후의 로그와 실패 처리는 있어야 합니다.
+
+```java
+log.info("payment request started. orderId={}", orderId);
+
+try {
+    PaymentResponse response = paymentClient.pay(paymentRequest);
+    log.info("payment request succeeded. orderId={}, paymentId={}", orderId, response.paymentId());
+    return response;
+} catch (PaymentTimeoutException e) {
+    log.warn("payment request timeout. orderId={}", orderId, e);
+    throw new PaymentPendingException(orderId);
+} catch (PaymentException e) {
+    log.error("payment request failed. orderId={}", orderId, e);
+    throw e;
+}
+```
+
+여기서도 민감한 카드 정보나 토큰은 찍지 않습니다. 대신 `orderId`, `paymentId`, `requestId`처럼 추적 가능한 내부 식별자를 남깁니다.
+
+진규가 프론트엔드 프로젝트에서 백엔드 코드를 받을 때도 이 관점이 중요합니다. 결제, OAuth, 파일 업로드 같은 외부 연동 코드는 “성공하는 예제”보다 **실패했을 때 추적 가능한 구조**가 더 중요합니다.
+
+---
+
+## 8. AI가 만든 로그 코드를 리뷰하는 간단한 순서
+
+AI가 Spring Boot 백엔드를 만들어줬다고 해보겠습니다. 로그와 관측 가능성만 따로 리뷰한다면 아래 순서로 보면 됩니다.
+
+### 1단계: Controller 입구 로그
+
+요청이 들어왔다는 기록이 필요한 API인지 봅니다.
+
+```text
+중요한 쓰기 API인가?
+외부 결제/메일/파일 업로드처럼 실패 추적이 중요한가?
+개인정보를 직접 찍고 있지는 않은가?
+```
+
+모든 GET 요청에 로그를 도배할 필요는 없습니다. 하지만 회원가입, 로그인, 결제, 주문, 권한 변경 같은 API는 최소한 추적 단서가 있어야 합니다.
+
+### 2단계: Service 핵심 결정 로그
+
+Service는 비즈니스 판단이 일어나는 곳입니다.
+
+```text
+중복 이메일이라 거절했는가?
+권한이 없어서 막았는가?
+재고가 부족해서 실패했는가?
+외부 API가 실패했는가?
+```
+
+이런 결정은 나중에 사용자 문의나 장애 분석에서 중요합니다.
+
+### 3단계: Repository/DB 예외 처리
+
+Repository 내부에서 모든 SQL을 직접 로그로 남길 필요는 없습니다. 하지만 DB 예외가 발생했을 때 어떤 요청과 연결되는지는 알아야 합니다.
+
+```text
+DB 에러가 requestId와 함께 남는가?
+트랜잭션 실패가 사용자 응답과 연결되는가?
+DB 접속 실패와 데이터 없음이 구분되는가?
+```
+
+### 4단계: 전역 예외 처리
+
+`@RestControllerAdvice` 같은 전역 예외 처리에서 사용자 응답과 서버 로그가 분리되어 있는지 봅니다.
+
+```text
+사용자에게 내부 예외를 그대로 보내지 않는가?
+서버 로그에는 원인 추적 정보가 남는가?
+응답에 requestId가 포함되는가?
+```
+
+### 5단계: 헬스체크/메트릭
+
+배포를 전제로 한다면 최소 헬스체크가 있는지 봅니다.
+
+```text
+/actuator/health 또는 비슷한 상태 확인 API가 있는가?
+운영 환경에서 너무 많은 내부 정보가 공개되지는 않는가?
+에러율/응답시간을 볼 수 있는 계획이 있는가?
+```
+
+이 정도만 봐도 “로컬에서만 돌아가는 코드”와 “운영에서 문제를 찾을 수 있는 코드”를 구분하기 쉬워집니다.
+
+---
+
+## 9. 오늘의 리뷰 체크리스트
+
+AI가 만든 Spring Boot 백엔드를 받을 때 아래 질문을 그대로 사용해도 됩니다.
+
+```text
+[로그 기본]
+- System.out.println이 운영 코드에 남아 있지 않은가?
+- Logger를 사용하고 있는가?
+- INFO/WARN/ERROR 레벨이 상황에 맞게 나뉘어 있는가?
+
+[요청 추적]
+- 요청 하나를 식별할 requestId 또는 traceId가 있는가?
+- 에러 응답과 서버 로그를 같은 ID로 연결할 수 있는가?
+- 외부 API 호출도 같은 요청 흐름 안에서 추적되는가?
+
+[보안]
+- password/token/secret/cookie/API key가 로그에 찍히지 않는가?
+- 외부 API 응답이나 request body를 통째로 로그에 남기지 않는가?
+- 필요한 경우 이메일/전화번호 같은 값이 마스킹되는가?
+
+[에러 처리]
+- 사용자 응답과 서버 로그가 분리되어 있는가?
+- 사용자에게 내부 예외 메시지를 그대로 보내지 않는가?
+- 운영 로그에는 원인을 찾을 수 있는 예외 정보가 남는가?
+
+[운영 상태]
+- 헬스체크가 있는가?
+- 응답 시간, 에러율, DB 상태를 볼 수 있는 계획이 있는가?
+- 배포 환경에서 로그 레벨과 노출 범위가 적절한가?
+```
+
+이 체크리스트는 코드를 직접 다 쓰기 위한 것이 아닙니다. AI가 만든 결과물을 리뷰할 때 빠진 부분을 찾기 위한 기준입니다.
+
+---
+
+## 10. 오늘 기억할 문장
+
+오늘의 핵심은 아래 문장입니다.
+
+> 운영 가능한 백엔드는 기능만 있는 코드가 아니라, 문제가 났을 때 원인을 따라갈 수 있는 코드다.
+
+로그는 단순 출력이 아닙니다. 요청과 결정과 실패를 나중에 복원하기 위한 기록입니다. 헬스체크와 메트릭은 서버가 지금 어떤 상태인지 빠르게 보는 계기판입니다.
+
+진규가 AI에게 백엔드 코드를 맡길수록 이 관점은 더 중요해집니다. AI는 정상 흐름 코드를 빠르게 만들 수 있지만, 운영 중에 문제가 났을 때 사람이 추적할 단서를 충분히 남기지 않는 경우가 많습니다.
+
+그래서 백엔드 코드를 리뷰할 때는 이제 이렇게 물어보면 됩니다.
+
+```text
+이 기능은 돌아가는가?
+```
+
+에서 한 단계 더 나아가야 합니다.
+
+```text
+이 기능이 실패했을 때 어디서 왜 실패했는지 알 수 있는가?
+```
+
+이 질문을 던질 수 있으면 AI가 만든 Spring Boot 코드도 훨씬 안전하게 읽을 수 있습니다.
+
+---
+
+## 다음에 볼 것
+
+다음 단계에서는 **백엔드 코드 리뷰와 PR 체크리스트**를 볼 수 있습니다. 지금까지 본 Controller, Service, Repository, DTO, validation, auth, test, deploy, docs, logs를 한 번에 묶어서 “AI가 만든 백엔드 PR을 어디서부터 읽어야 하는가?”를 정리하면 실제 협업에서 바로 쓸 수 있는 기준이 됩니다.
