@@ -1,0 +1,591 @@
+---
+title: "에이전트 프레임워크 스터디 Day 1: 프레임워크보다 먼저 실행 환경을 설계하기"
+date: 2026-06-11
+tags:
+  - 에이전트 프레임워크
+  - AI 개발
+  - Hermes
+  - MCP
+  - Tool Runtime
+  - Harness
+  - 시스템 설계
+description: 개인에게 맞는 에이전트 프레임워크를 만들기 전에 먼저 에이전트가 실제로 실행되는 환경을 분해합니다. 모델, 컨텍스트, 도구, 권한, 검증, 로그가 합쳐진 harness를 기준으로 현재 도구들의 한계와 확장 지점을 읽는 첫 번째 글입니다.
+---
+
+> 예상 읽기 시간: 20~30분
+
+## 오늘의 목표
+
+이번 시리즈의 목표는 "요즘 에이전트 프레임워크가 많다"를 구경하는 것이 아닙니다. 진규가 실제로 만들고 싶은 것은 **개인에게 맞고, 오래 운영할 수 있고, 필요할 때 확장 가능한 에이전트 프레임워크**입니다.
+
+그래서 첫날부터 LangGraph, AutoGen, CrewAI, OpenAI Agents SDK, Hermes, OpenClaw 같은 이름을 비교표로 세우지 않겠습니다. 그 전에 더 낮은 층을 봐야 합니다.
+
+> 에이전트는 어디에서 실행되는가?
+
+많은 설명은 에이전트를 "LLM이 도구를 쓰는 것" 정도로 말합니다. 하지만 실제로 하루 종일 돌아가는 개인 에이전트를 운영해 보면 그것만으로는 부족합니다.
+
+에이전트가 실행되려면 적어도 아래 요소가 필요합니다.
+
+```text
+model
++ prompt/context
++ memory/state
++ tools
++ permissions
++ workflow
++ validation/guardrails
++ logs/traces
++ artifact handling
+```
+
+이 묶음을 이 글에서는 **harness**라고 부르겠습니다. 여기서 harness는 테스트 harness만 뜻하지 않습니다. 테스트보다 넓습니다. AI가 일을 하도록 둘러싼 실행 환경 전체입니다.
+
+Claude Code나 Hermes 같은 도구를 쓰다 보면 harness는 또 다른 의미도 갖습니다. 단순히 프롬프트와 설정을 공유하는 수준이 아니라, 특정 작업을 잘하는 **전문화된 작업자, skill, 절차, 검증 방식**을 만들어내는 팀 아키텍처 공장처럼 작동합니다.
+
+오늘의 목표는 이 harness를 분해해서, 앞으로의 시리즈에서 프레임워크를 볼 때 어떤 질문을 던져야 하는지 기준을 만드는 것입니다.
+
+---
+
+## 1. 왜 프레임워크 비교부터 시작하면 안 되는가
+
+새로운 AI 프레임워크를 보면 보통 이런 질문부터 하게 됩니다.
+
+```text
+- LangGraph가 좋은가?
+- AutoGen이 좋은가?
+- CrewAI가 좋은가?
+- OpenAI Agents SDK를 써야 하나?
+- MCP를 붙이면 해결되나?
+```
+
+이 질문들이 틀린 것은 아닙니다. 하지만 너무 빨리 도구 이름으로 들어가면 중요한 판단을 놓치기 쉽습니다.
+
+예를 들어 어떤 프레임워크가 multi-agent orchestration을 멋지게 지원한다고 합시다. 그런데 진규의 실제 문제는 "아침 브리핑이 이미 본 후보를 매일 새 추천처럼 반복한다"라면, 에이전트 수를 늘리는 것이 답이 아닐 수 있습니다. 필요한 것은 중복 상태, 근거 기록, 추천/현재 적용 용어 구분, 검증된 출력 경로입니다.
+
+또 어떤 프레임워크가 long-term memory를 제공한다고 합시다. 그런데 실제 문제는 "작업 상태를 memory에 넣으면 일주일 뒤에 stale해진다"라면, 더 큰 memory backend가 답이 아닐 수 있습니다. 필요한 것은 memory, ticket, session, artifact, trace의 역할 분리입니다.
+
+그래서 프레임워크를 고르기 전에는 아래 질문이 먼저입니다.
+
+```text
+내가 만들려는 에이전트는 어떤 실행 환경 안에서,
+어떤 권한으로,
+어떤 상태를 가지고,
+어떤 검증을 통과해야 일을 끝냈다고 볼 것인가?
+```
+
+이 질문에 답하지 않은 상태에서 프레임워크를 고르면, 멋진 도구를 설치하고도 결국 같은 문제가 반복됩니다.
+
+---
+
+## 2. 에이전트를 "모델"이 아니라 "실행 루프"로 보기
+
+에이전트를 가장 단순하게 그리면 이렇게 볼 수 있습니다.
+
+```text
+사용자 요청
+  -> 컨텍스트 조립
+  -> 모델 호출
+  -> 도구 선택
+  -> 도구 실행
+  -> 결과 해석
+  -> 다음 행동 결정
+  -> 최종 응답 또는 다음 루프
+```
+
+조금 더 코드처럼 쓰면 아래와 같습니다.
+
+```text
+while not done:
+  context = build_context(user_request, memory, files, state)
+  decision = model(context, available_tools)
+
+  if decision.type == "tool_call":
+    result = run_tool(decision.tool, decision.args)
+    state.append(result)
+    continue
+
+  if decision.type == "final":
+    return decision.message
+```
+
+여기까지만 보면 간단합니다. 하지만 실제 운영에서는 거의 모든 줄이 설계 대상입니다.
+
+| 단계          | 그냥 만들면 생기는 문제             | 설계 질문                                |
+| ------------- | ----------------------------------- | ---------------------------------------- |
+| 컨텍스트 조립 | 오래된 정보와 최신 정보가 섞임      | 무엇을 넣고 무엇을 빼는가?               |
+| 모델 호출     | 모델마다 도구 호출/추론 특성이 다름 | 어떤 모델을 어떤 작업에 쓰는가?          |
+| 도구 선택     | 위험한 도구를 너무 쉽게 호출함      | 도구 권한과 위험도를 어떻게 나누는가?    |
+| 도구 실행     | 실패해도 그럴듯한 답을 만들 수 있음 | 실제 실행 증거를 어떻게 강제하는가?      |
+| 상태 저장     | 작업 상태와 장기 기억이 섞임        | state, memory, ticket을 어떻게 나누는가? |
+| 최종 응답     | 검증 전 성공처럼 말함               | 어떤 확인이 끝나야 done인가?             |
+
+즉 에이전트 프레임워크의 핵심은 "LLM을 몇 번 호출하는가"가 아닙니다. 핵심은 이 루프 주변에 어떤 실행 환경을 세우느냐입니다.
+
+---
+
+## 3. Harness는 실행 환경이다
+
+harness라는 말을 조금 더 명확히 잡아보겠습니다.
+
+```text
+Harness = AI가 일을 수행할 수 있게 만드는 실행 환경
+```
+
+여기에는 다음 요소가 들어갑니다.
+
+```text
+1. Model layer
+   - 어떤 모델을 쓸지
+   - fallback이 있는지
+   - 빠른 모델과 깊은 모델을 어떻게 나눌지
+
+2. Context layer
+   - system prompt
+   - skills
+   - user preferences
+   - project docs
+   - retrieved memory
+   - recent session state
+
+3. Tool layer
+   - terminal
+   - file read/write/search
+   - browser
+   - GitHub
+   - calendar/email
+   - image/voice/document tools
+
+4. Permission layer
+   - read-only
+   - reversible local write
+   - external side effect
+   - destructive/costly/credentialed action
+
+5. Workflow layer
+   - plan
+   - implement
+   - verify
+   - review
+   - report
+   - retry or block
+
+6. Validation layer
+   - tests
+   - lint/build
+   - secret scan
+   - OCR/reviewer gate
+   - public URL probe
+   - dashboard REST readback
+
+7. State and artifact layer
+   - tickets
+   - cron output
+   - memory
+   - sessions
+   - generated files
+   - workflow traces
+
+8. Feedback layer
+   - failure logs
+   - user corrections
+   - skill patches
+   - repeated workflow candidates
+```
+
+이걸 하나의 그림으로 보면 이렇게 됩니다.
+
+```text
+          ┌─────────────────────────────┐
+          │        User / Schedule       │
+          └──────────────┬──────────────┘
+                         │
+                         v
+┌──────────────────────────────────────────────────┐
+│                    Harness                       │
+│                                                  │
+│  context  ──>  model  ──>  tool runtime          │
+│     │          │             │                   │
+│     │          │             v                   │
+│     │          │        permissions              │
+│     │          │             │                   │
+│     v          v             v                   │
+│  memory     workflow     validation              │
+│     │          │             │                   │
+│     └──────────┴──────> artifacts/traces         │
+└──────────────────────────────────────────────────┘
+                         │
+                         v
+              final answer / ticket / post
+```
+
+프레임워크는 이 harness의 일부를 대신 만들어줍니다. 어떤 프레임워크는 workflow와 state를 잘 다룹니다. 어떤 프레임워크는 agent handoff를 잘 다룹니다. 어떤 프레임워크는 observability를 잘 붙입니다. 어떤 프레임워크는 tool schema를 표준화합니다.
+
+하지만 어떤 프레임워크도 진규의 개인 운영 기준을 자동으로 알지는 못합니다. 그래서 개인 에이전트 프레임워크를 만들려면 먼저 자기 harness의 요구사항을 알아야 합니다.
+
+---
+
+## 4. Claude Code식 harness와 개인 운영 harness의 차이
+
+Claude Code, Codex CLI, Hermes 같은 도구는 이미 harness를 가지고 있습니다. 사용자는 자연어로 요청하고, 에이전트는 파일을 읽고, 코드를 고치고, 테스트를 돌리고, 결과를 보고합니다.
+
+겉으로 보면 충분해 보입니다. 하지만 개인 운영 시스템으로 오래 쓰면 차이가 생깁니다.
+
+```text
+일회성 coding harness:
+- 현재 repo의 코드를 고친다.
+- 테스트를 돌린다.
+- diff를 보고한다.
+- 세션이 끝나면 대부분의 맥락이 사라진다.
+
+개인 운영 harness:
+- 여러 날에 걸친 작업 상태를 이어간다.
+- 사용자의 선호와 금지 사항을 기억한다.
+- 반복 업무를 cron으로 실행한다.
+- Discord, ticket, blog, dashboard에 결과를 남긴다.
+- 실패 원인을 다음 실행에 반영한다.
+```
+
+예를 들어 SEOJing 글 하나를 발행하는 작업을 봅시다. 단순 코딩 harness라면 `day1.mdx`를 만들고 `pnpm build`를 돌리면 충분하다고 볼 수 있습니다.
+
+하지만 OkayJing의 운영 harness에서는 더 많은 것이 필요합니다.
+
+```text
+- 오늘이 몇 번째 글인지 기존 파일에서 확인한다.
+- backend series와 agent-framework series의 경계를 지킨다.
+- unrelated draft를 실수로 stage하지 않는다.
+- format/lint/build를 실제로 통과한다.
+- Notjing/OCR이 MDX를 못 보면 대체 리뷰 근거를 남긴다.
+- commit type이 repo 규칙에 맞는지 확인한다.
+- push 후 origin/main과 local HEAD가 같은지 확인한다.
+- 8AM briefing이 public URL을 보고할 수 있게 남긴다.
+- 반복 성공 trace를 workflow compilation 후보로 기록한다.
+```
+
+이것이 harness의 차이입니다. 모델이 똑똑해지는 것만으로 해결되지 않습니다. 실행 환경이 작업의 정의, 검증, 기록을 붙잡아야 합니다.
+
+---
+
+## 5. Tool contract: 도구는 함수 목록이 아니라 계약이다
+
+에이전트 시스템을 만들 때 가장 먼저 흔들리는 부분은 도구입니다. 도구가 많아지면 에이전트가 강해지는 것처럼 보이지만, 실제로는 도구 계약이 약하면 실패도 커집니다.
+
+도구 계약은 최소한 아래를 포함해야 합니다.
+
+```text
+Tool Contract
+- name: 도구 이름
+- purpose: 어떤 일을 위한 도구인가
+- input schema: 어떤 인자를 받는가
+- output schema: 성공/실패를 어떻게 표현하는가
+- side effects: 파일, 네트워크, 외부 서비스 변경이 있는가
+- risk tier: read-only / local write / external / destructive
+- preconditions: 실행 전에 무엇이 필요한가
+- verification: 실행 후 무엇으로 성공을 확인하는가
+```
+
+예를 들어 `terminal` 도구를 그냥 "셸 명령 실행"으로만 보면 너무 넓습니다. 실제로는 아래처럼 위험도가 나뉩니다.
+
+```text
+read-only:
+  git status
+  date
+  pnpm --version
+
+local write:
+  pnpm format
+  git add
+  file generation
+
+external side effect:
+  git push
+  gh pr create
+  cloud deploy
+
+credential/destructive:
+  secret rotation
+  rm -rf
+  database migration
+```
+
+같은 `terminal`이라도 harness는 다른 규칙을 적용해야 합니다. read-only는 자동으로 진행할 수 있지만, 외부 side effect는 명확한 standing approval이나 사용자 요청이 필요합니다.
+
+MCP가 중요한 이유도 여기와 연결됩니다. MCP는 단순히 "도구를 더 많이 붙이는 표준"이 아닙니다. 도구와 리소스를 schema, capability, server boundary로 드러내는 방향입니다. 즉 tool contract를 시스템적으로 다룰 수 있게 해주는 축입니다.
+
+다만 MCP 서버를 붙였다고 안전해지는 것은 아닙니다. tool contract가 약하거나 권한 경계가 넓으면 표준 프로토콜 위에서도 위험한 도구가 됩니다.
+
+---
+
+## 6. State: memory와 작업 상태를 섞지 않기
+
+에이전트가 오래 일하려면 상태가 필요합니다. 그런데 여기서 가장 흔한 실수는 모든 것을 memory라고 부르는 것입니다.
+
+개인 에이전트에는 적어도 네 종류의 상태가 있습니다.
+
+| 상태 종류   | 예시                                | 저장 위치의 성격                 |
+| ----------- | ----------------------------------- | -------------------------------- |
+| 사용자 선호 | 답변 스타일, 금지된 작업 방식       | persistent memory                |
+| 작업 상태   | 티켓 진행 중, PR 대기, blocked 이유 | ticket/workflow DB               |
+| 대화 맥락   | 이번 세션에서 오간 판단과 도구 결과 | session store                    |
+| 증거/산출물 | 빌드 로그, public URL, 작성한 MDX   | artifact/cron output/git history |
+
+이걸 섞으면 문제가 생깁니다.
+
+예를 들어 "오늘 SEOJing Day 1을 발행했다"를 memory에 저장하면 일주일 뒤에는 낡은 정보가 됩니다. 반대로 "진규는 승인 피로를 줄이고 명확한 실행 요청은 자동으로 끝까지 처리하는 것을 선호한다"는 오래 유지되는 선호에 가깝습니다.
+
+그래서 harness는 상태를 이렇게 라우팅해야 합니다.
+
+```text
+facts/preferences -> memory
+procedures -> skills
+work state -> tickets / workflow DB
+conversations -> sessions
+repeat execution -> cron
+human-facing display -> dashboard / Discord
+verification evidence -> reports / artifacts / traces
+secrets -> .env only
+settings -> config.yaml
+```
+
+이 분리가 되어야 프레임워크가 바뀌어도 운영이 유지됩니다. 프레임워크 내부 memory 기능에 모든 것을 넣으면, 나중에 도구를 바꿀 때 전체 운영 상태가 같이 흔들립니다.
+
+---
+
+## 7. Workflow와 agent를 분리하기
+
+에이전트 프레임워크를 볼 때 중요한 기준 중 하나는 workflow와 agent를 구분하는지입니다.
+
+Anthropic의 agent 설계 글에서도 반복해서 나오는 방향은, 예측 가능한 작업에는 복잡한 autonomous agent보다 단순한 workflow가 낫다는 것입니다. LangGraph도 agent loop만이 아니라 상태 그래프와 checkpoint를 중요하게 다룹니다.
+
+OkayJing 기준으로 보면 아래처럼 나눌 수 있습니다.
+
+```text
+workflow에 가까운 것:
+- 매일 04:00 self-improvement 실행
+- 매일 08:00 briefing 작성
+- LMS 과제/일정 수집
+- SEOJing study post 발행 절차
+- dashboard 상태 렌더링
+- Notjing final gate
+
+agent에 가까운 것:
+- 새로운 기술 후보 조사와 판단
+- 글의 주제 선택과 구성
+- 복잡한 버그 원인 가설 세우기
+- 사용자의 모호한 요청을 요구사항으로 좁히기
+```
+
+좋은 harness는 이 둘을 섞지 않습니다.
+
+```text
+반복 가능하고 검증 가능한 뼈대는 workflow로 둔다.
+판단이 필요한 지점만 agent에게 맡긴다.
+```
+
+예를 들어 오늘 04:00 작업에서 "새 study post를 만든다"는 workflow입니다. 하지만 "오늘 Day 1에서 어떤 개념부터 시작해야 하는가"는 agent judgement입니다. 이후 format/lint/build/commit/push는 다시 workflow에 가깝습니다.
+
+이렇게 나누면 실패했을 때도 원인을 찾기 쉽습니다.
+
+```text
+- 판단이 틀렸나?
+- 도구 실행이 실패했나?
+- 검증이 부족했나?
+- 권한 경계가 잘못됐나?
+- 상태 기록이 stale했나?
+```
+
+프레임워크를 고를 때도 이 질문을 해야 합니다. 이 도구가 agent loop만 강조하는지, 아니면 workflow/state/interrupt/checkpoint를 같이 다루는지 봐야 합니다.
+
+---
+
+## 8. Human-in-the-loop는 "항상 물어보기"가 아니다
+
+많은 agent 시스템은 human-in-the-loop를 말합니다. 그런데 실제 사용에서는 두 극단이 모두 불편합니다.
+
+```text
+극단 A: 모든 것을 물어본다.
+- 사용자는 계속 승인 버튼을 눌러야 한다.
+- 에이전트가 일을 끝까지 못 한다.
+- 승인 피로가 생긴다.
+
+극단 B: 아무것도 묻지 않는다.
+- 외부 side effect가 조용히 일어난다.
+- 잘못된 삭제/배포/비용 발생 위험이 커진다.
+- 사용자가 통제감을 잃는다.
+```
+
+필요한 것은 risk-based human-in-the-loop입니다.
+
+```text
+Level 0: read-only discovery
+  -> 자동 진행
+
+Level 1: reversible local write
+  -> 명확한 요청/standing approval이 있으면 자동 진행
+
+Level 2: external side effect
+  -> 명확한 요청/standing approval이 필요
+
+Level 3: destructive, credentialed, costly, privacy-sensitive
+  -> 원칙적으로 명시 확인 필요
+```
+
+이 기준은 개인 harness에서 특히 중요합니다. 진규는 명확한 실행 요청에 대해 중간 승인으로 멈추는 것을 원하지 않지만, 그렇다고 비밀 변경, 대규모 삭제, 외부 배포를 아무 근거 없이 자동화하라는 뜻은 아닙니다.
+
+프레임워크가 제공하는 interrupt 기능도 이 기준 위에 올라가야 합니다. 단순히 "중간에 사람을 부를 수 있다"가 아니라, 어떤 위험 단계에서 어떤 형태로 멈출지 정해야 합니다.
+
+---
+
+## 9. Observability: 에이전트도 운영 로그가 필요하다
+
+백엔드 서버에 로그와 메트릭이 필요하듯, 에이전트 harness에도 관측 가능성이 필요합니다.
+
+에이전트가 실패했을 때 단순히 "모델이 헷갈렸다"고 말하면 개선할 수 없습니다. 최소한 아래를 남겨야 합니다.
+
+```text
+- 어떤 요청/cron/ticket에서 시작했는가
+- 어떤 skill과 context가 로드되었는가
+- 어떤 도구를 어떤 순서로 실행했는가
+- 어떤 출력이 검증 근거가 되었는가
+- 어떤 검증이 실패했는가
+- 어떤 판단으로 block/skip/done 처리했는가
+- 다음 실행에서 재사용할 절차가 있는가
+```
+
+OpenTelemetry GenAI semantic conventions, LangSmith, Langfuse, Opik 같은 도구들이 중요한 이유도 여기에 있습니다. 다만 OkayJing은 local-first 개인 운영이므로 곧바로 외부 observability 플랫폼을 붙이는 것이 항상 답은 아닙니다.
+
+먼저 필요한 것은 local trace discipline입니다.
+
+```text
+ticket -> session -> tool output -> artifact -> verification -> report -> workflow trace
+```
+
+이 선이 이어져야 합니다. 그래야 나중에 반복 성공이 쌓였을 때 "이 workflow는 skill dataset 후보인가?", "policy model 후보인가?", "아직 그냥 checklist로 충분한가?"를 판단할 수 있습니다.
+
+---
+
+## 10. 좋은 개인 에이전트 프레임워크의 첫 기준
+
+오늘 내용을 기준으로, 앞으로 프레임워크를 볼 때는 아래 질문을 던지면 됩니다.
+
+```text
+1. Primitive clarity
+   agent, tool, session, memory, state, artifact, trace가 구분되는가?
+
+2. Workflow vs agent separation
+   반복 가능한 절차와 열린 판단을 나눌 수 있는가?
+
+3. Durable state
+   긴 작업이 중단되어도 이어갈 수 있는가?
+
+4. Tool contract
+   도구 schema, side effect, 권한, 검증 조건이 명확한가?
+
+5. Context assembly
+   skill, memory, project docs, retrieved facts를 어떻게 조립하는가?
+
+6. Human control
+   위험도에 따라 승인/중단 지점을 설계할 수 있는가?
+
+7. Observability
+   tool call, decision, artifact, verification trace가 남는가?
+
+8. Evaluation
+   반복 workflow를 회귀 테스트하거나 비교할 수 있는가?
+
+9. Interoperability
+   MCP/A2A 같은 표준 경계와 연결될 수 있는가?
+
+10. Local-first fit
+   개인 데이터, 한국어 작업 맥락, Mac mini 운영에 맞는가?
+```
+
+이 질문에 답하지 못하는 프레임워크는 아무리 유명해도 개인 운영에는 애매할 수 있습니다. 반대로 모든 기능이 화려하지 않아도 이 기준을 잘 만족하면 진규에게 더 맞는 기반이 될 수 있습니다.
+
+---
+
+## 11. 실패 사례로 보는 harness 부족
+
+마지막으로 몇 가지 실패 사례를 보겠습니다.
+
+### 실패 1: 도구는 있는데 검증이 없다
+
+```text
+에이전트가 파일을 고쳤다.
+테스트는 돌리지 않았다.
+최종 응답은 "수정했습니다"라고 말한다.
+```
+
+문제는 모델의 성격이 아닙니다. harness가 done 조건을 약하게 둔 것입니다.
+
+개선된 harness는 이렇게 말해야 합니다.
+
+```text
+수정 -> format -> lint/test/build -> diff 확인 -> 보고
+```
+
+검증이 실패하면 성공 응답이 아니라 blocked 또는 partial report가 나와야 합니다.
+
+### 실패 2: memory에 작업 상태를 넣는다
+
+```text
+"PR #12가 대기 중"을 장기 memory에 저장한다.
+며칠 뒤 PR은 merge됐지만 memory는 남아 있다.
+다음 작업에서 오래된 상태를 현재 사실처럼 사용한다.
+```
+
+개선된 harness는 PR 상태를 ticket/session/GitHub 조회로 확인하고, memory에는 안정적인 선호나 절차만 저장해야 합니다.
+
+### 실패 3: agent가 workflow를 매번 새로 발명한다
+
+```text
+매일 SEOJing 글을 발행하는데,
+어떤 날은 format만 하고,
+어떤 날은 build를 빼먹고,
+어떤 날은 push 후 origin/main 확인을 안 한다.
+```
+
+개선된 harness는 발행 절차를 workflow/skill로 고정하고, agent는 글의 주제와 설명 품질에 집중하게 해야 합니다.
+
+### 실패 4: 새로운 도구를 추천하면서 dedupe가 없다
+
+```text
+매일 아침 같은 GitHub 라이브러리를 "새 후보"처럼 추천한다.
+```
+
+이것은 research 능력의 문제가 아니라 state 관리 문제입니다. 후보에는 `dedupe_key`, `first_reported_at`, `last_seen_at`, `status`, `what_changed`가 필요합니다.
+
+---
+
+## 12. 오늘의 결론
+
+개인 에이전트 프레임워크를 만들 때 첫 질문은 "어떤 프레임워크가 제일 좋은가"가 아닙니다.
+
+첫 질문은 이것입니다.
+
+```text
+내 에이전트가 안전하게 일하고,
+중단되어도 이어지고,
+검증된 결과만 보고하고,
+실패에서 배울 수 있게 만드는 실행 환경은 무엇인가?
+```
+
+이 실행 환경이 harness입니다.
+
+앞으로 이 시리즈는 이 harness를 한 층씩 내려가며 보겠습니다.
+
+```text
+Day 1: harness와 실행 환경
+Day 2: MCP와 tool contract
+Day 3: skill/procedural memory
+Day 4: context assembly와 state/memory 분리
+Day 5: workflow orchestration과 checkpoint
+Day 6: human-in-the-loop와 권한 경계
+Day 7: observability/tracing/evaluation
+Day 8 이후: Hermes/OpenClaw류 프레임워크의 내부 확장 지점
+```
+
+오늘 기준으로 진규가 가져가면 좋은 문장은 하나입니다.
+
+> 에이전트의 품질은 모델만이 아니라, 모델을 둘러싼 실행 환경의 품질이다.
+
+프레임워크는 그 실행 환경의 일부를 도와주는 도구입니다. 진짜 설계 대상은 도구 이름보다 먼저 harness입니다.
