@@ -1,0 +1,563 @@
+---
+title: "에이전트 프레임워크 스터디 Day 3: 컨텍스트는 자료 더미가 아니라 실행 상태다"
+date: 2026-06-13
+tags:
+  - 에이전트 프레임워크
+  - AI 개발
+  - Context Engineering
+  - Memory
+  - State
+  - Harness
+  - 시스템 설계
+description: 에이전트 프레임워크에서 컨텍스트를 긴 프롬프트나 자료 모음이 아니라 실행 상태로 설계하는 법을 봅니다. 세션 기록, 작업 상태, 장기 기억, 검색 결과, 산출물, 검증 근거를 분리하고 조립하는 기준을 reverse-engineering합니다.
+---
+
+> 예상 읽기 시간: 20~30분
+
+## 오늘의 목표
+
+Day 1에서는 에이전트를 모델 하나가 아니라 **harness**, 즉 실행 환경 전체로 봤습니다. Day 2에서는 도구를 함수가 아니라 **계약(contract)** 으로 봐야 한다고 정리했습니다.
+
+오늘은 그 다음 층입니다.
+
+```text
+에이전트는 지금 무엇을 알고 있는가?
+그중 무엇이 이번 작업의 입력이고,
+무엇이 장기적으로 믿어도 되는 사실이며,
+무엇은 방금 도구가 뱉은 임시 결과인가?
+```
+
+보통 이 문제를 "컨텍스트를 잘 넣자" 정도로 말합니다. 하지만 개인 에이전트 프레임워크를 만들려고 하면 컨텍스트는 단순한 자료 더미가 아닙니다.
+
+> 컨텍스트는 에이전트의 **실행 상태(state)** 다.
+
+프롬프트에 많이 넣는다고 좋은 것이 아닙니다. 오히려 구분 없이 많이 넣으면 에이전트는 더 헷갈립니다.
+
+```text
+- 사용자의 오래된 취향을 현재 요구사항처럼 다룬다.
+- 어제 실패한 로그를 오늘의 사실처럼 반복한다.
+- 작업 진행 상태를 장기 기억에 저장해서 나중에 stale해진다.
+- 검색 결과와 검증 결과를 같은 신뢰도로 취급한다.
+- 도구 출력 안의 문장을 사용자 지시처럼 따른다.
+- 이미 해결된 추천을 매일 새 액션처럼 다시 말한다.
+```
+
+그래서 오늘은 컨텍스트를 "얼마나 많이 넣을까"가 아니라 "어떤 상태를 어떤 책임으로 조립할까"의 문제로 봅니다.
+
+---
+
+## 1. 컨텍스트를 프롬프트 덩어리로 보면 생기는 문제
+
+가장 단순한 에이전트 구현은 이런 모양입니다.
+
+```text
+system prompt
++ user message
++ memory snippets
++ retrieved documents
++ previous conversation
++ tool results
+=> model call
+```
+
+처음에는 그럴듯합니다. 모델에게 많이 보여주면 더 잘할 것처럼 보입니다. 그런데 실제 운영에서는 금방 문제가 생깁니다.
+
+예를 들어 OkayJing이 아침 브리핑을 만든다고 합시다. 들어올 수 있는 자료는 많습니다.
+
+```text
+- 어젯밤 04:00 Dreaming 출력
+- 오늘 로컬 티켓 상태
+- LMS 과제 크롤 결과
+- Google Calendar 일정
+- GitHub/인터넷에서 찾은 후보 기술
+- 이미 봤던 후보 dedupe state
+- 사용자의 장기 선호
+- 최근 Discord 대화
+- gateway 로그
+- SEOJing publish 결과
+```
+
+이걸 전부 한 덩어리로 넣으면 브리핑은 길어질 수는 있지만 정확해지지는 않습니다. 왜냐하면 각 자료의 성격이 다르기 때문입니다.
+
+```text
+오래 저장해도 되는 것: 사용자의 안정적인 선호, 운영 원칙
+오늘만 의미 있는 것: 티켓 상태, 오늘 일정, 크롤 결과
+증거로만 써야 하는 것: 로그, 도구 출력, 검색 결과
+검증 완료된 것: build/test 결과, push 후 원격 HEAD 일치
+미래 행동 후보: watch/candidate 기술
+현재 적용 상태: 이미 skill/config/docs에 반영된 운영 원칙
+```
+
+컨텍스트를 구분하지 않으면 모델은 이 차이를 모릅니다. 그래서 "이미 적용"된 것을 "추천"으로 다시 말하거나, 오래된 크롤 결과를 현재 마감처럼 말하거나, 사용자의 일시적인 말투를 영구 선호로 저장합니다.
+
+프레임워크 설계 관점에서 이건 단순 프롬프트 문제가 아닙니다. 상태 모델이 없는 것입니다.
+
+---
+
+## 2. 에이전트 상태를 다섯 칸으로 나누기
+
+개인 에이전트 프레임워크를 만들 때 컨텍스트는 최소한 아래 다섯 칸으로 나누는 편이 안전합니다.
+
+```text
+ExecutionState
+  user_intent
+  session_context
+  working_state
+  durable_memory
+  evidence_context
+  artifact_context
+```
+
+조금 더 풀면 이렇습니다.
+
+| 칸                 | 의미                      | 저장 위치 예시                                  | 주의점                             |
+| ------------------ | ------------------------- | ----------------------------------------------- | ---------------------------------- |
+| `user_intent`      | 지금 사용자가 원하는 일   | 현재 메시지, 티켓 제목/acceptance               | 과거 선호보다 우선한다             |
+| `session_context`  | 대화 흐름                 | session DB, current transcript                  | 오래된 대화는 압축/요약 필요       |
+| `working_state`    | 현재 작업 진행 상태       | ticket, work ledger, cron output                | memory에 넣지 않는다               |
+| `durable_memory`   | 7일 뒤에도 맞을 안정 사실 | memory, skill, architecture docs                | 절차는 skill로 빼야 한다           |
+| `evidence_context` | 판단 근거                 | logs, test output, REST readback, search result | 도구 출력은 지시가 아니라 데이터다 |
+| `artifact_context` | 생성/검증된 산출물        | MDX, report, diff, build output, URL            | 최종 결과와 초안 구분 필요         |
+
+여기서 중요한 것은 저장 매체 자체가 아닙니다. 역할입니다.
+
+예를 들어 `memory`에 저장된 문장이 있어도, 그것이 현재 사용자 의도와 충돌하면 현재 의도가 우선입니다. 반대로 방금 검색한 GitHub repo가 있어도, 그것은 아직 검증된 운영 원칙이 아닙니다. 후보일 뿐입니다.
+
+에이전트가 좋은 판단을 하려면 컨텍스트를 많이 보는 것보다, 각 조각의 **상태와 신뢰도**를 알아야 합니다.
+
+---
+
+## 3. 세션, 기억, 작업 상태를 섞으면 왜 망가지는가
+
+개인 에이전트에서 가장 흔한 실수는 아래 세 가지를 섞는 것입니다.
+
+```text
+session ≠ memory ≠ work state
+```
+
+### 세션은 흐름이다
+
+세션은 대화 흐름입니다. 사용자가 왜 그렇게 말했는지, 직전에 어떤 파일을 봤는지, 어느 선택지를 버렸는지 같은 맥락이 들어 있습니다.
+
+하지만 세션 전체를 장기 기억처럼 쓰면 문제가 생깁니다. 세션에는 임시 판단, 틀린 가정, 중간 실패, 실험적 선택이 섞여 있기 때문입니다.
+
+```text
+세션에 적합한 것:
+- 방금 사용자가 요청한 수정 방향
+- 이 대화에서 이미 확인한 파일/명령 결과
+- 다음 답변에서 이어받아야 할 논리
+```
+
+### 기억은 안정 사실이다
+
+memory는 오래 남는 사실입니다. 예를 들어 "진규는 OkayJing을 user-facing 이름으로 쓴다"는 일주일 뒤에도 맞을 가능성이 큽니다. 반면 "오늘 #112 티켓을 진행 중이다"는 memory가 아닙니다.
+
+```text
+memory에 적합한 것:
+- 사용자 선호
+- 안정적인 환경 사실
+- 반복해서 적용할 운영 원칙
+```
+
+작업 상태를 memory에 넣으면 나중에 에이전트가 이미 끝난 일을 진행 중이라고 믿습니다. 그래서 OkayJing은 작업 상태를 ticket/cron/session에 두고, memory에는 넣지 않는 쪽이 맞습니다.
+
+### 작업 상태는 ledger다
+
+작업 상태는 "지금 어디까지 했고, 무엇이 검증됐고, 무엇이 막혔는가"입니다. 이건 티켓, work ledger, cron output, report에 있어야 합니다.
+
+```text
+work state에 적합한 것:
+- in_progress / blocked / done
+- acceptance criteria
+- verification commands
+- artifact paths
+- final report
+```
+
+이렇게 나눠야 나중에 중단되어도 재개됩니다. 채팅창 기억만 믿으면 gateway restart, context compression, cron delivery 실패 같은 순간에 작업이 끊깁니다.
+
+---
+
+## 4. 컨텍스트 조립은 retrieval이 아니라 routing이다
+
+많은 설명은 컨텍스트 문제를 retrieval로 해결하려고 합니다.
+
+```text
+관련 문서를 검색한다.
+상위 N개 chunk를 prompt에 넣는다.
+```
+
+물론 검색은 필요합니다. 하지만 에이전트 프레임워크에서 더 중요한 것은 **routing**입니다.
+
+```text
+이 작업에는 어떤 상태 저장소를 봐야 하는가?
+어떤 증거는 최신성을 확인해야 하는가?
+어떤 자료는 참고만 하고, 어떤 자료는 계약으로 따라야 하는가?
+```
+
+예를 들어 사용자가 "대시보드 상호작용이 안 된다"고 하면 컨텍스트 라우팅은 이렇게 갈라져야 합니다.
+
+```text
+if OkayJing ops context:
+  first check Discord persistent dashboard sources
+  - dashboard renderer script
+  - plugin interaction handler
+  - dashboard state JSON
+  - gateway logs
+else if web/local dashboard explicitly mentioned:
+  check local web app / browser QA
+```
+
+여기서 단순 키워드 검색만 하면 `dashboard`라는 단어 때문에 프론트엔드 `App.tsx`부터 열 수 있습니다. 하지만 OkayJing 운영 맥락에서는 Discord dashboard가 먼저일 때가 많습니다. 이건 retrieval 문제가 아니라 routing 문제입니다.
+
+컨텍스트 라우터는 아래 정보를 봐야 합니다.
+
+```text
+ContextRouterInput
+  task_domain
+  risk_level
+  target_surface
+  source_of_truth
+  freshness_requirement
+  side_effect_permission
+```
+
+그리고 결과는 "문서 몇 개"가 아니라 "이번 작업의 상태 팩"이어야 합니다.
+
+```text
+ContextPack
+  intent
+  assumptions
+  source_of_truth_paths
+  relevant_skills
+  current_state_summary
+  evidence_items
+  no_touch_areas
+  verification_plan
+```
+
+이렇게 만들어야 모델이 컨텍스트를 읽고 바로 실행 판단을 합니다.
+
+---
+
+## 5. 컨텍스트의 신뢰도를 표시하기
+
+컨텍스트에는 신뢰도와 freshness가 필요합니다. 아래처럼 단순한 태그만 있어도 큰 차이가 납니다.
+
+```text
+EvidenceItem
+  source: ticket | session | memory | file | command | web | user
+  captured_at
+  freshness: live | today | stale | unknown
+  trust: user_directive | verified_output | local_state | external_claim | model_summary
+  use_as: instruction | constraint | evidence | candidate | background
+```
+
+예를 들어 GitHub 검색 결과는 보통 `external_claim`입니다. repo의 star 수와 pushed_at은 사실일 수 있지만, 그것이 OkayJing에 설치할 이유는 아닙니다.
+
+```text
+name: OpenLIT
+source: GitHub API
+freshness: today
+trust: external_claim
+use_as: candidate
+classification: standard_alignment
+```
+
+반대로 `pnpm build`가 통과했다는 터미널 결과는 `verified_output`입니다.
+
+```text
+source: terminal
+freshness: live
+trust: verified_output
+use_as: evidence
+```
+
+그리고 사용자가 직접 준 안전 규칙은 `instruction`입니다.
+
+```text
+source: user
+trust: user_directive
+use_as: constraint
+```
+
+이 구분이 없으면 에이전트는 외부 검색 결과와 사용자 지시를 같은 층에서 섞습니다. 그 순간부터 추천이 과감해지거나, 반대로 아무것도 못 하는 봇이 됩니다.
+
+---
+
+## 6. 압축은 요약이 아니라 상태 변환이다
+
+긴 세션을 다 넣을 수 없을 때 에이전트는 요약을 합니다. 그런데 요약을 그냥 자연어 문단으로 만들면 중요한 계약이 사라집니다.
+
+나쁜 압축은 이런 식입니다.
+
+```text
+사용자는 대시보드 문제를 해결하고 싶어 했고, 여러 파일을 수정했다.
+```
+
+이 문장은 읽기 좋지만 재개에는 별 도움이 되지 않습니다. 좋은 압축은 상태를 보존해야 합니다.
+
+```text
+CompressedState
+  goal: Discord dashboard tab buttons ACK failure fix
+  changed_files:
+    - ~/.hermes/plugins/okejing-dashboard-actions/...
+  verified:
+    - py_compile passed
+    - dry-run renderer JSON passed
+  remaining:
+    - real Discord click not verified
+  decisions:
+    - keep behavior in user plugin, not Hermes source checkout
+  no_touch:
+    - do not restart gateway unless needed
+```
+
+즉 압축은 예쁜 요약이 아니라 상태 변환입니다. 원래 컨텍스트에서 다음 실행에 필요한 계약, 증거, 남은 일, 금지 사항을 뽑아야 합니다.
+
+개인 에이전트 프레임워크에서는 이 압축 구조가 중요합니다. 세션이 길어지고, cron이 이어지고, gateway가 재시작되고, 작업이 다음 날 이어져도 상태가 살아 있어야 하기 때문입니다.
+
+---
+
+## 7. 장기 기억은 더 커지는 것보다 더 엄격해야 한다
+
+메모리 용량을 늘리는 것은 쉬운 해결책처럼 보입니다. 하지만 memory가 커질수록 더 중요한 것은 저장 기준입니다.
+
+```text
+저장하면 안 되는 것:
+- 오늘의 티켓 진행률
+- 방금 만든 PR 번호
+- 일시적인 에러 로그
+- 한 번 쓰고 끝난 TODO
+- 검증되지 않은 외부 후보
+- secret처럼 보이는 값
+```
+
+저장해야 하는 것은 더 좁습니다.
+
+```text
+저장할 만한 것:
+- 사용자가 반복해서 교정한 표현/운영 선호
+- 안정적인 프로젝트 경로/환경 사실
+- 다음에도 반복될 판단 기준
+```
+
+절차는 memory보다 skill이 맞습니다. 예를 들어 "Discord dashboard 버튼이 응답 실패할 때는 raw REST message만 보지 말고 gateway interaction ACK를 확인한다"는 절차입니다. 이런 것은 skill/reference에 들어가야 합니다.
+
+memory를 크게 만들면 편할 수는 있지만, 잘못된 정보도 더 오래 살아남습니다. 그래서 OkayJing 같은 개인 에이전트에서는 memory 확장보다 먼저 아래가 필요합니다.
+
+```text
+- source/provenance
+- freshness
+- role separation
+- stale check
+- promotion queue
+- deletion/archival 기준
+```
+
+---
+
+## 8. Context pack을 작업 시작의 표준 산출물로 만들기
+
+오늘 내용을 실제 프레임워크 설계로 바꾸면, 에이전트가 작업을 시작할 때 아래 산출물을 만들면 좋습니다.
+
+```text
+TaskStartContextPack
+  task_id
+  user_intent
+  target_surface
+  source_of_truth
+  relevant_skills
+  current_state
+  evidence
+  assumptions
+  no_touch
+  verification
+```
+
+예를 들어 SEOJing 글 발행 작업이면 context pack은 이런 모양입니다.
+
+```text
+task_id: seojing-agent-framework-day3
+user_intent: publish next agent-framework study post
+source_of_truth:
+  - /Users/seojing/.hermes/workspace/projects/SEOJing
+  - apps/web/content/study/agent-framework/dayN.mdx
+relevant_skills:
+  - seojing
+  - notjing-final-gate or content-review gate
+current_state:
+  - main has unrelated local edits, use isolated worktree
+  - existing day1/day2 found, next is day3
+no_touch:
+  - do not stage unrelated design-system work
+verification:
+  - prettier new file
+  - pnpm format:check
+  - pnpm lint
+  - pnpm build
+  - commit only new MDX
+  - push HEAD:main
+```
+
+이렇게 하면 모델은 "무엇을 해야 하지?"를 매번 다시 추론하지 않습니다. 작업 시작 상태가 명시되기 때문입니다.
+
+---
+
+## 9. 에이전트 프레임워크로 옮기면 필요한 모듈
+
+오늘의 내용을 코드 수준 구조로 옮기면 대략 이런 모듈이 필요합니다.
+
+```text
+ContextAssembler
+  - collect session slice
+  - load relevant skills
+  - query memory with scope
+  - read ticket/work state
+  - retrieve evidence artifacts
+  - mark freshness/trust
+  - build context pack
+
+StateStore
+  - sessions
+  - tickets
+  - memory
+  - artifacts
+  - traces
+  - cron outputs
+
+FreshnessGuard
+  - reject stale crawl as current fact
+  - label old briefing context as reused
+  - require live check for external side effects
+
+PromotionPolicy
+  - session note -> memory?
+  - repeated procedure -> skill?
+  - task progress -> ticket?
+  - verified workflow -> trace?
+```
+
+여기서 중요한 설계 판단이 있습니다.
+
+`ContextAssembler`가 너무 똑똑하면 또 하나의 거대한 프롬프트 괴물이 됩니다. 반대로 너무 단순하면 검색 결과 덤프가 됩니다. 적당한 기준은 이것입니다.
+
+```text
+조립기는 판단을 대신하지 않는다.
+대신 판단 가능한 상태를 정리해서 모델에게 준다.
+```
+
+예를 들어 "이 기술을 설치하라"고 결정하지는 않습니다. 대신 "이 기술은 이미 watch에 있음, 오늘 pushed_at만 갱신됨, 설치 근거는 아직 없음"이라고 표시합니다. 그러면 모델은 추천을 반복하지 않고, 변경점만 말할 수 있습니다.
+
+---
+
+## 10. 실패 사례로 다시 보기
+
+컨텍스트 설계가 약하면 실패는 꽤 반복적인 모양으로 나옵니다.
+
+### 실패 1: 이미 본 후보를 새 추천처럼 말한다
+
+원인:
+
+```text
+candidate dedupe state를 보지 않았다.
+또는 status=watch/candidate/currently applied를 구분하지 않았다.
+```
+
+수정:
+
+```text
+briefing_seen.json 같은 상태 저장소를 먼저 읽고,
+새 후보는 new, 기존 후보는 changed/no-change로 분류한다.
+현재 적용된 것은 추천이 아니라 현재 상태로 쓴다.
+```
+
+### 실패 2: 대시보드라는 말만 보고 웹 프론트부터 고친다
+
+원인:
+
+```text
+target_surface routing이 없다.
+OkayJing ops 문맥에서 Discord dashboard가 source of truth라는 규칙을 못 봤다.
+```
+
+수정:
+
+```text
+user term -> domain -> source_of_truth mapping을 context pack에 넣는다.
+```
+
+### 실패 3: 크롤 결과를 과제 미제출로 단정한다
+
+원인:
+
+```text
+calendar event status와 assignment submission status를 같은 증거로 취급했다.
+```
+
+수정:
+
+```text
+source별 의미를 보존한다.
+CONFIRMED는 calendar event 존재이지 미제출 증거가 아니라고 표시한다.
+```
+
+### 실패 4: build가 통과했는데 원격 발행은 안 됐다
+
+원인:
+
+```text
+local artifact와 external side effect를 같은 done으로 취급했다.
+```
+
+수정:
+
+```text
+push, origin/main 일치, CI/deploy, public route probe를 별도 evidence item으로 둔다.
+```
+
+이 실패들은 모두 "모델이 멍청해서"라기보다 상태 설계가 약해서 생깁니다.
+
+---
+
+## 11. 오늘의 설계 원칙
+
+오늘 글을 프레임워크 설계 기준으로 줄이면 아래와 같습니다.
+
+```text
+1. 컨텍스트는 prompt padding이 아니라 execution state다.
+2. session, memory, work state, evidence, artifact를 섞지 않는다.
+3. retrieval보다 먼저 source-of-truth routing이 필요하다.
+4. 모든 context item에는 freshness/trust/use_as가 있어야 한다.
+5. 압축은 자연어 요약이 아니라 재개 가능한 상태 변환이다.
+6. 장기 memory는 커지기보다 엄격해야 한다.
+7. 작업 시작 시 ContextPack을 표준 산출물로 만든다.
+```
+
+이 기준이 잡히면 다음 질문으로 넘어갈 수 있습니다.
+
+```text
+상태가 있다면, 그 상태는 어떻게 오래 실행되고 재개되는가?
+```
+
+다음 글에서는 **durable workflow와 checkpoint**를 보겠습니다. LangGraph 같은 프레임워크가 왜 state와 persistence를 강조하는지, 그리고 개인 에이전트에서는 ticket, cron, artifact, trace가 어떻게 long-running execution을 지탱하는지 볼 예정입니다.
+
+---
+
+## 마지막으로 남기는 체크리스트
+
+개인 에이전트 프레임워크를 만들 때 컨텍스트 설계를 점검하려면 아래 질문을 써볼 수 있습니다.
+
+```text
+- 지금 작업의 user intent는 어디에 고정되어 있는가?
+- 이 작업의 source of truth는 무엇인가?
+- session에서 가져온 정보와 memory에서 가져온 정보를 구분하는가?
+- 작업 진행 상태를 memory에 저장하지 않는가?
+- 도구 출력의 freshness와 신뢰도를 표시하는가?
+- 외부 검색 결과를 candidate로만 다루는가?
+- 이미 적용된 운영 원칙을 추천으로 반복하지 않는가?
+- 압축 후에도 goal / changed files / verified / remaining / no-touch가 남는가?
+- 최종 보고가 실제 verified output과 external side effect를 구분하는가?
+```
+
+에이전트는 컨텍스트를 먹고 움직입니다. 그래서 컨텍스트가 지저분하면 도구가 좋아도 결과가 흔들립니다. 반대로 컨텍스트가 상태로 정리되어 있으면 모델이 조금 부족해도 작업은 훨씬 안정적으로 이어집니다.
