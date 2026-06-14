@@ -1,0 +1,549 @@
+---
+title: "에이전트 프레임워크 스터디 Day 5: 워크플로와 에이전트의 경계를 나누는 법"
+date: 2026-06-15
+tags:
+  - 에이전트 프레임워크
+  - AI 개발
+  - Workflow
+  - Agent
+  - Human-in-the-loop
+  - Harness
+  - 시스템 설계
+description: 에이전트 프레임워크에서 반복 가능한 워크플로와 열린 에이전트 판단을 어떻게 분리해야 하는지 봅니다. 모든 것을 자율 에이전트로 만들지 않고, 상태·도구·검증·사람 개입 지점을 나누는 설계 기준을 reverse-engineering합니다.
+---
+
+> 예상 읽기 시간: 20~30분
+
+## 오늘의 목표
+
+Day 1에서는 에이전트를 모델 하나가 아니라 **harness**, 즉 실행 환경 전체로 봤습니다. Day 2에서는 도구를 함수가 아니라 **계약(contract)** 으로 봤고, Day 3에서는 컨텍스트를 **실행 상태(state)** 로 봤습니다. Day 4에서는 그 실행을 다시 읽고 고칠 수 있게 하는 **관측 가능성(observability)** 을 봤습니다.
+
+오늘은 그 위에 올라가는 운영 판단입니다.
+
+```text
+어떤 일은 정해진 순서로 반복해야 하고,
+어떤 일은 모델이 상황을 보고 판단해야 한다.
+
+그 둘을 섞으면
+반복 업무는 불안정해지고,
+열린 탐색은 과하게 묶인다.
+```
+
+그래서 오늘의 문장은 이겁니다.
+
+> 좋은 에이전트 프레임워크는 모든 일을 에이전트에게 맡기지 않는다. **워크플로와 에이전트의 경계**를 설계한다.
+
+이 말은 자율성을 줄이자는 뜻이 아닙니다. 오히려 반대입니다. 반복 가능한 부분을 워크플로로 고정해야, 모델이 정말 판단해야 하는 부분에 자율성을 쓸 수 있습니다.
+
+---
+
+## 1. “에이전트가 알아서 해줘”는 설계가 아니다
+
+처음 AI 자동화를 만들 때 가장 쉬운 문장은 이겁니다.
+
+```text
+너는 내 개인 에이전트야.
+매일 알아서 좋은 걸 찾아보고,
+필요하면 글도 쓰고,
+문제가 있으면 고쳐줘.
+```
+
+말로는 편합니다. 하지만 프레임워크 관점에서는 너무 넓습니다. 이 요청 안에는 성격이 다른 작업이 섞여 있습니다.
+
+```text
+반복 가능한 일
+- 매일 04:00에 실행한다.
+- 티켓 상태를 읽는다.
+- 특정 repo에서 다음 Day 번호를 찾는다.
+- MDX 파일을 만든다.
+- format/lint/build를 돌린다.
+- commit/push 후 origin/main과 비교한다.
+- dedupe state를 갱신한다.
+
+모델 판단이 필요한 일
+- 오늘 어떤 주제가 이어지는가?
+- 새 기술 후보가 실제로 유용한가, 노이즈인가?
+- 실패가 pre-existing인지 새 글 때문에 생긴 것인지 판단한다.
+- 아침 브리핑에서 무엇을 추천이 아니라 현재 적용으로 말해야 하는가?
+```
+
+이 둘을 전부 “에이전트가 알아서”라는 한 문장으로 던지면 문제가 생깁니다.
+
+반복 가능한 일은 매번 조금씩 흔들립니다. 어떤 날은 build를 빠뜨리고, 어떤 날은 unrelated draft까지 stage하고, 어떤 날은 이미 본 라이브러리를 새 추천으로 다시 말합니다.
+
+반대로 모델 판단이 필요한 일은 너무 빡빡한 절차 안에 갇힙니다. 오늘은 새 post를 쓰지 않는 게 맞는 날인데 “매일 무조건 하나”라는 규칙 때문에 억지 글이 나옵니다.
+
+프레임워크 설계는 여기서 시작합니다.
+
+```text
+무엇을 워크플로로 잠글 것인가?
+무엇을 에이전트 판단으로 남길 것인가?
+어디서 사람의 승인을 요구할 것인가?
+어디까지는 로컬에서 되돌릴 수 있는가?
+```
+
+---
+
+## 2. 워크플로는 예측 가능한 실행 골격이다
+
+워크플로는 “AI가 안 들어가는 자동화”가 아닙니다. AI가 들어가더라도 실행 골격이 예측 가능하면 워크플로입니다.
+
+예를 들어 SEOJing 04:00 study publish는 이런 모양이어야 합니다.
+
+```text
+workflow: seojing-agent-framework-study-publish
+
+1. repo 상태 확인
+2. dirty canonical checkout이면 origin/main 기반 임시 worktree 생성
+3. 기존 dayN.mdx 목록 확인
+4. 다음 Day 번호 선택
+5. 모델이 글 주제/본문 작성
+6. prettier 적용
+7. format:check / lint / build
+8. 변경 파일 scope 확인
+9. commit
+10. push HEAD:main
+11. fetch origin main
+12. local HEAD == origin/main 확인
+13. public URL과 검증 결과를 report에 기록
+14. workflow trace 저장
+```
+
+이 중 5번에는 모델 판단이 들어갑니다. 하지만 전체 구조는 고정되어 있습니다. 그래서 실패해도 어디에서 실패했는지 알 수 있습니다.
+
+```text
+- 2번에서 막힘: canonical checkout이 dirty인데 worktree 생성 실패
+- 7번에서 막힘: MDX 문법 또는 lint 문제
+- 10번에서 막힘: push 권한/remote 문제
+- 12번에서 막힘: remote가 예상과 다름
+- 14번에서 막힘: workflow trace 저장 도구 문제
+```
+
+이렇게 단계가 보이면 개선도 쉬워집니다. 특정 단계가 자주 실패하면 skill이나 script로 내려보내면 됩니다. 검증이 빠지는 단계가 있으면 Notjing gate나 cron prompt에 체크를 추가하면 됩니다.
+
+반대로 “글 써서 올려줘”만 남아 있으면, 성공과 실패가 전부 대화 감각에 묻힙니다.
+
+---
+
+## 3. 에이전트는 열린 판단을 맡는다
+
+그렇다면 에이전트는 무엇을 맡아야 할까요?
+
+에이전트가 필요한 지점은 **정해진 규칙만으로 답이 안 나오는 곳**입니다.
+
+```text
+- 후보 기술의 채택 가치 판단
+- 사용자의 현재 수준에 맞는 설명 순서 선택
+- 실패 로그가 이번 변경 때문인지 기존 문제인지 분류
+- 여러 증거가 충돌할 때 어떤 상태로 보고할지 결정
+- 다음 글을 쓸지, 오늘은 쓰지 않는 게 나은지 판단
+- 반복된 작업에서 skill로 승격할 만한 규칙 추출
+```
+
+예를 들어 GitHub에서 새로운 agent framework가 보였다고 합시다. 워크플로는 repo 정보를 수집합니다.
+
+```json
+{
+  "name": "example-agent-framework",
+  "stars": 25000,
+  "pushed_at": "2026-06-14T18:56:53Z",
+  "description": "framework for building AI agents"
+}
+```
+
+하지만 이 정보만으로 “설치하자”는 결론은 나오지 않습니다. 여기서 에이전트 판단이 필요합니다.
+
+```text
+- 이 도구가 OkayJing의 현재 문제를 해결하는가?
+- Hermes와 겹치는 런타임을 또 설치하는가?
+- MCP/observability/workflow 같은 표준 방향을 강화하는가?
+- 로컬-first, 개인정보, 되돌리기 가능성에 맞는가?
+- 지금은 watch_only인가, 현재 적용할 practice가 있는가?
+```
+
+즉 에이전트의 핵심은 “마음대로 실행”이 아니라 **불확실한 선택지의 분류와 판단**입니다.
+
+---
+
+## 4. 경계를 나누는 첫 번째 질문: 반복 가능한가?
+
+어떤 작업을 보면 먼저 이 질문을 던집니다.
+
+```text
+이 작업은 같은 입력이면 거의 같은 순서로 처리해도 되는가?
+```
+
+그렇다면 워크플로 후보입니다.
+
+```text
+예: LMS assignment crawl
+- 로그인 세션 확인
+- 과제 페이지 접근
+- assignment DB upsert
+- schedule DB와 구분
+- last_seen_at 비교
+- stale/pending/completed 상태 판단
+- briefing용 요약 생성
+```
+
+여기서 모델이 매번 “어떻게 크롤하지?”를 고민하면 안 됩니다. 크롤 경로와 DB 업데이트 규칙은 deterministic해야 합니다. 모델은 결과 해석이나 보고 문구에 집중하면 됩니다.
+
+반대로 이런 작업은 에이전트 판단이 더 큽니다.
+
+```text
+예: 새로운 OkayJing Local UI 방향 판단
+- Discord를 얼마나 대체할 것인가?
+- Office/Sessions/Code 중 어디를 우선할 것인가?
+- 모바일에서 같은 IA를 유지할 것인가, 별도 탭을 만들 것인가?
+- 어떤 참고 제품을 실제로 연구할 것인가?
+```
+
+여기서는 고정된 단계만으로 충분하지 않습니다. 제품 방향, 사용자 선호, 기존 architecture doc, 최근 피드백을 함께 봐야 합니다.
+
+하지만 이 경우에도 완전히 자유롭게 두지 않습니다. planning skill은 목표, non-goal, 성공 기준, 리스크를 잡습니다. 즉 에이전트 판단도 harness 안에 들어갑니다.
+
+---
+
+## 5. 두 번째 질문: 실패 비용이 큰가?
+
+다음 질문은 실패 비용입니다.
+
+```text
+잘못 실행했을 때 되돌리기 쉬운가?
+외부에 영향을 주는가?
+사용자 데이터나 비용, 공개 상태가 걸려 있는가?
+```
+
+이 질문은 사람 개입(human-in-the-loop) 지점을 정합니다.
+
+```text
+낮은 위험
+- 로컬 상태 파일에 dedupe 항목 추가
+- 임시 worktree에 새 MDX 작성
+- dry-run dashboard render
+- read-only status check
+
+중간 위험
+- SEOJing main에 content commit/push
+- cron prompt의 좁은 문구 수정
+- skill procedure patch
+
+높은 위험
+- gateway restart
+- provider/model 변경
+- secret rotation
+- public API 노출
+- 데이터 삭제
+- 비용이 큰 외부 서비스 설치
+```
+
+낮은 위험은 워크플로가 자동으로 처리합니다. 중간 위험은 standing approval이 있거나 충분히 좁고 검증 가능한 경우에만 자동 처리합니다. 높은 위험은 사람에게 명확히 묻거나, scheduled job에서는 blocked로 남겨야 합니다.
+
+여기서 중요한 점은 “승인을 많이 받자”가 아닙니다. 승인 피로가 커지면 사용자는 결국 아무것도 확인하지 않게 됩니다. 사람 개입은 **위험이 바뀌는 지점**에 있어야 합니다.
+
+```text
+좋은 개입 지점
+- 공개 push 직전: 변경 scope와 검증 결과 확인
+- gateway restart 전: active work와 영향 범위 확인
+- 비용/외부 계정 연결 전: 권한과 비용 확인
+- destructive command 전: 대상과 rollback 확인
+
+나쁜 개입 지점
+- 이미 승인된 routine의 매 단계마다 확인
+- read-only check 전 확인
+- 실패 원인을 보지도 않고 “계속할까요?” 묻기
+- 추천과 현재 적용을 구분하지 않고 매일 같은 승인 요청 반복
+```
+
+---
+
+## 6. 세 번째 질문: 상태는 어디에 남아야 하는가?
+
+워크플로와 에이전트 경계를 나누려면 상태 저장 위치도 정해야 합니다.
+
+```text
+facts/preferences -> memory
+procedures -> skills
+work state -> ticket / work ledger
+conversation -> session
+repeated execution -> cron
+human-facing display -> dashboard / Discord / Local UI
+verification evidence -> report / trace / artifact
+```
+
+이 분리가 없으면 모델은 모든 것을 대화 context나 memory에 넣고 싶어집니다. 그러면 다음 문제가 생깁니다.
+
+```text
+- 어제의 작업 진행 상태가 장기 기억으로 남아 stale해진다.
+- skill로 내려가야 할 절차가 매번 prompt에 복붙된다.
+- ticket에 있어야 할 blocker가 final response에만 남는다.
+- dashboard는 예쁘지만 source of truth가 아니다.
+- cron output과 report가 분리되어 08:00 briefing이 오래된 정보를 새 것처럼 말한다.
+```
+
+워크플로는 상태 저장 위치를 명확히 해야 합니다. 에이전트는 그 상태들을 읽고 판단합니다. 둘을 바꾸면 안 됩니다.
+
+예를 들어 “어제 Day 4를 올렸는가?”는 memory가 아니라 repo/history/cron output이 답해야 합니다. “진규는 과한 승인 요청을 싫어한다”는 stable preference라 memory나 local operating rule에 남을 수 있습니다.
+
+---
+
+## 7. 네 번째 질문: 검증은 deterministic한가?
+
+에이전트 판단은 열려 있어도 검증은 가능한 한 deterministic해야 합니다.
+
+```text
+나쁜 검증
+- 글이 괜찮아 보인다.
+- 아마 build 될 것이다.
+- URL도 곧 될 것이다.
+- 리뷰어가 나중에 볼 것이다.
+
+좋은 검증
+- pnpm format:check exit 0
+- pnpm lint exit 0
+- pnpm build exit 0
+- git diff --check exit 0
+- git fetch 후 HEAD == origin/main
+- public route probe 또는 deploy evidence 확인
+- dashboard dry-run JSON 생성 성공
+```
+
+모델이 “좋다”고 판단하는 부분과 도구가 “통과했다”고 증명하는 부분을 분리해야 합니다. 이 분리가 있어야 Notjing final gate도 의미가 있습니다.
+
+에이전트 프레임워크를 만들 때도 마찬가지입니다. eval이나 trace가 없으면 self-improvement는 감상문이 됩니다.
+
+```text
+실행 -> 증거 -> 평가 -> 절차 수정
+```
+
+이 고리가 있어야 다음 실행이 좋아집니다.
+
+---
+
+## 8. 경계 설계를 상태 기계로 보기
+
+워크플로와 에이전트 경계는 상태 기계로 그려볼 수 있습니다.
+
+```text
+[scheduled]
+  -> collect_state
+  -> decide_scope
+  -> draft_artifact
+  -> verify_locally
+  -> review_gate
+  -> publish_or_record
+  -> trace_and_report
+  -> done | blocked
+```
+
+각 상태마다 책임이 다릅니다.
+
+```text
+collect_state
+- deterministic: repo, tickets, cron outputs, logs, existing files 읽기
+- agent: 어떤 정보가 stale한지 판단
+
+decide_scope
+- deterministic: standing approval과 hard safety rules 확인
+- agent: 오늘 publish할 주제가 충분한지 판단
+
+draft_artifact
+- deterministic: 파일 경로, frontmatter, slug 규칙
+- agent: 본문 구성과 설명 깊이
+
+verify_locally
+- deterministic: format/lint/build/test
+- agent: 실패 원인 분류와 수정 방향
+
+review_gate
+- deterministic: diff scope, secret scan, unsupported extension 여부
+- agent: review finding의 blocker 여부 판단
+
+publish_or_record
+- deterministic: commit/push/report 경로
+- agent: 공개하지 않을 때 이유 설명
+
+trace_and_report
+- deterministic: trace-add/analyze, ticket report
+- agent: 아침에 볼 수 있게 요약
+```
+
+이렇게 나누면 “AI가 하는 일”이 흐릿하지 않습니다. 모델은 판단과 생성에 집중하고, 시스템은 실행과 증거를 붙잡습니다.
+
+---
+
+## 9. OkayJing에 적용하면 무엇이 달라지나
+
+OkayJing 운영에서 이 경계는 이미 여러 번 문제를 줄였습니다.
+
+### 9.1 SEOJing publishing
+
+canonical checkout이 dirty일 때는 main에서 바로 stage하지 않습니다. 임시 worktree를 만들고, 거기서 새 글만 작성/검증/commit/push합니다.
+
+```text
+왜 워크플로인가?
+- 반복되는 공개 publish 루틴이다.
+- dirty tree contamination을 막아야 한다.
+- 검증된 파일만 push해야 한다.
+
+어디가 에이전트 판단인가?
+- 다음 글의 주제와 설명 순서
+- build 실패가 새 글 때문인지 기존 문제인지
+- 오늘 okayJing self-reflection post까지 쓸 가치가 있는지
+```
+
+### 9.2 Dreaming briefing
+
+아침 브리핑은 단순 요약이 아닙니다. 밤사이 적용된 것, watch-only 후보, future recommendation을 구분해야 합니다.
+
+```text
+왜 워크플로인가?
+- 매일 같은 시간에 같은 state sources를 읽어야 한다.
+- dedupe state가 있어야 반복 추천을 막는다.
+- stale context를 표시해야 한다.
+
+어디가 에이전트 판단인가?
+- 어떤 후보가 오늘 실제로 중요해졌는지
+- 이미 적용된 practice를 “현재 적용”으로 분류할지
+- 사용자가 아침에 봐야 할 focus를 무엇으로 좁힐지
+```
+
+### 9.3 Local UI / Discord replacement
+
+OkayJing Local은 제품 방향이 들어가는 작업입니다. 여기서는 곧바로 구현 워크플로로 잠그면 안 됩니다.
+
+```text
+먼저 필요한 것
+- product direction
+- device-specific UX
+- API/gateway boundary
+- verification criteria
+- non-goals
+
+그 다음 워크플로화할 것
+- shell/nav 구현
+- Sessions read-only API
+- Code file tree API
+- mobile overflow regression check
+- PWA cache verification
+```
+
+제품 방향은 에이전트 판단이 필요한 영역이고, 확정된 구현 단위는 워크플로로 내려갈 수 있습니다.
+
+---
+
+## 10. 프레임워크 설계 체크리스트
+
+개인 에이전트 프레임워크를 만들 때, 새 기능마다 아래 질문을 던지면 됩니다.
+
+```text
+1. 이 기능은 반복 업무인가, 열린 판단인가?
+2. 반복 업무라면 상태 기계로 쪼갤 수 있는가?
+3. 모델이 반드시 판단해야 하는 단계는 어디인가?
+4. deterministic check로 증명할 수 있는 단계는 어디인가?
+5. 실패하면 어디에 blocked 상태를 남길 것인가?
+6. 결과물은 artifact인가, memory인가, ticket report인가?
+7. 사람 승인은 위험이 바뀌는 지점에 있는가?
+8. 이 기능이 실패했을 때 다음 실행이 배울 trace가 남는가?
+9. 같은 절차가 3번 이상 반복되면 skill/script로 내려갈 수 있는가?
+10. “에이전트가 알아서”라는 말 뒤에 숨은 책임이 없는가?
+```
+
+이 체크리스트는 화려한 agent swarm보다 중요합니다. 많은 프레임워크가 복잡한 multi-agent pattern을 먼저 보여주지만, 실제 개인 운영에서는 이 경계가 먼저입니다.
+
+---
+
+## 11. 작은 예시: 새 라이브러리 watch를 설계하기
+
+새 기술 후보를 찾는 routine을 예로 들어보겠습니다.
+
+나쁜 설계는 이렇습니다.
+
+```text
+매일 GitHub에서 좋아 보이는 AI 도구를 찾아서 추천해줘.
+```
+
+이러면 매일 비슷한 라이브러리가 반복됩니다. 이미 본 것인지, 설치가 필요한지, 그냥 참고인지 흐려집니다.
+
+경계를 나누면 이렇게 됩니다.
+
+```text
+workflow
+1. watch module 목록을 읽는다.
+2. GitHub API로 후보 repo metadata를 가져온다.
+3. briefing_seen.json에서 dedupe_key를 찾는다.
+4. 새 항목이면 추가한다.
+5. 기존 항목이면 last_seen_at/evidence만 갱신한다.
+6. JSON validation을 통과해야 저장한다.
+
+agent judgement
+- standard_alignment / okayjing_differentiator / watch_only / avoid_for_now 분류
+- 현재 OkayJing 문제와 연결되는지 판단
+- 설치가 아니라 practice 흡수로 충분한지 판단
+- 08:00 briefing에 올릴 만큼 변화가 있는지 판단
+```
+
+이 구조에서는 “추천 액션”이 줄어듭니다. 대부분은 watch_only로 조용히 기록되고, 실제로 의미 있는 변화만 브리핑에 올라옵니다.
+
+---
+
+## 12. 다음으로 이어질 층
+
+지금까지의 흐름을 다시 쌓아보면 이렇습니다.
+
+```text
+Day 1: harness
+  모델이 아니라 실행 환경 전체
+
+Day 2: tool contract
+  함수 호출이 아니라 책임/위험/검증 계약
+
+Day 3: context/state
+  프롬프트 더미가 아니라 실행 상태 조립
+
+Day 4: observability
+  채팅 기록이 아니라 개선 가능한 run 증거
+
+Day 5: workflow vs agent boundary
+  반복 가능한 골격과 열린 판단의 분리
+```
+
+여기까지 오면 agent framework의 큰 뼈대가 보입니다. 다음 층에서는 이 경계를 실제 협업 구조로 확장해야 합니다.
+
+```text
+- 한 에이전트가 다른 작업자에게 무엇을 넘기는가?
+- handoff는 메시지인가, 계약인가, artifact인가?
+- A2A나 MCP 같은 프로토콜은 어디에 들어오는가?
+- profile/spoke/work-ledger는 어떤 단위로 분리되어야 하는가?
+```
+
+즉 다음 관심사는 **handoff와 orchestration**입니다. 에이전트가 많아지는 것 자체가 목표는 아닙니다. 책임이 분리되고, 상태가 이어지고, 검증 가능한 산출물이 남는지가 더 중요합니다.
+
+---
+
+## 오늘의 정리
+
+오늘의 핵심은 “AI를 얼마나 자율적으로 만들 것인가”가 아니라 “무엇을 자율적으로 둘 것인가”입니다.
+
+```text
+워크플로
+- 반복 가능하다.
+- 단계와 상태가 보인다.
+- 실패 위치를 남긴다.
+- deterministic check가 붙는다.
+
+에이전트 판단
+- 불확실한 선택을 분류한다.
+- 증거가 충돌할 때 해석한다.
+- 사용자의 목적과 현재 맥락에 맞춘다.
+- 절차로 내려갈 수 있는 규칙을 추출한다.
+
+사람 개입
+- 위험이 바뀌는 지점에 둔다.
+- 승인 피로를 만들지 않는다.
+- 외부 영향, 비용, 삭제, credential, 공개 배포에서 강해진다.
+```
+
+개인 에이전트 프레임워크를 제대로 만들려면 “모든 걸 맡기는 AI”보다 “책임이 분리된 실행 시스템”이 먼저입니다. OkayJing도 같은 방향으로 가야 합니다. 반복되는 운영은 워크플로로 고정하고, 모델은 열린 판단과 설계 개선에 쓰고, 사람은 정말 위험이 바뀌는 지점에서만 들어오게 해야 합니다.
+
+그 경계가 잡혀야 에이전트는 오래 굴러갑니다.
