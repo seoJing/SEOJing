@@ -1,0 +1,719 @@
+---
+title: "에이전트 프레임워크 스터디 Day 6: 사람 개입은 예외가 아니라 설계 표면이다"
+date: 2026-06-16
+tags:
+  - 에이전트 프레임워크
+  - AI 개발
+  - Human-in-the-loop
+  - Approval
+  - Guardrail
+  - Workflow
+  - 시스템 설계
+description: 에이전트 프레임워크에서 사람 개입, 승인, 거절, 확인 질문을 예외 처리로 두지 않고 실행 표면으로 설계하는 법을 봅니다. 위험도 기반 autonomy ladder, interrupt, approval gate, 검증 보고를 reverse-engineering합니다.
+---
+
+> 예상 읽기 시간: 20~30분
+
+## 오늘의 목표
+
+Day 1에서는 에이전트를 모델 하나가 아니라 **harness**, 즉 실행 환경 전체로 봤습니다. Day 2에서는 도구를 함수가 아니라 **계약(contract)** 으로 봤고, Day 3에서는 컨텍스트를 **실행 상태(state)** 로 봤습니다. Day 4에서는 그 실행을 다시 읽을 수 있게 하는 **관측 가능성(observability)** 을 봤고, Day 5에서는 반복 가능한 **워크플로**와 열린 **에이전트 판단**의 경계를 나눴습니다.
+
+오늘은 그 다음 질문입니다.
+
+```text
+에이전트가 어디까지 혼자 해도 되는가?
+어디서 사람에게 멈춰 물어야 하는가?
+어떤 질문은 왜 피곤한 승인 요청이 되고,
+어떤 질문은 좋은 안전장치가 되는가?
+```
+
+에이전트 프레임워크를 만들 때 사람 개입은 보통 뒤늦게 붙습니다.
+
+```text
+일단 자동으로 돌게 만든다.
+위험한 명령 앞에서만 confirm을 띄운다.
+실패하면 사용자에게 다시 물어본다.
+```
+
+하지만 실제 운영에서는 이 방식이 금방 무너집니다. 너무 많이 물으면 사용자는 에이전트를 못 믿고, 너무 적게 물으면 에이전트가 엉뚱한 방향으로 일을 진행합니다.
+
+그래서 오늘의 문장은 이겁니다.
+
+> 사람 개입은 예외가 아니라 **프레임워크의 설계 표면(surface)** 이다.
+
+여기서 설계 표면이라는 말은, 단순히 `confirm()`을 넣자는 뜻이 아닙니다. 에이전트가 어떤 위험을 판단하고, 언제 멈추고, 어떤 정보를 보여주고, 승인 이후 무엇을 기록하고, 거절되면 어떻게 회복하는지까지 하나의 인터페이스로 봐야 한다는 뜻입니다.
+
+---
+
+## 1. “사람에게 물어보기”가 항상 안전한 것은 아니다
+
+사람에게 물어보면 안전해질 것 같지만, 항상 그렇지는 않습니다. 나쁜 질문은 안전을 높이지 않고 피로만 만듭니다.
+
+예를 들어 이런 질문을 생각해봅시다.
+
+```text
+이 파일을 읽어도 될까요?
+이제 테스트를 실행해도 될까요?
+이 후보 라이브러리를 조사해도 될까요?
+이 변경을 계속 진행할까요?
+```
+
+겉으로는 조심스러워 보입니다. 하지만 사용자는 매번 판단할 정보가 부족합니다. 특히 에이전트가 이미 할 수 있는 저위험 작업까지 계속 묻기 시작하면 사용자는 승인 버튼을 습관적으로 누르게 됩니다. 그러면 승인 시스템은 안전장치가 아니라 잡음이 됩니다.
+
+반대로 이런 질문은 필요합니다.
+
+```text
+- public main branch에 push해도 되는가?
+- 비용이 생기는 API를 호출해도 되는가?
+- 외부 서비스에 데이터를 업로드해도 되는가?
+- 사용자 데이터나 secrets가 포함될 수 있는 파일을 열거나 전송해도 되는가?
+- 제품 방향이 둘로 갈리는 결정을 지금 확정해도 되는가?
+```
+
+차이는 위험도입니다. 좋은 에이전트 프레임워크는 “항상 묻기”와 “항상 자동 실행” 사이에서 고르는 것이 아니라, 작업을 위험도별로 나눕니다.
+
+```text
+질문의 기준은 예의가 아니라 위험이다.
+```
+
+이 관점이 없으면 시스템은 두 극단 중 하나로 갑니다.
+
+```text
+승인 과잉
+- 사소한 read/check에도 멈춘다.
+- 사용자는 매번 판단해야 한다.
+- 결국 승인 버튼을 기계적으로 누른다.
+- 중요한 승인도 덜 진지하게 보인다.
+
+자동화 과잉
+- 외부 side effect까지 혼자 진행한다.
+- 잘못된 방향의 작업을 길게 밀고 간다.
+- 사용자가 나중에 되돌려야 한다.
+- 신뢰가 깨진다.
+```
+
+그래서 human-in-the-loop는 “사람이 중간에 들어온다”가 아니라 **위험도 기반 실행 제어**로 설계해야 합니다.
+
+---
+
+## 2. autonomy ladder: 자율성은 단계가 있어야 한다
+
+에이전트 실행을 설계할 때 가장 먼저 만들 수 있는 모델은 autonomy ladder입니다.
+
+```text
+Level 0. 말하기만 한다
+Level 1. 읽기 / 조사 / 분석
+Level 2. 로컬의 되돌릴 수 있는 쓰기
+Level 3. 검증된 로컬 변경
+Level 4. 외부 side effect
+Level 5. 파괴적·비용·credential 관련 작업
+```
+
+각 단계는 허용되는 행동과 필요한 확인 방식이 다릅니다.
+
+```text
+Level 0 — 말하기만 한다
+- 예: 설계 리뷰, 학습 설명, 계획 제안
+- 보통 승인 불필요
+- 위험: 사실 오류, 과한 확신
+- 필요한 장치: 근거 표시, 가정 표시
+
+Level 1 — 읽기 / 조사 / 분석
+- 예: 파일 읽기, git status, public GitHub 조사
+- 보통 승인 불필요
+- 위험: 민감한 파일 출력, tool output 오염
+- 필요한 장치: secret redaction, tool output을 지시로 취급하지 않기
+
+Level 2 — 로컬의 되돌릴 수 있는 쓰기
+- 예: draft MDX 작성, local note 업데이트, 임시 worktree 생성
+- 조건부 자동 가능
+- 위험: unrelated file 수정, stale state 기록
+- 필요한 장치: scope 제한, diff 확인, 백업/patch 가능성
+
+Level 3 — 검증된 로컬 변경
+- 예: format/lint/build 통과 후 local commit 준비
+- 명시된 standing approval이 있으면 자동 가능
+- 위험: 검증과 실제 commit 범위 불일치
+- 필요한 장치: staged file check, exact-tree verification
+
+Level 4 — 외부 side effect
+- 예: push, Discord post, Cloudflare 배포, ticket done 처리
+- 명확한 승인 또는 standing rule 필요
+- 위험: 공개 노출, 중복 알림, 되돌리기 비용
+- 필요한 장치: final gate, idempotency, remote readback
+
+Level 5 — 파괴적·비용·credential 관련 작업
+- 예: secret rotation, data deletion, paid API 대량 호출, gateway restart
+- 보통 명시 승인 필요
+- 위험: 데이터 손실, 비용, 서비스 중단
+- 필요한 장치: 별도 확인, dry-run, rollback plan
+```
+
+이 ladder의 목적은 에이전트를 느리게 만드는 것이 아닙니다. 오히려 저위험 작업은 빠르게 진행하고, 진짜 중요한 지점에서만 멈추게 만듭니다.
+
+좋은 프레임워크는 이렇게 말할 수 있어야 합니다.
+
+```text
+이 작업은 Level 2라서 자동으로 진행했다.
+이 작업은 Level 4지만 standing approval 범위 안이라 진행했다.
+이 작업은 Level 5라서 멈췄다.
+```
+
+이 정도로 말할 수 있으면, 사용자는 “왜 물었는지”와 “왜 묻지 않았는지”를 이해할 수 있습니다.
+
+---
+
+## 3. interrupt는 실패가 아니라 정상 경로다
+
+많은 에이전트 구현은 interrupt를 실패처럼 다룹니다.
+
+```text
+모델이 작업 중이었다.
+승인이 필요해서 멈췄다.
+세션이 끊겼다.
+다음에 다시 시작하면 맥락이 사라졌다.
+```
+
+하지만 오래 실행되는 개인 에이전트에서는 interrupt가 정상 경로입니다.
+
+```text
+- 사용자가 승인할 때까지 기다린다.
+- 외부 CI가 끝날 때까지 기다린다.
+- 브라우저 OAuth가 완료될 때까지 기다린다.
+- 밤에 만든 draft를 아침에 사람이 읽고 결정한다.
+- 위험한 deploy는 다음 세션으로 넘긴다.
+```
+
+따라서 interrupt는 다음 정보를 남겨야 합니다.
+
+```text
+Interrupt record
+- run_id
+- paused_at
+- reason
+- risk_level
+- requested_decision
+- options
+- default_if_no_response
+- current_artifacts
+- verification_so_far
+- resume_command_or_route
+```
+
+단순히 “승인 필요”라고만 남기면 부족합니다. 사용자는 나중에 무엇을 승인해야 하는지 모릅니다. 에이전트도 resume할 때 무엇까지 끝났는지 헷갈립니다.
+
+예를 들어 SEOJing 글을 publish하는 워크플로에서 push 직전에 멈춘다면, interrupt record는 이런 식이어야 합니다.
+
+```text
+run_id: seojing-agent-framework-day6-20260616
+reason: external side effect before direct push
+risk_level: Level 4
+requested_decision: push origin main with one new MDX post?
+options:
+  - approve: push commit feature: add agent framework study day 6
+  - reject: keep local draft only
+current_artifacts:
+  - apps/web/content/study/agent-framework/day6.mdx
+verification_so_far:
+  - prettier: pass
+  - format:check: pass
+  - lint: pass
+  - build: pass
+resume:
+  - git push origin HEAD:main
+```
+
+이렇게 남기면 사람 개입은 흐름을 깨는 이벤트가 아니라 workflow state의 일부가 됩니다.
+
+---
+
+## 4. approval gate는 버튼 하나가 아니다
+
+승인 게이트를 너무 단순하게 보면 이렇게 됩니다.
+
+```text
+if dangerous:
+  ask_user("진행할까요?")
+```
+
+실제 프레임워크에서는 더 많은 것이 필요합니다.
+
+```text
+Approval gate
+- 무엇을 하려는가?
+- 왜 필요한가?
+- 어떤 파일/서비스/데이터에 영향을 주는가?
+- 되돌릴 수 있는가?
+- 이미 어떤 검증을 했는가?
+- 승인하지 않으면 무엇을 할 것인가?
+- 승인이 몇 번까지 유효한가?
+- 같은 작업을 중복 실행해도 안전한가?
+```
+
+특히 “몇 번까지 유효한가”가 중요합니다. 한 번 승인했다고 해서 모든 비슷한 작업이 영원히 승인된 것은 아닙니다.
+
+```text
+나쁜 승인 캐시
+- 사용자가 한 번 push를 승인했다.
+- 이후 모든 repo push를 자동 승인한다.
+
+좋은 승인 캐시
+- ticket #121의 SEOJing agent-framework day6 publish만 승인한다.
+- commit 범위가 바뀌면 다시 확인한다.
+- 날짜나 session이 바뀌면 만료한다.
+```
+
+approval gate는 identity도 필요합니다.
+
+```text
+Approval identity
+- who: 어떤 사용자/채널/역할이 승인했는가?
+- what: 어떤 action_id를 승인했는가?
+- scope: 어떤 파일/티켓/브랜치/서비스에만 유효한가?
+- expires_at: 언제 만료되는가?
+- consumed_at: 실제 실행에 사용됐는가?
+```
+
+Discord 반응 버튼, CLI prompt, 웹 대시보드 버튼, 모바일 승인 모두 결국 같은 개념으로 모여야 합니다. UI는 여러 개일 수 있지만, backend에서는 같은 approval record를 다뤄야 합니다.
+
+---
+
+## 5. 확인 질문과 승인 질문은 다르다
+
+에이전트가 사람에게 묻는 질문은 크게 두 종류입니다.
+
+```text
+clarification
+- 요구사항이 애매해서 방향을 정해야 한다.
+- 예: pixel office를 더 게임처럼 할지, 업무 콘솔처럼 할지?
+
+authorization
+- 무엇을 할지는 명확하지만 위험도가 있어 허가가 필요하다.
+- 예: 이 commit을 origin main에 push할까?
+```
+
+이 둘을 섞으면 UX가 나빠집니다.
+
+나쁜 예:
+
+```text
+작업을 진행해도 될까요?
+```
+
+이 문장은 모호합니다. 요구사항이 불명확해서 묻는 건지, 권한이 없어서 묻는 건지 알 수 없습니다.
+
+좋은 예:
+
+```text
+방향 확인:
+OkayJing Local의 홈을 일반 dashboard가 아니라 pixel office로 유지하는 전제로 진행하겠습니다. 만약 ticket-first dashboard를 원하면 지금 방향이 바뀝니다.
+
+권한 확인:
+검증이 끝난 commit 1개를 origin main에 push하려면 외부 side effect가 생깁니다. standing approval 범위 안인지 확인합니다.
+```
+
+프레임워크는 질문 타입을 명시해야 합니다.
+
+```text
+question.type = clarification | authorization | unblock | preference | report_ack
+```
+
+- clarification은 제품 방향이나 구현 방향을 바꿉니다.
+- authorization은 같은 방향 안에서 side effect를 허용합니다.
+- unblock은 외부 credential/OAuth/브라우저 승인처럼 에이전트가 스스로 해결할 수 없는 상태를 넘깁니다.
+- preference는 앞으로의 기본값을 조정합니다.
+- report_ack는 읽었는지 확인하는 정도이며, 가능하면 줄이는 게 좋습니다.
+
+이 구분이 있으면 에이전트는 “질문을 줄이자”라는 요구도 더 정확히 해석할 수 있습니다.
+
+```text
+줄여야 하는 것: 불필요한 report_ack / 저위험 authorization
+줄이면 안 되는 것: 제품 방향을 바꾸는 clarification / 고위험 authorization
+```
+
+---
+
+## 6. 사람 개입을 상태 머신으로 그려보기
+
+human-in-the-loop를 코드로 만들기 전에 상태 머신으로 보면 명확해집니다.
+
+```text
+[Running]
+   |
+   | risk detected / ambiguity detected
+   v
+[Needs Human]
+   |      |       |
+   |      |       +-- timeout --> [Fallback / Blocked]
+   |      |
+   |      +-- reject --> [Abort / Alternative]
+   |
+   +-- approve / answer
+          |
+          v
+[Resume]
+   |
+   v
+[Verify]
+   |
+   +-- pass --> [Complete]
+   |
+   +-- fail --> [Repair or Block]
+```
+
+여기서 중요한 점은 `Needs Human`이 막다른 길이 아니라는 겁니다. 상태는 계속 이어져야 합니다.
+
+```text
+Needs Human 상태가 가져야 하는 필드
+- blocking_reason
+- user_visible_summary
+- machine_resume_payload
+- artifacts
+- risk_level
+- timeout_policy
+- fallback_policy
+```
+
+예를 들어 OAuth 로그인이 필요하다면 fallback은 “계속 재시도”가 아닙니다.
+
+```text
+blocked:
+  reason: Cloudflare browser approval required
+  fallback: do not create tunnel; keep local-only service
+  report: login approval pending, no tunnel-ready claim
+```
+
+반대로 사용자가 응답하지 않아도 진행 가능한 저위험 조사라면 timeout policy는 다를 수 있습니다.
+
+```text
+needs-human:
+  reason: optional topic choice
+  timeout: choose the lower-risk default topic
+  fallback: write local draft only, no push
+```
+
+상태 머신으로 보면 사람 개입은 “대화 중간에 질문”이 아니라 workflow engine의 한 상태가 됩니다.
+
+---
+
+## 7. 도구 실행과 승인 게이트를 분리해야 한다
+
+프레임워크에서 흔히 생기는 버그가 있습니다. 도구 실행 함수 안에 승인 로직이 섞이는 겁니다.
+
+```text
+run_terminal(command):
+  if looks_dangerous(command):
+    ask_user()
+  execute(command)
+```
+
+작아 보이는 구현에서는 괜찮습니다. 하지만 시스템이 커지면 문제가 생깁니다.
+
+```text
+- Discord 승인과 CLI 승인이 따로 논다.
+- cron job에서는 물어볼 사람이 없어 멈춘다.
+- 같은 action을 두 번 실행할 수 있다.
+- 승인 메시지와 실제 실행 command가 달라질 수 있다.
+- 도구는 위험도를 모르고 문자열 패턴만 본다.
+```
+
+더 나은 구조는 action proposal과 execution을 분리하는 것입니다.
+
+```text
+1. 에이전트가 action proposal을 만든다.
+2. risk classifier가 위험도를 붙인다.
+3. policy engine이 자동/승인/차단을 결정한다.
+4. approval UI가 필요하면 사람에게 보여준다.
+5. approved action_id만 executor가 실행한다.
+6. result와 verification이 같은 run trace에 기록된다.
+```
+
+pseudo-flow로 쓰면 이런 모양입니다.
+
+```text
+action = {
+  id: "push-seojing-day6",
+  type: "git.push",
+  repo: "SEOJing",
+  branch: "main",
+  files: ["apps/web/content/study/agent-framework/day6.mdx"],
+  reversibility: "medium",
+  external_effect: true,
+}
+
+risk = classify(action)
+# Level 4: external side effect
+
+policy = decide(action, risk, standing_approvals, context)
+# allowed because scheduled SEOJing study publish standing approval matches exact scope
+
+result = execute(action)
+record_trace(action, risk, policy, result)
+```
+
+이렇게 해두면 UI가 바뀌어도 핵심 로직은 유지됩니다. CLI, Discord, Local PWA, cron이 모두 같은 approval/policy model을 쓸 수 있습니다.
+
+---
+
+## 8. cron에서는 “묻기”가 아니라 “안전한 기본값”이 필요하다
+
+예약 실행은 사람 개입 설계가 특히 어렵습니다. 04:00 cron에는 사용자가 없습니다. 이때 에이전트가 “진행할까요?”라고 물으면 작업은 멈춥니다.
+
+따라서 cron prompt에는 두 가지가 필요합니다.
+
+```text
+1. standing approval의 정확한 범위
+2. approval 밖의 작업을 만났을 때의 안전한 기본값
+```
+
+예를 들어 OkayJing 04:00 Dreaming은 SEOJing study post를 직접 작성하고 push할 수 있는 standing approval이 있습니다. 하지만 이 승인은 무제한이 아닙니다.
+
+```text
+허용됨
+- agent-framework study의 다음 dayN.mdx 작성
+- format/lint/build 검증
+- commit 1개 생성
+- origin main에 push
+- origin/main 일치 확인
+
+허용되지 않음
+- unrelated UI package 변경 포함
+- secrets 수정
+- gateway restart
+- 다른 repo의 main push
+- 외부 서비스 신규 설치
+- Cloudflare 설정 변경
+```
+
+cron에서 모호한 상황이 나오면, 질문 대신 안전한 기본값을 택해야 합니다.
+
+```text
+상황: canonical checkout이 dirty하다.
+나쁜 선택: dirty tree에서 적당히 stage하고 push한다.
+좋은 선택: origin/main에서 disposable worktree를 만들고, intended file만 검증/push한다.
+
+상황: public URL probe가 approval scanner에 막힌다.
+나쁜 선택: 성공한 것처럼 HTTP 상태를 지어낸다.
+좋은 선택: route readback skipped/blocked라고 보고하고, push/build/deploy evidence를 분리한다.
+
+상황: 새 기술 후보가 흥미롭지만 설치가 필요하다.
+나쁜 선택: 04:00에 바로 설치한다.
+좋은 선택: watch state에 기록하고, 실제 workflow need가 생길 때 prototype한다.
+```
+
+예약 실행에서 중요한 것은 “사람에게 물어보지 않는다”가 아닙니다. 사람 없는 시간에 **멈출 조건과 안전한 대체 경로**를 미리 정하는 겁니다.
+
+---
+
+## 9. 보고서는 승인 시스템의 일부다
+
+사람 개입을 줄이려면 보고가 더 정확해야 합니다. 사용자가 매번 승인하지 않더라도, 나중에 무엇이 일어났는지 확인할 수 있어야 하기 때문입니다.
+
+좋은 보고서는 이런 구분을 지킵니다.
+
+```text
+현재 적용
+- 이미 반영했고 검증한 것
+
+추천 액션
+- 아직 하지 않았고 사용자의 판단이나 별도 작업이 필요한 것
+
+차단
+- credentials, auth, 외부 승인, 실패한 검증 때문에 진행하지 못한 것
+
+감시 후보
+- 흥미롭지만 설치/적용하지 않은 기술
+```
+
+이 구분이 흐려지면 사용자는 시스템을 과신하거나 불신하게 됩니다.
+
+```text
+나쁜 보고
+- “Langfuse 도입 추천”을 매일 반복한다.
+- 사실은 watch-only인데 “흡수 완료”라고 말한다.
+- push하지 않았는데 public URL이 있다고 말한다.
+- 검증이 막혔는데 성공처럼 쓴다.
+
+좋은 보고
+- “OpenTelemetry trace shape은 현재 적용 기준에 반영됨.”
+- “Langfuse는 watch-only, 설치 안 함.”
+- “Day 6 post는 commit/push 완료, origin/main 일치 확인.”
+- “public route readback은 deploy 후 확인 필요.”
+```
+
+보고서는 단순한 마지막 문장이 아닙니다. 다음 실행이 읽을 수 있는 state이고, 사용자가 자율성을 계속 허용할지 판단하는 evidence입니다.
+
+---
+
+## 10. 프레임워크 확장 포인트로 보기
+
+오늘 내용을 프레임워크 확장 포인트로 정리하면 이렇습니다.
+
+```text
+HumanControlPolicy
+- classify_risk(action, context) -> RiskLevel
+- decide(action, risk, approvals, standing_rules) -> allow | ask | block
+- explain_decision(policy_result) -> user_visible_reason
+
+ApprovalStore
+- create_request(action, scope, expires_at)
+- resolve(request_id, approve | reject, actor)
+- consume(request_id, action_id)
+- audit(request_id)
+
+InterruptState
+- pause(run_id, reason, payload)
+- resume(run_id, answer_or_approval)
+- timeout(run_id)
+
+QuestionRouter
+- clarification
+- authorization
+- unblock
+- preference
+- report_ack
+
+RunTrace
+- action_proposed
+- risk_classified
+- policy_decided
+- human_answered
+- action_executed
+- verification_done
+```
+
+이 다섯 개가 있으면 “사람에게 물어보기”는 UI 기능이 아니라 프레임워크 기능이 됩니다.
+
+그리고 이 확장 포인트는 특정 제품에 묶이지 않습니다.
+
+```text
+CLI Hermes
+- 위험한 shell command 승인
+- /busy, /queue, /steer 같은 작업 중 입력 처리
+
+Discord Hermes
+- ✅/❌ 반응 승인
+- dashboard button action
+- voice task promotion confirmation
+
+OkayJing Local PWA
+- ticket done 승인
+- worker talk/session promotion
+- code review fix apply 버튼
+
+SEOJing publishing workflow
+- direct-to-main standing approval
+- exact scope verification
+- remote handoff report
+```
+
+표면은 달라도 내부 primitive는 같습니다. 이것이 프레임워크 설계입니다.
+
+---
+
+## 11. 작은 설계 연습: “댓글로 달까요?” 버튼
+
+SEOJing 글을 읽다가 독자가 “오케이징에게 물어보기”를 누른다고 합시다. 아래 CTA가 있습니다.
+
+```text
+이 내용을 댓글로 달아서 서징에게도 물어볼까요?
+작성자가 직접 볼 수 있어요!
+```
+
+이 기능을 그냥 버튼으로 보면 단순합니다.
+
+```text
+button clicked -> post comment
+```
+
+하지만 human-in-the-loop 관점에서는 더 많은 설계가 필요합니다.
+
+```text
+Action
+- type: public_comment.create
+- content: reader question + optional context
+- target: blog post comment area
+- external_effect: true
+- reversibility: medium
+- privacy_risk: possible user text exposure
+
+Policy
+- 자동 게시 금지
+- 사용자에게 공개될 내용 preview
+- 수정 가능
+- 최종 게시 버튼 별도
+
+Trace
+- question drafted
+- preview shown
+- user approved
+- comment posted
+- post id / url stored
+```
+
+이렇게 보면 “댓글로 달까요?”는 단순 UI가 아니라 Level 4 external side effect입니다. 반드시 preview와 approval이 필요합니다.
+
+반대로 “이 섹션에 대해 inline 질문 input을 열기”는 다릅니다.
+
+```text
+Action
+- type: local_ui.open_question_box
+- external_effect: false
+- risk: low
+
+Policy
+- 자동 허용
+```
+
+같은 Q&A 기능 안에서도 action마다 위험도가 다릅니다. 프레임워크가 action 단위로 판단해야 하는 이유입니다.
+
+---
+
+## 12. 오늘의 체크리스트
+
+에이전트 프레임워크에 사람 개입을 설계할 때는 아래 질문을 던질 수 있습니다.
+
+```text
+1. 이 action의 위험도는 몇 단계인가?
+2. read/write/external/destructive 중 어디에 속하는가?
+3. standing approval이 있다면 정확한 scope는 무엇인가?
+4. approval이 필요한 경우, 사용자가 판단할 충분한 정보를 보여주는가?
+5. approval record는 만료되고 한 번만 소비되는가?
+6. cron처럼 사람이 없는 환경에서는 안전한 fallback이 있는가?
+7. interrupt 후 resume할 수 있는 machine-readable state가 남는가?
+8. 질문이 clarification인지 authorization인지 구분되는가?
+9. 거절되었을 때 alternative path가 있는가?
+10. 최종 보고가 현재 적용/추천/차단/watch-only를 구분하는가?
+```
+
+이 체크리스트는 에이전트를 덜 자율적으로 만들기 위한 것이 아닙니다. 자율성이 필요한 곳에 자율성을 쓰고, 사람의 판단이 필요한 곳에서만 정확히 멈추기 위한 것입니다.
+
+---
+
+## 마무리
+
+오늘은 human-in-the-loop를 예외 처리나 confirm prompt가 아니라 프레임워크의 핵심 표면으로 봤습니다.
+
+정리하면 이렇습니다.
+
+```text
+나쁜 설계
+- 애매하면 그냥 묻는다.
+- 위험한 문자열만 막는다.
+- 승인 UI와 실행 도구가 섞여 있다.
+- cron에서 물어보다가 멈춘다.
+- 보고서가 현재 적용과 추천을 섞는다.
+
+좋은 설계
+- action을 위험도별로 분류한다.
+- standing approval의 scope를 좁게 잡는다.
+- interrupt를 durable state로 남긴다.
+- approval gate와 executor를 분리한다.
+- 질문 타입을 구분한다.
+- 사람 없는 환경에는 안전한 기본값을 둔다.
+- 보고서가 다음 실행의 evidence가 된다.
+```
+
+개인 에이전트를 오래 쓰려면, 사용자는 매번 손으로 조종하고 싶지 않습니다. 하지만 완전히 방치하고 싶지도 않습니다. 프레임워크의 일은 그 사이를 감으로 때우지 않고 구조로 만드는 것입니다.
+
+다음 글에서는 이 구조가 여러 에이전트나 worker로 넓어질 때 필요한 **handoff와 artifact lifecycle**을 보겠습니다. 에이전트끼리 일을 넘긴다는 말이 단순히 “다른 모델에게 물어보기”가 아니라, 어떤 계약과 산출물을 넘겨야 재개·검증·폐기가 가능한지 볼 차례입니다.
