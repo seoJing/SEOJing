@@ -1,0 +1,489 @@
+---
+title: "에이전트 프레임워크 스터디 Day 8: 여러 에이전트는 역할이 아니라 계약으로 연결된다"
+date: 2026-06-18
+tags:
+  - 에이전트 프레임워크
+  - AI 개발
+  - Handoff
+  - A2A
+  - Capability
+  - Artifact
+  - 시스템 설계
+description: 여러 에이전트나 프로필을 붙일 때 사람 역할놀이가 아니라 capability, task, artifact, handoff contract로 연결해야 하는 이유를 reverse-engineering합니다. A2A식 사고와 OkayJing hub-spoke 운영을 바탕으로 안전한 협업 경계를 봅니다.
+---
+
+> 예상 읽기 시간: 20~30분
+
+## 오늘의 목표
+
+Day 1에서는 에이전트를 모델 하나가 아니라 **harness**, 즉 실행 환경 전체로 봤습니다. Day 2에서는 도구를 함수가 아니라 **계약(contract)** 으로 봤고, Day 3에서는 컨텍스트를 **실행 상태(state)** 로 봤습니다. Day 4에서는 관측 가능성, Day 5에서는 워크플로와 에이전트 판단의 경계, Day 6에서는 위험도 기반 사람 개입, Day 7에서는 이벤트와 산출물 수명주기를 다뤘습니다.
+
+오늘은 자연스럽게 다음 질문으로 넘어갑니다.
+
+```text
+에이전트가 하나가 아니라 여러 개라면,
+무엇이 서로를 이어 주는가?
+```
+
+처음에는 이렇게 생각하기 쉽습니다.
+
+```text
+- planner agent
+- coder agent
+- reviewer agent
+- researcher agent
+```
+
+이름만 보면 그럴듯합니다. 그런데 실제 운영에서는 역할 이름보다 더 중요한 것이 있습니다.
+
+```text
+이 에이전트는 무엇을 할 수 있는가?
+어떤 입력을 받는가?
+어떤 산출물을 돌려주는가?
+어떤 권한을 갖는가?
+실패하면 어떤 상태로 남기는가?
+다음 에이전트는 무엇을 믿고 이어받는가?
+```
+
+그래서 오늘의 문장은 이겁니다.
+
+> 여러 에이전트는 사람 역할이 아니라 **계약된 capability와 handoff**로 연결된다.
+
+여기서 capability는 “할 수 있는 일”이고, handoff는 “일을 넘기는 방식”입니다. A2A 같은 프로토콜이 말하는 방향도 결국 이쪽입니다. 에이전트를 사람처럼 부르는 것이 아니라, 작업·메시지·산출물·상태 전이로 연결하는 겁니다.
+
+---
+
+## 1. 역할 이름만 늘리면 왜 불안정해지는가
+
+멀티 에이전트 구조를 만들 때 가장 흔한 실수는 이름을 먼저 붙이는 겁니다.
+
+```text
+Planner가 계획한다.
+Coder가 구현한다.
+Reviewer가 검토한다.
+Manager가 조율한다.
+```
+
+문제는 이 설명만으로는 아무것도 고정되지 않는다는 점입니다.
+
+```text
+Planner가 어디까지 결정해도 되는가?
+Coder는 계획을 바꿔도 되는가?
+Reviewer는 수정까지 해도 되는가?
+Manager는 실패한 작업을 어떻게 재시도하는가?
+```
+
+역할 이름은 사람이 읽기에는 편하지만 시스템 계약은 아닙니다. 같은 “reviewer”라도 어떤 시스템에서는 스타일만 봅니다. 다른 시스템에서는 보안 이슈까지 막습니다. 또 다른 시스템에서는 테스트를 직접 돌리고 수정까지 합니다.
+
+역할이 계약으로 내려오지 않으면 이런 문제가 생깁니다.
+
+```text
+- 같은 일을 두 에이전트가 중복해서 한다.
+- 아무도 마지막 검증 책임을 지지 않는다.
+- 중간 산출물이 대화 요약으로만 남아 다음 실행이 재현되지 않는다.
+- 권한이 넓은 에이전트가 필요 이상으로 파일을 수정한다.
+- 실패가 '잘 안 됨'이라는 문장으로만 남고 재시도 가능한 상태가 없다.
+```
+
+그래서 멀티 에이전트 구조의 첫 질문은 “몇 명의 에이전트를 둘까?”가 아닙니다.
+
+```text
+어떤 capability를 분리해야 하는가?
+```
+
+---
+
+## 2. capability는 함수보다 크고, 사람 역할보다 작다
+
+capability는 함수 하나보다 큽니다. 예를 들어 `read_file()`은 도구 함수입니다. 하지만 “SEOJing 글을 검증 가능한 상태로 발행한다”는 capability입니다.
+
+반대로 capability는 사람 역할보다 작습니다. “개발자 에이전트”는 너무 큽니다. 그 안에는 요구사항 정리, 파일 수정, 테스트 실행, 리뷰 반영, 커밋 작성, 배포 확인이 섞입니다.
+
+좋은 capability는 보통 이렇게 생겼습니다.
+
+```text
+Capability: seojing_content_publish
+Inputs:
+  - target_series
+  - next_day
+  - topic_contract
+  - repo_root
+Permissions:
+  - write content MDX under scoped path
+  - run format/lint/build
+  - commit scoped files
+  - push to origin/main if standing approval applies
+Outputs:
+  - changed_files
+  - verification_results
+  - commit_sha
+  - public_url
+Failure states:
+  - blocked_by_dirty_scope
+  - verification_failed
+  - push_failed
+  - deploy_pending
+```
+
+이렇게 쓰면 “콘텐츠 작성자”라는 막연한 이름보다 훨씬 선명합니다.
+
+프레임워크 관점에서는 capability가 다음 네 가지를 묶습니다.
+
+```text
+1. 입력 계약
+2. 권한 범위
+3. 실행 절차
+4. 산출물/상태 계약
+```
+
+에이전트는 이 capability를 수행하는 실행 주체일 뿐입니다. 오늘은 이 구분이 중요합니다.
+
+---
+
+## 3. handoff는 요약 전달이 아니다
+
+에이전트 간 handoff를 “앞 에이전트가 뒤 에이전트에게 요약을 써 준다” 정도로 생각하면 금방 깨집니다.
+
+요약은 유용하지만 충분하지 않습니다.
+
+예를 들어 구현 에이전트가 리뷰 에이전트에게 이렇게 넘겼다고 합시다.
+
+```text
+수정 완료. 테스트도 통과했습니다. 확인 부탁합니다.
+```
+
+리뷰 에이전트는 무엇을 확인해야 할까요?
+
+```text
+- 어떤 파일이 바뀌었는가?
+- 사용자의 원래 요구는 무엇이었는가?
+- 테스트는 어떤 명령으로 돌렸는가?
+- 실패한 검사는 없었는가?
+- 미해결 판단은 무엇인가?
+- 커밋/푸시가 허용된 작업인가?
+```
+
+이 정보가 없으면 리뷰는 다시 처음부터 탐색해야 합니다. 그러면 멀티 에이전트는 병렬성과 전문성을 얻는 대신, 재탐색 비용만 키웁니다.
+
+handoff는 최소한 이런 구조를 가져야 합니다.
+
+```text
+HandoffContract:
+  task_id: W-20260618-001
+  source_capability: implementation
+  target_capability: final_review
+  user_intent: "..."
+  scope:
+    allowed_paths: [...]
+    no_touch: [...]
+  artifacts:
+    - path: changed-file-list.txt
+    - path: test-output.md
+    - path: diff.patch
+  claims:
+    - "format passed"
+    - "lint passed"
+  open_questions:
+    - "public deploy not checked yet"
+  required_decision:
+    - "block or approve remote handoff"
+```
+
+요약은 이 계약의 한 필드일 수 있습니다. 하지만 handoff 자체가 요약은 아닙니다.
+
+---
+
+## 4. A2A식 사고: agent card, task, artifact
+
+A2A(Agent2Agent) 같은 흐름이 흥미로운 이유는 “에이전트를 사람처럼 대화시키자”가 아니라, 에이전트 사이의 경계를 표준 객체로 만들려 하기 때문입니다.
+
+핵심 아이디어를 단순화하면 이렇습니다.
+
+```text
+AgentCard:
+  이 에이전트는 무엇을 할 수 있는가?
+  어떤 인증/권한이 필요한가?
+  어떤 입력/출력 형식을 쓰는가?
+
+Task:
+  지금 맡겨진 일은 무엇인가?
+  상태는 queued/running/completed/failed 중 어디인가?
+
+Message:
+  작업 중 오간 설명이나 요청은 무엇인가?
+
+Artifact:
+  작업 결과로 남은 파일/데이터/보고서는 무엇인가?
+```
+
+이 구조는 OkayJing에도 직접 연결됩니다.
+
+```text
+OkayJing Hub
+  - 사용자와 대화한다.
+  - 최종 결정을 소유한다.
+  - 티켓/결과 ledger를 관리한다.
+
+Spoke profile
+  - 특정 프로젝트/작업 세계의 맥락을 가진다.
+  - 제한된 contract를 받아 실행한다.
+  - 결과와 검증 근거를 artifact로 돌려준다.
+
+Work ledger
+  - handoff contract와 결과 ledger를 남긴다.
+  - full transcript를 hub에 흡수하지 않는다.
+```
+
+이건 “planner, coder, reviewer를 만들자”보다 훨씬 운영적입니다. Hub와 spoke는 사람 역할 이름이 아니라 책임 경계입니다.
+
+---
+
+## 5. OkayJing hub-spoke를 capability 관점으로 다시 보기
+
+OkayJing의 현재 원칙은 `default` profile이 사용자-facing Hub이고, `seojing`, `okejing-ops` 같은 profile이 task-world spoke가 되는 구조입니다.
+
+이 구조를 capability로 쓰면 이렇게 볼 수 있습니다.
+
+```text
+Hub capability:
+  - user_conversation
+  - final_decision
+  - ticket_ledger
+  - absorption_policy
+  - cross_profile_memory_policy
+
+SEOJing spoke capability:
+  - repo_context_read
+  - content_generation
+  - local_verification
+  - scoped_publish_when_approved
+
+Ops spoke capability:
+  - local_api_status
+  - dashboard_health
+  - cron_prompt_patch
+  - work_ledger_run
+```
+
+여기서 중요한 점은 Hub가 모든 세부 맥락을 먹어치우지 않는다는 겁니다.
+
+나쁜 흡수는 이런 모양입니다.
+
+```text
+Hub memory에 spoke 작업의 전체 대화, 중간 로그, 일회성 TODO를 저장한다.
+```
+
+좋은 흡수는 이런 모양입니다.
+
+```text
+Hub ledger에 계약, 산출물 위치, 검증 결과, 최종 판단, 재사용 가능한 규칙만 저장한다.
+```
+
+이 차이가 커집니다. 에이전트가 여러 개가 될수록 기억과 상태가 섞일 위험도 커지기 때문입니다.
+
+---
+
+## 6. handoff 실패 패턴
+
+여러 에이전트를 연결할 때 자주 보는 실패를 정리해봅시다.
+
+### 6.1 책임 없는 relay
+
+```text
+A: B에게 넘겼습니다.
+B: 받은 것 같습니다.
+Hub: 완료된 건가?
+```
+
+누구도 완료 기준을 소유하지 않습니다. 해결책은 handoff contract에 `required_decision`과 `acceptance_criteria`를 넣는 겁니다.
+
+### 6.2 transcript 복사
+
+```text
+앞 세션 전체를 뒤 에이전트에게 붙여 넣는다.
+```
+
+당장은 편합니다. 하지만 token 비용이 커지고, 오래된 판단과 현재 요구가 섞입니다. 해결책은 transcript가 아니라 contract와 artifact pointer를 넘기는 겁니다.
+
+### 6.3 권한 과잉 spoke
+
+```text
+spoke가 Hub처럼 모든 메모리와 모든 파일을 수정할 수 있다.
+```
+
+그러면 isolation의 의미가 사라집니다. spoke는 scoped path, scoped tool, scoped output을 가져야 합니다.
+
+### 6.4 결과만 있고 근거가 없음
+
+```text
+완료: 성공
+```
+
+검증 명령, 출력, 산출물 위치가 없으면 다음 실행은 믿을 수 없습니다. 성공은 claim이 아니라 evidence-backed state여야 합니다.
+
+### 6.5 사람 역할놀이로 흐름
+
+```text
+나는 전략가입니다.
+나는 비평가입니다.
+나는 코더입니다.
+```
+
+말투는 생기지만 프레임워크는 단단해지지 않습니다. capability contract가 없으면 역할은 장식입니다.
+
+---
+
+## 7. capability manifest의 최소 형태
+
+개인 에이전트 프레임워크를 만든다면, 거창한 표준부터 구현할 필요는 없습니다. 먼저 로컬 manifest를 하나 만들 수 있습니다.
+
+```yaml
+id: seojing-publisher
+kind: profile-capability
+owner: OkayJing Hub
+summary: SEOJing study/okayJing content publishing lane
+inputs:
+  - series
+  - topic
+  - target_path
+  - standing_approval_scope
+permissions:
+  files:
+    write:
+      - apps/web/content/study/agent-framework/day*.mdx
+      - apps/web/content/okayJing/**
+  commands:
+    - pnpm exec prettier
+    - pnpm format:check
+    - pnpm lint
+    - pnpm build
+    - git commit
+    - git push origin main
+constraints:
+  - do_not_stage_unrelated_files
+  - use_isolated_worktree_when_canonical_checkout_dirty
+  - run_notjing_or_content_review_gate
+outputs:
+  - changed_files
+  - verification_log
+  - commit_sha
+  - public_url
+  - workflow_trace_id
+failure_states:
+  - verification_failed
+  - unrelated_dirty_scope
+  - deploy_not_confirmed
+```
+
+이 manifest는 코드가 아니어도 됩니다. 처음에는 Markdown/YAML 문서여도 됩니다. 에이전트가 자기 능력을 설명할 때 “나는 개발자야”가 아니라 “나는 이런 입력과 권한으로 이런 산출물을 만들 수 있어”라고 말하면 충분합니다.
+
+---
+
+## 8. handoff state machine
+
+handoff도 상태 기계로 보면 더 선명해집니다.
+
+```text
+[DRAFT]
+  contract written but not accepted
+
+[QUEUED]
+  target profile/capability can claim it
+
+[RUNNING]
+  target is executing with bounded permissions
+
+[NEEDS_INPUT]
+  execution reached a real missing decision/input
+
+[FAILED]
+  execution stopped with reason and evidence
+
+[COMPLETED]
+  artifact and verification are attached
+
+[ABSORBED]
+  Hub reviewed result and stored only durable outcome/rules
+
+[ARCHIVED or DISCARDED]
+  task-local context is closed without promotion
+```
+
+이 상태가 있으면 “에이전트가 일하고 있나?”를 대화 감으로 추측하지 않아도 됩니다. Office UI든 Discord dashboard든, 사용자는 현재 상태를 볼 수 있습니다.
+
+OkayJing 서식지의 pixel office 방향도 여기와 맞습니다. worker sprite가 중요한 이유는 귀여운 캐릭터 때문이 아닙니다. 각 worker/spoke가 어떤 상태인지, 말을 걸 수 있는지, 결과를 흡수할지 폐기할지 보여주는 affordance이기 때문입니다.
+
+---
+
+## 9. 여러 에이전트를 붙이기 전에 물어야 할 질문
+
+멀티 에이전트 구조를 만들기 전에 이 질문을 먼저 던지면 과설계를 줄일 수 있습니다.
+
+```text
+1. 이 일은 하나의 workflow로 충분한가?
+2. 다른 context world가 필요해서 profile을 나눠야 하는가?
+3. 나눴을 때 handoff artifact가 무엇인가?
+4. Hub가 최종적으로 흡수해야 할 정보는 무엇인가?
+5. 실패하면 어디에 어떤 상태로 남는가?
+6. 사람 승인이 필요한 위험 경계는 어디인가?
+7. 다음 실행이 이 결과를 재사용할 수 있는가?
+```
+
+이 질문에 답하지 못하면 에이전트를 늘려도 복잡도만 올라갑니다.
+
+반대로 답할 수 있다면 작은 profile 하나만 추가해도 효과가 큽니다.
+
+```text
+큰 멀티 에이전트 팀 < 작은 capability + 좋은 handoff
+```
+
+이게 개인 에이전트 프레임워크에서는 특히 중요합니다. 회사형 조직도를 흉내 내기보다, 개인 작업이 실제로 이어지는 단위를 찾아야 합니다.
+
+---
+
+## 10. 오늘의 설계 규칙
+
+오늘 내용을 OkayJing식 규칙으로 줄이면 이렇습니다.
+
+```text
+1. 에이전트 이름보다 capability contract를 먼저 쓴다.
+2. handoff는 요약이 아니라 task/artifact/state 계약이다.
+3. Hub는 최종 decision과 ledger를 소유한다.
+4. Spoke는 bounded context와 scoped permission을 가진다.
+5. 전체 transcript를 흡수하지 말고 결과/검증/재사용 규칙만 흡수한다.
+6. multi-agent는 역할놀이가 아니라 상태 전이와 산출물 흐름이다.
+```
+
+이 규칙은 A2A, MCP, LangGraph, OpenAI Agents SDK 같은 흐름과도 잘 맞습니다. 이름은 다르지만 공통 방향은 비슷합니다.
+
+```text
+- capability를 설명한다.
+- task 상태를 남긴다.
+- artifact를 전달한다.
+- human-in-the-loop를 명시한다.
+- trace/eval로 검증한다.
+```
+
+OkayJing이 여기에 더하는 차이는 local-first와 개인 맥락입니다. public SaaS 팀 에이전트가 아니라, Mac mini에서 진규의 작업 흔적과 블로그, 티켓, Discord/Local UI를 연결하는 개인 운영체계라는 점입니다.
+
+---
+
+## 마무리
+
+여러 에이전트를 붙인다는 말은 멋있지만, 실제로는 꽤 건조한 설계 문제입니다.
+
+```text
+누가 무엇을 할 수 있고,
+어떤 입력을 받고,
+어떤 권한으로 실행하며,
+무엇을 남기고,
+누가 최종 판단하는가?
+```
+
+이 질문에 답하는 것이 capability와 handoff입니다.
+
+오늘의 핵심은 이것입니다.
+
+> 멀티 에이전트의 단위는 사람이 아니라 계약이다.
+
+다음 글에서는 이 계약들이 쌓였을 때 필요한 **메모리/학습/반성 루프**를 더 구체적으로 보겠습니다. 에이전트가 실패를 어떻게 다음 실행의 절차 개선으로 바꾸는지, 그리고 어디까지를 memory·skill·workflow trace·eval dataset으로 나눠야 하는지 살펴볼 예정입니다.
