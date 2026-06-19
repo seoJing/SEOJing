@@ -1,0 +1,704 @@
+---
+title: "에이전트 프레임워크 스터디 Day 10: harness는 팀 아키텍처를 만드는 공장이다"
+date: 2026-06-20
+tags:
+  - 에이전트 프레임워크
+  - AI 개발
+  - Harness
+  - Multi Agent
+  - Skills
+  - Workflow
+  - 시스템 설계
+description: harness를 단순 테스트 환경이나 공유 프롬프트가 아니라 모델, 컨텍스트, 도구, 권한, 작업 원장, 검증, 피드백을 묶어 전문 작업 단위를 찍어내는 팀 아키텍처 공장으로 reverse-engineering합니다.
+---
+
+> 예상 읽기 시간: 20~30분
+
+## 오늘의 목표
+
+Day 1에서는 에이전트를 모델 하나가 아니라 **harness**, 즉 실행 환경 전체로 봤습니다. Day 2에서는 도구를 계약으로 봤고, Day 3에서는 컨텍스트를 실행 상태로 봤습니다. Day 4에서는 관측 가능성, Day 5에서는 워크플로와 에이전트 판단의 경계, Day 6에서는 사람 개입, Day 7에서는 이벤트와 산출물, Day 8에서는 capability/handoff, Day 9에서는 확장점을 책임과 권한의 경계면으로 봤습니다.
+
+오늘은 Day 1의 harness 개념을 한 단계 더 밀어붙입니다.
+
+```text
+harness는 테스트 도구인가?
+공유 프롬프트인가?
+아니면 agent team을 찍어내는 실행 환경인가?
+```
+
+이 시리즈에서 말하는 harness는 테스트 harness보다 넓습니다. Claude Code나 Hermes 같은 도구를 실제로 오래 쓰다 보면, 중요한 것은 “AI가 똑똑한가”보다 “어떤 실행 환경 안에서 일하게 만들었는가”가 됩니다.
+
+> 좋은 harness는 에이전트를 하나 더 만드는 기능이 아니라, 반복 가능한 전문 작업 단위를 만드는 공장이다.
+
+여기서 말하는 전문 작업 단위는 사람이 흉내 내는 역할극이 아닙니다. `기획자`, `리뷰어`, `코더` 같은 이름을 붙이는 것이 핵심도 아닙니다. 핵심은 아래 조각이 함께 고정되는 것입니다.
+
+```text
+model
++ prompt/context
++ source data
++ tools
++ permissions
++ workflow
++ validation
++ artifact contract
++ feedback loop
+```
+
+이 묶음이 안정되면 “이번에는 어떤 에이전트에게 맡길까?”가 아니라 “이 일은 어떤 harness로 실행해야 하나?”라고 생각할 수 있습니다.
+
+---
+
+## 1. harness를 너무 좁게 보면 생기는 착각
+
+개발에서 harness라는 말은 보통 테스트 환경을 떠올리게 합니다.
+
+```text
+input을 넣고
+함수를 실행하고
+output을 검증하는 틀
+```
+
+이 뜻도 맞습니다. 하지만 에이전트 프레임워크에서 harness를 이렇게만 보면 부족합니다.
+
+AI 작업에서 실패는 단순히 정답이 틀려서만 생기지 않습니다.
+
+```text
+- 필요한 파일을 못 읽었다.
+- 오래된 기억을 현재 사실처럼 썼다.
+- tool output을 지시처럼 믿었다.
+- 승인 없이 외부 side effect를 냈다.
+- 중간 산출물을 남기지 않아 이어받을 수 없다.
+- 리뷰는 했지만 어떤 diff를 봤는지 모른다.
+- 실패했는데 ticket/session/cron 어디에도 기록이 없다.
+```
+
+이런 실패는 모델 하나를 바꾼다고 해결되지 않습니다. 실행 환경을 설계해야 합니다.
+
+그래서 agent harness는 더 넓은 구조입니다.
+
+```text
+Agent Harness
+  input contract
+  context assembly
+  tool boundary
+  permission policy
+  execution workflow
+  artifact capture
+  verification gate
+  feedback / memory / skill update
+```
+
+테스트 harness가 “함수를 안전하게 실행하는 틀”이라면, agent harness는 “AI 작업을 안전하게 실행하고 남기는 틀”입니다.
+
+---
+
+## 2. 공유 프롬프트만으로는 팀이 되지 않는다
+
+AI-assisted development를 오래 쓰다 보면 이런 시도를 하게 됩니다.
+
+```text
+- backend agent prompt
+- frontend agent prompt
+- reviewer prompt
+- planner prompt
+- QA prompt
+```
+
+처음에는 효과가 있습니다. 그런데 곧 한계가 옵니다.
+
+```text
+Planner가 repo 상태를 모른다.
+Reviewer가 실제 lint/test 결과를 모른다.
+Coder가 ticket acceptance criteria를 잊는다.
+QA가 어떤 브랜치/diff를 봐야 하는지 모른다.
+각 agent가 서로 다른 사실을 기억한다.
+```
+
+이 상태에서 프롬프트만 더 길게 쓰면 팀이 되는 것처럼 보이지만, 실제로는 “긴 지시문을 가진 독립 채팅방 여러 개”가 됩니다.
+
+팀 아키텍처가 되려면 프롬프트보다 먼저 아래가 있어야 합니다.
+
+```text
+Task Contract:
+  intent
+  scope
+  acceptance criteria
+  no-touch area
+  source refs
+  allowed tools
+  output artifact
+  verification required
+```
+
+그리고 각 전문 작업 단위는 같은 계약을 다른 관점으로 읽어야 합니다.
+
+```text
+Planner harness:
+  contract -> plan / risk / sequence
+
+Implementer harness:
+  contract + plan -> changed files / local checks
+
+Reviewer harness:
+  contract + diff + checks -> pass/fail findings
+
+Publisher harness:
+  contract + final diff + gate result -> commit/push/report
+```
+
+이렇게 보면 “agent team”의 중심은 사람이 붙인 역할명이 아니라 **공유 계약과 산출물 흐름**입니다.
+
+---
+
+## 3. harness는 무엇을 고정하고 무엇을 열어 둘까?
+
+좋은 harness는 모든 것을 고정하지 않습니다. 하지만 아무것도 고정하지 않는 것도 아닙니다.
+
+예를 들어 SEOJing 글 발행 harness를 생각해 봅니다.
+
+```text
+Fixed:
+  repo path
+  content folder convention
+  frontmatter shape
+  format/lint/build commands
+  commit scope
+  public URL verification
+  ticket report format
+
+Variable:
+  post topic
+  examples
+  article structure
+  external references
+  final wording
+```
+
+반대로 Notjing final gate harness는 다릅니다.
+
+```text
+Fixed:
+  git status/diff inspection
+  untracked file review
+  deterministic checks
+  OCR or fallback reviewer
+  high/medium finding resolution rule
+  no remote handoff on unresolved blockers
+
+Variable:
+  project-specific commands
+  severity judgement evidence
+  whether OCR must rerun after fix
+```
+
+즉 harness는 다음을 정합니다.
+
+```text
+무엇은 매번 같아야 하는가?
+무엇은 매번 판단해야 하는가?
+무엇은 절대 자동화하면 안 되는가?
+```
+
+이 세 질문을 나누지 않으면 자동화가 이상한 방향으로 갑니다. 매번 같아야 할 검증을 모델에게 맡기고, 매번 판단해야 할 제품 결정을 스크립트로 고정하고, 절대 자동화하면 안 되는 파괴적 작업을 cron에 넣게 됩니다.
+
+---
+
+## 4. 팀 아키텍처 공장으로서의 harness
+
+이제 harness를 “전문 agent 생성기”처럼 그려보겠습니다.
+
+```text
+Harness Template
+  + Task Contract
+  + Profile / Context Scope
+  + Tool Allowlist
+  + Workflow Steps
+  + Artifact Schema
+  + Verification Gate
+  + Feedback Rule
+        |
+        v
+Runnable Work Unit
+```
+
+여기서 `Runnable Work Unit`은 꼭 별도 프로세스일 필요는 없습니다.
+
+```text
+- 같은 Hermes 세션 안에서 수행되는 절차일 수도 있고
+- 별도 profile/spoke로 실행될 수도 있고
+- cron job일 수도 있고
+- CI job일 수도 있고
+- MCP tool 뒤쪽의 worker일 수도 있습니다.
+```
+
+중요한 것은 “독립적으로 맡길 수 있을 만큼 계약이 닫혀 있는가”입니다.
+
+### 예시: 글 발행 work unit
+
+```text
+Input:
+  series = agent-framework
+  next_day = 10
+  topic = harness as team architecture factory
+
+Allowed tools:
+  file write
+  pnpm format/lint/build
+  git commit/push main
+
+No-touch:
+  unrelated local drafts
+  provider/model config
+  gateway restart
+
+Artifacts:
+  day10.mdx
+  local verification log
+  commit hash
+  public URL
+  ticket report
+
+Done when:
+  format/lint/build pass
+  pushed HEAD == origin/main
+  public route verified or deploy evidence recorded
+```
+
+이 정도면 사람도, Hermes도, 별도 profile도 같은 기준으로 일을 이어받을 수 있습니다.
+
+### 예시: local evidence routing work unit
+
+```text
+Input:
+  large source/log/session corpus
+  question
+
+Allowed tools:
+  local index/search/router
+  source coordinate extraction
+
+No-touch:
+  durable memory write
+  remote upload of raw logs
+
+Artifacts:
+  selected source spans
+  confidence notes
+  stale/missing evidence flags
+
+Done when:
+  cloud reasoning receives coordinates, not raw dump
+```
+
+이것도 harness입니다. 모델에게 “요약해 줘”라고 던지는 것이 아니라, 어떤 증거를 어떤 형태로 넘길지 정하는 실행 환경입니다.
+
+---
+
+## 5. profile/spoke는 역할극이 아니라 context boundary다
+
+여러 에이전트를 쓴다고 하면 보통 역할명을 먼저 나눕니다.
+
+```text
+planner
+coder
+reviewer
+manager
+```
+
+하지만 개인 agent framework에서는 더 중요한 구분이 있습니다.
+
+```text
+이 작업은 어떤 context를 오래 들고 있어야 하는가?
+이 작업의 실패 비용은 어느 정도인가?
+이 작업 결과가 hub에 흡수될 가치가 있는가?
+```
+
+그래서 profile/spoke는 사람 흉내가 아니라 context boundary로 봐야 합니다.
+
+```text
+Hub:
+  user conversation
+  final decision
+  ticket/result ledger
+  reusable rule absorption
+
+Stable Spoke:
+  repeated project context
+  dense local conventions
+  recurring verification pattern
+
+Disposable Spoke:
+  one-off exploration
+  isolated risky context
+  archive/discard after result
+```
+
+이 구조에서 harness는 spoke를 만들지 말지까지 판단합니다.
+
+```text
+if repetition is low and context is small:
+  stay in hub session
+
+if repetition is high and project conventions are dense:
+  use stable profile
+
+if task is risky/noisy/exploratory:
+  use disposable profile or isolated worktree
+```
+
+여기서 중요한 점은 hub가 모든 transcript를 흡수하지 않는다는 것입니다. hub가 가져야 할 것은 계약, 산출물, 검증, 최종 판단, 재사용 가능한 규칙입니다.
+
+---
+
+## 6. skill은 harness의 일부이지 전부가 아니다
+
+Hermes의 skill 시스템은 harness를 만드는 데 중요합니다. 하지만 skill 하나가 harness 전체는 아닙니다.
+
+Skill은 보통 이런 것을 담습니다.
+
+```text
+when to use
+source-of-truth paths
+commands
+pitfalls
+verification checklist
+report format
+```
+
+즉 skill은 절차적 기억입니다. 하지만 실제 harness는 skill 밖의 것까지 포함합니다.
+
+```text
+skill document
++ active config
++ enabled tools
++ repo state
++ ticket state
++ session context
++ cron delivery mode
++ external credentials availability
++ local files/artifacts
+```
+
+그래서 같은 skill을 로드해도 실행 결과가 다를 수 있습니다. 예를 들어 `seojing` skill은 SEOJing repo의 규칙을 알려 주지만, 실제 발행 harness는 아래 상태를 먼저 봐야 합니다.
+
+```text
+- canonical checkout이 dirty인가?
+- origin/main이 앞서 있는가?
+- node_modules가 있는가?
+- 이번 run은 commit/push standing approval 범위인가?
+- unrelated draft가 같이 build에 섞이는가?
+```
+
+이 상태 점검까지 포함해야 “스킬을 사용했다”가 아니라 “harness가 작동했다”고 말할 수 있습니다.
+
+---
+
+## 7. harness의 최소 스키마
+
+프레임워크를 직접 설계한다면 harness를 최소한 이런 스키마로 표현할 수 있습니다.
+
+```ts
+type AgentHarness = {
+  name: string;
+  trigger: TriggerContract;
+  input: InputSchema;
+  context: ContextPolicy;
+  tools: ToolPolicy;
+  permissions: PermissionPolicy;
+  workflow: WorkflowStep[];
+  artifacts: ArtifactContract[];
+  verification: VerificationGate[];
+  feedback: FeedbackRule[];
+  disposition: DispositionPolicy;
+};
+```
+
+각 필드는 대충 이런 의미입니다.
+
+```text
+trigger:
+  언제 이 harness를 쓸지
+
+input:
+  무엇을 받아야 실행 가능한지
+
+context:
+  어떤 memory/session/file/source를 넣을지
+
+ tools:
+  어떤 도구를 노출하고 어떤 도구는 막을지
+
+permissions:
+  read-only / local write / external side effect / destructive action 경계
+
+workflow:
+  deterministic step과 agent judgement step의 순서
+
+artifacts:
+  중간/최종 산출물의 위치와 형식
+
+verification:
+  pass/fail 기준과 명령
+
+feedback:
+  memory, skill, trace, ticket 중 어디에 무엇을 남길지
+
+disposition:
+  결과를 hub에 absorb할지, archive할지, discard할지
+```
+
+이 스키마가 있으면 “에이전트를 하나 더 만든다”는 말이 훨씬 구체적이 됩니다.
+
+```text
+새 agent = 새 persona
+```
+
+가 아니라,
+
+```text
+새 agent = 새 harness instance
+```
+
+입니다.
+
+---
+
+## 8. 실패 사례로 보는 harness 설계
+
+### 실패 1: role은 있는데 output contract가 없다
+
+```text
+Reviewer에게 리뷰를 맡겼다.
+Reviewer가 길게 설명했다.
+무엇이 block인지, 무엇이 suggestion인지 알 수 없다.
+```
+
+수정:
+
+```text
+Reviewer output:
+  passed: boolean
+  blocking_issues: []
+  verification_gaps: []
+  non_blocking_suggestions: []
+```
+
+### 실패 2: 도구는 있는데 permission tier가 없다
+
+```text
+Worker가 파일을 읽다가 수정까지 했다.
+수정하다가 commit/push까지 시도했다.
+```
+
+수정:
+
+```text
+Tool policy:
+  read_file/search allowed
+  write_file requires local-write harness
+  git push requires publish harness + final gate
+```
+
+### 실패 3: memory와 task state가 섞인다
+
+```text
+이번 티켓 진행 상황을 memory에 저장했다.
+다음 주에는 이미 stale한 사실이 system context에 들어간다.
+```
+
+수정:
+
+```text
+facts/preferences -> memory
+task progress -> ticket/session/cron output
+procedure -> skill
+workflow evidence -> trace
+```
+
+### 실패 4: verification이 final response 안에만 있다
+
+```text
+모델이 “검증했습니다”라고 말했다.
+어떤 명령을 어디서 실행했는지 없다.
+```
+
+수정:
+
+```text
+Verification artifact:
+  command
+  cwd
+  exit code
+  relevant output
+  skipped reason if any
+```
+
+### 실패 5: disposable work가 hub를 오염시킨다
+
+```text
+한 번 조사한 후보 기술의 긴 README 요약이 hub memory에 저장된다.
+다음 briefing마다 같은 후보가 새 추천처럼 나온다.
+```
+
+수정:
+
+```text
+watch/candidate state -> briefing_seen.json
+absorbed rule -> skill/reference
+stable user preference -> memory
+```
+
+이런 실패들은 모델 성능 문제가 아닙니다. harness가 작업의 경계, 산출물, 검증, 흡수 방식을 정하지 않았기 때문에 생깁니다.
+
+---
+
+## 9. OkayJing식 harness 판단 기준
+
+OkayJing처럼 개인 운영 시스템을 만든다면 harness는 아래 기준으로 판단해야 합니다.
+
+```text
+1. 이 작업은 반복되는가?
+2. 실패했을 때 복구할 수 있는가?
+3. 산출물이 어디에 남는가?
+4. 어떤 정보가 hub에 흡수되어야 하는가?
+5. 어떤 정보는 버려야 하는가?
+6. 검증은 deterministic한가, agent judgement인가?
+7. 사람 개입은 위험도에 맞게 배치되어 있는가?
+8. 다음 실행에서 재사용할 수 있는 trace가 남는가?
+```
+
+이 기준으로 보면 “더 많은 에이전트”보다 “더 좋은 harness”가 먼저입니다.
+
+```text
+나쁜 방향:
+  agent를 많이 만든다
+  각 agent에게 긴 역할 프롬프트를 준다
+  결과를 채팅으로만 받는다
+
+좋은 방향:
+  반복 작업을 harness로 정의한다
+  입력/도구/권한/산출물/검증을 고정한다
+  필요한 경우에만 profile/spoke를 쓴다
+  결과를 ticket/artifact/trace/skill로 나누어 남긴다
+```
+
+이렇게 하면 개인 에이전트 시스템이 점점 복잡해져도 운영자가 어디를 봐야 하는지 알 수 있습니다.
+
+---
+
+## 10. 작은 설계 연습: SEOJing publish harness
+
+마지막으로 실제 harness를 아주 작게 적어 봅니다.
+
+```text
+name: seojing-study-publish
+trigger:
+  scheduled 04:00 run with standing approval
+
+input:
+  series
+  next day number
+  topic direction
+
+context:
+  origin/main worktree
+  existing series posts
+  seojing skill
+  content conventions
+
+tools:
+  file write
+  pnpm prettier/format/lint/build
+  git commit/push
+  ticket report
+
+permissions:
+  local write: allowed for intended MDX
+  commit/push: allowed only for approved study lane
+  unrelated files: no-touch
+  gateway restart: forbidden
+
+workflow:
+  1. inspect repo state
+  2. use isolated worktree if canonical tree is dirty/behind
+  3. choose next Day N from origin/main
+  4. write MDX
+  5. run formatting and build checks
+  6. commit only intended file
+  7. push to origin main
+  8. verify origin/main equality and public/deploy evidence
+  9. record ticket report and workflow trace
+
+artifacts:
+  apps/web/content/study/agent-framework/dayN.mdx
+  command outputs
+  commit hash
+  public URL
+  ticket report
+
+feedback:
+  if repeated failure -> patch skill/reference
+  if success -> workflow trace
+  if new reusable rule -> skill update
+```
+
+이런 식으로 적으면 harness는 추상 개념이 아니라 실행 가능한 설계 문서가 됩니다.
+
+그리고 이 문서가 충분히 안정되면 다음 단계가 가능합니다.
+
+```text
+- CLI command로 만들기
+- cron job으로 만들기
+- profile worker로 만들기
+- MCP tool로 노출하기
+- eval dataset으로 만들기
+```
+
+즉 harness는 agent framework의 내부 부품이면서, 동시에 자동화로 승격되는 전 단계입니다.
+
+---
+
+## 오늘의 정리
+
+오늘의 핵심은 이것입니다.
+
+```text
+harness = AI를 둘러싼 실행 환경
+```
+
+하지만 더 정확히 말하면 이렇습니다.
+
+```text
+harness = 반복 가능한 전문 작업 단위를 찍어내는 팀 아키텍처 공장
+```
+
+프롬프트는 harness의 일부입니다. skill도 harness의 일부입니다. profile도 harness의 일부일 수 있습니다. 하지만 어느 하나가 harness 전체는 아닙니다.
+
+좋은 harness는 아래를 함께 묶습니다.
+
+```text
+input contract
++ context policy
++ tool/permission boundary
++ workflow sequence
++ artifact contract
++ verification gate
++ feedback rule
++ disposition policy
+```
+
+이 관점이 생기면 agent framework를 볼 때 질문이 달라집니다.
+
+```text
+이 프레임워크는 몇 개의 agent를 만들 수 있나?
+```
+
+보다,
+
+```text
+이 프레임워크는 harness를 얼마나 명확하게 정의하고 실행하고 검증하고 학습시키는가?
+```
+
+를 보게 됩니다.
+
+다음 글에서는 이 harness가 남긴 실행 기록을 어떻게 trace/eval/portfolio graph로 바꾸는지, 그리고 단순 로그와 학습 가능한 workflow trace가 어떻게 다른지 보겠습니다.
