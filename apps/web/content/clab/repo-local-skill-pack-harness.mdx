@@ -1,0 +1,218 @@
+---
+title: "하네스가 명령어가 되면 안 됐다 — CLAB Agent Harness를 repo-local skill pack으로 줄인 이유"
+date: 2026-06-21
+tags:
+  - CLAB
+  - AI 개발
+  - Agent Harness
+  - Skill
+  - 팀 운영
+description: CLAB Agent Coaching Harness를 다시 정리하면서, 문서와 명령어 중심 구조를 자연어로 트리거되는 repo-local skill pack으로 바꾼 이유를 기록합니다.
+---
+
+<Subtitle level={2}>이전 글에서 놓친 지점</Subtitle>
+
+<Paragraph>
+  며칠 전에 CLAB Agent Coaching Harness를 정리하면서, 나는 하네스를 꽤 넓게
+  잡았다. `AGENTS.md`, `CLAUDE.md`, `.agent/*`, `docs/frontend-conventions/*`,
+  `docs/ai-harness/*`, `scripts/clab-harness/*` 같은 식이었다. 처음엔 이게
+  자연스러워 보였다. 팀원이 AI에게 일을 맡길 때 필요한 컨벤션, 코칭 메모리, 팀
+  메모리 승격 절차, 검증 스크립트를 repo 안에 체계적으로 남기려는 의도였다.
+</Paragraph>
+
+<Paragraph>
+  그런데 실제로 CLAB repo에 넣을 형태를 다시 보니, 조금 과했다. 하네스가 팀원을
+  돕는 장치라기보다 "또 하나의 사용법"이 될 위험이 있었다. 특히 `pnpm
+  clab-harness:*` 같은 명령어 흐름은 겉으로는 자동화처럼 보이지만, 사용자
+  입장에서는 외워야 할 절차가 하나 더 생긴다.
+</Paragraph>
+
+<Paragraph>
+  이 지점에서 방향을 바꿨다. CLAB 하네스의 기본 인터페이스는 명령어가 아니라
+  자연어여야 한다. 팀원은 그냥 "이거 작업해줘", "테스트해줘", "PR 초안 써줘"라고
+  말하면 되고, AI가 repo 안의 스킬과 규칙을 읽고 실행해야 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>문서가 아니라 agent가 읽는 skill pack</Subtitle>
+
+<Paragraph>
+  이번에 정리한 구조의 핵심은 repo-local skill pack이다. 사람에게 읽히는 긴 설명
+  문서를 repo 안에 잔뜩 넣는 방식이 아니라, Codex나 Claude Code 같은 coding
+  agent가 작업 중에 읽을 수 있는 실행 단위를 repo에 둔다.
+</Paragraph>
+
+```text
+AGENTS.md
+CLAUDE.md
+.agent/
+  skills/
+  rules/
+  templates/
+  scripts/
+.agent-local/   # gitignore
+```
+
+<Paragraph>
+  `AGENTS.md`와 `CLAUDE.md`는 얇은 entrypoint로만 둔다. 여기에는 모든 규칙을
+  복사하지 않는다. 대신 자연어 요청이 들어왔을 때 어떤 skill을 읽어야 하는지
+  알려준다. 실제 작업 방식은 `.agent/skills/*/SKILL.md`와 `.agent/rules/*`에
+  있다.
+</Paragraph>
+
+<Paragraph>
+  이게 이전 구조와 가장 큰 차이다. 예전 방향에서는 `docs/ai-harness`가 꽤 큰
+  비중을 차지했다. 하지만 CLAB은 이미 Notion을 쓴다. 설명, 온보딩, 회고, 근거
+  글은 Notion이나 블로그에 두는 편이 낫다. repo에는 agent가 작업 중 바로 써야
+  하는 운영 규칙만 남기는 쪽이 더 맞았다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>자연어 트리거로 바꿨다</Subtitle>
+
+<Paragraph>현재 하네스의 기본 라우팅은 이렇게 잡았다.</Paragraph>
+
+```text
+구현해줘 / 수정해줘 / 작업해줘 / 만들어줘
+→ .agent/skills/clab-work/SKILL.md
+
+테스트해줘 / 검증해줘 / 화면 확인해줘
+→ .agent/skills/clab-test/SKILL.md
+
+PR 만들어줘 / PR 초안 써줘
+→ .agent/skills/clab-pr/SKILL.md
+
+리뷰 반영해줘 / 코멘트 반영해줘
+→ .agent/skills/clab-review-fix/SKILL.md
+
+팀 컨벤션으로 남길 것 정리해줘
+→ .agent/skills/clab-team-learning/SKILL.md
+```
+
+<Paragraph>
+  별것 아닌 차이처럼 보일 수 있다. 하지만 팀에 AI 협업 방식을 넣을 때는 이
+  차이가 꽤 크다. 신규 인원에게 "이 명령어를 순서대로 실행하세요"라고 말하면,
+  하네스는 또 하나의 내부 도구가 된다. 반대로 "평소처럼 AI에게 말하면 되고,
+  repo가 AI에게 필요한 규칙을 알려준다"라고 만들면 진입 장벽이 낮아진다.
+</Paragraph>
+
+<Paragraph>
+  그래서 `.claude/commands/*`도 기본 구조에서는 뺐다. Claude Code에서 편의용
+  slash command를 둘 수는 있지만, 그게 하네스의 중심이 되면 안 된다고 봤다.
+  중심은 tool-specific command가 아니라 repo-local skill이다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>스크립트는 사라진 게 아니라 뒤로 들어갔다</Subtitle>
+
+<Paragraph>
+  그렇다고 스크립트를 버린 건 아니다. 오히려 스크립트는 더 분명한 역할을 갖게
+  됐다. 사람에게 노출되는 명령어가 아니라, agent가 내부에서 실행하는 결정론적
+  helper다.
+</Paragraph>
+
+```text
+.agent/scripts/check-local-files.mjs
+.agent/scripts/check-diff-hygiene.mjs
+.agent/scripts/suggest-verification.mjs
+.agent/scripts/collect-pr-evidence.mjs
+.agent/scripts/make-screenshot-plan.mjs
+```
+
+<Paragraph>
+  예를 들어 "테스트해줘"라고 하면 AI는 먼저 현재 diff를 보고,
+  `.agent-local/`이나 `.env`, `.next`, `node_modules` 같은 파일이 섞였는지
+  확인한다. 그다음 변경 파일을 기준으로 lint/build/test 후보를 고른다. UI
+  변경이면 PR에 붙일 screenshot evidence 후보도 만든다.
+</Paragraph>
+
+<Paragraph>
+  여기서 중요한 건 사용자가 이 스크립트 이름을 몰라도 된다는 점이다. 스크립트는
+  하네스의 부품이지 인터페이스가 아니다. 사람이 말하는 문장은 자연어이고,
+  agent는 그 자연어를 skill과 script로 번역한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>테스트 체계는 아직 다음 단계로 미뤘다</Subtitle>
+
+<Paragraph>
+  이번 정리 과정에서 테스트 이야기도 나왔다. root에는 `turbo run test`가 있지만,
+  실제 패키지별로 보면 아직 테스트 체계가 잡혀 있다고 보긴 어렵다.
+  `apps/member`에 Vitest와 Playwright 관련 의존성은 있지만, `test` script와 실제
+  테스트 파일은 아직 거의 없다. `apps/land`도 lint/build 중심이다.
+</Paragraph>
+
+<Paragraph>
+  그래서 지금의 `clab-test`는 엄밀히 말하면 unit test runner가 아니라 검증
+  skill에 가깝다. diff hygiene, local-only file check, lint/build 추천,
+  screenshot plan을 묶어 "이 브랜치가 PR에 올릴 수 있는 상태인지"를 보는 쪽이다.
+</Paragraph>
+
+<Paragraph>
+  테스트 코드를 제대로 넣는 일은 볼륨이 크다. member 앱의 validation이나 순수
+  util부터 Vitest seed를 넣고, 이후 Playwright smoke test를 붙이는 식으로 가는
+  게 맞다. 다만 그건 이번 하네스 MVP의 범위는 아니라고 봤다. 지금은 먼저 자연어
+  트리거와 검증 흐름을 안정시키고, 테스트 인프라는 차후 개선으로 남긴다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>이번에 줄인 것</Subtitle>
+
+<Paragraph>
+  정리하면 이번 방향 전환은 기능을 줄인 게 아니라, 표면을 줄인 작업이었다.
+</Paragraph>
+
+| 이전 방향                                | 현재 방향                                         |
+| ---------------------------------------- | ------------------------------------------------- |
+| `docs/ai-harness/*` 중심의 설명 문서     | `.agent/rules/*` 중심의 agent용 운영 규칙         |
+| `pnpm clab-harness:*` 명령어 흐름        | 자연어 요청 → skill 라우팅                        |
+| `.claude/commands/*` 같은 도구별 wrapper | `AGENTS.md`, `CLAUDE.md` 얇은 entrypoint          |
+| 사람이 절차를 따라 실행                  | AI가 skill과 script를 읽고 내부 실행              |
+| OKF를 눈에 보이는 모델로 설명            | OKF식 사고는 참고하되 repo에는 필요한 구조만 남김 |
+
+<Paragraph>
+  이전 글에서 말한 Agent Coaching Harness의 문제의식은 그대로다. AI가 작업
+  경계를 묻고, 적용한 컨벤션의 이유를 설명하고, 검증 결과와 PR 초안을 남기게
+  하려는 방향은 바뀌지 않았다. 다만 그걸 구현하는 repo 표면이 달라졌다.
+</Paragraph>
+
+<Paragraph>
+  하네스가 너무 많이 보이면, 사람은 하네스를 쓰기 전에 하네스부터 배워야 한다.
+  이건 별로 좋은 방향이 아니다. 좋은 하네스는 사용자가 명령어를 외우게 만드는
+  장치가 아니라, 사용자가 평소처럼 말했을 때 AI가 팀의 기준 안에서 움직이게
+  만드는 주변 구조에 가깝다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>남은 기준</Subtitle>
+
+<Paragraph>
+  이번 정리로 기준이 조금 더 좁아졌다. CLAB 하네스는 거대한 문서 시스템이나 별도
+  제품이 아니라, repo 안에 들어가는 얇은 skill pack이어야 한다. 사람은 자연어로
+  요청하고, agent는 entrypoint를 통해 skill을 고르고, 필요한 rule과 script를
+  읽고, 결과를 `.agent-local/`에 남긴다.
+</Paragraph>
+
+<Paragraph>
+  그리고 팀 규칙으로 올릴 만한 내용은 바로 공유 문서에 쓰지 않는다. 먼저
+  `.agent-local/proposals/`에 후보로 남기고, 사람이 승인한 뒤 `.agent/rules/`나
+  Notion으로 올린다. 개인 코칭과 팀 규칙의 경계는 계속 지켜야 한다.
+</Paragraph>
+
+<Paragraph>
+  결국 이번 하네스의 첫 버전은 "AI를 잘 쓰는 방법 문서"가 아니라 "AI가 CLAB
+  repo에서 덜 엇나가게 만드는 실행 표면"에 가깝다. 그래서 더 작아졌고, 오히려 더
+  실제 사용에 가까워졌다.
+</Paragraph>
+
+## 참고문헌
+
+- SEOJing, 「AGENTS.md로는 부족했다 — 팀원이 AI에게 일을 맡기는 방식을 하네스로 묶기」, https://seojing.com/blog/clab/agent-coaching-harness
+- CLAB `clab-platforms-client` repo-local harness draft: `AGENTS.md`, `CLAUDE.md`, `.agent/skills/*`, `.agent/rules/*`, `.agent/scripts/*`
+- Toss Tech, 「Skill 품질 관리를 위한 Rubric 설계와 시스템 구현」, https://toss.tech/article/skill-quality-rubric
