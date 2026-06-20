@@ -57,8 +57,25 @@ description: 외부 skill, MCP/tool package, agent repo를 OkayJing에 들여올
 
 ---
 
+<Subtitle level={2}>3. 외부 skill을 가져올 때의 최소 절차</Subtitle>
+
+<Paragraph>
+  개인 agent를 키우다 보면 좋은 skill, MCP tool, prompt pack을 계속 보게 된다.
+  문제는 그 파일들이 코드와 비슷한 권한을 갖는다는 점이다. agent가 읽고 따르는
+  문서라면, 그 문서는 실행 경로에 들어온 공급망이다.
+</Paragraph>
+
+<Paragraph>
+  최소 절차는 단순해도 된다. 출처를 기록한다. 파일 안의 명령, 네트워크 호출,
+  credential 접근, 과한 권한 요청을 훑는다. 바로 설치하지 않고 격리된 위치에서
+  읽는다. 허용했다면 왜 허용했는지 남긴다. 이런 기록이 있어야 나중에 agent가
+  이상하게 행동할 때 skill까지 거슬러 올라갈 수 있다.
+</Paragraph>
+
+---
+
 <Subtitle level={2}>참고 자료 / Evidence sources</Subtitle>
 
 - Public project — SkillSpector: [NVIDIA/SkillSpector](https://github.com/NVIDIA/SkillSpector)
-- Internal runbook — SkillSpector preflight gate: `~/.hermes/skills/devops/okejing-ops/references/skillspector-preflight-gate.md`
-- Internal policy — `/Users/seojing/.hermes/okejing/architecture/Memory-Skill-Policy.md`
+- Threat model — ToxicSkills-style prompt/skill supply-chain risk
+- Guardrail pattern — provenance record, static scan, isolated review, explicit allow/deny decision

@@ -53,7 +53,26 @@ description: OkayJing 서식지가 ticket list 중심 UI를 넘어 worker, sessi
 
 ---
 
+<Subtitle level={2}>3. UI를 만들 때 먼저 보여줘야 할 것</Subtitle>
+
+<Paragraph>
+  agent workspace UI를 만들 때 ticket list부터 만들면 관리 화면은 빨리 나온다.
+  하지만 사용자는 여전히 "지금 누가 무엇을 하고 있는지", "어떤 결과물이
+  남았는지", "검증은 끝났는지"를 따로 물어봐야 한다. 그러면 대화창을 벗어난
+  의미가 줄어든다.
+</Paragraph>
+
+<Paragraph>
+  Pixel Office라는 말의 핵심은 픽셀 아트가 아니다. worker, session, artifact,
+  verification이 한 공간에서 이어져 보이는 상태 모델이다. 작은 구현이라면 먼저
+  project room 하나를 만들고, 그 안에 진행 중인 worker, 마지막 메시지, 산출물,
+  검증 로그 링크를 붙이는 것부터 시작하면 된다.
+</Paragraph>
+
+---
+
 <Subtitle level={2}>참고 자료 / Evidence sources</Subtitle>
 
-- Internal plan — `/Users/seojing/.hermes/okejing/architecture/OkayJing-Local-Pixel-Office-Implementation-Plan.md`
-- Internal runbook — `~/.hermes/skills/devops/okejing-ops/references/okayjing-local-pixel-office.md`
+- Product direction — worker/session/artifact/verification should be visible together, not hidden behind a ticket list
+- UI pattern — project rooms, worker state, talkability, evidence-backed result links
+- Design caution — sprites are affordances for work state, not roleplay personas

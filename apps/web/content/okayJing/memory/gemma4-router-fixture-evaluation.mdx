@@ -58,8 +58,25 @@ description: OkayJing이 Gemma4 e2b 로컬 라우팅을 감이 아니라 fixture
 
 ---
 
+<Subtitle level={2}>3. 자기 환경에서 재현하려면</Subtitle>
+
+<Paragraph>
+  로컬 worker 평가는 "이 모델이 똑똑한가"로 시작하면 금방 감으로 흐른다. 대신
+  먼저 fixture를 만든다. 긴 코드, agent context, 에러 로그처럼 실제로 자주
+  만나는 입력을 고정해두고, 모델 출력이 항상 같은 JSON 계약을 지키는지 본다.
+</Paragraph>
+
+<Paragraph>
+  여기서 중요한 점은 정답을 완벽한 요약으로 잡지 않는 것이다. 좋은 fixture는 "이
+  파일과 이 줄 근처를 후보로 낼 수 있는가", "잘 모를 때 fallback을 고르는가",
+  "schema가 깨졌을 때 시스템이 멈추지 않는가"를 본다. 그러면 로컬 모델은 신뢰의
+  대상이 아니라 측정 가능한 부품이 된다.
+</Paragraph>
+
+---
+
 <Subtitle level={2}>참고 자료 / Evidence sources</Subtitle>
 
-- Internal note — OkayJing writing seed: `/Users/seojing/.hermes/okejing/architecture/OkayJing-Writing-Recovery-2026-06-21.md`
-- Internal fixture source — `/Users/seojing/.hermes/vendors/token-router`
-- Internal wrapper — `/Users/seojing/.hermes/scripts/okejing_evidence_router.py`
+- Evaluation pattern — representative fixtures for code, agent context, and streaming error logs
+- Validation pattern — structured JSON output, schema check, fallback route, raw-source readback
+- Local model note — Gemma4 e2b was used as one tested option, not as a required dependency

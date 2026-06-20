@@ -59,7 +59,26 @@ external repo pattern
 
 ---
 
+<Subtitle level={2}>3. 복사보다 번역이 필요한 이유</Subtitle>
+
+<Paragraph>
+  다른 agent framework의 skill을 볼 때 중요한 것은 문장 그대로가 아니다. 그
+  skill이 어떤 실패를 막으려는지, 어떤 입력을 요구하는지, 어떤 검증을 끝으로
+  삼는지를 뽑아야 한다. 그런 뒤 자기 시스템의 도구 이름, 권한 모델, 보고 방식에
+  맞게 다시 써야 한다.
+</Paragraph>
+
+<Paragraph>
+  예를 들어 어떤 skill이 "테스트를 실행하라"고 말하더라도, 내 시스템의 실제
+  계약은 더 구체적이어야 한다. 어떤 테스트가 CI와 같은지, 실패하면 어디까지 자동
+  수정해도 되는지, 외부로 push하기 전에 어떤 근거를 남길지까지 정해야 한다.
+  흡수는 수집이 아니라 운영 규칙으로 바꾸는 일이다.
+</Paragraph>
+
+---
+
 <Subtitle level={2}>참고 자료 / Evidence sources</Subtitle>
 
-- Internal architecture note — `/Users/seojing/.hermes/okejing/architecture/Agent-Skills-Absorption-Standard.md`
-- Internal runbook — `~/.hermes/skills/devops/okejing-ops/references/external-agent-skill-absorption-standard.md`
+- Design note — external agent skills should be absorbed as local operating rules, not copied verbatim
+- Absorption checklist — intent, trigger, required context, allowed tools, verification, reporting, rollback
+- Safety rule — preserve useful procedure; discard incompatible authority assumptions

@@ -57,7 +57,25 @@ graph_imports / graph_nodes / graph_edges = derived structural hints
 
 ---
 
+<Subtitle level={2}>3. 그래프를 붙이고 싶은 사람에게</Subtitle>
+
+<Paragraph>
+  그래프형 memory를 만들고 싶다면 먼저 source of truth를 정해야 한다. 대화 원문,
+  문서, 티켓, 코드 조각 같은 원본이 먼저 있고, 그래프는 그 위에 붙는 색인이어야
+  한다. 그래프가 원본보다 앞서면 관계 추론이 곧 기억이 되어버린다.
+</Paragraph>
+
+<Paragraph>
+  실용적인 시작점은 작다. node와 edge를 만들되, 각 edge가 어느 원본 조각에서
+  나왔는지 coordinate를 붙인다. UI에서는 "이 둘이 관련 있다"고 단정하지 말고 "이
+  원본 근처에서 같이 등장했다"고 보여준다. 그래야 그래프는 자동 판단자가 아니라
+  탐색 지도 역할을 한다.
+</Paragraph>
+
+---
+
 <Subtitle level={2}>참고 자료 / Evidence sources</Subtitle>
 
-- Internal runbook — Graph-derived memory layer: `~/.hermes/skills/devops/okejing-ops/references/graph-derived-memory-layer.md`
-- Internal note — OkayJing writing seed: `/Users/seojing/.hermes/okejing/architecture/OkayJing-Writing-Recovery-2026-06-21.md`
+- Design note — Graphify should be derived metadata over source/index, not a competing memory layer
+- Implementation pattern — keep raw chunks and full-text search as source of truth; attach graph edges as hints
+- UX requirement — every graph hint should link back to source coordinates and readback

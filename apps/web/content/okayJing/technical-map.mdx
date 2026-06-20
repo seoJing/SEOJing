@@ -20,8 +20,9 @@ description: 오케이징 포스트를 처음 읽는 사람이 기술 축과 목
 
 <Paragraph>
   그래서 시간순으로 보면 실제 시행착오는 잘 보이지만, 처음 들어온 사람은 어디서
-  시작해야 할지 어렵다. 이 글은 날짜순 아카이브가 아니라 기술 지도다. 오케이징을
-  이루는 축을 먼저 잡고, 각 축에서 어떤 글을 읽으면 되는지 연결한다.
+  시작해야 할지 어렵다. 이 글은 날짜순 아카이브가 아니라 기술 지도다. 특히 "나도
+  이런 개인 AI 운영체계를 만들어보고 싶다"는 사람이 어떤 문제부터 쪼개야 하는지
+  보이도록, 오케이징을 이루는 축과 각 축의 설계 질문을 함께 연결한다.
 </Paragraph>
 
 ---
@@ -107,26 +108,28 @@ description: 오케이징 포스트를 처음 읽는 사람이 기술 축과 목
 
 ---
 
-<Subtitle level={2}>5. 2026-06-21에 여러 편으로 회수한 빈칸</Subtitle>
+<Subtitle level={2}>5. 직접 만들 때 부딪히는 세부 설계 질문</Subtitle>
 
 <Paragraph>
-  아래 항목은 한 편으로 묶기보다 각각의 판단이 살아야 했다. 그래서
-  2026-06-21에는 omnibus 글이 아니라 여러 개의 focused post로 나눠 회수했다.
-  다음에 읽을 때는 관심 있는 경계부터 들어가면 된다.
+  아래 항목은 오케이징 내부 사정만 정리한 글감이 아니다. 개인 AI 운영체계를
+  만들다 보면 결국 다시 만나는 설계 질문들이다. 작은 모델에게 무엇을 맡길지,
+  memory와 graph를 어떻게 나눌지, 외부 skill을 어떻게 검수할지, 웹 UI와
+  gateway의 책임을 어디서 끊을지 같은 문제다. 그래서 한 편으로 묶지 않고, 각
+  질문을 독립 글로 나눴다.
 </Paragraph>
 
-| 회수한 항목                                         | 새 글                                                                                                                                 |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| token-router / local evidence router                | [`architecture/local-evidence-router-boundary`](/blog/okayJing/architecture/local-evidence-router-boundary)                           |
-| Gemma4 e2b 로컬 라우팅 실험                         | [`memory/gemma4-router-fixture-evaluation`](/blog/okayJing/memory/gemma4-router-fixture-evaluation)                                   |
-| Graphify                                            | [`memory/graphify-derived-metadata`](/blog/okayJing/memory/graphify-derived-metadata)                                                 |
-| SkillSpector / ToxicSkills guardrail                | [`skills/skill-supply-chain-guardrail`](/blog/okayJing/skills/skill-supply-chain-guardrail)                                           |
-| agent-skills absorption standard                    | [`skills/external-agent-skills-absorption`](/blog/okayJing/skills/external-agent-skills-absorption)                                   |
-| Hermes-only hub-spoke model                         | [`architecture/hermes-only-hub-spoke`](/blog/okayJing/architecture/hermes-only-hub-spoke)                                             |
-| OkayJing 서식지 / Pixel Office                      | [`architecture/pixel-office-worker-space`](/blog/okayJing/architecture/pixel-office-worker-space)                                     |
-| source-resource concurrency / API-mediated mutation | [`architecture/source-resource-api-boundary`](/blog/okayJing/architecture/source-resource-api-boundary)                               |
-| Discord replacement로서 OkayJing Local              | [`architecture/okayjing-local-discord-replacement-criteria`](/blog/okayJing/architecture/okayjing-local-discord-replacement-criteria) |
-| TTS local API / Range streaming / R2 defer          | [`voice/tts-local-api-r2-defer`](/blog/okayJing/voice/tts-local-api-r2-defer)                                                         |
+| 만들 때 마주치는 설계 질문                                                    | 사례 글                                                                                                                               |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 작은 로컬 모델에게 맡겨도 되는 범위는 어디까지인가?                           | [`architecture/local-evidence-router-boundary`](/blog/okayJing/architecture/local-evidence-router-boundary)                           |
+| 로컬 라우터를 감이 아니라 fixture와 JSON 계약으로 어떻게 평가하나?            | [`memory/gemma4-router-fixture-evaluation`](/blog/okayJing/memory/gemma4-router-fixture-evaluation)                                   |
+| Graphify 같은 graph layer를 memory로 둘지, derived metadata로 둘지            | [`memory/graphify-derived-metadata`](/blog/okayJing/memory/graphify-derived-metadata)                                                 |
+| 외부 skill과 tool package의 supply-chain 위험을 어떻게 다루나?                | [`skills/skill-supply-chain-guardrail`](/blog/okayJing/skills/skill-supply-chain-guardrail)                                           |
+| 외부 agent skill을 복사하지 않고 로컬 운영 규칙으로 어떻게 번역하나?          | [`skills/external-agent-skills-absorption`](/blog/okayJing/skills/external-agent-skills-absorption)                                   |
+| planner/reviewer/coder 인격 분리 대신 hub-spoke 격리를 택할 수 있나?          | [`architecture/hermes-only-hub-spoke`](/blog/okayJing/architecture/hermes-only-hub-spoke)                                             |
+| ticket list를 넘어 worker, session, artifact, verification을 어떻게 보여주나? | [`architecture/pixel-office-worker-space`](/blog/okayJing/architecture/pixel-office-worker-space)                                     |
+| DB, Markdown, ticket 같은 원천 리소스 변경을 어디까지 API로 감싸나?           | [`architecture/source-resource-api-boundary`](/blog/okayJing/architecture/source-resource-api-boundary)                               |
+| Discord를 fallback으로 두면서 자체 daily work surface를 만들 수 있나?         | [`architecture/okayjing-local-discord-replacement-criteria`](/blog/okayJing/architecture/okayjing-local-discord-replacement-criteria) |
+| TTS는 public asset보다 local cache와 Range streaming부터 검증해야 하나?       | [`voice/tts-local-api-r2-defer`](/blog/okayJing/voice/tts-local-api-r2-defer)                                                         |
 
 ---
 
