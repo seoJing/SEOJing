@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SEOJing Paper Design System · OkayJing Workspace Example</title>
+    <link rel="stylesheet" href="../src/styles.css" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+      }
+      .demo-app {
+        height: 100vh;
+        padding: 14px;
+        display: grid;
+        grid-template-rows: 56px 1fr;
+        gap: 12px;
+      }
+      .demo-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 18px;
+        border-radius: var(--sj-radius-xl);
+      }
+      .demo-brand {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        min-width: 0;
+      }
+      .demo-mark {
+        width: 34px;
+        height: 34px;
+        border-radius: var(--sj-radius-sm);
+        display: grid;
+        place-items: center;
+        background: linear-gradient(
+          135deg,
+          var(--sj-color-lemon-icing),
+          var(--sj-color-ice-melt)
+        );
+        font-family: var(--sj-font-heading);
+        font-weight: 700;
+      }
+      .demo-title {
+        margin: 0;
+        font: 700 17px/1 var(--sj-font-heading);
+        letter-spacing: -0.025em;
+      }
+      .demo-sub {
+        margin: 4px 0 0;
+        color: var(--sj-color-ink-muted);
+        font-size: 12px;
+      }
+      .demo-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .demo-grid {
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 278px minmax(420px, 1fr) 390px;
+        gap: 12px;
+      }
+      .demo-panel {
+        min-height: 0;
+        overflow: hidden;
+      }
+      .demo-rail {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+      .demo-pad {
+        padding: 14px;
+      }
+      .demo-scroll {
+        min-height: 0;
+        overflow: auto;
+      }
+      .demo-label {
+        margin: 16px 6px 8px;
+        color: var(--sj-color-ink-muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .demo-session {
+        display: grid;
+        grid-template-columns: 34px 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 11px;
+        border-radius: var(--sj-radius-md);
+        border: 1px solid transparent;
+        margin-bottom: 7px;
+      }
+      .demo-session.is-active {
+        background: var(--sj-color-paper-raised);
+        border-color: var(--sj-color-line);
+      }
+      .demo-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: var(--sj-radius-sm);
+        display: grid;
+        place-items: center;
+        background: var(--sj-color-ice-melt);
+        color: var(--sj-color-anchor);
+        font-weight: 700;
+      }
+      .demo-session-title {
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .demo-meta {
+        margin-top: 4px;
+        color: var(--sj-color-ink-muted);
+        font-size: 11px;
+      }
+      .demo-chat {
+        display: grid;
+        grid-template-rows: 62px 1fr auto;
+      }
+      .demo-chat-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 18px;
+        border-bottom: 1px solid var(--sj-color-line-soft);
+      }
+      .demo-chat-head h2 {
+        margin: 0;
+        font: 700 16px/1.15 var(--sj-font-heading);
+      }
+      .demo-messages {
+        padding: 18px;
+        display: grid;
+        align-content: start;
+        gap: 14px;
+        overflow: auto;
+      }
+      .demo-msg {
+        max-width: 84%;
+        border: 1px solid var(--sj-color-line);
+        border-radius: var(--sj-radius-lg);
+        padding: 13px 15px;
+        background: var(--sj-color-paper-surface);
+        line-height: 1.55;
+        font-size: 14px;
+      }
+      .demo-msg.user {
+        margin-left: auto;
+        background: var(--sj-color-anchor);
+        color: var(--sj-color-paper-surface);
+        border-color: var(--sj-color-anchor);
+      }
+      .demo-tool {
+        border: 1px dashed rgba(47, 79, 100, 0.28);
+        background: rgba(211, 228, 241, 0.34);
+        color: #385468;
+        border-radius: var(--sj-radius-md);
+        padding: 10px 12px;
+        font-size: 12px;
+      }
+      .demo-composer {
+        padding: 14px;
+        border-top: 1px solid var(--sj-color-line-soft);
+      }
+      .demo-attachments {
+        display: flex;
+        gap: 8px;
+        padding-bottom: 10px;
+        overflow-x: auto;
+      }
+      .demo-thumb {
+        flex: 0 0 auto;
+        width: 74px;
+        height: 58px;
+        border: 1px solid var(--sj-color-line);
+        border-radius: var(--sj-radius-md);
+        background: linear-gradient(
+          135deg,
+          var(--sj-color-ice-melt),
+          var(--sj-color-lemon-icing)
+        );
+        display: grid;
+        place-items: center;
+        font-size: 20px;
+        position: relative;
+      }
+      .demo-thumb span {
+        position: absolute;
+        left: 7px;
+        bottom: 5px;
+        color: var(--sj-color-ink-muted);
+        font-size: 10px;
+      }
+      .demo-composer-row {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 9px;
+        align-items: end;
+      }
+      .demo-tabs {
+        padding: 14px 14px 8px;
+        border-bottom: 1px solid var(--sj-color-line-soft);
+      }
+      .demo-changes {
+        padding: 12px 14px;
+        display: grid;
+        gap: 8px;
+        border-bottom: 1px solid var(--sj-color-line-soft);
+      }
+      .demo-file {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 10px 11px;
+        border-radius: var(--sj-radius-md);
+        border: 1px solid transparent;
+        font-size: 12px;
+      }
+      .demo-file.is-active {
+        background: var(--sj-color-paper-raised);
+        border-color: var(--sj-color-line);
+      }
+      .demo-context-body {
+        padding: 14px;
+        display: grid;
+        gap: 14px;
+        overflow: auto;
+      }
+      @media (max-width: 1080px) {
+        body {
+          overflow: auto;
+        }
+        .demo-app {
+          height: auto;
+        }
+        .demo-grid {
+          grid-template-columns: 1fr;
+        }
+        .demo-panel {
+          min-height: 520px;
+        }
+      }
+    </style>
+  </head>
+  <body class="sj-theme-paper">
+    <main class="demo-app">
+      <header class="demo-topbar sj-surface">
+        <div class="demo-brand">
+          <div class="demo-mark">O</div>
+          <div>
+            <h1 class="demo-title">OkayJing Local</h1>
+            <p class="demo-sub">
+              @app/design-system으로 그린 Happy-style workspace
+            </p>
+          </div>
+        </div>
+        <div class="demo-actions">
+          <span class="sj-badge sj-badge--success">gateway 정상</span>
+          <span class="sj-badge">profile: default</span>
+          <button class="sj-button sj-button--ghost sj-button--sm">⌘K</button>
+          <button class="sj-button sj-button--primary sj-button--sm">
+            새 작업
+          </button>
+        </div>
+      </header>
+
+      <section class="demo-grid">
+        <aside class="demo-panel demo-rail sj-card sj-card--raised">
+          <div
+            class="demo-pad"
+            style="border-bottom: 1px solid var(--sj-color-line-soft)"
+          >
+            <p class="sj-heading" style="margin: 0 0 10px; font-size: 13px">
+              Sessions
+            </p>
+            <input class="sj-input" placeholder="세션, 파일, 티켓 검색" />
+          </div>
+          <div class="demo-scroll demo-pad">
+            <div class="demo-label">Today</div>
+            <div class="demo-session is-active">
+              <div class="demo-avatar">로</div>
+              <div>
+                <div class="demo-session-title">오케이징 로컬 화면 설계</div>
+                <div class="demo-meta">running · Happy UI</div>
+              </div>
+              <span class="sj-badge">+3</span>
+            </div>
+            <div class="demo-session">
+              <div
+                class="demo-avatar"
+                style="
+                  background: var(--sj-color-raindrops-on-roses);
+                  color: #744048;
+                "
+              >
+                S
+              </div>
+              <div>
+                <div class="demo-session-title">SEOJing TTS API 점검</div>
+                <div class="demo-meta">done · build pass</div>
+              </div>
+              <span class="sj-badge sj-badge--success">✓</span>
+            </div>
+            <div class="demo-label">Profiles</div>
+            <div class="demo-session is-active">
+              <div class="demo-avatar">H</div>
+              <div>
+                <div class="demo-session-title">default · Hub</div>
+                <div class="demo-meta">memory on · crons 8</div>
+              </div>
+            </div>
+            <div class="demo-session">
+              <div
+                class="demo-avatar"
+                style="background: var(--sj-color-lemon-icing); color: #7c552c"
+              >
+                B
+              </div>
+              <div>
+                <div class="demo-session-title">seojing · Blog</div>
+                <div class="demo-meta">scoped · repo linked</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <section class="demo-panel demo-chat sj-card sj-card--raised">
+          <div class="demo-chat-head">
+            <div>
+              <h2>오케이징 로컬 화면 설계</h2>
+              <p class="demo-sub">Ticket #97 · design-system package 적용</p>
+            </div>
+            <span class="sj-badge sj-badge--warning">approval 대기</span>
+          </div>
+          <div class="demo-messages">
+            <div class="demo-msg user">
+              SEOJing design system을 별도 패키지로 분리해서 버튼/인풋도 전부
+              그걸로 쓰자.
+            </div>
+            <div class="demo-msg">
+              좋아. 이제 임의 버튼/입력창을 만들지 않고 @app/design-system의
+              primitive를 기준으로 확장한다.
+            </div>
+            <div class="demo-tool">
+              접힘: Button, Input, Textarea, Card, Badge, Tabs, CodePanel 생성
+            </div>
+            <div
+              class="sj-card"
+              style="padding: 14px; background: rgba(246, 235, 200, 0.55)"
+            >
+              <strong class="sj-heading">승인 필요 · 파일 쓰기</strong>
+              <p class="demo-sub">previous_hash 확인 후 저장합니다.</p>
+              <button class="sj-button sj-button--primary sj-button--sm">
+                승인
+              </button>
+              <button class="sj-button sj-button--secondary sj-button--sm">
+                diff 보기
+              </button>
+            </div>
+          </div>
+          <div class="demo-composer">
+            <div class="demo-attachments">
+              <div class="demo-thumb">🖼<span>screen.png</span></div>
+              <div class="demo-thumb">📄<span>plan.md</span></div>
+            </div>
+            <div class="demo-composer-row">
+              <button class="sj-button sj-button--secondary">＋</button
+              ><textarea
+                class="sj-textarea"
+                style="min-height: 48px; resize: none"
+              >
+이 구조로 v0.1 shell부터 붙여줘</textarea
+              ><button class="sj-button sj-button--primary">전송</button>
+            </div>
+          </div>
+        </section>
+
+        <aside
+          class="demo-panel sj-card sj-card--raised"
+          style="display: grid; grid-template-rows: auto auto 1fr"
+        >
+          <div class="demo-tabs sj-tabs">
+            <button class="sj-tab sj-tab--active" aria-selected="true">
+              Changes</button
+            ><button class="sj-tab">Files</button
+            ><button class="sj-tab">Artifacts</button
+            ><button class="sj-tab">Ticket</button>
+          </div>
+          <div class="demo-changes">
+            <div class="demo-file is-active">
+              <span>packages/design-system/src/styles.css</span
+              ><span style="color: var(--sj-color-success)">+240</span>
+            </div>
+            <div class="demo-file">
+              <span>packages/design-system/src/components/button.tsx</span
+              ><span style="color: var(--sj-color-success)">+44</span>
+            </div>
+            <div class="demo-file">
+              <span>apps/web/src/app/globals.css</span
+              ><span style="color: var(--sj-color-success)">+1</span>
+            </div>
+          </div>
+          <div class="demo-context-body">
+            <div class="sj-code-panel">
+              <div class="sj-code-panel__header">
+                <span>button.tsx</span><span>unified</span>
+              </div>
+              <pre
+                class="sj-code"
+              ><span class="sj-code-line">@@ design primitive @@</span><span class="sj-code-line sj-code-line--add">+ &lt;Button variant="primary" /&gt;</span><span class="sj-code-line sj-code-line--add">+ &lt;Input label="세션 검색" /&gt;</span><span class="sj-code-line sj-code-line--add">+ &lt;Card elevation="raised" /&gt;</span></pre>
+            </div>
+            <div class="sj-card" style="padding: 14px">
+              <strong class="sj-heading">Artifact</strong>
+              <p class="demo-sub">
+                이 예시는 @app/design-system/styles.css를 직접 import해서
+                렌더링합니다.
+              </p>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </body>
+</html>

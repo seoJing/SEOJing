@@ -1,0 +1,140 @@
+---
+title: "오케이징 기술 지도 — 채팅봇에서 개인 AI 운영체계까지"
+date: "2026-06-20"
+tags:
+  - okayJing
+  - guide
+  - architecture
+  - agent
+  - roadmap
+description: 오케이징 포스트를 처음 읽는 사람이 기술 축과 목적별 읽기 순서를 먼저 잡을 수 있도록, gateway·ticket·skill·memory·local LLM·검증·자동화·인터페이스 흐름으로 다시 묶은 상위 지도입니다.
+---
+
+<Subtitle level={2}>0. 이 글은 시간순 목록이 아니다</Subtitle>
+
+<Paragraph>
+  okayJing 글은 원래 작업하면서 생긴 운영 기록에 가까웠다. OpenClaw를 만지고,
+  Hermes로 옮기고, Discord gateway를 붙이고, ticket과 memory를 나누고, skill과
+  final gate를 고치면서 그때그때 필요한 글이 쌓였다.
+</Paragraph>
+
+<Paragraph>
+  그래서 시간순으로 보면 실제 시행착오는 잘 보이지만, 처음 들어온 사람은 어디서
+  시작해야 할지 어렵다. 이 글은 날짜순 아카이브가 아니라 기술 지도다. 오케이징을
+  이루는 축을 먼저 잡고, 각 축에서 어떤 글을 읽으면 되는지 연결한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. 오케이징을 이루는 10개 기술 축</Subtitle>
+
+| 축                                 | 질문                                                                        | 먼저 읽을 글                                                                                                                                                                                                                                                                                                      |
+| ---------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime / Gateway                  | AI를 매번 CLI로 부르지 않고 작업 환경에 상주시킨다는 건 무슨 구조인가?      | [`evolution/openclaw-runtime-core`](/blog/okayJing/evolution/openclaw-runtime-core), [`discord/discord-free-response-channel-prompt`](/blog/okayJing/discord/discord-free-response-channel-prompt), [`discord/discord-startup-auto-resume`](/blog/okayJing/discord/discord-startup-auto-resume)                   |
+| Work State / Ticket                | "해줘" 이후 작업이 어디까지 갔는지 어떻게 잃어버리지 않을 것인가?           | [`workflow/sessions-and-tickets`](/blog/okayJing/workflow/sessions-and-tickets), [`workflow/hermes-ticket-memory`](/blog/okayJing/workflow/hermes-ticket-memory), [`workflow/ticket-trigger-logic`](/blog/okayJing/workflow/ticket-trigger-logic)                                                                 |
+| Skill / Procedural Memory          | 반복되는 판단과 절차를 어디에 저장해야 하나?                                | [`skills/ouroboros-planning-skill`](/blog/okayJing/skills/ouroboros-planning-skill), [`skills/notjing-final-gate`](/blog/okayJing/skills/notjing-final-gate), [`workflow/workflow-compilation-policy`](/blog/okayJing/workflow/workflow-compilation-policy)                                                       |
+| Memory / Evidence                  | AI가 기억한다고 말할 때, 어떤 근거를 다시 꺼내서 판단하게 만들 것인가?      | [`memory/memory-ticket-session-search`](/blog/okayJing/memory/memory-ticket-session-search), [`memory/local-first-hermes-memory-architecture`](/blog/okayJing/memory/local-first-hermes-memory-architecture), [`memory/source-linked-context-packs`](/blog/okayJing/memory/source-linked-context-packs)           |
+| Local LLM / Router                 | 모든 일을 큰 모델에게 보내지 않고, 로컬 모델에게 맡겨도 되는 일은 무엇인가? | [`memory/local-llm-worker-evaluation`](/blog/okayJing/memory/local-llm-worker-evaluation), [`memory/vector-search-after-fts`](/blog/okayJing/memory/vector-search-after-fts)                                                                                                                                      |
+| Tool Contract / Extension Boundary | 확장점은 기능 추가 버튼인가, 책임과 권한의 경계면인가?                      | [`architecture/extension-boundaries`](/blog/okayJing/architecture/extension-boundaries), [`architecture/capability-handoff-contracts`](/blog/okayJing/architecture/capability-handoff-contracts), [`architecture/agent-framework-standards-intake`](/blog/okayJing/architecture/agent-framework-standards-intake) |
+| Review / Verification              | AI가 끝났다고 말할 때, 무엇을 근거로 믿을 것인가?                           | [`skills/notjing-final-gate`](/blog/okayJing/skills/notjing-final-gate), [`workflow/smart-reviewer-behavior`](/blog/okayJing/workflow/smart-reviewer-behavior), [`workflow/hermes-report-format`](/blog/okayJing/workflow/hermes-report-format)                                                                   |
+| Automation / Dreaming              | 밤사이에 AI가 뭘 해도 되고, 뭘 하면 안 되는가?                              | [`automation/okejing-dreaming-loop`](/blog/okayJing/automation/okejing-dreaming-loop), [`automation/cron-prompt-self-contained`](/blog/okayJing/automation/cron-prompt-self-contained), [`automation/briefing-automation-report-skill`](/blog/okayJing/automation/briefing-automation-report-skill)               |
+| Voice / Interface                  | AI가 말하기 시작하면 보고 방식과 작업 동선은 어떻게 달라져야 하나?          | [`voice/text-chat-to-voice-colleague`](/blog/okayJing/voice/text-chat-to-voice-colleague), [`voice/voice-mode-report-style-breaks`](/blog/okayJing/voice/voice-mode-report-style-breaks), [`voice/tts-selection-operational-criteria`](/blog/okayJing/voice/tts-selection-operational-criteria)                   |
+| Workspace / 서식지                 | 오케이징을 채팅창이 아니라 작업이 보이는 공간으로 만들면 어떤 UI가 맞나?    | [`architecture/jing-factory-hermes-redesign`](/blog/okayJing/architecture/jing-factory-hermes-redesign), [`architecture/jing-studio-contract-pipeline`](/blog/okayJing/architecture/jing-studio-contract-pipeline), [`evolution/okejing-vnext`](/blog/okayJing/evolution/okejing-vnext)                           |
+
+---
+
+<Subtitle level={2}>2. 처음 읽는 사람을 위한 30분 루트</Subtitle>
+
+<Paragraph>
+  처음부터 OpenClaw 세부 구조나 memory backend 후보를 다 볼 필요는 없다. 먼저
+  오케이징이 왜 여러 인격 팀이 아니라 Hermes 안의 절차 묶음이 되었는지만 잡으면
+  된다.
+</Paragraph>
+
+1. [`evolution/logic-evolution-map`](/blog/okayJing/evolution/logic-evolution-map) — 현재 구조를 먼저 본다.
+2. [`evolution/openclaw-to-hermes-single-system`](/blog/okayJing/evolution/openclaw-to-hermes-single-system) — 왜 Hermes 단일 체계로 접었는지 본다.
+3. [`workflow/sessions-and-tickets`](/blog/okayJing/workflow/sessions-and-tickets) — 대화와 작업을 왜 나눴는지 본다.
+4. [`memory/memory-ticket-session-search`](/blog/okayJing/memory/memory-ticket-session-search) — 기억, 작업 상태, 과거 대화 검색이 왜 다른 저장소인지 본다.
+5. [`automation/okejing-dreaming-loop`](/blog/okayJing/automation/okejing-dreaming-loop) — 사용자가 부르지 않는 시간의 자가점검 루프를 본다.
+6. [`evolution/okejing-vnext`](/blog/okayJing/evolution/okejing-vnext) — 다음 구조가 어디로 가는지 본다.
+
+<Paragraph>
+  이 루트의 목표는 구현 세부가 아니라 큰 방향이다. "오케이징은 역할극 팀이
+  아니라 상태, 절차, 검증, 기억을 Hermes 안에 모은 개인 운영체계"라는 감각을
+  잡는 데 맞춰져 있다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>3. 직접 비슷한 개인 AI 운영체계를 만들고 싶다면</Subtitle>
+
+<Paragraph>
+  구현 관점에서는 history보다 상태 관리가 먼저다. 채팅 표면, 작업 상태, 절차
+  저장소, 기억 저장소, 검증 루틴을 따로 봐야 한다.
+</Paragraph>
+
+1. [`evolution/openclaw-runtime-core`](/blog/okayJing/evolution/openclaw-runtime-core) — gateway, session, tool의 기본 좌표.
+2. [`workflow/hermes-ticket-memory`](/blog/okayJing/workflow/hermes-ticket-memory) — Discord thread만으로 부족했던 작업 상태.
+3. [`workflow/ticket-trigger-logic`](/blog/okayJing/workflow/ticket-trigger-logic) — 질문과 실행 요청을 가르는 기준.
+4. [`skills/ouroboros-planning-skill`](/blog/okayJing/skills/ouroboros-planning-skill) — planning을 별도 인격이 아니라 skill로 남기는 방식.
+5. [`memory/local-first-hermes-memory-architecture`](/blog/okayJing/memory/local-first-hermes-memory-architecture) — 요약보다 증거를 먼저 남기는 memory 구조.
+6. [`memory/source-linked-context-packs`](/blog/okayJing/memory/source-linked-context-packs) — 작업 시작 때 꺼낼 수 있는 evidence pack.
+7. [`workflow/smart-reviewer-behavior`](/blog/okayJing/workflow/smart-reviewer-behavior) — 모든 것을 막는 리뷰어가 아니라 위험도에 맞는 검증자.
+8. [`automation/cron-prompt-self-contained`](/blog/okayJing/automation/cron-prompt-self-contained) — 미래 세션이 현재 대화를 모른다는 전제.
+9. [`architecture/extension-boundaries`](/blog/okayJing/architecture/extension-boundaries) — 플러그인보다 경계면을 먼저 설계하는 이유.
+
+---
+
+<Subtitle level={2}>4. Agent framework 공부용으로 읽는다면</Subtitle>
+
+<Paragraph>
+  agent framework를 공부할 때는 "어떤 도구가 좋다"보다 런타임이 어떤 상태를
+  갖고, 도구 호출이 어떤 계약으로 묶이고, 사람이 어디에서 승인하고, 기억이 어떤
+  근거를 다시 꺼내는지를 봐야 한다. 오케이징 글은 완성된 프레임워크 소개가
+  아니라 그 설계 압력을 실제 운영에서 만난 기록에 가깝다.
+</Paragraph>
+
+1. [`evolution/openclaw-big-picture`](/blog/okayJing/evolution/openclaw-big-picture) — agent runtime을 어떤 추상화로 봤는지.
+2. [`evolution/openclaw-runtime-core`](/blog/okayJing/evolution/openclaw-runtime-core) — gateway, sessions, tools.
+3. [`workflow/multi-agent-ticket-structure`](/blog/okayJing/workflow/multi-agent-ticket-structure) — 다중 worker 조율을 ticket으로 접은 이유.
+4. [`evolution/openclaw-to-hermes-single-system`](/blog/okayJing/evolution/openclaw-to-hermes-single-system) — 역할 분리에서 절차 분리로 넘어간 이유.
+5. [`skills/ouroboros-planning-skill`](/blog/okayJing/skills/ouroboros-planning-skill) — procedural memory로 남은 planning.
+6. [`memory/source-linked-context-packs`](/blog/okayJing/memory/source-linked-context-packs) — context를 요약이 아니라 evidence pack으로 다루는 방식.
+7. [`workflow/workflow-compilation-policy`](/blog/okayJing/workflow/workflow-compilation-policy) — 반복 workflow를 모델에 넣기 전 필요한 trace와 평가 기준.
+8. [`architecture/capability-handoff-contracts`](/blog/okayJing/architecture/capability-handoff-contracts) — worker를 사람 역할이 아니라 capability contract로 보는 관점.
+9. [`architecture/extension-boundaries`](/blog/okayJing/architecture/extension-boundaries) — MCP, plugin, memory, gateway를 경계면으로 읽는 관점.
+10. [`memory/local-llm-worker-evaluation`](/blog/okayJing/memory/local-llm-worker-evaluation) — local worker를 믿기 전 필요한 검증 기준.
+
+---
+
+<Subtitle level={2}>5. 아직 글로 더 회수해야 할 빈칸</Subtitle>
+
+<Paragraph>
+  아래 항목은 운영 메모리나 실제 실험에는 이미 등장했지만, 공개 글로는 아직
+  충분히 회수되지 않았다. 다음 okayJing 글감은 새 기술을 억지로 찾기보다 이
+  빈칸을 메우는 쪽이 자연스럽다.
+</Paragraph>
+
+| 빈칸                                                | 왜 필요한가                                                                                                     |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| token-router / local evidence router                | 큰 모델 호출 전에 로컬 모델이 분류, 요약, 라우팅을 맡아도 되는 범위를 설명해야 한다.                            |
+| Gemma4 e2b 로컬 라우팅 실험                         | local worker를 감으로 믿지 않고 fixture와 JSON 검증으로 평가한 사례가 필요하다.                                 |
+| Graphify                                            | 별도 memory layer로 두지 않고 기존 evidence/index 위의 관계 메타데이터로 붙이기로 한 판단을 정리해야 한다.      |
+| SkillSpector / ToxicSkills guardrail                | skill을 외부에서 가져올 때 supply-chain 위험을 어떻게 다루는지 설명해야 한다.                                   |
+| agent-skills absorption standard                    | 외부 agent skill을 그대로 복사하지 않고 로컬 운영 규칙으로 번역하는 기준이 필요하다.                            |
+| Hermes-only hub-spoke model                         | planner/reviewer/coder 인격 분리 대신 hub와 spoke profile로 격리하는 현재 원칙을 정리해야 한다.                 |
+| OkayJing 서식지 / Pixel Office                      | ticket list 중심 UI를 넘어 worker, session, artifact, verification이 보이는 작업 공간으로 가는 이유가 필요하다. |
+| source-resource concurrency / API-mediated mutation | DB, Markdown, ticket 같은 원천 리소스 동시성과 상태 변경을 어디까지 API로 감쌀지 설명해야 한다.                 |
+| Discord replacement로서 OkayJing Local              | 단순 ops dashboard가 아니라 desktop, tablet, mobile에서 대화와 작업을 대체할 수 있는지 평가 기준이 필요하다.    |
+| TTS local API / Range streaming / R2 defer          | 음성 기능을 public asset이 아니라 Mac mini local cache와 audio API로 시작한 판단을 정리해야 한다.               |
+
+---
+
+<Subtitle level={2}>6. 이 글과 기존 reading guide의 역할</Subtitle>
+
+<Paragraph>
+  이 글은 "무슨 기술 축으로 읽을 것인가"를 정한다. 기존 [`okayJing 읽는
+  법`](/blog/okayJing/reading-guide)은 폴더별 접근과 시간순 아카이브로 남긴다.
+  처음 읽는다면 이 글에서 루트를 고르고, 특정 글을 찾거나 날짜별 흐름을 보고
+  싶을 때 reading guide로 넘어가는 편이 덜 헷갈린다.
+</Paragraph>
