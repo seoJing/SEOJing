@@ -5,7 +5,7 @@ export const blogNavItems: DropdownItem[] = [
   { label: "SEO Jing", href: "/blog/SEOJing" },
   { label: "okayJing", href: "/blog/okayJing" },
   { label: "KD Team", href: "/blog/kd-team" },
-  { label: "CLab CoreTeam", href: "/blog/clab-coreteam" },
+  { label: "CLAB Coreteam", href: "/blog/clab" },
   { label: "Study", href: "/blog/study" },
 ];
 
