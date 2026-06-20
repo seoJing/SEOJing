@@ -1,0 +1,59 @@
+---
+title: "Ticket list만으로는 일이 보이지 않았다 — Pixel Office를 작업 상태 모델로 보는 이유"
+date: "2026-06-21"
+tags: [okayJing, architecture, habitat, ui]
+description: OkayJing 서식지가 ticket list 중심 UI를 넘어 worker, session, artifact, verification이 연결된 Pixel Office로 가야 하는 이유를 정리합니다.
+---
+
+<Subtitle level={2}>0. 티켓은 필요하지만 납작하다</Subtitle>
+
+<Paragraph>
+  ticket list는 필요하다. 작업 상태를 잃지 않게 해주고, 완료 보고를 남기고, 다음
+  작업으로 이어지는 최소 ledger가 된다. 그런데 ticket list만 보면 OkayJing이
+  실제로 어떻게 일하는지는 잘 보이지 않는다.
+</Paragraph>
+
+<Paragraph>
+  지금 누가 일하고 있는지, 그 worker와 말할 수 있는지, 어느 profile이나 spoke에
+  격리되어 있는지, 어떤 session과 artifact와 verification으로 이어지는지. 이런
+  질문은 단순 목록에서 잘 드러나지 않는다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. Pixel Office는 장식이 아니다</Subtitle>
+
+<Paragraph>
+  Pixel Office라는 말은 UI 취향처럼 들릴 수 있다. 여러 층, 작은 worker sprite,
+  프로젝트 방, briefing 공간. 하지만 여기서 중요한 것은 귀여운 그림이 아니라
+  상태 모델이다.
+</Paragraph>
+
+<Paragraph>
+  top floor에는 Hub, briefing, calendar, approval이 있다. project floor에는
+  SEOJing이나 OkayJing Ops 같은 stable spoke가 있다. lab floor에는 disposable
+  worker가 있을 수 있다. person-like sprite는 인격이 아니라 affordance다. 상태를
+  보고, 말을 걸 수 있는지 확인하고, 결과 artifact로 들어가는 버튼이다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. 보여야 하는 연결</Subtitle>
+
+<Paragraph>
+  Pixel Office가 진짜 작업 공간이 되려면 worker만 보이면 안 된다. worker에서
+  session, ticket, artifact, verification, disposition으로 이어져야 한다. 이
+  결과를 promote할지, archive할지, discard할지도 보이면 좋다.
+</Paragraph>
+
+<Paragraph>
+  그래야 OkayJing 서식지가 dashboard가 아니라 일하는 공간이 된다. 상태를 보는
+  화면이 아니라, 대화하고 확인하고 회수하는 표면이 된다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>참고 자료 / Evidence sources</Subtitle>
+
+- Internal plan — `/Users/seojing/.hermes/okejing/architecture/OkayJing-Local-Pixel-Office-Implementation-Plan.md`
+- Internal runbook — `~/.hermes/skills/devops/okejing-ops/references/okayjing-local-pixel-office.md`

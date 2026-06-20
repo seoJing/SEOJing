@@ -1,0 +1,63 @@
+---
+title: "OkayJing Local이 Discord를 대체하려면 — dashboard가 아니라 daily surface여야 한다"
+date: "2026-06-21"
+tags: [okayJing, architecture, local, product]
+description: OkayJing Local을 단순 ops dashboard가 아니라 desktop, tablet, mobile에서 실제 대화와 작업을 대체하는 표면으로 평가하는 기준을 정리합니다.
+---
+
+<Subtitle level={2}>0. dashboard라면 기준이 너무 낮다</Subtitle>
+
+<Paragraph>
+  OkayJing Local을 ops dashboard로만 보면 성공 기준은 낮다. 상태가 보이고,
+  버튼이 눌리고, ticket count가 맞으면 된다. 그런데 목표가 Discord
+  replacement라면 전혀 다르다. 대체해야 하는 것은 표가 아니라 매일 쓰는 대화와
+  작업 흐름이다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>
+  1. desktop, tablet, mobile은 같은 실패를 하지 않는다
+</Subtitle>
+
+<Paragraph>
+  desktop에서는 Office, Sessions, Code가 2–3 pane workspace로 이어져야 한다.
+  session과 artifact, code diff를 나란히 보고, worker detail과 verification,
+  ticket report로 바로 넘어갈 수 있어야 한다.
+</Paragraph>
+
+<Paragraph>
+  tablet에서는 split view나 collapsible review/planning view가 필요하다. 긴
+  코드와 대화가 서로 밀어내면 안 되고, approval이나 draft 조작이 터치로 가능해야
+  한다.
+</Paragraph>
+
+<Paragraph>
+  mobile에서는 기준이 더 명확하다. bottom nav, one active surface, drilldown이
+  필요하다. floor → worker → detail, session → chat → artifact, code list →
+  detail이 한 번에 하나씩 열려야 한다. desktop panel을 세로로 쌓아놓은 형태면
+  실패다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. Discord는 fallback이 될 수 있다</Subtitle>
+
+<Paragraph>
+  Discord를 당장 버린다는 뜻은 아니다. fallback channel로 남을 수 있다. 다만
+  primary surface가 되려면 대화, 파일, 코드, 승인, 브리핑, 알림, restart
+  recovery가 Local에서 이어져야 한다.
+</Paragraph>
+
+<Paragraph>
+  이 기준을 통과해야 OkayJing Local은 dashboard가 아니라 서식지가 된다. 매일
+  들어가서 일하고, 확인하고, 다시 말을 거는 공간이 된다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>참고 자료 / Evidence sources</Subtitle>
+
+- Internal plan — `/Users/seojing/.hermes/okejing/architecture/OkayJing-Local-Happy-v2-Feedback-Plan.md`
+- Internal runbook — `~/.hermes/skills/devops/okejing-ops/references/okayjing-local-happy-v2-ticket-a-shell.md`
+- Internal runbook — `~/.hermes/skills/devops/okejing-ops/references/okayjing-local-happy-v2-ticket-c-sessions.md`

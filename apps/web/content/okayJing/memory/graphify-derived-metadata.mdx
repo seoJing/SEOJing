@@ -1,0 +1,63 @@
+---
+title: "Graphify를 memory로 두지 않기로 했다 — 관계는 진실이 아니라 힌트다"
+date: "2026-06-21"
+tags: [okayJing, memory, graph, evidence]
+description: OkayJing이 Graphify를 별도 memory layer로 두지 않고 기존 source/index 위의 derived metadata로 붙이기로 한 판단을 정리합니다.
+---
+
+<Subtitle level={2}>0. 그래프가 생기면 똑똑해진 것처럼 보인다</Subtitle>
+
+<Paragraph>
+  Graphify를 붙이면 화면이 그럴듯해진다. 함수, 파일, 개념이 노드와 엣지로
+  이어진다. 어떤 함수가 무엇을 호출하고, 어떤 파일이 무엇을 reference하는지
+  보인다. 마치 새로운 memory layer가 생긴 것처럼 느껴진다.
+</Paragraph>
+
+<Paragraph>
+  그런데 바로 그 지점이 위험했다. graph가 memory처럼 행동하기 시작하면 OkayJing
+  안에 source of truth가 두 개 생긴다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. source of truth는 원본이다</Subtitle>
+
+```text
+sources / chunks / chunk_fts / artifacts = source of truth
+graph_imports / graph_nodes / graph_edges = derived structural hints
+```
+
+<Paragraph>
+  현재 판단은 이렇다. Graphify가 뽑은 관계는 유용하지만, 원본을 대체하지 않는다.
+  `calls`, `imports`, `references`, `contains` 같은 edge는 다음에 읽을 후보를
+  좁히는 힌트다. 최종 판단은 여전히 source chunk, read_file, test, artifact
+  readback이 한다.
+</Paragraph>
+
+<Paragraph>
+  edge 하나만 보고 "이 기능이 보장된다"고 말하면 안 된다. 그래프는 구조를 보여줄
+  수 있지만, 동작을 증명하지는 않는다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. Code surface에는 잘 맞는다</Subtitle>
+
+<Paragraph>
+  이 방향은 OkayJing 서식지의 Code surface와 잘 맞는다. 어떤 worker가 만진
+  코드와 주변 관계를 보여줄 수 있고, 다음에 읽어야 할 파일을 빠르게 좁힐 수
+  있다.
+</Paragraph>
+
+<Paragraph>
+  다만 UI에도 label이 필요하다. 이건 derived metadata라고 보여줘야 한다. 원본
+  링크, source coordinate, readback 버튼이 같이 있어야 한다. 그래야 그래프가
+  판단을 대신하지 않고, 판단을 시작할 위치만 알려준다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>참고 자료 / Evidence sources</Subtitle>
+
+- Internal runbook — Graph-derived memory layer: `~/.hermes/skills/devops/okejing-ops/references/graph-derived-memory-layer.md`
+- Internal note — OkayJing writing seed: `/Users/seojing/.hermes/okejing/architecture/OkayJing-Writing-Recovery-2026-06-21.md`

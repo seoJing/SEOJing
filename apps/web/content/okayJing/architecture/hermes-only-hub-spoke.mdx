@@ -1,0 +1,58 @@
+---
+title: "Planner, reviewer, coder를 늘리지 않기로 했다 — Hermes-only hub-spoke 원칙"
+date: "2026-06-21"
+tags: [okayJing, architecture, agents, hub-spoke]
+description: OkayJing이 역할극형 planner/reviewer/coder 분리보다 Hermes Hub와 project/profile spoke 격리를 택한 이유를 정리합니다.
+---
+
+<Subtitle level={2}>0. 역할을 나누면 팀처럼 보인다</Subtitle>
+
+<Paragraph>
+  agent 시스템을 만들다 보면 planner, reviewer, coder를 나누고 싶어진다.
+  화면상으로도 팀처럼 보이고, 설명도 쉽다. 그런데 OkayJing에는 그 방식이 잘 맞지
+  않았다.
+</Paragraph>
+
+<Paragraph>
+  진규가 필요한 것은 여러 인격의 회의가 아니라, 사용자-facing Hub와 격리된
+  task-world다. 누가 무슨 성격인지보다, 어떤 profile이 어떤 문맥과 권한을 갖고
+  어떤 artifact를 남기는지가 더 중요했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. default는 Hub다</Subtitle>
+
+<Paragraph>
+  default profile은 OkayJing Hub다. 사용자와 대화하고, 최종 결정을 내리고,
+  ticket/result ledger를 소유한다. 다른 profile에서 나온 결과를 흡수할지,
+  archive할지, discard할지도 Hub가 판단한다.
+</Paragraph>
+
+<Paragraph>
+  stable spoke는 `seojing`, `okejing-ops`처럼 프로젝트나 작업 세계의 문맥을
+  가진다. disposable spoke는 작업 단위 격리 실행에 가깝고, 기본 disposition은
+  archive나 discard다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. Hub가 흡수해야 하는 것만 흡수한다</Subtitle>
+
+<Paragraph>
+  Hub가 가져올 것은 contract, artifact, verification, final result, reusable
+  rule이다. 가져오지 말아야 할 것은 전체 worker transcript, 일회성 중간 context,
+  self-report뿐인 결과다.
+</Paragraph>
+
+<Paragraph>
+  이 구조는 덜 화려하다. 대신 Hub가 덜 더러워진다. 실패한 실험은 버릴 수 있고,
+  성공한 작업도 필요한 근거와 규칙만 회수할 수 있다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>참고 자료 / Evidence sources</Subtitle>
+
+- Internal architecture note — `/Users/seojing/.hermes/okejing/architecture/Hermes-Only-Hub-Spoke-Operating-Model.md`
+- Internal runbook — `~/.hermes/skills/devops/okejing-ops/references/hermes-only-hub-spoke-stabilization.md`

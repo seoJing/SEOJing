@@ -1,0 +1,65 @@
+---
+title: "외부 agent skill을 그대로 복사하지 않는 이유 — 흡수는 번역이다"
+date: "2026-06-21"
+tags: [okayJing, skills, agents, workflow]
+description: 외부 agent skill repository에서 좋은 패턴을 가져오되 OkayJing의 로컬 운영 규칙으로 다시 쓰는 기준을 정리합니다.
+---
+
+<Subtitle level={2}>0. 좋은 skill repo라도 그대로 맞지는 않는다</Subtitle>
+
+<Paragraph>
+  외부 agent skill repository를 보면 가져오고 싶은 패턴이 많다. description을
+  trigger처럼 쓰는 방식, 큰 skill을 reference와 script로 나누는 방식, 작업
+  생애주기를 명시하는 방식은 분명 유용하다.
+</Paragraph>
+
+<Paragraph>
+  하지만 그대로 복사하면 안 된다. 그 repo의 전제, 말투, 권한 모델, 자동화 범위가
+  OkayJing과 같지 않기 때문이다. 잘 만든 skill도 남의 운영 규칙이다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. 흡수는 install이 아니라 번역이다</Subtitle>
+
+```text
+external repo pattern
+→ useful idea 추출
+→ OkayJing 운영 문맥으로 재작성
+→ trigger / procedure / pitfall / verification으로 skill화
+→ provenance와 security disposition 남김
+```
+
+<Paragraph>
+  지금 OkayJing이 가져간 것은 원문이 아니라 기준이다. `description`은 장식이
+  아니라 trigger contract다. 큰 skill은 progressive disclosure로 나눈다.
+  Understand, Plan, Execute, Verify, Review, Report, Absorb 같은 lifecycle
+  vocabulary는 작업을 닫는 순서를 분명히 하는 데 쓴다.
+</Paragraph>
+
+<Paragraph>
+  다만 이 표현들도 그대로 권위가 되는 것은 아니다. OkayJing의 ticket, session,
+  memory, cron, hub-spoke 구조 안에서 다시 써야 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. 흡수 후에도 평가가 필요하다</Subtitle>
+
+<Paragraph>
+  좋은 문장을 skill에 넣었다고 끝이 아니다. 반복 작업에서 실제로 도움이 되는지,
+  오류를 줄이는지, 보고 품질을 높이는지 봐야 한다. workflow trace나 작은 eval
+  set이 필요한 이유도 여기에 있다.
+</Paragraph>
+
+<Paragraph>
+  외부 skill을 빨리 늘리는 것보다, OkayJing 안에서 쓸 수 있는 규칙으로 번역하고
+  검증하는 편이 낫다. 느려 보이지만 나중에 덜 위험하다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>참고 자료 / Evidence sources</Subtitle>
+
+- Internal architecture note — `/Users/seojing/.hermes/okejing/architecture/Agent-Skills-Absorption-Standard.md`
+- Internal runbook — `~/.hermes/skills/devops/okejing-ops/references/external-agent-skill-absorption-standard.md`

@@ -1,0 +1,56 @@
+---
+title: "API로 감쌀 것과 gateway에 남길 것 — OkayJing Local의 상태 변경 경계"
+date: "2026-06-21"
+tags: [okayJing, architecture, api, gateway]
+description: DB, Markdown, ticket 같은 원천 리소스 동시성은 API가 맡고, chat/voice/approval은 Hermes gateway 의미를 따라야 한다는 경계를 정리합니다.
+---
+
+<Subtitle level={2}>0. 모든 것을 API로 만들고 싶어진다</Subtitle>
+
+<Paragraph>
+  Local app을 만들다 보면 모든 동작을 API로 만들고 싶어진다.
+  `/api/messages/send`, `/api/worker/talk`, `/api/approve` 같은 endpoint를
+  만들면 UI에서는 편하다. 문제는 그 순간 Hermes gateway가 이미 갖고 있는 대화
+  의미를 우회할 수 있다는 점이다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. API가 맡아야 하는 것</Subtitle>
+
+<Paragraph>
+  API는 원천 리소스의 동시성과 상태 변경을 맡는 것이 맞다. SQLite DB, Markdown,
+  ticket, work-ledger, artifact, profile metadata, git/file/checkpoint index
+  같은 것들이다. 여기는 idempotency, locking, audit log, auth, readback이
+  필요하다.
+</Paragraph>
+
+<Paragraph>
+  이런 리소스는 여러 화면과 worker가 동시에 볼 수 있다. 그래서 명시적인 mutation
+  contract가 있어야 한다. 누가 무엇을 바꿨고, 실패하면 어떻게 되돌릴 수 있는지
+  남아야 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. gateway에 남겨야 하는 것</Subtitle>
+
+<Paragraph>
+  반대로 chat, voice, STT/TTS, media attachment, session/thread binding,
+  approval/clarify/permission prompt lifecycle은 gateway 의미를 따라야 한다.
+  conversation은 단순 POST가 아니다. 누가 말했고, 어느 session에 묶이고, 어떤
+  platform delivery로 나가며, 어떤 승인 흐름을 갖는지가 같이 붙는다.
+</Paragraph>
+
+<Paragraph>
+  서식지 UI는 draft, preview, read-first bridge를 보여줄 수 있다. 하지만 실제
+  대화 런타임을 앱 API 안에 새로 만들면 OkayJing이 두 개의 대화 시스템을 갖게
+  된다. 이건 피해야 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>참고 자료 / Evidence sources</Subtitle>
+
+- Internal contract — `/Users/seojing/.hermes/okejing/architecture/OkayJing-Habitat-Gateway-Bridge-Contract.md`
+- Internal runbook — `~/.hermes/skills/devops/okejing-ops/references/habitat-gateway-bridge-contract.md`

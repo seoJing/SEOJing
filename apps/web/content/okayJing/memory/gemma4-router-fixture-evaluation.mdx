@@ -1,0 +1,65 @@
+---
+title: "Gemma4 e2b를 감으로 믿지 않기 — fixture와 JSON으로 본 로컬 라우터"
+date: "2026-06-21"
+tags: [okayJing, memory, local-llm, evaluation]
+description: OkayJing이 Gemma4 e2b 로컬 라우팅을 감이 아니라 fixture, JSON schema, fallback, raw slice readback으로 평가한 과정을 정리합니다.
+---
+
+<Subtitle level={2}>0. "괜찮아 보인다"는 기준이 아니다</Subtitle>
+
+<Paragraph>
+  로컬 모델을 붙일 때 가장 위험한 말은 "생각보다 괜찮다"다. 작은 모델이 빠르게
+  뭔가를 내면 믿고 싶어진다. 그런데 OkayJing에서 로컬 모델은 큰 모델 호출 전의
+  증거 라우터다. 여기서 틀리면 이후 판단도 엉뚱한 원본을 보게 된다.
+</Paragraph>
+
+<Paragraph>
+  그래서 Gemma4 e2b 실험에서 중요했던 건 모델 인상이 아니라 검증 방식이었다.
+  fixture를 만들고, JSON output을 강제하고, 실패하면 fallback이 동작해야 했다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. 본 것은 모델 순위가 아니라 실패 모양이었다</Subtitle>
+
+<Paragraph>
+  관찰 결과는 이랬다. `gemma4:e2b`는 `heavy_code`, `agent_context`, streaming
+  `error_log` fixture에서 valid JSON을 냈다. 반면 `qwen3:8b`는 `heavy_code`와
+  `agent_context`는 처리했지만 streaming `error_log`에서 JSON parse failure가
+  났다.
+</Paragraph>
+
+<Paragraph>
+  이걸 "Gemma4가 더 좋다"로만 읽으면 아쉽다. 진짜 얻은 기준은 로컬 라우터를
+  평가하는 절차다.
+</Paragraph>
+
+1. fixture를 먼저 만든다.
+2. output schema를 강제한다.
+3. JSON parse failure를 실패로 인정한다.
+4. fallback이 있어야 한다.
+5. 모델 출력 대신 원본 raw slice를 다음 단계에 넘긴다.
+6. run 후 unload까지 확인한다.
+
+---
+
+<Subtitle level={2}>2. 작은 모델일수록 경계를 더 작게 적어야 한다</Subtitle>
+
+<Paragraph>
+  Gemma4 e2b는 OkayJing에서 "작은 판단자"가 아니다. 검증된 라우터 후보에 가깝다.
+  파일을 고르고, 줄 범위를 좁히고, 원본 readback을 돕는 역할이다.
+</Paragraph>
+
+<Paragraph>
+  작은 모델은 싸고 빠르다. 그래서 더 자주 쓰고 싶어진다. 하지만 자주 쓸수록 더
+  좁은 계약이 필요하다. local worker가 낸 답이 아니라, local worker가 가리킨
+  원본을 믿는 구조가 되어야 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>참고 자료 / Evidence sources</Subtitle>
+
+- Internal note — OkayJing writing seed: `/Users/seojing/.hermes/okejing/architecture/OkayJing-Writing-Recovery-2026-06-21.md`
+- Internal fixture source — `/Users/seojing/.hermes/vendors/token-router`
+- Internal wrapper — `/Users/seojing/.hermes/scripts/okejing_evidence_router.py`

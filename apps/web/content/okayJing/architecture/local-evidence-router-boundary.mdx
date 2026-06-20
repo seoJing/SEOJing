@@ -1,0 +1,73 @@
+---
+title: "로컬 모델에게 맡겨도 되는 일 — local evidence router의 경계"
+date: "2026-06-21"
+tags: [okayJing, architecture, local-first, evidence]
+description: 큰 모델 호출 전에 로컬 모델이 무엇을 해도 되고 무엇을 하면 안 되는지, OkayJing의 local evidence router 기준을 정리합니다.
+---
+
+<Subtitle level={2}>0. 처음엔 토큰 절약 문제처럼 보였다</Subtitle>
+
+<Paragraph>
+  token-router와 local evidence router를 붙이려는 이유는 처음엔 단순해 보였다.
+  큰 로그나 긴 코드 파일을 매번 큰 모델에게 보내면 비싸고 느리다. 그러니 로컬
+  모델이 먼저 훑고, 필요한 부분만 넘기면 된다. 여기까지만 보면 token 절약
+  장치다.
+</Paragraph>
+
+<Paragraph>
+  그런데 막상 기준을 잡다 보니 더 중요한 문제가 있었다. 로컬 모델이 고른 구간을
+  어디까지 믿을 것인가. 이 질문을 잘못 잡으면 작은 모델이 어느 순간 사실
+  판단자나 보안 판단자로 올라서게 된다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. 로컬 모델은 좌표를 고른다</Subtitle>
+
+<Paragraph>
+  OkayJing에서 local evidence router가 맡아도 되는 일은 좁다. 긴 로그, 긴 코드,
+  긴 agent-context 문서에서 관련 있어 보이는 file/line 후보를 고르는 것이다. "이
+  부분을 먼저 보라"는 좌표를 내는 일이다.
+</Paragraph>
+
+<Paragraph>
+  반대로 로컬 모델의 요약을 사실로 저장하면 안 된다. 로컬 모델 판단만으로 코드를
+  수정하거나 삭제해도 안 된다. 권한, 보안, 소유권, 외부 전송 같은 규칙을 로컬
+  라우팅 결과에 맡기는 것도 안 된다.
+</Paragraph>
+
+```text
+큰 원본 파일
+→ local model: 후보 file/line JSON
+→ deterministic router: 원본 raw slice readback
+→ cloud model: source-backed evidence로 판단
+```
+
+<Paragraph>
+  신뢰 지점은 모델 출력이 아니라 readback이다. 로컬 모델이 "여기쯤"을 말하면,
+  deterministic router가 원본에서 다시 뽑는다. 큰 모델은 요약문이 아니라 원본
+  slice를 본다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. 이 구조가 좋은 이유</Subtitle>
+
+<Paragraph>
+  이 방식은 큰 모델을 아끼는 것보다 더 중요하다. OkayJing이 raw evidence를
+  버리지 않는 시스템으로 남기 때문이다. 큰 모델이 덜 읽어도, 판단은 원본에
+  묶인다.
+</Paragraph>
+
+<Paragraph>
+  로컬 worker를 쓰는 순간마다 이 기준을 다시 봐야 한다. "이 worker가 낸 문장을
+  믿는가"가 아니라 "이 worker가 원본을 다시 찾게 해줬는가"를 봐야 한다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>참고 자료 / Evidence sources</Subtitle>
+
+- Internal note — OkayJing writing seed: `/Users/seojing/.hermes/okejing/architecture/OkayJing-Writing-Recovery-2026-06-21.md`
+- Internal implementation — Local evidence router wrapper: `/Users/seojing/.hermes/scripts/okejing_evidence_router.py`
+- Internal fixture source — Vendored token-router tests: `/Users/seojing/.hermes/vendors/token-router`

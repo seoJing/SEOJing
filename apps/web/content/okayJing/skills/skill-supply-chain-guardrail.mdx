@@ -1,0 +1,64 @@
+---
+title: "스킬은 문서가 아니라 공급망이다 — SkillSpector와 ToxicSkills guardrail"
+date: "2026-06-21"
+tags: [okayJing, skills, security, supply-chain]
+description: 외부 skill, MCP/tool package, agent repo를 OkayJing에 들여올 때 왜 supply-chain guardrail이 필요한지 정리합니다.
+---
+
+<Subtitle level={2}>0. skill은 조용히 행동을 바꾼다</Subtitle>
+
+<Paragraph>
+  skill은 그냥 Markdown 문서처럼 보인다. 그런데 agent 입장에서는 다르다. 언제
+  tool을 쓸지, 무엇을 먼저 확인할지, 어떤 보고를 pass라고 말할지까지 바꾼다.
+  외부 skill을 그대로 가져오는 일은 문서를 복사하는 일이 아니라 행동 규칙을
+  들여오는 일이다.
+</Paragraph>
+
+<Paragraph>
+  그래서 OkayJing에서는 외부 skill, MCP/tool package, agent repo를 supply-chain
+  artifact로 본다. 읽는 것과 설치하는 것, 참고하는 것과 흡수하는 것은 다르다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>1. 외부 텍스트는 authority가 아니라 evidence다</Subtitle>
+
+<Paragraph>
+  외부 skill은 처음엔 evidence다. authority가 아니다. 좋은 repo에서 왔더라도
+  prompt injection, obfuscation, remote execution, secret exposure, persistence
+  mutation 같은 위험을 봐야 한다.
+</Paragraph>
+
+<Paragraph>
+  SkillSpector 점수도 자동 판결은 아니다. review coordinate다. trusted 내부
+  runbook은 baseline이나 waiver가 있을 수 있지만, 외부 후보에서 hard blocker가
+  나오면 reject나 quarantine으로 막아야 한다.
+</Paragraph>
+
+<Paragraph>
+  중요한 건 "보안 도구를 붙였다"가 아니다. OkayJing의 운영 규칙으로 들어오는
+  입구에 intake gate를 만든 것이다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>2. guardrail의 목표는 느리게 만드는 게 아니다</Subtitle>
+
+<Paragraph>
+  이런 절차는 귀찮다. 하지만 목적은 외부 지식을 막는 것이 아니다. 좋은 패턴은
+  흡수하되, 행동 권한과 출처를 흐리지 않으려는 것이다.
+</Paragraph>
+
+<Paragraph>
+  OkayJing이 오래 굴러가려면 "어디서 온 규칙인지", "어떤 위험을 봤는지", "왜
+  허용했는지"가 남아야 한다. 그래야 나중에 이상한 행동이 생겼을 때 skill 자체를
+  다시 추적할 수 있다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>참고 자료 / Evidence sources</Subtitle>
+
+- Public project — SkillSpector: [NVIDIA/SkillSpector](https://github.com/NVIDIA/SkillSpector)
+- Internal runbook — SkillSpector preflight gate: `~/.hermes/skills/devops/okejing-ops/references/skillspector-preflight-gate.md`
+- Internal policy — `/Users/seojing/.hermes/okejing/architecture/Memory-Skill-Policy.md`
