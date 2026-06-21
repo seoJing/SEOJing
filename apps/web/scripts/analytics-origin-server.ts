@@ -1,8 +1,17 @@
 import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import http from "node:http";
 import { pathToFileURL } from "node:url";
-import { createJsonlAnalyticsStorage } from "../src/shared/analytics/analytics-ingestion";
+import {
+  createJsonlAnalyticsStorage,
+  type StoredAnalyticsEvent,
+} from "../src/shared/analytics/analytics-ingestion";
 import { handleAnalyticsCollectRequest } from "../src/shared/analytics/analytics-collect-api";
+import {
+  buildOpsAnalyticsSummary,
+  buildPublicAnalyticsSummary,
+  type AnalyticsContentInventoryItem,
+} from "../src/shared/analytics/analytics-summary";
 
 const DEFAULT_PORT = 8791;
 const DEFAULT_STORAGE_PATH = "var/analytics/events.jsonl";
@@ -22,6 +31,52 @@ function envList(value: string | undefined, fallback: string[]): string[] {
 function positiveInteger(value: unknown, fallback: number): number {
   const numeric = Number(value);
   return Number.isInteger(numeric) && numeric > 0 ? numeric : fallback;
+}
+
+function jsonResponse(status: number, body: unknown): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "private, no-store",
+    },
+  });
+}
+
+function isOpsReadAuthorized(
+  req: http.IncomingMessage,
+  token?: string,
+): boolean {
+  const authorization = req.headers.authorization;
+  if (token) return authorization === `Bearer ${token}`;
+
+  return Boolean(
+    req.headers["cf-access-authenticated-user-email"] ||
+    req.headers["cf-access-jwt-assertion"],
+  );
+}
+
+async function readStoredEvents(
+  jsonlPath: string,
+): Promise<StoredAnalyticsEvent[]> {
+  let raw = "";
+  try {
+    raw = await readFile(jsonlPath, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw error;
+  }
+
+  const events: StoredAnalyticsEvent[] = [];
+  for (const line of raw.split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      events.push(JSON.parse(line) as StoredAnalyticsEvent);
+    } catch {
+      // Ignore corrupt rows for dashboard reads; ingestion only writes valid JSON.
+    }
+  }
+  return events;
 }
 
 async function nodeRequestToWebRequest(
@@ -74,6 +129,8 @@ export function createAnalyticsOriginServer(
     storagePath?: string;
     allowedOrigins?: string[];
     maxBodyBytes?: number;
+    contentInventory?: AnalyticsContentInventoryItem[];
+    opsReadToken?: string;
   } = {},
 ): http.Server {
   const storagePath =
@@ -90,6 +147,9 @@ export function createAnalyticsOriginServer(
     options.maxBodyBytes ?? process.env.SEOJING_ANALYTICS_MAX_BODY_BYTES,
     32 * 1024,
   );
+  const contentInventory = options.contentInventory ?? [];
+  const opsReadToken =
+    options.opsReadToken ?? process.env.SEOJING_ANALYTICS_OPS_READ_TOKEN;
   const storage = createJsonlAnalyticsStorage(storagePath);
 
   return http.createServer(async (req, res) => {
@@ -112,6 +172,58 @@ export function createAnalyticsOriginServer(
                 "cache-control": "no-store",
               },
             },
+          ),
+        );
+        return;
+      }
+
+      if (
+        req.method === "GET" &&
+        url.pathname === "/v1/analytics/public-summary"
+      ) {
+        const rows = await readStoredEvents(storagePath);
+        await writeWebResponse(
+          res,
+          jsonResponse(
+            200,
+            buildPublicAnalyticsSummary({
+              rows,
+              inventory: contentInventory,
+              generatedAt: new Date().toISOString(),
+            }),
+          ),
+        );
+        return;
+      }
+
+      if (
+        req.method === "GET" &&
+        url.pathname === "/v1/ops/analytics/summary"
+      ) {
+        if (!isOpsReadAuthorized(req, opsReadToken)) {
+          await writeWebResponse(
+            res,
+            jsonResponse(401, {
+              ok: false,
+              error: "unauthorized",
+              expected: opsReadToken
+                ? "authorization bearer token"
+                : "cloudflare access headers",
+            }),
+          );
+          return;
+        }
+
+        const rows = await readStoredEvents(storagePath);
+        await writeWebResponse(
+          res,
+          jsonResponse(
+            200,
+            buildOpsAnalyticsSummary({
+              rows,
+              inventory: contentInventory,
+              generatedAt: new Date().toISOString(),
+            }),
           ),
         );
         return;

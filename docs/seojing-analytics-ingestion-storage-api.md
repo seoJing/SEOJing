@@ -96,10 +96,46 @@ YYYY-MM-DD|content_slug|event_type -> count
 - `apps/web/scripts/analytics-origin-server.ts`: Mac mini Node HTTP origin process
 - `apps/web/src/shared/analytics/*.test.ts`: collect/ingestion/replay tests
 
+## Dashboard / 접근 최종 플랜
+
+진규가 웹에서 바로 내부용을 확인할 수 있게 하되, GitHub OAuth를 SEOJing 앱에 바로 넣지는 않는다. Giscus 댓글의 GitHub 로그인은 `giscus.app` iframe 내부 인증이라 SEOJing 앱 세션으로 재사용할 수 없기 때문이다.
+
+### 공개용
+
+- 경로: `/analytics`
+- 목적: SEOJing을 포트폴리오처럼 보여주는 public-safe 운영 지표
+- 데이터: public summary JSON/API 또는 콘텐츠 인벤토리 fallback
+- 노출 가능: 총 이벤트, 조회 이벤트, 인기 글, 이벤트 타입별 집계, 콘텐츠 분류별 개수
+- 노출 금지: session id, raw IP, raw User-Agent, raw Q&A question/answer, raw referrer, 정확한 개인별 journey
+- 작은 표본: 기본 threshold 미만은 숫자 대신 `< threshold` 형태로 숨긴다.
+
+### 내부용
+
+- 경로: `/ops/analytics`
+- 목적: ingestion/storage/rejected event 상태 확인
+- 접근: `/ops/*`와 `/v1/ops/*`를 Cloudflare Access로 보호하는 방식을 1순위로 둔다.
+- fallback: origin read endpoint의 server-side bearer token. 이 값은 browser bundle 또는 `PUBLIC_*` env에 넣지 않는다.
+- GitHub OAuth 직접 구현: 관리자 액션, 방문자 계정 기능, Q&A→GitHub Discussion 연결이 필요해질 때 후순위로 도입한다.
+
+### Origin read endpoints
+
+Mac mini origin process는 collect endpoint와 분리된 read endpoint를 제공한다.
+
+```text
+GET /v1/analytics/public-summary
+GET /v1/ops/analytics/summary
+```
+
+`/v1/ops/analytics/summary`는 다음 중 하나가 있어야 통과한다.
+
+- Cloudflare Access headers: `cf-access-authenticated-user-email` 또는 `cf-access-jwt-assertion`
+- `SEOJING_ANALYTICS_OPS_READ_TOKEN`과 일치하는 `Authorization: Bearer ...`
+
 ## 후속 TODO
 
 - Worker BFF/proxy 실제 배포 경로에서 `/api/analytics/events -> Mac mini /v1/analytics/events` 연결
 - Cloudflare Tunnel/Access/env secret 운영값 확정
+- `/ops/*`와 `/v1/ops/*` Cloudflare Access 정책 적용
+- `SEOJING_ANALYTICS_PUBLIC_SUMMARY_URL`, `SEOJING_ANALYTICS_OPS_SUMMARY_URL` 운영값 연결
 - retention job: raw accepted JSONL 30일, compressed backup/archive 정책 적용
-- dashboard admin read API는 collect endpoint와 별도 구현
-- SQLite aggregate table은 dashboard 요구가 생긴 뒤 JSONL replay source에서 생성
+- SQLite aggregate table은 dashboard 요구가 커진 뒤 JSONL replay source에서 생성
