@@ -225,7 +225,7 @@ export function PostCoverCard({ post, priority = false }: PostCoverCardProps) {
           <img
             src={post.cover!.src}
             alt={post.cover?.alt ?? ""}
-            className="absolute inset-0 size-full object-cover transition duration-500 group-hover:scale-[1.03]"
+            className="absolute inset-0 size-full scale-[1.04] object-cover opacity-85 blur-[1px] saturate-[0.88] contrast-[0.72] transition duration-500 group-hover:scale-[1.07]"
             loading={priority ? "eager" : "lazy"}
           />
         ) : null}
@@ -233,7 +233,7 @@ export function PostCoverCard({ post, priority = false }: PostCoverCardProps) {
           className="absolute inset-0"
           style={{
             background: hasImage
-              ? "linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.74))"
+              ? "linear-gradient(180deg, rgba(0,0,0,0.36), rgba(0,0,0,0.86))"
               : `radial-gradient(circle at ${20 + (seed % 50)}% ${20 + (seed % 50)}%, ${palette.soft}, transparent 38%)`,
           }}
         />
@@ -246,29 +246,37 @@ export function PostCoverCard({ post, priority = false }: PostCoverCardProps) {
           style={{ color: hasImage ? "rgba(255,255,255,0.78)" : palette.muted }}
         >
           <span>{post.category}</span>
-          <time>{formatDate(post.date)}</time>
+          <time className="hidden sm:inline">{formatDate(post.date)}</time>
         </div>
 
-        <div className="absolute inset-x-[8%] bottom-[9%]">
-          <h3 className="whitespace-pre-line font-heading text-[clamp(1.3rem,4.7vw,2.55rem)] font-black leading-[1.02] tracking-[-0.06em] sm:text-[clamp(1.25rem,2.45vw,2.2rem)]">
+        <div className="absolute inset-x-[8%] bottom-[8%]">
+          <h3 className="line-clamp-3 whitespace-pre-line break-words font-heading text-[clamp(0.98rem,5.4vw,1.35rem)] font-black leading-[1.04] tracking-[-0.045em] sm:text-[clamp(1.15rem,2.35vw,2.05rem)]">
             {title}
             <span style={{ color: hasImage ? "#ff2a35" : palette.accent }}>
               .
             </span>
           </h3>
-          <div className="mt-5 flex items-end justify-between gap-3">
+          <div className="mt-2 flex items-end justify-between gap-2 sm:mt-5 sm:gap-3">
             <p
-              className="line-clamp-2 max-w-[72%] text-xs font-semibold leading-relaxed"
+              className="hidden max-w-[72%] text-xs font-semibold leading-relaxed sm:line-clamp-2 sm:block"
               style={{
                 color: hasImage ? "rgba(255,255,255,0.78)" : palette.muted,
               }}
             >
               {post.description || post.tags.slice(0, 2).join(" · ")}
             </p>
+            <time
+              className="ml-auto font-mono text-[0.62rem] font-bold uppercase tracking-[0.16em] sm:hidden"
+              style={{
+                color: hasImage ? "rgba(255,255,255,0.78)" : palette.muted,
+              }}
+            >
+              {formatDate(post.date)}
+            </time>
             <img
               src="/logo.ico"
               alt="SEOJing"
-              className="size-10 shrink-0 object-contain drop-shadow-[0_1px_6px_rgba(0,0,0,0.35)] transition group-hover:scale-105"
+              className="ml-auto hidden size-7 shrink-0 object-contain drop-shadow-[0_1px_6px_rgba(0,0,0,0.35)] transition group-hover:scale-105 sm:block sm:size-10"
               loading="lazy"
             />
           </div>
