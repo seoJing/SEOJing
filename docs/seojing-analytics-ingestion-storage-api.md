@@ -8,7 +8,7 @@
 
 MVP 저장소는 Mac mini private API의 append-only JSONL 파일로 시작한다.
 
-- Public collect 경로: `POST /api/analytics/events` 또는 Worker proxy 뒤 `POST /v1/analytics/events`
+- Public collect 경로: `POST /api/analytics/events` → Worker/Vinext BFF proxy → Mac mini origin `POST /v1/analytics/events`
 - 실제 저장 책임: Mac mini origin process
 - 저장 파일 기본값: `apps/web/var/analytics/events.jsonl` 또는 `SEOJING_ANALYTICS_JSONL_PATH`
 - batch 한도: 최대 20개 이벤트 / 기본 32KB body
@@ -117,6 +117,24 @@ YYYY-MM-DD|content_slug|event_type -> count
 - fallback: origin read endpoint의 server-side bearer token. 이 값은 browser bundle 또는 `PUBLIC_*` env에 넣지 않는다.
 - GitHub OAuth 직접 구현: 관리자 액션, 방문자 계정 기능, Q&A→GitHub Discussion 연결이 필요해질 때 후순위로 도입한다.
 
+### Worker/Vinext BFF env
+
+SEOJing 앱의 same-origin collect route는 다음 env를 사용한다.
+
+```text
+SEOJING_ANALYTICS_COLLECT_URL=http://127.0.0.1:8791/v1/analytics/events
+```
+
+이 값이 없으면 `/api/analytics/events`는 404 대신 disabled `202`를 반환한다. 글 읽기 UX를 깨지 않기 위한 fallback이며, 운영에서는 반드시 collect URL을 연결해 실제 저장까지 확인한다.
+
+공개/내부 dashboard server component는 다음 env가 있으면 외부 summary를 읽고, 없으면 콘텐츠 인벤토리 fallback을 렌더링한다.
+
+```text
+SEOJING_ANALYTICS_PUBLIC_SUMMARY_URL=https://ops-api.seojing.com/v1/analytics/public-summary
+SEOJING_ANALYTICS_OPS_SUMMARY_URL=https://ops-api.seojing.com/v1/ops/analytics/summary
+SEOJING_ANALYTICS_OPS_READ_TOKEN=<server-side-only-token-if-not-using-access-header>
+```
+
 ### Origin read endpoints
 
 Mac mini origin process는 collect endpoint와 분리된 read endpoint를 제공한다.
@@ -129,7 +147,7 @@ GET /v1/ops/analytics/summary
 `/v1/ops/analytics/summary`는 다음 중 하나가 있어야 통과한다.
 
 - Cloudflare Access headers: `cf-access-authenticated-user-email` 또는 `cf-access-jwt-assertion`
-- `SEOJING_ANALYTICS_OPS_READ_TOKEN`과 일치하는 `Authorization: Bearer ...`
+- `SEOJING_ANALYTICS_OPS_READ_TOKEN`과 일치하는 `Authorization: Bearer <token>`
 
 ## 후속 TODO
 
