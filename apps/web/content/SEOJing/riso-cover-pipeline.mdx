@@ -1,0 +1,111 @@
+---
+title: "대표 이미지를 글마다 다시 붙이는 방식 — 사진 검색에서 리소그래프 배경까지"
+date: "2026-06-21"
+tags:
+  - SEOJing
+  - Cover
+  - Image Generation
+  - Automation
+  - Codex
+description: SEOJing 포스트 목록을 파일 탐색기처럼만 두지 않고, 최신 글부터 실제 사진 기반 리소그래프 배경을 붙이는 실험을 정리합니다. 이미지는 배경만 만들고, 제목과 아이콘은 블로그 UI가 맡는 쪽으로 방향을 바꿨습니다.
+cover:
+  src: "/images/content/seojing/riso-cover-pipeline/cover-riso.png"
+  alt: "대표 이미지를 글마다 다시 붙이는 방식 글의 리소그래프 스타일 대표 이미지 배경"
+  caption: "Wikimedia Commons source photo · risograph reinterpretation via Codex image generation · SEOJing cover pipeline experiment"
+  kind: "generated"
+---
+
+처음에는 글 제목을 넣은 이미지를 직접 만들려고 했다. 그런데 해보니 금방 한계가 보였다. 이미지 생성 모델이 한글 타이틀을 안정적으로 다루지 못했고, 로컬 후처리로 텍스트를 박아 넣으면 폰트 설치 상태에 따라 결과가 달라졌다.
+
+그래서 방향을 바꿨다.
+
+이미지는 **배경만** 만든다. 제목, 서브타이틀, SEOJing 아이콘, 검정 블러 오버레이는 블로그 카드 UI가 맡는다. 기존 파일 탐색기형 목록은 그대로 있으니, 새 카드 영역은 정보 탐색보다 분위기를 만드는 쪽으로 가도 된다.
+
+## 이번에 바꾼 판단
+
+대표 이미지 자동화의 순서를 이렇게 잡았다.
+
+```txt
+글 제목 / 설명 / 태그
+→ 검색 키워드 생성
+→ 실제 사진 후보 검색
+→ 미니멀한 사진을 점수화해서 선택
+→ Codex image generation/edit으로 리소그래프 배경 변환
+→ MDX cover frontmatter에 삽입
+→ 카드 UI에서 hover 시 제목/블러/아이콘 표시
+```
+
+핵심은 "처음부터 도트 스타일 그림을 생성"하는 것이 아니었다. 그 방식은 그럴듯하지만 금방 추상 배경처럼 보였다. 원하는 감성은 실제 사진의 구도가 남아있는 상태에서, 그 사진을 리소그래프 인쇄물처럼 다시 해석할 때 더 잘 나왔다.
+
+## 사진을 고르는 기준
+
+좋은 사진을 고르는 게 아니라, **변환했을 때 좋은 포스터가 될 사진**을 골라야 했다.
+
+이번 필터는 대략 이런 점수를 봤다.
+
+- 상단 35% 영역이 조용한가
+- 전체 edge density가 너무 높지 않은가
+- 색과 디테일이 과하게 많지 않은가
+- 세로 4:5 크롭이 가능한가
+- 단일 사물이나 큰 형태가 남아 있는가
+
+반대로 이런 후보는 제외했다.
+
+```txt
+logo, icon, diagram, chart, map, screenshot,
+poster, infographic, presentation, slide,
+collage, group, conference, meeting, people, portrait
+```
+
+사진 검색어도 그냥 글 키워드만 쓰지 않았다. `close up`, `detail`, `macro`, `minimal`, `empty`, `single`, `isolated` 같은 단어를 붙여서, 넓은 장면보다 사물 일부와 여백이 있는 사진을 우선했다.
+
+## 최신 20개 포스트에 먼저 적용
+
+이번 실험에서는 전체 포스트 중 최신 20개만 대상으로 잡았다. 모든 옛글까지 한 번에 덮으면 검수 비용이 커지고, 커버 스타일이 아직 확정되지 않은 상태에서 되돌리기도 어렵기 때문이다.
+
+아래 이미지는 이번에 만든 최신 20개 커버 배경의 접촉시트다. 실제 카드에서는 이 이미지들 위에 제목이 박혀 있지 않고, hover 시 블로그 UI가 검정 블러와 흰색 제목을 얹는 구조로 가는 것이 맞다.
+
+![최신 20개 리소그래프 커버 배경 접촉시트](/images/content/seojing/riso-cover-pipeline/latest20-riso-contact-sheet.png)
+
+| #   | date       | post                                            | source query                 | cover                                                                                              |
+| --- | ---------- | ----------------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------- |
+| 1   | 2026-06-21 | day11.mdx                                       | `network switch close up`    | `/images/content/study/agent-framework/day11/cover-riso.png`                                       |
+| 2   | 2026-06-21 | tts-local-api-r2-defer.mdx                      | `archive boxes detail`       | `/images/content/okayjing/voice/tts-local-api-r2-defer/cover-riso.png`                             |
+| 3   | 2026-06-21 | skill-supply-chain-guardrail.mdx                | `network switch close up`    | `/images/content/okayjing/skills/skill-supply-chain-guardrail/cover-riso.png`                      |
+| 4   | 2026-06-21 | external-agent-skills-absorption.mdx            | `hard drive close up`        | `/images/content/okayjing/skills/external-agent-skills-absorption/cover-riso.png`                  |
+| 5   | 2026-06-21 | graphify-derived-metadata.mdx                   | `library shelves detail`     | `/images/content/okayjing/memory/graphify-derived-metadata/cover-riso.png`                         |
+| 6   | 2026-06-21 | gemma4-router-fixture-evaluation.mdx            | `archive boxes detail`       | `/images/content/okayjing/memory/gemma4-router-fixture-evaluation/cover-riso.png`                  |
+| 7   | 2026-06-21 | source-resource-api-boundary.mdx                | `audio cable close up`       | `/images/content/okayjing/architecture/source-resource-api-boundary/cover-riso.png`                |
+| 8   | 2026-06-21 | pixel-office-worker-space.mdx                   | `paper texture close up`     | `/images/content/okayjing/architecture/pixel-office-worker-space/cover-riso.png`                   |
+| 9   | 2026-06-21 | okayjing-local-discord-replacement-criteria.mdx | `archive boxes detail`       | `/images/content/okayjing/architecture/okayjing-local-discord-replacement-criteria/cover-riso.png` |
+| 10  | 2026-06-21 | local-evidence-router-boundary.mdx              | `hard drive close up`        | `/images/content/okayjing/architecture/local-evidence-router-boundary/cover-riso.png`              |
+| 11  | 2026-06-21 | hermes-only-hub-spoke.mdx                       | `paper texture close up`     | `/images/content/okayjing/architecture/hermes-only-hub-spoke/cover-riso.png`                       |
+| 12  | 2026-06-21 | repo-local-skill-pack-harness.mdx               | `keyboard close up computer` | `/images/content/clab/repo-local-skill-pack-harness/cover-riso.png`                                |
+| 13  | 2026-06-21 | cover-automation-codex-test.mdx                 | `keyboard close up computer` | `/images/content/seojing/cover-automation-codex-test/cover-riso.png`                               |
+| 14  | 2026-06-20 | day10.mdx                                       | `keyboard close up computer` | `/images/content/study/agent-framework/day10/cover-riso.png`                                       |
+| 15  | 2026-06-20 | technical-map.mdx                               | `network switch close up`    | `/images/content/okayjing/technical-map/cover-riso.png`                                            |
+| 16  | 2026-06-20 | skill-quality-rubric.mdx                        | `keyboard close up computer` | `/images/content/clab/insight-analysis/skill-quality-rubric/cover-riso.png`                        |
+| 17  | 2026-06-20 | project-automation-with-ai.mdx                  | `ethernet cable close up`    | `/images/content/clab/insight-analysis/project-automation-with-ai/cover-riso.png`                  |
+| 18  | 2026-06-20 | playwright-e2e-harness.mdx                      | `laptop keyboard detail`     | `/images/content/clab/insight-analysis/playwright-e2e-harness/cover-riso.png`                      |
+| 19  | 2026-06-20 | ai-code-review-adoption.mdx                     | `laptop keyboard detail`     | `/images/content/clab/insight-analysis/ai-code-review-adoption/cover-riso.png`                     |
+| 20  | 2026-06-19 | day9.mdx                                        | `lock close up minimal`      | `/images/content/study/agent-framework/day9/cover-riso.png`                                        |
+
+## 앞으로의 기본값
+
+앞으로 새 글을 만들 때는 커버를 본문 작성의 마지막 장식으로 보지 않기로 했다. 글 제목, 설명, 태그가 정리되면 곧바로 배경 후보를 검색하고, 미니멀한 실제 사진을 골라 리소그래프 배경으로 변환한다.
+
+카드에서 타이틀은 이미지 안에 굽지 않는다. 블로그 기능으로 처리한다.
+
+```txt
+기본 상태: 배경 이미지만 조용히 보임
+hover 상태: 상단 검정 블러가 내려오고, 흰색 제목/설명/SEOJing 아이콘이 등장
+```
+
+이렇게 하면 폰트 문제도 줄고, 제목을 고칠 때 이미지를 다시 만들 필요도 없다. 이미지 생성은 이미지다운 일만 하고, 블로그 UI는 UI다운 일을 맡는 쪽이 오래 간다.
+
+## Evidence
+
+- 최신 20개 포스트 MDX에 `cover` frontmatter 추가
+- 커버 이미지 저장 위치: `apps/web/public/images/content/**/cover-riso.png`
+- 접촉시트: `/images/content/seojing/riso-cover-pipeline/latest20-riso-contact-sheet.png`
+- 생성 경로: Wikimedia Commons 후보 검색 → 미니멀 점수 필터링 → Codex image generation/edit 리소그래프 변환

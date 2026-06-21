@@ -1,4 +1,4 @@
-import type { ContentNode } from "@app/utils";
+import type { ContentCover, ContentNode } from "@app/utils";
 
 export interface PostInfo {
   title: string;
@@ -6,6 +6,8 @@ export interface PostInfo {
   date: string;
   tags: string[];
   href: string;
+  category: string;
+  cover?: ContentCover;
 }
 
 /** 트리에서 특정 경로의 서브트리를 반환 */
@@ -26,8 +28,23 @@ export function getSubTree(
   return current;
 }
 
-/** 모든 파일을 평탄화하여 최신순 정렬 */
-export function getRecentPosts(nodes: ContentNode[], limit = 5): PostInfo[] {
+function getCategoryFromPath(path: string): string {
+  const firstSegment = path.replace(/^\//, "").split("/")[0];
+  if (!firstSegment) return "All Posts";
+
+  const labels: Record<string, string> = {
+    SEOJing: "SEO Jing",
+    okayJing: "OkayJing",
+    clab: "CLAB",
+    "kd-team": "KD Team",
+    study: "Study",
+    spot: "SPOT",
+  };
+
+  return labels[firstSegment] ?? firstSegment;
+}
+
+function collectPosts(nodes: ContentNode[]): PostInfo[] {
   const posts: PostInfo[] = [];
 
   function collect(items: ContentNode[]) {
@@ -39,6 +56,8 @@ export function getRecentPosts(nodes: ContentNode[], limit = 5): PostInfo[] {
           date: node.frontmatter.date,
           tags: node.frontmatter.tags,
           href: `/blog${node.path.replace(/\.mdx?$/, "")}`,
+          category: getCategoryFromPath(node.path),
+          cover: node.frontmatter.cover,
         });
       }
       if (node.type === "folder" && node.children) {
@@ -49,5 +68,15 @@ export function getRecentPosts(nodes: ContentNode[], limit = 5): PostInfo[] {
 
   collect(nodes);
   posts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  return posts.slice(0, limit);
+  return posts;
+}
+
+/** 모든 파일을 평탄화하여 최신순 정렬 */
+export function getAllPosts(nodes: ContentNode[]): PostInfo[] {
+  return collectPosts(nodes);
+}
+
+/** 모든 파일을 평탄화하여 최신순 정렬 */
+export function getRecentPosts(nodes: ContentNode[], limit = 5): PostInfo[] {
+  return collectPosts(nodes).slice(0, limit);
 }

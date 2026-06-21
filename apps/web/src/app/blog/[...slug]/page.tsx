@@ -7,6 +7,7 @@ import type { MDXComponents } from "mdx/types";
 import { NewPostsCarousel } from "@/widgets/new-posts-carousel/NewPostsCarousel";
 import { RecentlyRead } from "@/widgets/recently-read/RecentlyRead";
 import { PostExplorer } from "@/widgets/post-explorer/PostExplorer";
+import { PostGrid } from "@/widgets/post-grid";
 import { ArticleToolbar } from "@/widgets/article-toolbar/ArticleToolbar";
 import { ArticleAnalytics } from "@/widgets/article-analytics";
 import { PostQaPanel, SectionQaPrompts } from "@/widgets/post-qa";
@@ -56,6 +57,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         <NewPostsCarousel rootPath={rootPath} />
         <RecentlyRead rootPath={rootPath} />
         <PostExplorer rootPath={rootPath} />
+        <PostGrid rootPath={rootPath} title="이 섹션의 대표 이미지" />
       </>
     );
   }
@@ -106,6 +108,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           title={content.frontmatter.title}
         />
         <PostExplorer rootPath={rootPath} wayFindingPath={wayFindingPath} />
+        <PostGrid rootPath={rootPath} title="같은 섹션의 대표 이미지" />
       </Paper>
     </div>
   );

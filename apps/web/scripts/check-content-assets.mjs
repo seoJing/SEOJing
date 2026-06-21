@@ -53,21 +53,23 @@ function parseFrontmatter(source) {
   return source.slice(4, end);
 }
 
-function parseFrontmatterImage(frontmatter) {
+function parseFrontmatterObject(frontmatter, key) {
   if (!frontmatter) return undefined;
   const lines = frontmatter.split("\n");
-  const imageIndex = lines.findIndex((line) => /^image:\s*$/.test(line));
-  if (imageIndex === -1) return undefined;
+  const objectIndex = lines.findIndex((line) =>
+    new RegExp(`^${key}:\\s*$`).test(line),
+  );
+  if (objectIndex === -1) return undefined;
 
   /** @type {Record<string, string>} */
-  const image = {};
-  for (const line of lines.slice(imageIndex + 1)) {
+  const object = {};
+  for (const line of lines.slice(objectIndex + 1)) {
     if (/^\S/.test(line)) break;
     const match = line.match(/^\s{2,}([A-Za-z0-9_-]+):\s*(.*)$/);
     if (!match) continue;
-    image[match[1]] = match[2].replace(/^['"]|['"]$/g, "");
+    object[match[1]] = match[2].replace(/^['"]|['"]$/g, "");
   }
-  return image;
+  return object;
 }
 
 function isExternal(src) {
@@ -76,6 +78,36 @@ function isExternal(src) {
     src.startsWith("data:") ||
     src.startsWith("mailto:")
   );
+}
+
+function checkSvgSafety(file, publicPath, context) {
+  const source = fs.readFileSync(publicPath, "utf8");
+  const bodyWithoutXmlns = source.replace(
+    /\sxmlns(?::[A-Za-z0-9_-]+)?=["'][^"']+["']/g,
+    "",
+  );
+  const forbiddenPatterns = [
+    {
+      pattern:
+        /<\s*(script|foreignObject|iframe|object|embed|canvas|audio|video|image)\b/i,
+      label: "scriptable or external-capable SVG element",
+    },
+    { pattern: /\son[a-z]+\s*=/i, label: "event handler attribute" },
+    { pattern: /\b(?:href|xlink:href)\s*=/i, label: "href attribute" },
+    { pattern: /(?:https?:)?\/\//i, label: "remote URL" },
+    { pattern: /data:/i, label: "data URL" },
+    { pattern: /@import/i, label: "CSS import" },
+  ];
+
+  for (const { pattern, label } of forbiddenPatterns) {
+    if (pattern.test(bodyWithoutXmlns)) {
+      add(
+        "error",
+        file,
+        `${context}: unsafe SVG (${label}); rasterize it or regenerate a sanitized static SVG`,
+      );
+    }
+  }
 }
 
 function checkPublicSrc(file, src, context) {
@@ -141,6 +173,8 @@ function checkPublicSrc(file, src, context) {
       file,
       `${context}: image file does not exist under apps/web/public: ${src}`,
     );
+  } else if (extension === ".svg") {
+    checkSvgSafety(file, publicPath, context);
   }
 
   const isLegacyAllowed =
@@ -162,7 +196,9 @@ function checkPublicSrc(file, src, context) {
 
 function checkFile(file) {
   const source = fs.readFileSync(file, "utf8");
-  const frontmatterImage = parseFrontmatterImage(parseFrontmatter(source));
+  const frontmatter = parseFrontmatter(source);
+  const frontmatterImage = parseFrontmatterObject(frontmatter, "image");
+  const frontmatterCover = parseFrontmatterObject(frontmatter, "cover");
 
   if (frontmatterImage) {
     if (!frontmatterImage.src)
@@ -171,6 +207,15 @@ function checkFile(file) {
       add("error", file, "frontmatter image: missing alt");
     if (frontmatterImage.src)
       checkPublicSrc(file, frontmatterImage.src, "frontmatter image");
+  }
+
+  if (frontmatterCover) {
+    if (!frontmatterCover.src)
+      add("error", file, "frontmatter cover: missing src");
+    if (!frontmatterCover.alt)
+      add("error", file, "frontmatter cover: missing alt");
+    if (frontmatterCover.src)
+      checkPublicSrc(file, frontmatterCover.src, "frontmatter cover");
   }
 
   const articleImageRegex = /<ArticleImage\b([\s\S]*?)(?:\/>|>)/g;

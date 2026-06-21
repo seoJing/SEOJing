@@ -129,6 +129,23 @@ Content`;
     expect(result.content.startsWith("\n")).toBe(false);
   });
 
+  it("parses nested object values", () => {
+    const raw = `---
+title: Test
+cover:
+  src: "/images/content/post/cover-01.jpg"
+  alt: "대표 이미지"
+  kind: "searched"
+---
+Content`;
+    const result = parseFrontmatter(raw);
+    expect(result.data.cover).toEqual({
+      src: "/images/content/post/cover-01.jpg",
+      alt: "대표 이미지",
+      kind: "searched",
+    });
+  });
+
   it("resets currentArrayKey when a new key-value pair is found", () => {
     const raw = `---
 tags:

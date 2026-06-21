@@ -1,0 +1,188 @@
+---
+title: "대표 이미지 자동화 실험 — 검색과 Codex 생성이 같은 경로로 붙었다"
+date: 2026-06-21
+tags:
+  - SEOJing
+  - Image Generation
+  - Cover
+  - Automation
+  - DevLog
+description: SEOJing 블로그에 대표 이미지를 자동으로 붙이는 실험을 실제로 돌려봤다. 검색 기반 cover 삽입과 Codex CLI 기반 정적 SVG 생성이 같은 frontmatter 경로로 연결됐다.
+cover:
+  src: "/images/content/seojing/cover-automation-codex-test/cover-riso.png"
+  alt: "대표 이미지 자동화 실험 — 검색과 Codex 생성이 같은 경로로 붙었다 글의 리소그래프 스타일 대표 이미지 배경"
+  caption: "Wikimedia Commons · Keyboard close-up.jpg · CC0 · risograph reinterpretation via Codex image generation · https://commons.wikimedia.org/wiki/File:Keyboard_close-up.jpg"
+  kind: "generated"
+---
+
+<Subtitle level={2}>사진이 없는 글은 진입 장벽이 된다</Subtitle>
+
+<Paragraph>
+  블로그 목록을 텍스트만으로 보면 글이 많아질수록 어디부터 눌러야 할지 흐려진다.
+  특히 SEOJing처럼 학습 기록, 기능 개발기, OkayJing 운영 기록이 섞여 있으면
+  제목만으로 분위기를 구분하기 어렵다. 그래서 최근에 블로그 목록을 대표 이미지
+  중심의 카드 그리드로 바꾸고, 이미지가 없는 글은 코드로 만든 fallback 카드를
+  보여주도록 했다.
+</Paragraph>
+
+<Paragraph>
+  여기서 바로 다음 문제가 생긴다. fallback 카드는 빈칸을 막아주지만, 모든 글이
+  fallback이면 결국 비슷한 카드가 반복된다. 글마다 사진이나 시각 요소가 있으면
+  글의 성격을 훨씬 빨리 파악할 수 있다. 그래서 이번에는 실제로 대표 이미지 자동
+  삽입을 돌려봤다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>구조는 네 층으로 나눴다</Subtitle>
+
+<Paragraph>
+  이번 기능은 한 번에 “AI가 예쁜 사진을 알아서 넣는다”로 잡지 않았다. 실패할 수
+  있는 지점을 나눠야 운영할 수 있기 때문이다.
+</Paragraph>
+
+| 층             | 역할                                                                    | 현재 상태      |
+| :------------- | :---------------------------------------------------------------------- | :------------- |
+| `cover.src`    | 글 frontmatter에 실제 대표 이미지 경로를 저장한다                       | 구현됨         |
+| 검색 기반 삽입 | Wikimedia Commons에서 이미지를 찾아 로컬 public asset으로 복사한다      | 동작 확인      |
+| 생성 기반 삽입 | 구독 기반 이미지 생성 도구로 이미지를 만들고 같은 `cover` 구조로 넣는다 | 도구 연결 필요 |
+| fallback 카드  | cover가 없을 때 제목/카테고리/날짜/패턴으로 카드 렌더링                 | 구현됨         |
+
+<Paragraph>
+  이 구조의 장점은 검색과 생성을 같은 렌더링 경로로 다룬다는 점이다. 이미지가
+  어디서 왔든 최종적으로는 `apps/web/public/images/content/**` 아래 파일이 되고,
+  MDX에는 `cover.src`, `cover.alt`, `cover.caption`, `cover.kind`만 남는다.
+  렌더러는 출처를 신경 쓰지 않고 `cover.src`가 있으면 이미지를 쓰고, 없으면
+  fallback 카드를 그린다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>검색 기반 삽입은 실제로 됐다</Subtitle>
+
+<Paragraph>
+  먼저 Wikimedia 검색 기반 흐름을 테스트했다. `cover:auto` 스크립트는 기본적으로
+  dry-run이고, `--write`를 붙였을 때만 파일과 MDX를 수정한다. 넓은 범위의 글을
+  한 번에 바꾸지 않도록 `--path`, `--limit`, `--force`, `--query`도 따로 받는다.
+</Paragraph>
+
+```bash
+pnpm --filter @app/web run cover:auto -- \
+  --provider wikimedia \
+  --path apps/web/content/okayJing/technical-map.mdx \
+  --limit 1 \
+  --write
+```
+
+<Paragraph>
+  이 테스트에서는 `okayJing/technical-map.mdx`에 대표 이미지가 들어갔다. 이미지
+  파일은 `apps/web/public/images/content/okayjing/technical-map/cover-02.jpg`로
+  저장됐고, MDX frontmatter에는 출처와 라이선스가 `caption`으로 남았다. 이후
+  content-tree를 다시 생성해보니 `frontmatter.cover`도 사라지지 않고 들어갔다.
+</Paragraph>
+
+<Paragraph>
+  중간에 작은 함정도 있었다. SEOJing의 가벼운 frontmatter 파서는 원래 scalar
+  값과 배열만 읽고, `cover:`처럼 중첩된 YAML 객체는 제대로 읽지 못했다. 그래서
+  이미지를 넣었는데도 카드 렌더러가 계속 fallback을 보여주는 상태가 됐다. 해결은
+  카드가 아니라 parser 쪽이었다. 중첩 객체 파싱을 추가하고
+  `frontmatter.test.ts`에 케이스를 넣은 뒤에야 그리드 카드에 실제 이미지가
+  보였다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>
+  생성 기반 삽입은 API key 경로가 기본값이면 안 맞았다
+</Subtitle>
+
+<Paragraph>
+  처음 구현은 `OPENAI_API_KEY`가 있으면 이미지 생성 API를 호출하는 fallback까지
+  열어뒀다. 하지만 이건 SEOJing 운영 방향과 맞지 않았다. API key 방식은 별도
+  과금과 별도 쿼터가 붙는다. 진짜 원하는 건 “내가 이미 쓰는 Codex/Hermes 구독
+  사용량 안에서 생성하고, 그 결과만 블로그 자산으로 가져오는 흐름”이었다.
+</Paragraph>
+
+<Paragraph>
+  그래서 `auto` 모드에서 OpenAI API fallback은 뺐다. 지금 `cover:auto`의 기본
+  자동화는 검색만 수행한다. API 기반 생성은 `--provider openai`를 명시했을 때만
+  쓰는 선택지로 내려놨다. 기본 운영 경로는 다음처럼 잡는 게 맞다.
+</Paragraph>
+
+```text
+검색 이미지가 어울리는 글
+→ cover:auto --provider wikimedia --write
+
+추상적이거나 OkayJing 정체성이 필요한 글
+→ Hermes/Codex 구독 기반 이미지 생성
+→ 생성 파일을 public/images/content/** 로 저장
+→ 같은 cover frontmatter를 삽입
+→ asset check / content generation / browser 검증
+```
+
+---
+
+<Subtitle level={2}>Codex CLI 생성도 같은 cover 경로로 연결했다</Subtitle>
+
+<Paragraph>
+  이후 Codex CLI 로그인을 마치고 `--provider codex-svg` 경로를 추가했다. 이
+  모드는 Codex에게 1200×630 정적 SVG를 만들게 하고, 결과를 바로 쓰지 않는다.
+  먼저 SVG 안에 `script`, `foreignObject`, 외부 URL, `href`, 이벤트 핸들러,
+  `data:` URL, `<image>` 태그가 없는지 검사한다. 검사를 통과한 파일만
+  `apps/web/public/images/content/**` 아래로 복사하고, MDX의 `cover` metadata를
+  `kind: "generated"`로 교체한다.
+</Paragraph>
+
+```bash
+pnpm --filter @app/web run cover:auto -- \
+  --provider codex-svg \
+  --path apps/web/content/SEOJing/cover-automation-codex-test.mdx \
+  --limit 1 \
+  --force \
+  --write
+```
+
+<Paragraph>
+  이 실험의 첫 결과는 Wikimedia 검색 이미지에서 Codex가 만든 정적 SVG였고, 이후
+  같은 파이프라인에 리소그래프 PNG 변환을 얹었다. 중요한 점은 “생성”이 렌더러의
+  별도 예외가 아니라는 것이다. 검색 이미지든 Codex 생성물이든 최종적으로는 같은
+  `cover.src`, `cover.alt`, `cover.caption`, `cover.kind` 구조로 들어간다.
+</Paragraph>
+
+<Paragraph>
+  다만 이건 Codex CLI가 직접 PNG를 뱉은 것이 아니라, Codex가 코드형 시각 자료를
+  만든 경로다. OpenAI 문서에 나온 `gpt-image-1.5` 기반 이미지 반복 기능이 Codex
+  제품 안에 열려 있더라도, 지금 CLI 자동화에서 확인된 안정 경로는 “Codex로
+  안전한 SVG/HTML 시각 자산을 만들고 블로그 cover 파이프라인에 넣는 방식”이다.
+</Paragraph>
+
+---
+
+<Subtitle level={2}>이 실험에서 정리된 기준</Subtitle>
+
+<Paragraph>
+  이번 실험 뒤에 대표 이미지 자동화의 기준은 조금 더 명확해졌다.
+</Paragraph>
+
+- 검색 이미지는 빠르고 출처를 남기기 쉽다. 다만 추상적인 OkayJing 글에는 종종 generic하게 보인다.
+- 생성 이미지는 글의 분위기를 맞추기 좋다. 대신 별도 API key가 아니라 구독 기반 Hermes/Codex 도구로 실행해야 한다.
+- `cover:auto`는 기본적으로 dry-run이어야 한다. 이미지 자동화는 한 번에 많은 글을 바꿀 수 있어서 실수 비용이 크다.
+- `cover.caption`에는 검색 이미지의 출처와 라이선스를 남긴다. 생성 이미지는 어떤 생성 경로였는지 남긴다.
+- 렌더러보다 parser와 asset check가 더 중요할 수 있다. frontmatter가 content-tree에 남지 않으면 아무리 좋은 카드 컴포넌트도 이미지를 못 본다.
+
+<Paragraph>
+  그래서 지금 SEOJing의 상태는 “검색 기반 대표 이미지 자동 삽입은 바로 쓸 수
+  있고, Codex 기반 정적 생성도 같은 파이프라인에 얹을 수 있다”에 가깝다. 다만
+  photorealistic 이미지 생성이나 PNG 직접 생성까지 검증한 것은 아니다. 당장
+  안정적으로 운영할 수 있는 생성 경로는 Codex가 만든 안전한 SVG 시각 자료를
+  cover asset으로 가져오는 방식이다.
+</Paragraph>
+
+---
+
+## 참고문헌
+
+- Wikimedia Commons API — https://www.mediawiki.org/wiki/API:Imageinfo
+- Wikimedia Commons licensing guide — https://commons.wikimedia.org/wiki/Commons:Licensing
+- OpenAI Codex 소개 — https://openai.com/ko-KR/index/codex-for-almost-everything/
+- SEOJing 로컬 구현 파일: `apps/web/scripts/generate-content-covers.mjs`, `apps/web/scripts/check-content-assets.mjs`, `apps/web/src/widgets/post-grid/PostCoverCard.tsx`, `packages/utils/src/frontmatter.ts`

@@ -1,6 +1,7 @@
 export { cn } from "./cn";
 
 export type {
+  ContentCover,
   ContentFrontmatter,
   ContentNode,
   ContentTree,

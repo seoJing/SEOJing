@@ -1,6 +1,6 @@
 import { NewPostsCarousel } from "@/widgets/new-posts-carousel/NewPostsCarousel";
 import { RecentlyRead } from "@/widgets/recently-read/RecentlyRead";
-import { PostExplorer } from "@/widgets/post-explorer/PostExplorer";
+import { PostGrid } from "@/widgets/post-grid";
 import type { Metadata } from "vinext/shims/metadata";
 import { buildBlogIndexMetadata } from "@/shared/seo/metadata";
 
@@ -11,7 +11,7 @@ export default function BlogPage() {
     <>
       <NewPostsCarousel />
       <RecentlyRead />
-      <PostExplorer />
+      <PostGrid title="All posts" />
     </>
   );
 }

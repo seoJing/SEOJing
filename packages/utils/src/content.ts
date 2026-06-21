@@ -1,7 +1,40 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseFrontmatter } from "./frontmatter";
-import type { ContentFrontmatter, ContentTree } from "./content-types";
+import type {
+  ContentCover,
+  ContentFrontmatter,
+  ContentTree,
+} from "./content-types";
+
+function parseCover(value: unknown): ContentCover | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    return undefined;
+  const record = value as Record<string, unknown>;
+  const cover: ContentCover = {};
+
+  if (typeof record.src === "string") cover.src = record.src;
+  if (typeof record.alt === "string") cover.alt = record.alt;
+  if (typeof record.caption === "string") cover.caption = record.caption;
+  if (typeof record.kind === "string") cover.kind = record.kind;
+
+  return Object.keys(cover).length > 0 ? cover : undefined;
+}
+
+function buildFrontmatter(
+  data: Record<string, unknown>,
+  fallbackTitle: string,
+): ContentFrontmatter {
+  const frontmatter: ContentFrontmatter = {
+    title: typeof data.title === "string" ? data.title : fallbackTitle,
+    date: typeof data.date === "string" ? data.date : "",
+    tags: Array.isArray(data.tags) ? data.tags : [],
+    description: typeof data.description === "string" ? data.description : "",
+  };
+  const cover = parseCover(data.cover);
+  if (cover) frontmatter.cover = cover;
+  return frontmatter;
+}
 
 // resolved 경로가 baseDir 내부인지 검증
 function isInsideDir(baseDir: string, targetPath: string): boolean {
@@ -59,13 +92,7 @@ export function scanContentDir(
         try {
           const raw = fs.readFileSync(fullPath, "utf-8");
           const { data } = parseFrontmatter(raw);
-          frontmatter = {
-            title: typeof data.title === "string" ? data.title : entry.name,
-            date: typeof data.date === "string" ? data.date : "",
-            tags: Array.isArray(data.tags) ? data.tags : [],
-            description:
-              typeof data.description === "string" ? data.description : "",
-          };
+          frontmatter = buildFrontmatter(data, entry.name);
         } catch {
           frontmatter = {
             title: entry.name,
@@ -125,16 +152,7 @@ export function getContentBySlug(
       const raw = fs.readFileSync(filePath, "utf-8");
       const { data, content } = parseFrontmatter(raw);
       return {
-        frontmatter: {
-          title:
-            typeof data.title === "string"
-              ? data.title
-              : slug[slug.length - 1]!,
-          date: typeof data.date === "string" ? data.date : "",
-          tags: Array.isArray(data.tags) ? data.tags : [],
-          description:
-            typeof data.description === "string" ? data.description : "",
-        },
+        frontmatter: buildFrontmatter(data, slug[slug.length - 1]!),
         source: content,
         filePath,
       };

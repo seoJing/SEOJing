@@ -1,0 +1,308 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1200"
+  height="630"
+  viewBox="0 0 1200 630"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">대표 이미지 자동화 실험</title>
+  <desc id="desc">
+    A static editorial technical-blog cover illustration about automated cover
+    image workflows.
+  </desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7f8fb" />
+      <stop offset="0.48" stop-color="#edf4f2" />
+      <stop offset="1" stop-color="#f5f1ec" />
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="1" stop-color="#f3f6f8" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f8b8d" />
+      <stop offset="1" stop-color="#315c73" />
+    </linearGradient>
+    <linearGradient id="warn" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d99058" />
+      <stop offset="1" stop-color="#b9563f" />
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow
+        dx="0"
+        dy="18"
+        stdDeviation="24"
+        flood-color="#264653"
+        flood-opacity="0.14"
+      />
+    </filter>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#d9e2e3" stroke-width="1" />
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#grid)" opacity="0.45" />
+
+  <g opacity="0.38">
+    <circle cx="1010" cy="92" r="110" fill="#dbe9e6" />
+    <circle cx="176" cy="548" r="130" fill="#eadfd5" />
+    <path
+      d="M860 560c96-22 184-72 228-146"
+      fill="none"
+      stroke="#c9d6d8"
+      stroke-width="18"
+      stroke-linecap="round"
+    />
+    <path
+      d="M92 198c72-58 158-86 260-82"
+      fill="none"
+      stroke="#d8cac0"
+      stroke-width="14"
+      stroke-linecap="round"
+    />
+  </g>
+
+  <g filter="url(#softShadow)">
+    <rect
+      x="82"
+      y="78"
+      width="1036"
+      height="474"
+      rx="26"
+      fill="url(#panel)"
+      stroke="#d8e0e3"
+    />
+    <rect x="82" y="78" width="1036" height="64" rx="26" fill="#ffffff" />
+    <path d="M82 116h1036" stroke="#e1e7ea" />
+    <circle cx="124" cy="110" r="8" fill="#d95f54" />
+    <circle cx="153" cy="110" r="8" fill="#e7b35b" />
+    <circle cx="182" cy="110" r="8" fill="#4aa36f" />
+    <rect x="231" y="99" width="258" height="22" rx="11" fill="#edf2f4" />
+    <rect x="918" y="98" width="72" height="24" rx="12" fill="#edf2f4" />
+    <rect x="1004" y="98" width="72" height="24" rx="12" fill="#edf2f4" />
+  </g>
+
+  <g transform="translate(124 176)">
+    <text
+      x="0"
+      y="0"
+      font-family="Arial, Helvetica, sans-serif"
+      font-size="46"
+      font-weight="700"
+      fill="#17252f"
+    >
+      대표 이미지 자동화 실험
+    </text>
+    <rect x="2" y="34" width="410" height="10" rx="5" fill="url(#accent)" />
+    <rect x="0" y="82" width="212" height="14" rx="7" fill="#c8d4d7" />
+    <rect x="0" y="112" width="315" height="14" rx="7" fill="#dce4e6" />
+    <rect x="0" y="142" width="268" height="14" rx="7" fill="#dce4e6" />
+
+    <g transform="translate(0 214)">
+      <rect x="0" y="0" width="92" height="30" rx="15" fill="#e4efed" />
+      <text
+        x="46"
+        y="20"
+        text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="13"
+        font-weight="700"
+        fill="#2f6f71"
+      >
+        Cover
+      </text>
+      <rect x="106" y="0" width="126" height="30" rx="15" fill="#f1e4d9" />
+      <text
+        x="169"
+        y="20"
+        text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="13"
+        font-weight="700"
+        fill="#9a5d35"
+      >
+        Automation
+      </text>
+      <rect x="246" y="0" width="88" height="30" rx="15" fill="#e7ebef" />
+      <text
+        x="290"
+        y="20"
+        text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="13"
+        font-weight="700"
+        fill="#53616b"
+      >
+        DevLog
+      </text>
+    </g>
+  </g>
+
+  <g transform="translate(548 172)">
+    <rect
+      x="0"
+      y="0"
+      width="456"
+      height="308"
+      rx="22"
+      fill="#ffffff"
+      stroke="#d7e0e3"
+    />
+    <rect
+      x="24"
+      y="24"
+      width="408"
+      height="172"
+      rx="18"
+      fill="#eef4f5"
+      stroke="#d8e4e5"
+    />
+    <path
+      d="M48 164l88-80 82 62 66-46 98 64"
+      fill="none"
+      stroke="#96a9ad"
+      stroke-width="10"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <circle cx="338" cy="72" r="24" fill="#d99058" />
+    <rect x="24" y="220" width="184" height="16" rx="8" fill="#c5d0d4" />
+    <rect x="24" y="250" width="300" height="12" rx="6" fill="#e0e7e9" />
+    <rect x="24" y="276" width="236" height="12" rx="6" fill="#e0e7e9" />
+
+    <g transform="translate(268 216)">
+      <rect
+        x="0"
+        y="0"
+        width="164"
+        height="68"
+        rx="16"
+        fill="#f7faf9"
+        stroke="#dce4e6"
+      />
+      <circle cx="34" cy="34" r="16" fill="url(#accent)" />
+      <path
+        d="M28 34h12M34 28v12"
+        stroke="#ffffff"
+        stroke-width="3"
+        stroke-linecap="round"
+      />
+      <path
+        d="M66 25h72M66 43h46"
+        stroke="#bdc9cd"
+        stroke-width="8"
+        stroke-linecap="round"
+      />
+    </g>
+  </g>
+
+  <g
+    transform="translate(410 316)"
+    fill="none"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path
+      d="M0 0h80c25 0 38-14 54-34l38-48c16-20 30-34 56-34h72"
+      stroke="#94a5aa"
+      stroke-width="4"
+    />
+    <path d="M292-116l22 13-22 13" stroke="#94a5aa" stroke-width="4" />
+    <path
+      d="M0 58h96c26 0 42 10 58 30l28 35c18 22 34 32 64 32h76"
+      stroke="#94a5aa"
+      stroke-width="4"
+    />
+    <path d="M314 155l22 13-22 13" stroke="#94a5aa" stroke-width="4" />
+  </g>
+
+  <g transform="translate(390 274)">
+    <rect
+      x="0"
+      y="0"
+      width="138"
+      height="76"
+      rx="18"
+      fill="#ffffff"
+      stroke="#d6e0e2"
+    />
+    <circle cx="36" cy="38" r="18" fill="#e7f0ee" />
+    <path
+      d="M30 38h12M36 32v12"
+      stroke="#2f7577"
+      stroke-width="3"
+      stroke-linecap="round"
+    />
+    <path
+      d="M70 27h44M70 48h30"
+      stroke="#b9c6ca"
+      stroke-width="8"
+      stroke-linecap="round"
+    />
+  </g>
+
+  <g transform="translate(434 392)">
+    <rect
+      x="0"
+      y="0"
+      width="118"
+      height="68"
+      rx="17"
+      fill="#ffffff"
+      stroke="#d6e0e2"
+    />
+    <rect x="24" y="20" width="70" height="10" rx="5" fill="#bfcbd0" />
+    <rect x="24" y="40" width="48" height="8" rx="4" fill="#dde5e7" />
+  </g>
+
+  <g transform="translate(892 426)">
+    <rect
+      x="0"
+      y="0"
+      width="164"
+      height="58"
+      rx="18"
+      fill="#fff8f3"
+      stroke="#ead4c4"
+    />
+    <circle cx="32" cy="29" r="15" fill="url(#warn)" />
+    <path
+      d="M32 20v13M32 39v1"
+      stroke="#ffffff"
+      stroke-width="4"
+      stroke-linecap="round"
+    />
+    <path
+      d="M64 21h70M64 39h48"
+      stroke="#d7bca8"
+      stroke-width="8"
+      stroke-linecap="round"
+    />
+  </g>
+
+  <g opacity="0.85">
+    <path
+      d="M1048 178h28v28h-28z"
+      fill="none"
+      stroke="#88a3a8"
+      stroke-width="4"
+    />
+    <path
+      d="M1076 178l24-20v28l-24 20z"
+      fill="#dce8e8"
+      stroke="#88a3a8"
+      stroke-width="4"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M1048 178l24-20h28"
+      fill="none"
+      stroke="#88a3a8"
+      stroke-width="4"
+      stroke-linejoin="round"
+    />
+  </g>
+</svg>

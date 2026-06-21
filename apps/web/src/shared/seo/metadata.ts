@@ -10,6 +10,16 @@ const defaultOgImage = {
   alt: "SEOJing 로고",
 };
 
+function imageForFrontmatter(frontmatter: ContentFrontmatter) {
+  if (!frontmatter.cover?.src) return defaultOgImage;
+  return {
+    url: frontmatter.cover.src,
+    width: 1200,
+    height: 1200,
+    alt: frontmatter.cover.alt || frontmatter.title,
+  };
+}
+
 export function buildSiteMetadata(): Metadata {
   return {
     title: {
@@ -113,6 +123,7 @@ export function buildArticleMetadata(
   const description = getArticleDescription(frontmatter, source);
   const url = blogUrl(slug);
   const tags = frontmatter.tags ?? [];
+  const articleImage = imageForFrontmatter(frontmatter);
 
   return {
     title: frontmatter.title,
@@ -124,17 +135,17 @@ export function buildArticleMetadata(
       description,
       url,
       siteName: siteConfig.name,
-      images: [defaultOgImage],
       locale: siteConfig.locale,
       type: "article",
       publishedTime: frontmatter.date,
       authors: [siteConfig.author.name],
+      images: [articleImage],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: frontmatter.title,
       description,
-      images: [siteConfig.logoPath],
+      images: [articleImage.url],
     },
   };
 }

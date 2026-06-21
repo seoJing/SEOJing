@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { getSubTree, getRecentPosts } from "./new-posts-carousel.utils";
+import {
+  getAllPosts,
+  getSubTree,
+  getRecentPosts,
+} from "./new-posts-carousel.utils";
 import type { ContentNode } from "@app/utils";
 
 const tree: ContentNode[] = [
@@ -18,6 +22,10 @@ const tree: ContentNode[] = [
           description: "Learn React",
           date: "2024-03-01",
           tags: ["react"],
+          cover: {
+            src: "/images/study/react.webp",
+            alt: "React cover",
+          },
         },
       },
       {
@@ -84,6 +92,12 @@ describe("getRecentPosts", () => {
   it("recursively collects from nested folders", () => {
     const posts = getRecentPosts(tree);
     expect(posts).toHaveLength(3);
+  });
+
+  it("keeps cover metadata and derives a display category", () => {
+    const posts = getAllPosts(tree);
+    expect(posts[0]!.cover?.src).toBe("/images/study/react.webp");
+    expect(posts[0]!.category).toBe("Study");
   });
 
   it("returns empty for tree with no files", () => {

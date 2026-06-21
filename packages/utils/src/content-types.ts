@@ -1,8 +1,16 @@
+export interface ContentCover {
+  src?: string;
+  alt?: string;
+  caption?: string;
+  kind?: "uploaded" | "generated" | "searched" | "fallback" | string;
+}
+
 export interface ContentFrontmatter {
   title: string;
   date: string;
   tags: string[];
   description: string;
+  cover?: ContentCover;
 }
 
 export interface ContentNode {
