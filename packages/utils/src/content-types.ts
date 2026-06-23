@@ -5,12 +5,22 @@ export interface ContentCover {
   kind?: "uploaded" | "generated" | "searched" | "fallback" | string;
 }
 
+export interface ContentSummaryVideo {
+  src?: string;
+  title?: string;
+  caption?: string;
+  poster?: string;
+  subtitles?: string;
+  provider?: "supertonic" | "edge" | string;
+}
+
 export interface ContentFrontmatter {
   title: string;
   date: string;
   tags: string[];
   description: string;
   cover?: ContentCover;
+  summaryVideo?: ContentSummaryVideo;
 }
 
 export interface ContentNode {

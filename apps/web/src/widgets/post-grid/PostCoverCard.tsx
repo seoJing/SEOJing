@@ -258,7 +258,7 @@ export function PostCoverCard({ post, priority = false }: PostCoverCardProps) {
           </h3>
           <div className="mt-2 flex items-end justify-between gap-2 sm:mt-5 sm:gap-3">
             <p
-              className="hidden max-w-[72%] text-xs font-semibold leading-relaxed sm:line-clamp-2 sm:block"
+              className="hidden max-w-[72%] overflow-hidden text-xs font-semibold leading-relaxed sm:[display:-webkit-box] sm:[-webkit-box-orient:vertical] sm:[-webkit-line-clamp:2]"
               style={{
                 color: hasImage ? "rgba(255,255,255,0.78)" : palette.muted,
               }}

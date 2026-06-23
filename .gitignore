@@ -48,3 +48,5 @@ _workspace/
 # log
 logs/
 *.log
+# generated summary-video intermediates
+apps/web/public/summary-videos/**/work/

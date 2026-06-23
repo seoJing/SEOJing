@@ -4,6 +4,7 @@ import { parseFrontmatter } from "./frontmatter";
 import type {
   ContentCover,
   ContentFrontmatter,
+  ContentSummaryVideo,
   ContentTree,
 } from "./content-types";
 
@@ -21,6 +22,27 @@ function parseCover(value: unknown): ContentCover | undefined {
   return Object.keys(cover).length > 0 ? cover : undefined;
 }
 
+function parseSummaryVideo(value: unknown): ContentSummaryVideo | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+  const record = value as Record<string, unknown>;
+  const summaryVideo: ContentSummaryVideo = {};
+
+  if (typeof record.src === "string") summaryVideo.src = record.src;
+  if (typeof record.title === "string") summaryVideo.title = record.title;
+  if (typeof record.caption === "string") summaryVideo.caption = record.caption;
+  if (typeof record.poster === "string") summaryVideo.poster = record.poster;
+  if (typeof record.subtitles === "string") {
+    summaryVideo.subtitles = record.subtitles;
+  }
+  if (typeof record.provider === "string") {
+    summaryVideo.provider = record.provider;
+  }
+
+  return Object.keys(summaryVideo).length > 0 ? summaryVideo : undefined;
+}
+
 function buildFrontmatter(
   data: Record<string, unknown>,
   fallbackTitle: string,
@@ -33,6 +55,8 @@ function buildFrontmatter(
   };
   const cover = parseCover(data.cover);
   if (cover) frontmatter.cover = cover;
+  const summaryVideo = parseSummaryVideo(data.summaryVideo);
+  if (summaryVideo) frontmatter.summaryVideo = summaryVideo;
   return frontmatter;
 }
 

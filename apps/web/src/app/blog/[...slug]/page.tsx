@@ -12,6 +12,7 @@ import { ArticleToolbar } from "@/widgets/article-toolbar/ArticleToolbar";
 import { ArticleAnalytics } from "@/widgets/article-analytics";
 import { PostQaPanel, SectionQaPrompts } from "@/widgets/post-qa";
 import { BlogAudioPlayer } from "@/widgets/blog-audio-player/BlogAudioPlayer";
+import { SummaryVideo } from "@/widgets/summary-video";
 import type { Metadata } from "vinext/shims/metadata";
 import {
   buildArticleMetadata,
@@ -95,6 +96,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             date={content.frontmatter.date}
             tags={content.frontmatter.tags}
             readingTime={calculateReadingTime(content.source)}
+          />
+          <SummaryVideo
+            video={content.frontmatter.summaryVideo}
+            title={content.frontmatter.title}
           />
           <BlogAudioPlayer slug={slug.join("/")} />
           <div data-article-content>

@@ -1,0 +1,189 @@
+---
+title: "본문 이미지를 나중에 넣는 게 아니라 — SEOJing 글쓰기 파이프라인에 시각 판단을 넣기"
+date: "2026-06-22"
+tags:
+  - SEOJing
+  - Visual
+  - Automation
+  - Blog
+  - DevLog
+description: SEOJing에서 새 글을 쓸 때 대표 이미지와 본문 이미지를 빼먹지 않도록, 블로그 맵과 글쓰기 파이프라인 안에 시각 판단 단계를 넣은 과정을 정리했다.
+cover:
+  src: "/images/content/seojing/inline-visual-pipeline/cover-01.jpg"
+  alt: "본문 이미지를 나중에 넣는 게 아니라 — SEOJing 글쓰기 파이프라인에 시각 판단을 넣기 글의 대표 이미지"
+  caption: "Wikimedia Commons · HP Pavilion Computer laptop keyboard closeup · Carissa Rogers · CC BY 2.0 · computer laptop keyboard HP Pavilion Entertainment PC"
+  kind: "searched"
+---
+
+처음엔 대표 이미지 자동화만 있으면 충분할 줄 알았다. 글 목록에서 카드가 비어 보이지 않고, 최신 글들이 어느 정도 분위기를 갖게 되면 된다고 봤다. 그런데 실제로 새 포스트를 작성해보니 다른 문제가 남아 있었다.
+
+글 안쪽은 여전히 텍스트만 길게 이어졌다.
+
+썸네일은 목록에서 글을 고르게 해준다. 하지만 독자가 글에 들어온 뒤에는 중간중간 구조를 잡아주는 이미지나 다이어그램이 필요하다. 특히 SEOJing에는 일반 회고 글만 있는 게 아니라 OkayJing 운영 기록, agent framework 스터디, CLAB 하네스 기록처럼 추상적인 시스템 설명이 많다. 이런 글은 문단만으로 밀어붙이면 읽는 사람이 머릿속에 구조를 계속 다시 그려야 한다.
+
+이번 작업은 그래서 작은 반성에서 시작했다.
+
+“대표 이미지 기능을 만들었는데, 왜 새 글 작성 흐름에서는 안 쓰고 있지?”
+
+## 먼저 SEOJing 블로그 맵을 다시 봤다
+
+<ArticleImage
+  src="/images/content/seojing/inline-visual-pipeline/inline-01.svg"
+  alt="본문 이미지를 나중에 넣는 게 아니라 — SEOJing 글쓰기 파이프라인에 시각 판단을 넣기 글의 먼저 SEOJing 블로그 맵을 다시 봤다 섹션을 설명하는 경계/계약 구조 다이어그램"
+  caption="SEOJing authored diagram · 경계/계약 구조"
+/>
+
+본문 이미지 자동화를 만들려면, 아무 글에나 사진을 붙이면 안 된다. 글의 성격마다 필요한 시각 자료가 다르기 때문이다. 그래서 지금 SEOJing의 글을 대략 이렇게 나눠봤다.
+
+```txt
+SEOJing Blog
+├─ SEOJing
+│  ├─ 블로그 기능 개발기
+│  ├─ 글쓰기/이미지/프레젠테이션 같은 publishing UX
+│  └─ 실제 구현 후 생긴 판단 기록
+├─ Study
+│  ├─ Backend study
+│  └─ Agent framework study
+├─ OkayJing
+│  ├─ Architecture
+│  ├─ Memory
+│  ├─ Workflow
+│  ├─ Skills
+│  └─ Voice
+├─ CLAB
+│  ├─ Agent harness
+│  └─ Insight analysis
+└─ Archive
+   ├─ KD/CSHOME
+   └─ SPOT
+```
+
+이 맵에서 중요한 건 카테고리 이름 자체가 아니다. 각 카테고리가 요구하는 이미지의 종류가 다르다는 점이다.
+
+| 글 종류             | 어울리는 시각 자료                             | 피해야 할 것                                  |
+| ------------------- | ---------------------------------------------- | --------------------------------------------- |
+| SEOJing 기능 개발기 | 실제 UI 흐름, 파이프라인 다이어그램, 전후 비교 | 기능과 상관없는 예쁜 배경 사진                |
+| Study 글            | 개념 관계도, 상태 전이, 계약/경계 그림         | 교과서 캡처처럼 보이는 장식 이미지            |
+| OkayJing 운영 기록  | hub-spoke 구조, memory 흐름, worker 경계       | 내부 경로만 가득한 사적인 스크린샷            |
+| CLAB 글             | 팀 작업 흐름, repo-local 구조, 검증 루프       | 사람 역할놀이처럼 보이는 agent 그림           |
+| Archive 글          | 당시 프로젝트 스크린샷, 의사결정 비교          | 지금도 활성 프로젝트처럼 보이게 만드는 이미지 |
+
+여기서 기준이 하나 생겼다. SEOJing의 이미지는 “글을 예쁘게 꾸미는 장식”이 아니라, 글의 카테고리와 사고 구조를 빨리 잡아주는 장치여야 한다.
+
+## cover와 inline visual은 역할이 다르다
+
+대표 이미지는 이미 `cover:auto`로 어느 정도 경로가 잡혔다. 글 frontmatter에 `cover.src`, `cover.alt`, `cover.caption`, `cover.kind`를 넣고, 카드 렌더러는 그 값을 보고 실제 이미지를 보여준다. 검색 이미지든 생성 이미지든 최종적으로 같은 경로를 탄다.
+
+하지만 cover는 글 바깥에서 작동한다.
+
+```txt
+목록 / archive / OG image
+→ 이 글이 어떤 분위기인지 보여준다
+→ 클릭할지 말지 판단하게 한다
+```
+
+본문 이미지는 역할이 다르다.
+
+```txt
+article body
+→ 지금 읽는 섹션의 구조를 잡아준다
+→ 긴 설명을 하나의 모델로 압축한다
+→ 다음 문단을 읽기 전에 머릿속 좌표를 만든다
+```
+
+그래서 같은 자동화라고 해도 판단 기준이 달라야 했다. cover는 글 전체의 대표성을 본다. inline visual은 특정 섹션의 인지 부하를 본다.
+
+## 이번에 추가한 visual:auto
+
+이번에 만든 명령은 `visual:auto`다. 기본은 dry-run이고, 실제 파일과 MDX를 바꾸려면 `--write`를 붙여야 한다.
+
+```bash
+pnpm --filter @app/web run visual:auto -- \
+  --path apps/web/content/SEOJing/inline-visual-pipeline.mdx
+```
+
+실제 삽입은 이렇게 한다.
+
+```bash
+pnpm --filter @app/web run visual:auto -- \
+  --provider diagram \
+  --path apps/web/content/SEOJing/inline-visual-pipeline.mdx \
+  --write
+```
+
+이 명령은 글을 섹션 단위로 읽고, 각 섹션이 시각 anchor를 필요로 하는지 점수를 매긴다. 대충 이런 신호를 본다.
+
+- boundary / contract
+- flow / pipeline
+- lifecycle / state transition
+- comparison
+- stack / runtime / API
+- interface / tooling
+
+후보가 없으면 억지로 넣지 않는다. 이게 중요했다. 새 기능을 만들었다고 모든 글에 이미지를 강제로 박으면, 결국 예전의 decorative image 문제로 돌아간다.
+
+## 다이어그램이 먼저인 글이 있다
+
+처음에는 이미지라고 하면 외부 사진 검색을 먼저 떠올렸다. 하지만 SEOJing의 많은 글은 추상적인 시스템 판단을 다룬다. 이런 글에 Wikimedia 사진을 붙이면 대개 애매해진다. 서버 랙 사진, 키보드 사진, 책장 사진은 분위기는 만들 수 있지만, 글 안쪽에서 구조를 설명해주지는 못한다.
+
+그래서 본문 이미지 쪽은 authored diagram을 우선했다.
+
+```txt
+글의 섹션
+→ 경계/흐름/비교/상태 신호 탐지
+→ 추상 개념이면 diagram 생성
+→ 구체적 사물이나 UI면 Wikimedia 후보 검토
+→ ArticleImage로 해당 heading 아래 삽입
+```
+
+이 방식이 마음에 드는 이유는, 다이어그램이 글의 일부가 되기 때문이다. 외부 사진은 출처와 라이선스를 신경 써야 하고, 의미가 조금만 빗나가도 장식처럼 보인다. 반면 직접 만든 다이어그램은 글에서 말하려는 구조를 그대로 압축할 수 있다.
+
+물론 이건 만능이 아니다. 실제 도구 화면, 하드웨어, 역사적 자료처럼 “실물”이 중요한 글은 검색 이미지가 더 낫다. 다만 agent framework, memory architecture, workflow boundary 같은 글은 사진보다 다이어그램이 먼저다.
+
+## 이 글 자체를 테스트 대상으로 삼았다
+
+이번 포스트도 일부러 테스트 대상으로 만들었다. 글 안에 SEOJing 블로그 맵, cover와 inline visual의 역할 구분, `visual:auto`의 판단 흐름을 넣어뒀다. 그러면 자동화가 어디를 시각 anchor로 잡는지 볼 수 있다.
+
+내가 기대한 후보는 세 곳이었다.
+
+1. SEOJing 블로그 맵
+2. cover와 inline visual의 역할 분리
+3. `visual:auto`의 섹션 판단 흐름
+
+실제로 자동화가 고른 곳은 첫 번째였다. 내가 처음에 예상한 후보는 세 번째였는데, 점수화 기준은 블로그 맵 섹션을 더 강하게 봤다. 경계, 흐름, 상태, 비교, 인터페이스 신호가 한꺼번에 들어 있었기 때문이다. 이 결과가 나쁘지는 않았다. 오히려 이 글에서는 독자가 먼저 전체 블로그 지형을 잡아야 뒤의 `cover`와 `inline visual` 구분도 따라오기 쉽다.
+
+## 앞으로의 새 글 작성 기본값
+
+이제 새 글 작성 흐름은 이렇게 잡는 게 맞다.
+
+```txt
+주제 결정
+→ 카테고리와 독자 맥락 확인
+→ MDX 초안 작성
+→ cover:auto dry-run
+→ 적절하면 cover --write
+→ visual:auto dry-run
+→ 적절하면 inline visual --write
+→ asset check / format / lint / build
+→ 내용 리뷰
+```
+
+중요한 건 `--write`보다 dry-run이다. 이미지를 넣는 기능이 있다는 이유만으로 무조건 넣으면 안 된다. 대신 새 글을 만들 때마다 “이 글은 이미지가 없어도 괜찮은가?”를 한 번은 물어봐야 한다.
+
+이번 기능은 그 질문을 자동으로 던지는 장치에 가깝다.
+
+## 정리
+
+이번 작업으로 SEOJing의 글쓰기 파이프라인이 조금 더 명확해졌다. 예전에는 글을 쓰고, 나중에 필요하면 이미지를 붙이는 흐름이었다. 이제는 글을 쓰는 과정 안에 시각 판단이 들어간다.
+
+대표 이미지는 글 바깥의 진입점을 만든다. 본문 이미지는 글 안쪽의 이해 지점을 만든다. 둘 다 필요하지만, 같은 기준으로 넣으면 안 된다.
+
+돌이켜보면 기능 자체보다 기본값을 바꾼 게 더 중요했다. 새 포스트가 텍스트만으로 끝났다면, 그건 “이미지가 필요 없었다”는 판단이어야 한다. 그냥 잊어버린 결과이면 안 된다.
+
+## 참고문헌
+
+- SEOJing cover 자동화 구현: `apps/web/scripts/generate-content-covers.mjs`
+- SEOJing inline visual 자동화 구현: `apps/web/scripts/generate-inline-visuals.mjs`
+- SEOJing asset 삽입 보조 스크립트: `apps/web/scripts/insert-content-image.mjs`
+- SEOJing 콘텐츠 자산 검증: `apps/web/scripts/check-content-assets.mjs`
+- Wikimedia Commons API — https://www.mediawiki.org/wiki/API:Imageinfo

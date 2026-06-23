@@ -2,11 +2,13 @@ import contentTree from "@/generated/content-tree.json";
 import {
   buildOpsAnalyticsSummary,
   buildPublicAnalyticsSummary,
-  type AnalyticsContentInventoryItem,
-  type AnalyticsOpsSummary,
-  type AnalyticsPublicSummary,
 } from "./analytics-summary";
 import type { AnalyticsContentKind } from "./analytics-ingestion";
+import type {
+  AnalyticsContentInventoryItem,
+  AnalyticsOpsSummary,
+  AnalyticsPublicSummary,
+} from "./analytics-summary";
 
 type ContentTreeNode = {
   name: string;

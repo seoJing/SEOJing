@@ -1,0 +1,72 @@
+{
+  "title": "왜 Qwen3-TTS 대신 Supertonic3를 골랐나",
+  "series": "SEOJing 포스트 요약",
+  "subtitle": "블로그 글 1분 요약",
+  "blog_url": "https://seojing.com/blog/okayJing/voice/qwen3-tts-mlx-to-supertonic3",
+  "cta": "판단 근거 전문은 SEOJing 블로그에서",
+  "tts_provider": "supertonic",
+  "voice": "supertonic3-f1-human",
+  "tts_lang": "ko",
+  "tts_speed": 1.2,
+  "tts_pitch": 1.0,
+  "tts_steps": 12,
+  "source_post": "apps/web/content/okayJing/voice/qwen3-tts-mlx-to-supertonic3.mdx",
+  "scenes": [
+    {
+      "title": "좋아 보이는 TTS가 곧 기본값은 아니다",
+      "narration": "Qwen3-TTS는 꽤 그럴듯한 후보였습니다. 하지만 좋아 보이는 모델과 매일 쓸 기본 목소리는 다른 기준으로 봐야 합니다.",
+      "caption": "Qwen3-TTS는 후보였지만, 오케이징의 매일 쓰는 목소리로는 다른 기준이 필요했습니다.",
+      "kind": "hook",
+      "duration": null,
+      "audio_duration": 7.941224
+    },
+    {
+      "title": "첫 기준은 RAM이었습니다",
+      "narration": "첫 기준은 램이었습니다. 로컬에서 돌릴 수 있다는 것과, 오케이징이 다른 작업을 하는 동안 계속 기본값으로 둘 수 있다는 건 다릅니다.",
+      "caption": "로컬에서 돌릴 수 있어도, 대화형 오케이징 옆에 항상 붙이기엔 부담이 될 수 있습니다.",
+      "kind": "point",
+      "duration": null,
+      "audio_duration": 8.916463
+    },
+    {
+      "title": "두 번째는 한국어 말끝입니다",
+      "narration": "두 번째는 한국어 말끝이었습니다. 자연스럽게 말하려는 장식이 너무 드러나면, 듣는 순간 모델이 노력하고 있다는 느낌이 남습니다.",
+      "caption": "자연스럽게 말하려는 장식이 너무 드러나면, 오히려 모델 목소리처럼 들립니다.",
+      "kind": "point",
+      "duration": null,
+      "audio_duration": 9.195102
+    },
+    {
+      "title": "Supertonic3는 조정할 수 있었습니다",
+      "narration": "Supertonic3도 완벽한 기본 목소리는 아니었습니다. 대신 스타일 제이슨과 속도, 피치, 스텝을 만지며 오케이징에 맞게 조정할 수 있었습니다.",
+      "caption": "F1/F2/F5 비교, style JSON, 속도와 피치 조정으로 운영 기준에 맞출 수 있었습니다.",
+      "kind": "process",
+      "duration": null,
+      "audio_duration": 9.264762
+    },
+    {
+      "title": "이번 선택은 실험실 기준이 아니었습니다",
+      "narration": "이번 선택은 실험실 데모 기준이 아니었습니다. 보이스 모드는 매일 대화하는 인터페이스라서 지연, 램, 말끝, 조정 가능성을 같이 봐야 했습니다.",
+      "caption": "voice mode는 데모가 아니라 매일 대화하는 인터페이스입니다.",
+      "kind": "process",
+      "duration": null,
+      "audio_duration": 9.891701
+    },
+    {
+      "title": "Qwen3-TTS를 버린 건 아닙니다",
+      "narration": "Qwen3-TTS를 버린 건 아닙니다. 나중에 램 부담이 줄고 말끝 조정이 쉬워지면 다시 볼 수 있습니다. 다만 지금 기본값은 안정적인 쪽이어야 했습니다.",
+      "caption": "MLX 기반 한국어 TTS는 계속 볼 가치가 있지만, 지금 기본값은 안정적인 쪽이어야 했습니다.",
+      "kind": "point",
+      "duration": null,
+      "audio_duration": 10.24
+    },
+    {
+      "title": "자세한 기준은 글에서 이어집니다",
+      "narration": "자세한 판단 근거는 SEOJing 블로그 글에 정리해 두었습니다. 램, 한국어 말끝, 지연, 조정 가능성. 이 네 가지 기준으로 TTS를 다시 봅니다.",
+      "caption": "RAM, 한국어 말끝, 지연, 조정 가능성. 네 기준으로 TTS를 다시 봅니다.",
+      "kind": "cta",
+      "duration": null,
+      "audio_duration": 10.17034
+    }
+  ]
+}

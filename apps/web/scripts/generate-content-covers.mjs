@@ -69,7 +69,7 @@ Images are copied into apps/web/public/images/content/<section>/<post-slug>/cove
 Options:
   --path <path>             Content file or directory. Defaults to apps/web/content.
   --limit <number>          Max posts to process. Defaults to 10.
-  --provider <name>         wikimedia | codex-image | codex-svg | openai | auto. Defaults to auto.
+  --provider <name>         codex-svg | codex-image | wikimedia | openai | auto. Defaults to auto.
   --write                   Actually write images and MDX. Default is dry-run.
   --force                   Replace existing cover block.
   --query <text>            Override search query for all selected posts.
@@ -89,7 +89,7 @@ Examples:
   OPENAI_API_KEY=... pnpm --filter @app/web run cover:auto -- --provider openai --limit 3 --write
 
 Notes:
-  - auto uses Wikimedia search only. Generated covers can be produced explicitly with --provider codex-image, which invokes Codex CLI's ChatGPT-auth built-in raster image generation and imports the generated PNG, or --provider codex-svg, which validates a static SVG before inserting it.
+  - auto tries the Codex subscription lane first: static SVG cover generation via Codex CLI, then Wikimedia search as a sourced fallback. Use --provider codex-image explicitly for ChatGPT-auth raster image generation smoke runs, because it must expose a real generated file before SEOJing can import it.
   - --provider openai is an explicit API-key fallback for environments that intentionally accept separate API billing.
   - Dry-run is the default so a broad run cannot rewrite many posts by accident.`;
   console.log(message.trimEnd());
@@ -487,6 +487,19 @@ function assertSafeSvg(svg) {
   }
 }
 
+function compactProcessOutput(value) {
+  const lines = String(value || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const diagnostic = lines.filter((line) =>
+    /(401 Unauthorized|unauthorized|refresh_token|login|Missing bearer|ERROR: unexpected status|OpenAI Codex v)/i.test(
+      line,
+    ),
+  );
+  return (diagnostic.length ? diagnostic : lines).slice(-6).join(" | ");
+}
+
 async function generateCodexSvg(info, args) {
   const workdir = fs.mkdtempSync(
     path.join(os.tmpdir(), "seojing-codex-cover-"),
@@ -496,9 +509,9 @@ async function generateCodexSvg(info, args) {
   const svgPath = path.join(workdir, "cover.svg");
   fs.writeFileSync(promptPath, buildCodexSvgPrompt(info, args));
 
+  const codex = codexCommand();
   const codexArgs = [
-    "-y",
-    "@openai/codex",
+    ...codex.argsPrefix,
     "exec",
     "--cd",
     workdir,
@@ -512,16 +525,17 @@ async function generateCodexSvg(info, args) {
   codexArgs.push("-");
 
   try {
-    execFileSync("npx", codexArgs, {
+    execFileSync(codex.command, codexArgs, {
       cwd: workdir,
       input: fs.readFileSync(promptPath),
       encoding: "utf8",
       timeout: 300_000,
+      stdio: ["pipe", "pipe", "pipe"],
       maxBuffer: 10 * 1024 * 1024,
     });
   } catch (error) {
-    const stderr = error?.stderr ? String(error.stderr).trim() : "";
-    const stdout = error?.stdout ? String(error.stdout).trim() : "";
+    const stderr = error?.stderr ? compactProcessOutput(error.stderr) : "";
+    const stdout = error?.stdout ? compactProcessOutput(error.stdout) : "";
     throw new Error(
       ["Codex SVG generation failed", stderr, stdout]
         .filter(Boolean)
@@ -586,11 +600,14 @@ async function generateCodexImage(info, args) {
       input: fs.readFileSync(promptPath),
       encoding: "utf8",
       timeout: 600_000,
+      stdio: ["pipe", "pipe", "pipe"],
       maxBuffer: 30 * 1024 * 1024,
     });
   } catch (error) {
-    const stderr = error?.stderr ? String(error.stderr).trim() : "";
-    stdout = error?.stdout ? String(error.stdout).trim() : stdout;
+    const stderr = error?.stderr ? compactProcessOutput(error.stderr) : "";
+    stdout = error?.stdout
+      ? compactProcessOutput(error.stdout)
+      : compactProcessOutput(stdout);
     throw new Error(
       ["Codex raster generation failed", stderr, stdout]
         .filter(Boolean)
@@ -736,12 +753,24 @@ async function generateOpenAi(info, args) {
 
 async function resolveCandidate(info, args) {
   const errors = [];
-  if (args.provider === "wikimedia" || args.provider === "auto") {
+  if (args.provider === "auto") {
+    try {
+      return await generateCodexSvg(info, args);
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+    }
     try {
       return await searchWikimedia(info, args);
     } catch (error) {
       errors.push(error instanceof Error ? error.message : String(error));
-      if (args.provider === "wikimedia") throw error;
+    }
+  }
+  if (args.provider === "wikimedia") {
+    try {
+      return await searchWikimedia(info, args);
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+      throw error;
     }
   }
   if (args.provider === "openai") {
@@ -786,12 +815,40 @@ async function materializeCandidate(candidate, targetPath) {
   fs.writeFileSync(targetPath, buffer);
 }
 
+function summarizeAutoFailure(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  const parts = [];
+  if (/401 Unauthorized|Missing bearer|refresh_token|login/i.test(message)) {
+    parts.push("Codex auth failed: 401 Unauthorized / login refresh needed");
+  } else if (/Codex/i.test(message)) {
+    parts.push("Codex generation failed");
+  }
+  const wikimedia = message.match(
+    /No suitable Wikimedia image for query: ([^)]+)/i,
+  );
+  if (wikimedia)
+    parts.push(`Wikimedia fallback had no suitable image: ${wikimedia[1]}`);
+  return parts.length ? parts.join("; ") : message.slice(0, 280);
+}
+
 async function processFile(info, args) {
   if (info.existingCover && !args.force) {
     return { status: "skipped", file: info.file, reason: "cover exists" };
   }
 
-  const candidate = await resolveCandidate(info, args);
+  let candidate;
+  try {
+    candidate = await resolveCandidate(info, args);
+  } catch (error) {
+    if (args.provider === "auto") {
+      return {
+        status: "skipped",
+        file: info.file,
+        reason: `cover skipped: no suitable image (${summarizeAutoFailure(error)})`,
+      };
+    }
+    throw error;
+  }
   const section = contentSectionFor(info.file);
   const slug = kebab(slugFor(info.file)) || "post";
   const targetDir = path.join(coverRoot, section, slug);
@@ -848,6 +905,12 @@ async function main() {
     try {
       const result = await processFile(info, args);
       results.push(result);
+      if (result.status === "skipped") {
+        console.log(
+          `SKIP ${path.relative(repoRoot, info.file)}: ${result.reason}`,
+        );
+        continue;
+      }
       console.log(
         `OK ${path.relative(repoRoot, info.file)} -> ${result.publicPath} (${result.provider})`,
       );

@@ -1,0 +1,24 @@
+{
+  "video": "/summary-videos/SEOJing/summary-video-pipeline/summary-short.mp4",
+  "duration": 75.67195,
+  "resolution": "1080x1920",
+  "scenes": 8,
+  "narration": "/summary-videos/SEOJing/summary-video-pipeline/narration.mp3",
+  "subtitles": "/summary-videos/SEOJing/summary-video-pipeline/subtitles.srt",
+  "voice": "supertonic3-f1-human",
+  "tts_provider": "supertonic",
+  "source": "/summary-videos/SEOJing/summary-video-pipeline/scenes.json",
+  "theme": {
+    "name": "SEOJing Paper Summary Video",
+    "path": "/summary-videos/theme/seojing-summary-video-theme.json"
+  },
+  "diagram_types": [
+    "boundary",
+    "comparison",
+    "criteria",
+    "pipeline",
+    "timeline"
+  ],
+  "renderer": "ffmpeg-card",
+  "motion_canvas_contract": "scene.motion is preserved for optional high-quality social renderer; not the default blog-header renderer."
+}

@@ -1,0 +1,11 @@
+{
+  "video": "/summary-videos/okayJing/voice/qwen3-tts-mlx-to-supertonic3/summary-short.mp4",
+  "duration": 65.640567,
+  "resolution": "1080x1920",
+  "scenes": 7,
+  "narration": "/summary-videos/okayJing/voice/qwen3-tts-mlx-to-supertonic3/narration.mp3",
+  "subtitles": "/summary-videos/okayJing/voice/qwen3-tts-mlx-to-supertonic3/subtitles.srt",
+  "voice": "supertonic3-f1-human",
+  "tts_provider": "supertonic",
+  "source": "summary-video source scenes (local generation input)"
+}

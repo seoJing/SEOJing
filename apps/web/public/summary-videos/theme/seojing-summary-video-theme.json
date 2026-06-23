@@ -1,0 +1,87 @@
+{
+  "name": "SEOJing Paper Summary Video",
+  "source": "packages/design-system/DESIGN.md",
+  "colors": {
+    "primary": "#25231F",
+    "secondary": "#777167",
+    "tertiary": "#2F4F64",
+    "neutral": "#F0EEE9",
+    "surface": "#FFFDF8",
+    "raised": "#FBF6EA",
+    "success": "#5F7F68",
+    "warning": "#A66F38",
+    "danger": "#9D4D55",
+    "border": "#D8D0C3",
+    "shadow": "#B7A98F"
+  },
+  "typography": {
+    "title": {
+      "family": "Paperlogy",
+      "size": 78,
+      "weight": 700,
+      "lineHeight": 96
+    },
+    "caption": {
+      "family": "A2z",
+      "size": 42,
+      "weight": 400,
+      "lineHeight": 58
+    },
+    "label": {
+      "family": "A2z",
+      "size": 29,
+      "weight": 600,
+      "lineHeight": 38
+    },
+    "micro": {
+      "family": "A2z",
+      "size": 25,
+      "weight": 600,
+      "lineHeight": 34
+    }
+  },
+  "radii": {
+    "sm": 12,
+    "md": 16,
+    "lg": 22,
+    "xl": 28,
+    "full": 999
+  },
+  "spacing": {
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32
+  },
+  "layout": {
+    "safeX": 72,
+    "headerY": 72,
+    "titleY": 270,
+    "diagramTop": 760,
+    "captionTop": 1280,
+    "footerY": 1700
+  },
+  "kinds": {
+    "hook": {
+      "accent": "#9D4D55",
+      "tint": "#F6E7E4"
+    },
+    "point": {
+      "accent": "#2F4F64",
+      "tint": "#E5EDF1"
+    },
+    "process": {
+      "accent": "#A66F38",
+      "tint": "#F5E8D9"
+    },
+    "cta": {
+      "accent": "#5F7F68",
+      "tint": "#E8F0E6"
+    },
+    "default": {
+      "accent": "#2F4F64",
+      "tint": "#E5EDF1"
+    }
+  }
+}

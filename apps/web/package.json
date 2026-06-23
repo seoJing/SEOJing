@@ -9,6 +9,7 @@
     "qa:insights": "tsx scripts/qa-log-insights.ts",
     "asset:insert": "node scripts/insert-content-image.mjs",
     "cover:auto": "node scripts/generate-content-covers.mjs",
+    "visual:auto": "node scripts/generate-inline-visuals.mjs",
     "dev": "pnpm run generate:content && vinext dev",
     "build": "pnpm run generate:content && vinext build",
     "start": "vinext start",

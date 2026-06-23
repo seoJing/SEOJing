@@ -16,6 +16,7 @@ const sectionRules = [
   { prefix: "okayJing/", section: "okayjing" },
   { prefix: "study/backend/", section: "study-backend" },
   { prefix: "study/clab-26-1/", section: "study-clab-26-1" },
+  { prefix: "study/", section: "study" },
   { prefix: "SEOJing/", section: "seojing" },
   { prefix: "spot/", section: "spot" },
   { prefix: "kd-team/", section: "kd-team" },

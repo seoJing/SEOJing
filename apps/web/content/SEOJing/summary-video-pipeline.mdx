@@ -1,0 +1,217 @@
+---
+title: "글 위에 영상을 붙인다는 것 — SEOJing 요약 쇼츠 파이프라인"
+date: "2026-06-22"
+tags:
+  - SEOJing
+  - SummaryVideo
+  - Video
+  - TTS
+  - DevLog
+description: SEOJing 글을 소셜용 영상으로 따로 소비시키는 게 아니라, 포스트 상단 요약과 블로그 유입 장치로 연결하기 위해 summaryVideo frontmatter와 Supertonic3 기반 요약 쇼츠 파이프라인을 붙인 과정을 정리했다.
+summaryVideo:
+  src: /summary-videos/SEOJing/summary-video-pipeline/summary-short.mp4
+  title: 영상은 글을 대체하면 안 됐다
+  caption: SEOJing 요약 쇼츠를 독립 콘텐츠가 아니라 포스트 상단 요약과 블로그 유입 장치로 설계한 이유를 1분으로 압축했습니다.
+  subtitles: /summary-videos/SEOJing/summary-video-pipeline/subtitles.srt
+  provider: supertonic
+---
+
+처음에는 “AI로 영상 만든다”는 말을 조금 넓게 보고 있었다. 글 하나를 넣으면 쇼츠가 나오고, 그걸 유튜브나 인스타에 올리면 되는 식의 자동화로 생각하기 쉽다. 그런데 SEOJing에 그대로 붙이기에는 어색했다.
+
+SEOJing 글은 그냥 콘텐츠 덩어리가 아니다. 대부분이 어떤 기능을 만들다가 기준을 다시 잡은 기록이고, OkayJing 운영 판단이나 스터디 흐름처럼 맥락을 같이 읽어야 이해되는 글이 많다. 여기서 영상만 따로 튀어나가면, 영상은 눈길을 끌 수는 있어도 글과 분리된다.
+
+이번에 잡은 기준은 그래서 조금 다르다.
+
+영상은 글의 대체물이 아니라, 글로 들어오는 입구여야 한다.
+
+## 시작은 “요약 영상”이 아니라 “포스트 상단”이었다
+
+<ArticleImage
+  src="/images/content/seojing/summary-video-pipeline/inline-01.svg"
+  alt="글 위에 영상을 붙인다는 것 — SEOJing 요약 쇼츠 파이프라인 글의 시작은 “요약 영상”이 아니라 “포스트 상단”이었다 섹션을 설명하는 경계/계약 구조 다이어그램"
+  caption="SEOJing authored diagram · 경계/계약 구조"
+/>
+
+처음 의심한 건 영상 생성 방식이었다. Motion Canvas처럼 코드를 짜서 모션그래픽을 만들지, FFmpeg로 카드형 영상을 만들지, 아니면 Sora나 Runway 같은 생성형 영상을 써야 하는지 같은 선택지가 먼저 보였다.
+
+그런데 막상 SEOJing에 붙이려고 보니, 렌더러보다 앞에 있는 문제가 있었다.
+
+이 영상이 어디에 붙을 것인가?
+
+소셜에만 올릴 영상이면 훅이 강한 게 중요하다. 하지만 SEOJing 포스트 안에 들어갈 영상이면 성격이 달라진다. 글의 제목, 설명, 태그, 본문 흐름과 같은 선상에 있어야 한다. 영상의 첫 문장이 세더라도, 그 강함은 포스트의 실제 문제에서 나와야 한다.
+
+그래서 기능의 출발점을 이렇게 바꿨다.
+
+```txt
+글을 요약해서 영상 만들기
+```
+
+가 아니라,
+
+```txt
+SEOJing 포스트 상단에 붙을 요약 쇼츠 만들기
+```
+
+이 차이가 생각보다 컸다. 후자는 영상 생성보다 콘텐츠 계약에 가깝다.
+
+## frontmatter에 summaryVideo를 넣었다
+
+가장 단순한 방법은 MDX 본문에 `<video>` 태그를 직접 박는 것이다. 하지만 그건 SEOJing 구조와 잘 맞지 않았다. 나중에 모든 글의 요약 영상을 목록화하거나, 소셜용 파일과 블로그 상단 파일을 구분하거나, 자막/포스터/제공자를 추적하려면 본문 안에 숨어 있으면 불편하다.
+
+그래서 포스트 frontmatter에 `summaryVideo`를 추가했다.
+
+```yaml
+summaryVideo:
+  src: /summary-videos/SEOJing/summary-video-pipeline/summary-short.mp4
+  title: SEOJing 글 위에 붙는 요약 쇼츠
+  caption: 글을 대체하는 영상이 아니라, 본문으로 들어가는 입구로 만든 요약 영상입니다.
+  subtitles: /summary-videos/SEOJing/summary-video-pipeline/subtitles.srt
+  provider: supertonic
+```
+
+이 구조가 마음에 드는 이유는 명확하다. 영상이 글의 메타데이터가 된다. `cover`가 글 바깥의 대표 이미지를 담당한다면, `summaryVideo`는 글 안쪽의 진입 영상을 담당한다.
+
+```txt
+cover
+→ 목록과 카드에서 글을 고르게 만든다
+
+summaryVideo
+→ 글에 들어온 뒤, 본문을 읽을 이유를 빠르게 만든다
+```
+
+둘 다 진입점이지만 위치와 역할이 다르다.
+
+## 렌더러는 일단 FFmpeg 카드형으로 뒀다
+
+Motion Canvas가 훨씬 멋있어 보이는 건 맞다. 장면별로 텍스트가 움직이고, 비교표가 등장하고, 도식이 전환되는 영상을 만들 수 있다. 하지만 지금 SEOJing에 먼저 필요한 건 “멋진 데모”보다 반복 가능한 기본값이었다.
+
+이번 MVP는 이렇게 잡았다.
+
+```txt
+SEOJing post
+→ scenes JSON
+→ Supertonic3 TTS
+→ subtitles.srt
+→ FFmpeg/Pillow 카드형 9:16 영상
+→ public/summary-videos/<slug>/summary-short.mp4
+→ frontmatter summaryVideo로 연결
+```
+
+이 흐름은 화려하지 않다. 대신 빠르고, 디버깅하기 쉽고, 글마다 같은 방식으로 붙일 수 있다. 지금 단계에서는 이게 더 중요했다.
+
+특히 TTS는 오케이징에서 튜닝해둔 Supertonic3 쪽을 기본값으로 썼다. Edge TTS는 편하지만, SEOJing 포스트 상단에 붙는 영상이라면 목소리도 OkayJing 쪽 운영 톤과 이어지는 편이 낫다.
+
+## 실제 구현은 세 군데를 건드렸다
+
+겉으로 보면 영상 카드 하나가 추가된 것처럼 보이지만, 실제로는 세 층을 건드렸다.
+
+첫 번째는 content parser다. `packages/utils/src/content.ts`에서 frontmatter의 `summaryVideo` 객체를 읽을 수 있게 했다. 기존에는 `title`, `date`, `tags`, `description`, `cover` 정도만 안정적으로 파싱했다. 여기에 영상 메타데이터가 들어간다.
+
+두 번째는 타입이다. `ContentFrontmatter`에 `ContentSummaryVideo`를 추가했다. 이걸 해두면 글 목록, 상세 페이지, 나중의 검색 인덱스나 RSS 확장에서도 같은 계약을 쓸 수 있다.
+
+세 번째는 article page다. `apps/web/src/app/blog/[...slug]/page.tsx`에서 `ArticleHeader` 아래에 `SummaryVideo`를 렌더링한다. 포스트에 `summaryVideo.src`가 없으면 아무것도 나오지 않는다. 그래서 기존 글은 건드리지 않고, 준비된 글만 영상을 가진다.
+
+이게 이번 기능의 핵심이다. 새 기능을 넣었지만 모든 글에 새 UI를 강제로 밀어 넣지는 않는다.
+
+## 영상 스크립트도 글에서 벗어나면 안 된다
+
+요약 쇼츠를 만들 때 가장 조심해야 하는 건 훅이다. 영상은 첫 2초가 중요하니까 자극적인 문장을 쓰고 싶어진다. 하지만 SEOJing에서는 그 훅이 글의 주제에서 벗어나면 바로 어색해진다.
+
+예를 들어 이 기능을 소개하면서 이런 식으로 시작하면 안 된다.
+
+```txt
+AI 영상 제작의 시대가 왔다
+```
+
+너무 넓다. 이 글의 주제는 AI 영상 제작 전체가 아니라, SEOJing 포스트를 어떻게 영상으로 요약하고 블로그에 다시 연결할 것인가다.
+
+더 맞는 훅은 이쪽이다.
+
+```txt
+영상은 글을 대체하면 안 됐다
+```
+
+이 문장은 지금 기능의 판단과 바로 연결된다. 요약 쇼츠가 소셜에서 관심을 끄는 건 좋다. 하지만 결국 독자가 더 자세한 내용을 읽으러 블로그에 들어와야 한다. 그래서 영상은 독립 콘텐츠라기보다 압축된 문 앞 표지에 가깝다.
+
+## 다음 단계는 Motion Canvas가 아니라 scene contract다
+
+복잡한 모션그래픽을 하고 싶다면 Motion Canvas로 가면 된다. 그런데 바로 렌더러를 바꾸면 다시 한 번 도구 중심으로 흐른다. 먼저 정해야 하는 건 장면 계약이다.
+
+예를 들면 이런 구조다.
+
+```json
+{
+  "kind": "point",
+  "title": "영상은 글의 입구다",
+  "caption": "소셜 훅은 허용하지만, 포스트 주제 밖으로 나가면 안 됩니다.",
+  "diagram": {
+    "type": "pipeline",
+    "items": ["post", "scenes", "tts", "video", "blog"]
+  }
+}
+```
+
+이렇게 장면 데이터에 `diagram`과 `motion` 정보를 넣어두면, 지금의 FFmpeg 렌더러도 쓰고 나중의 Motion Canvas 렌더러도 같은 데이터를 볼 수 있다.
+
+내가 원하는 방향은 이렇다.
+
+```txt
+scenes.normalized.json
+├─ ffmpeg-card renderer
+│  └─ 빠른 블로그 상단 영상
+└─ motion-canvas renderer
+   └─ 소셜 업로드용 고품질 모션그래픽
+```
+
+즉 Motion Canvas는 목표가 아니라 출력 방식 중 하나다. 진짜 중심은 포스트에서 장면을 뽑는 기준이다.
+
+## 디자인 시스템도 나중 일이 아니다
+
+영상이 블로그 위에 들어오면, 영상도 SEOJing 디자인 시스템의 일부가 된다. 색이 다르고, 카드 모서리나 여백이 다르고, 타이포가 따로 놀면 바로 티가 난다.
+
+그래서 다음 단계는 Motion Canvas보다 디자인 토큰화가 먼저다.
+
+```txt
+SEOJing design tokens
+→ summary-video-theme.json
+→ FFmpeg renderer
+→ Motion Canvas renderer
+```
+
+이렇게 가야 같은 포스트에서 카드, cover, inline visual, summary video가 한 흐름으로 보인다. 영상만 멋있는 건 오히려 실패에 가깝다. SEOJing 글의 일부처럼 보여야 한다.
+
+## 지금 상태를 과장하지 않기
+
+이 기능은 현재 로컬에서 구현되고 검증된 상태다. 포스트에 `summaryVideo`를 붙이고, 정적 mp4와 자막을 연결하고, 빌드가 통과하는 것까지 확인했다. 다만 이 글을 공개 포스트로 말하려면 배포까지 이어져야 한다.
+
+그래서 지금 단계에서 정확한 표현은 이렇다.
+
+```txt
+SEOJing 요약 쇼츠 삽입 기능을 로컬 구현했고,
+포스트 frontmatter 기반으로 반복 가능한 계약을 만들었다.
+```
+
+아직 “모든 SEOJing 글에 자동 영상이 붙는다”는 말은 하면 안 된다. 자동 생성, 디자인 토큰 연동, Motion Canvas 고품질 렌더러는 다음 단계다.
+
+이 구분을 해두는 게 중요하다. SEOJing 글은 기능 홍보보다 판단 기록에 가깝고, 판단 기록은 어디까지 됐는지를 정확히 적어야 한다.
+
+## 정리
+
+이번 작업은 영상 기능을 붙였다기보다, SEOJing 글에 영상이 들어오는 자리를 만든 작업에 가깝다.
+
+요약 쇼츠는 글을 대체하지 않는다. 글의 주제를 먼저 압축하고, 독자가 본문을 읽을 이유를 만든다. 그래서 영상 스크립트도 포스트 밖으로 튀면 안 되고, 영상 파일도 frontmatter 계약 안에 들어와야 한다.
+
+다음에 할 일은 분명하다.
+
+1. SEOJing 디자인 토큰을 영상 렌더러에 연결한다.
+2. scene JSON에 도식 정보를 넣는다.
+3. Motion Canvas는 같은 scene contract를 읽는 고품질 선택 렌더러로 붙인다.
+
+돌이켜보면 이 기능에서 중요한 건 “AI로 영상을 만들었다”가 아니었다. 글과 영상 사이의 책임 경계를 먼저 잡은 것이다. 그 경계가 있어야, 나중에 모션그래픽이 화려해져도 SEOJing 글의 일부로 남을 수 있다.
+
+## 참고
+
+- 요약 쇼츠 고도화 계획: `docs/seojing-summary-video-roadmap.md`
+- 요약 영상 렌더러: `/Users/seojing/.hermes/scripts/summary_video_maker.py`
+- SEOJing 영상 카드 컴포넌트: `apps/web/src/widgets/summary-video/SummaryVideo.tsx`
+- frontmatter 파서: `packages/utils/src/content.ts`

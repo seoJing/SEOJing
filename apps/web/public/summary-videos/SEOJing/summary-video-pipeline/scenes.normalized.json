@@ -1,0 +1,234 @@
+{
+  "title": "글 위에 영상을 붙인다는 것",
+  "series": "SEOJing 요약 쇼츠",
+  "subtitle": "요약 쇼츠는 글의 대체물이 아니라 입구입니다",
+  "blog_url": "https://seojing.com/blog/SEOJing/summary-video-pipeline",
+  "cta": "전체 글은 SEOJing 블로그에서",
+  "tts_provider": "supertonic",
+  "voice": "supertonic3-f1-human",
+  "tts_lang": "ko",
+  "tts_speed": 1.2,
+  "tts_pitch": 1.0,
+  "tts_steps": 12,
+  "scenes": [
+    {
+      "title": "영상은 글을 대체하면 안 됐다",
+      "narration": "이번 기능의 출발점은 AI 영상 제작이 아니었습니다. 영상이 글을 대체하지 않고, 글로 들어오는 입구가 되게 만드는 일이었습니다.",
+      "caption": "SEOJing 요약 쇼츠의 기준은 관심 유도가 아니라 블로그 진입입니다.",
+      "kind": "hook",
+      "duration": null,
+      "audio_duration": 8.637823,
+      "diagram": {
+        "type": "boundary",
+        "items": ["영상", "글"],
+        "left": ["눈길을 끌 수 있음", "하지만 혼자 튀면 실패"],
+        "right": ["본문 맥락", "읽을 이유"]
+      },
+      "motion": {
+        "preset": "title-punch",
+        "beats": [
+          {
+            "at": 0.2,
+            "action": "show-title"
+          },
+          {
+            "at": 1.8,
+            "action": "reveal-boundary"
+          }
+        ]
+      }
+    },
+    {
+      "title": "먼저 위치를 정했습니다",
+      "narration": "소셜에만 올릴 영상이면 훅이 먼저입니다. 하지만 블로그 포스트 안에 들어가는 영상이면 제목, 설명, 본문 흐름과 같은 선상에 있어야 합니다.",
+      "caption": "소셜용 독립 영상이 아니라, 포스트 상단에 붙는 요약 영상입니다.",
+      "kind": "point",
+      "duration": null,
+      "audio_duration": 9.473741,
+      "diagram": {
+        "type": "criteria",
+        "items": ["포스트 상단", "본문 흐름", "소셜 훅", "블로그 진입"],
+        "highlight": "포스트 상단"
+      },
+      "motion": {
+        "preset": "criteria-reveal",
+        "beats": [
+          {
+            "at": 0.3,
+            "action": "show-title"
+          },
+          {
+            "at": 2.0,
+            "action": "highlight",
+            "target": "포스트 상단"
+          }
+        ]
+      }
+    },
+    {
+      "title": "계약은 frontmatter에 둡니다",
+      "narration": "그래서 본문에 비디오 태그를 직접 박지 않았습니다. 포스트 frontmatter에 summaryVideo를 넣고, 영상도 글의 메타데이터로 다루게 했습니다.",
+      "caption": "summaryVideo가 mp4, 자막, 제목, provider를 글의 메타데이터로 묶습니다.",
+      "kind": "process",
+      "duration": null,
+      "audio_duration": 8.916463,
+      "diagram": {
+        "type": "pipeline",
+        "items": ["frontmatter", "mp4", "subtitles", "provider", "article"]
+      },
+      "motion": {
+        "preset": "pipeline-slide",
+        "beats": [
+          {
+            "at": 0.4,
+            "action": "show-title"
+          },
+          {
+            "at": 2.0,
+            "action": "reveal-item",
+            "target": "frontmatter"
+          }
+        ]
+      }
+    },
+    {
+      "title": "렌더러는 일단 단순하게",
+      "narration": "Motion Canvas는 멋있지만, 먼저 필요한 건 반복 가능한 기본값이었습니다. 지금은 FFmpeg와 Pillow로 빠르게 만들고, 같은 계약을 계속 쓰는 쪽이 맞았습니다.",
+      "caption": "FFmpeg와 Pillow 카드형 렌더가 지금 단계의 기본값입니다.",
+      "kind": "point",
+      "duration": null,
+      "audio_duration": 10.24,
+      "diagram": {
+        "type": "comparison",
+        "sides": ["FFmpeg/Pillow", "Motion Canvas"],
+        "left": ["빠른 기본값", "글 상단 안정성", "반복 생성"],
+        "right": ["고품질 모션", "소셜 선택 렌더", "비용/복잡도"]
+      },
+      "motion": {
+        "preset": "comparison-split",
+        "beats": [
+          {
+            "at": 0.4,
+            "action": "split"
+          },
+          {
+            "at": 2.4,
+            "action": "highlight",
+            "target": "FFmpeg/Pillow"
+          }
+        ]
+      }
+    },
+    {
+      "title": "목소리는 Supertonic3",
+      "narration": "TTS는 오케이징에서 튜닝해둔 Supertonic3를 기본으로 썼습니다. 글 위에 붙는 영상이라면, 목소리도 운영 톤과 이어지는 편이 자연스럽습니다.",
+      "caption": "오케이징 튜닝 음성으로 SEOJing 상단 요약의 톤을 맞췄습니다.",
+      "kind": "point",
+      "duration": null,
+      "audio_duration": 9.682721,
+      "diagram": {
+        "type": "criteria",
+        "items": ["톤", "말끝", "운영감", "반복성"],
+        "highlight": "운영감"
+      },
+      "motion": {
+        "preset": "criteria-reveal",
+        "beats": [
+          {
+            "at": 0.4,
+            "action": "reveal-item",
+            "target": "톤"
+          },
+          {
+            "at": 2.4,
+            "action": "highlight",
+            "target": "운영감"
+          }
+        ]
+      }
+    },
+    {
+      "title": "다음 핵심은 scene contract",
+      "narration": "복잡한 모션그래픽은 바로 렌더러부터 바꾸면 안 됩니다. 먼저 장면 데이터에 도식과 모션 정보를 넣고, 여러 렌더러가 같은 장면 계약을 읽게 해야 합니다.",
+      "caption": "도식과 모션은 scenes JSON에 먼저 들어가야 합니다.",
+      "kind": "process",
+      "duration": null,
+      "audio_duration": 10.17034,
+      "diagram": {
+        "type": "pipeline",
+        "items": ["post", "scene contract", "diagram", "motion", "renderer"]
+      },
+      "motion": {
+        "preset": "pipeline-slide",
+        "beats": [
+          {
+            "at": 0.4,
+            "action": "show-title"
+          },
+          {
+            "at": 2.0,
+            "action": "reveal-item",
+            "target": "scene contract"
+          }
+        ]
+      }
+    },
+    {
+      "title": "디자인 시스템도 영상의 일부입니다",
+      "narration": "영상이 블로그 위에 들어오면, 영상도 디자인 시스템의 일부가 됩니다. 색과 여백과 타이포가 따로 놀면 바로 이질감이 생깁니다.",
+      "caption": "영상만 멋있으면 실패입니다. SEOJing 글의 일부처럼 보여야 합니다.",
+      "kind": "point",
+      "duration": null,
+      "audio_duration": 8.846803,
+      "diagram": {
+        "type": "boundary",
+        "items": ["SEOJing tokens", "renderer outputs"],
+        "left": ["색", "카드", "타이포", "간격"],
+        "right": ["FFmpeg/Pillow", "Motion Canvas"]
+      },
+      "motion": {
+        "preset": "comparison-split",
+        "beats": [
+          {
+            "at": 0.3,
+            "action": "show-token-source"
+          },
+          {
+            "at": 2.2,
+            "action": "reuse",
+            "target": "both-renderers"
+          }
+        ]
+      }
+    },
+    {
+      "title": "전체 판단은 글에서 이어집니다",
+      "narration": "이번 영상은 기능 설명의 압축본입니다. 왜 이런 구조를 택했는지, Motion Canvas는 어디에 붙일지, 자세한 판단은 SEOJing 글에서 이어집니다.",
+      "caption": "frontmatter 계약, 렌더러 선택, Motion Canvas 다음 단계를 글로 정리했습니다.",
+      "kind": "cta",
+      "duration": null,
+      "audio_duration": 9.682721,
+      "diagram": {
+        "type": "timeline",
+        "items": ["토큰화", "도식", "기본 영상", "선택 모션", "블로그 검증"]
+      },
+      "motion": {
+        "preset": "cta-blog-card",
+        "beats": [
+          {
+            "at": 0.3,
+            "action": "show-title"
+          },
+          {
+            "at": 3.0,
+            "action": "show-cta"
+          }
+        ]
+      }
+    }
+  ],
+  "theme": {
+    "name": "SEOJing Paper Summary Video",
+    "path": "/summary-videos/theme/seojing-summary-video-theme.json"
+  }
+}

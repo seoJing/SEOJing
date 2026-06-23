@@ -1,0 +1,16 @@
+{
+  "slug": "okayJing/voice/qwen3-tts-mlx-to-supertonic3",
+  "title": "Qwen3-TTS MLX를 검토했지만 Supertonic3로 돌아온 이유",
+  "videoPath": "/summary-videos/okayJing/voice/qwen3-tts-mlx-to-supertonic3/summary-short.mp4",
+  "subtitlePath": "/summary-videos/okayJing/voice/qwen3-tts-mlx-to-supertonic3/subtitles.srt",
+  "narrationPath": "/summary-videos/okayJing/voice/qwen3-tts-mlx-to-supertonic3/narration.mp3",
+  "sourceManifestPath": "/summary-videos/okayJing/voice/qwen3-tts-mlx-to-supertonic3/manifest.json",
+  "copied": [
+    "summary-short.mp4",
+    "subtitles.srt",
+    "scenes.normalized.json",
+    "manifest.json",
+    "narration.mp3"
+  ],
+  "posterNote": "poster는 추후 대표 프레임/cover 파이프라인과 연결"
+}
