@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Effective TypeScript Day 1 mental model map</title>
+  <desc id="desc">TypeScript를 JavaScript 위의 정적 타입 계층, 타입 제거, 구조적 타이핑, any의 구멍으로 정리한 다이어그램</desc>
+  <rect width="1200" height="720" fill="#111827"/>
+  <rect x="70" y="70" width="1060" height="580" rx="36" fill="#f8fafc"/>
+  <text x="105" y="130" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="34" font-weight="800" fill="#0f172a">TypeScript를 처음 읽을 때 붙잡을 5가지 경계</text>
+  <text x="106" y="170" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="18" fill="#475569">Day 1 · Items 1–5 · 타입은 실행되지 않고, JavaScript 위에서 의도를 검사한다</text>
+
+  <g font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="18" fill="#0f172a">
+    <rect x="110" y="225" width="290" height="130" rx="22" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+    <text x="135" y="265" font-size="23" font-weight="800">1. JS 위의 TS</text>
+    <text x="135" y="300">JS 코드는 문법상 TS다.</text>
+    <text x="135" y="328">타입은 의도를 더 선명하게 한다.</text>
+
+    <rect x="455" y="225" width="290" height="130" rx="22" fill="#ede9fe" stroke="#7c3aed" stroke-width="3"/>
+    <text x="480" y="265" font-size="23" font-weight="800">2. tsconfig</text>
+    <text x="480" y="300">검사 강도는 설정이 정한다.</text>
+    <text x="480" y="328">strict는 팀의 안전벨트다.</text>
+
+    <rect x="800" y="225" width="290" height="130" rx="22" fill="#fee2e2" stroke="#dc2626" stroke-width="3"/>
+    <text x="825" y="265" font-size="23" font-weight="800">3. 타입 제거</text>
+    <text x="825" y="300">타입은 런타임에 없다.</text>
+    <text x="825" y="328">실행 검증은 따로 설계한다.</text>
+
+    <rect x="280" y="425" width="290" height="130" rx="22" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+    <text x="305" y="465" font-size="23" font-weight="800">4. 구조적 타이핑</text>
+    <text x="305" y="500">이름보다 모양을 본다.</text>
+    <text x="305" y="528">타입은 sealed가 아니다.</text>
+
+    <rect x="630" y="425" width="290" height="130" rx="22" fill="#fef3c7" stroke="#d97706" stroke-width="3"/>
+    <text x="655" y="465" font-size="23" font-weight="800">5. any의 구멍</text>
+    <text x="655" y="500">검사를 꺼버리는 탈출구다.</text>
+    <text x="655" y="528">작게, 짧게, 경계에 숨긴다.</text>
+  </g>
+
+  <path d="M400 355 C455 405 505 405 560 425" fill="none" stroke="#64748b" stroke-width="4" stroke-dasharray="10 10"/>
+  <path d="M745 355 C720 405 700 405 675 425" fill="none" stroke="#64748b" stroke-width="4" stroke-dasharray="10 10"/>
+  <text x="470" y="610" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="20" font-weight="700" fill="#334155">리뷰 질문: “이 타입은 실제 실행 경계와 맞는가?”</text>
+</svg>

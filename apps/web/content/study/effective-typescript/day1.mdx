@@ -1,0 +1,352 @@
+---
+title: "이펙티브 타입스크립트 2판 Day 1: 타입스크립트를 믿기 전에 알아야 할 경계"
+date: 2026-06-23
+tags:
+  - TypeScript
+  - 프론트엔드
+  - Effective TypeScript
+  - 타입 시스템
+  - any
+description: Effective TypeScript 2판의 Item 1–5를 바탕으로 TypeScript와 JavaScript의 관계, tsconfig, 타입 제거, 구조적 타이핑, any의 위험을 프론트엔드 코드 리뷰 관점에서 정리합니다.
+cover:
+  src: /images/content/study/effective-typescript/day1/ts-mental-model.svg
+  alt: TypeScript를 JavaScript 위의 정적 타입 계층, 타입 제거, 구조적 타이핑, any의 구멍으로 정리한 다이어그램
+  caption: 타입스크립트는 실행 언어가 아니라 JavaScript 위에서 의도를 검사하는 계층이다
+---
+
+## 이 시리즈를 왜 같이 읽는가
+
+자바스크립트 퀴즈북 리마인드가 언어의 런타임 감각을 다시 잡는 연재라면, 이펙티브 타입스크립트 2판 읽기는 그 위에 얹히는 타입 설계 감각을 잡는 연재입니다.
+
+TypeScript를 오래 쓰다 보면 타입이 코드를 안전하게 만들어준다는 말에 익숙해집니다. 그런데 실제 리뷰에서는 그 말만으로 부족합니다. 어떤 오류는 타입이 잡아주고, 어떤 오류는 통과합니다. 타입 선언은 런타임에 사라지고, `any` 하나가 주변 타입을 무너뜨리기도 합니다. 클래스 이름이 같지 않아도 구조가 맞으면 통과하고, 반대로 합법적인 JavaScript라도 TypeScript 설정에 따라 막히기도 합니다.
+
+그래서 이 연재의 목표는 책 내용을 순서대로 요약하는 것이 아닙니다. 매일 몇 개의 item을 묶어서 “프론트엔드 개발자가 코드 리뷰에서 어떤 질문을 해야 하는가”로 바꿔보려 합니다.
+
+Day 1은 가장 앞의 다섯 item입니다.
+
+```text
+Item 1. TypeScript와 JavaScript의 관계
+Item 2. TypeScript 옵션과 strict 설정
+Item 3. 타입과 코드 생성의 독립성
+Item 4. 구조적 타이핑
+Item 5. any 사용 제한
+```
+
+오늘의 핵심 질문은 하나입니다.
+
+```text
+타입스크립트가 이 코드를 정말 안전하게 만든 걸까,
+아니면 안전해 보이게만 만든 걸까?
+```
+
+---
+
+## 먼저 지도를 그려보자
+
+![TypeScript를 JavaScript 위의 정적 타입 계층, 타입 제거, 구조적 타이핑, any의 구멍으로 정리한 다이어그램](/images/content/study/effective-typescript/day1/ts-mental-model.svg)
+
+TypeScript를 처음부터 “JavaScript보다 엄격한 언어”로만 보면 자주 헷갈립니다. 더 정확히는 JavaScript 위에 정적 타입 검사 계층을 얹은 도구에 가깝습니다. 이 차이를 모르면 타입 에러, 빌드 결과, 런타임 버그를 한 덩어리로 섞어버립니다.
+
+Day 1에서 잡아야 할 경계는 다섯 가지입니다.
+
+| 경계                                   | 리뷰 질문                                           |
+| -------------------------------------- | --------------------------------------------------- |
+| TypeScript는 JavaScript의 superset이다 | 이 코드는 JS 동작을 이해한 뒤 타입을 붙인 것인가?   |
+| 검사 강도는 tsconfig가 정한다          | 이 프로젝트는 어떤 엄격함을 켜고 있는가?            |
+| 타입은 런타임에 사라진다               | 실행 중에도 검증이 필요한 값인가?                   |
+| TypeScript는 구조를 본다               | 이 타입은 이름이 아니라 모양으로 통과해도 괜찮은가? |
+| `any`는 검사 구멍이다                  | 이 `any`가 어디까지 전염되는가?                     |
+
+---
+
+## 1. TypeScript는 JavaScript를 대체하지 않는다
+
+TypeScript는 문법적으로 JavaScript의 superset입니다. 문법 오류가 없는 JavaScript 파일은 대체로 TypeScript도 파싱할 수 있습니다. 여기에 타입 주석과 타입 검사 규칙이 더해집니다.
+
+이 말은 TypeScript가 JavaScript의 런타임을 없애주지 않는다는 뜻이기도 합니다.
+
+```ts
+const city = "new york city";
+
+console.log(city.toUppercase());
+// Property 'toUppercase' does not exist on type 'string'.
+// Did you mean 'toUpperCase'?
+```
+
+이런 오타는 TypeScript가 잘 잡습니다. 값의 타입을 추론하고, 그 타입에 없는 메서드를 호출했다고 알려줍니다.
+
+하지만 타입을 통과한다고 해서 런타임 오류가 사라지는 것은 아닙니다.
+
+```ts
+declare const response: { name: string };
+
+console.log(response.name.toUpperCase());
+```
+
+타입만 보면 괜찮습니다. 그런데 실제 API가 `{ name: null }`을 보내거나 아예 `name`을 빼먹으면 런타임에서 깨집니다. TypeScript는 선언된 세계를 검사합니다. 바깥에서 들어오는 값이 정말 그 선언과 같은지는 별도 문제입니다.
+
+코드 리뷰에서는 이렇게 물어야 합니다.
+
+```text
+이 타입은 실제 데이터와 만나는 경계에서 검증되는가?
+아니면 우리가 그렇다고 믿고 있는가?
+```
+
+---
+
+## 2. tsconfig는 팀의 타입 안전 수준이다
+
+같은 TypeScript 코드라도 설정에 따라 전혀 다르게 검사됩니다.
+
+```ts
+function greet(name) {
+  return name.toUpperCase();
+}
+```
+
+`noImplicitAny`가 꺼져 있으면 `name`은 암묵적으로 `any`가 될 수 있습니다. 그러면 `name.toUpperCase()`가 맞는지 틀린지 TypeScript가 제대로 묻지 않습니다.
+
+`strictNullChecks`도 중요합니다.
+
+```ts
+const el = document.querySelector("#submit");
+
+el.addEventListener("click", () => {
+  console.log("clicked");
+});
+```
+
+`strictNullChecks`가 켜져 있으면 `querySelector` 결과가 `Element | null`이라는 사실을 마주하게 됩니다. 꺼져 있으면 null 가능성이 훨씬 쉽게 묻힙니다.
+
+```ts
+const el = document.querySelector("#submit");
+
+if (!el) {
+  throw new Error("submit button not found");
+}
+
+el.addEventListener("click", () => {
+  console.log("clicked");
+});
+```
+
+이 코드는 조금 길지만 의도가 분명합니다. DOM에 실제로 없을 수 있는 값이라는 사실을 코드에 남깁니다.
+
+그래서 TypeScript 프로젝트를 볼 때는 파일 하나보다 먼저 `tsconfig.json`을 봐야 할 때가 많습니다. `strict`, `noImplicitAny`, `strictNullChecks`가 꺼진 프로젝트에서 “TypeScript니까 안전하다”고 말하면 과장입니다.
+
+---
+
+## 3. 타입은 JavaScript로 컴파일될 때 사라진다
+
+TypeScript 타입은 런타임 값이 아닙니다. 컴파일 결과 JavaScript에는 대부분 남지 않습니다.
+
+```ts
+type User = {
+  id: string;
+  name: string;
+};
+
+function greet(user: User) {
+  return `Hello, ${user.name}`;
+}
+```
+
+실행 시점에는 `User` 타입이 없습니다. 그래서 이런 코드는 동작하지 않습니다.
+
+```ts
+// 잘못된 직관
+if (user instanceof User) {
+  // ...
+}
+```
+
+`User`는 타입 공간에만 있고 값 공간에는 없습니다. 런타임에서 확인하려면 다른 장치가 필요합니다.
+
+```ts
+type User = {
+  kind: "user";
+  id: string;
+  name: string;
+};
+
+function isUser(value: unknown): value is User {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  return (
+    record.kind === "user" &&
+    typeof record.id === "string" &&
+    typeof record.name === "string"
+  );
+}
+```
+
+이 예시는 완전한 검증 라이브러리 대체가 아닙니다. 다만 중요한 경계를 보여줍니다. 타입 선언만으로는 외부 데이터를 검증하지 못합니다. 런타임에서 확인할 값은 태그, 속성 검사, 스키마 라이브러리 같은 방식으로 다시 만들어야 합니다.
+
+AI가 만든 TypeScript 코드에서 자주 보는 문제도 여기에 있습니다.
+
+```ts
+const data = (await res.json()) as User;
+```
+
+이 코드는 TypeScript를 조용하게 만들 뿐, 응답이 정말 `User`인지 확인하지 않습니다. 코드 리뷰에서는 `as User`가 “검증”인지 “주장”인지 구분해야 합니다.
+
+---
+
+## 4. 구조적 타이핑은 이름보다 모양을 본다
+
+TypeScript는 대체로 구조적 타입 시스템입니다. 타입 이름이나 선언 위치보다 값의 모양을 봅니다.
+
+```ts
+interface Point2D {
+  x: number;
+  y: number;
+}
+
+function length(p: Point2D) {
+  return Math.sqrt(p.x ** 2 + p.y ** 2);
+}
+
+const point3D = { x: 3, y: 4, z: 12 };
+
+length(point3D); // OK
+```
+
+`point3D`에는 `z`가 더 있지만, `Point2D`에 필요한 `x`, `y`가 있으므로 통과합니다. 이건 버그가 아닙니다. JavaScript의 duck typing을 TypeScript가 모델링한 결과입니다.
+
+문제는 우리가 타입을 sealed object처럼 기대할 때 생깁니다.
+
+```ts
+interface UserSummary {
+  id: string;
+  name: string;
+}
+
+function renderUser(user: UserSummary) {
+  return `${user.id}: ${user.name}`;
+}
+```
+
+이 함수는 `UserSummary` 모양만 필요합니다. 실제 값이 더 많은 필드를 가진 `AdminUser`여도 들어올 수 있습니다. 대부분은 장점입니다. 테스트 double을 만들기도 쉽고, 필요한 필드만 요구하는 API를 설계하기도 좋습니다.
+
+하지만 보안/권한/도메인 경계에서는 조심해야 합니다. “이 타입으로 받았으니 이 필드만 있을 것”이라고 생각하면 안 됩니다. TypeScript 타입은 기본적으로 객체를 봉인하지 않습니다.
+
+---
+
+## 5. any는 타입 시스템의 음소거 버튼이다
+
+`any`는 점진적 마이그레이션에는 유용합니다. 문제는 `any`가 들어오는 순간 TypeScript가 많은 검사를 멈춘다는 점입니다.
+
+```ts
+function renderProfile(profile: any) {
+  return profile.user.name.toUpperCase();
+}
+```
+
+이 코드는 어떤 값이 들어와도 타입 검사 단계에서는 조용합니다. `profile.user`가 없거나 `name`이 숫자여도 TypeScript는 막지 않습니다.
+
+더 나쁜 점은 `any`가 주변으로 번진다는 것입니다.
+
+```ts
+const profile: any = await res.json();
+const name = profile.user.name;
+
+name.toFixed(2); // 타입 검사에서 쉽게 통과할 수 있음
+```
+
+`name`이 실제로 문자열이어도, `any`에서 나온 값이면 엉뚱한 메서드 호출이 숨어들 수 있습니다. IDE 자동완성도 약해지고, 리팩터링 때 타입의 도움을 받기 어렵습니다.
+
+외부 입력을 모를 때는 `any`보다 `unknown`이 낫습니다.
+
+```ts
+const profile: unknown = await res.json();
+
+if (isUser(profile)) {
+  console.log(profile.name.toUpperCase());
+}
+```
+
+`unknown`은 “아직 모른다”는 상태를 유지합니다. 사용하려면 좁혀야 합니다. 반면 `any`는 “아무거나 해도 된다”가 됩니다.
+
+---
+
+## 오늘의 코드 리뷰 체크포인트
+
+TypeScript Day 1을 읽고 코드 리뷰에서 바로 써먹을 질문은 이 정도입니다.
+
+```text
+1. 이 프로젝트의 tsconfig에서 strict, noImplicitAny, strictNullChecks는 켜져 있는가?
+2. 외부 API, localStorage, URLSearchParams, form input처럼 밖에서 들어온 값은 런타임 검증을 거치는가?
+3. as Type은 검증 결과인가, 아니면 TypeScript를 조용하게 만들기 위한 주장인가?
+4. 이 타입은 구조적으로 더 많은 필드를 가진 객체가 들어와도 괜찮은가?
+5. any가 쓰였다면 범위가 작고 경계 안에 숨겨져 있는가?
+6. any 대신 unknown으로 받고 좁힐 수 있는가?
+```
+
+특히 AI가 생성한 TypeScript 코드는 `as`, `any`, 넓은 객체 타입을 자주 씁니다. 겉으로는 TypeScript처럼 보이지만 실제 안전성은 낮을 수 있습니다. Day 1의 핵심은 타입스크립트를 덜 믿자는 말이 아닙니다. 어디까지 믿을 수 있는지 경계를 알고 쓰자는 쪽에 가깝습니다.
+
+---
+
+## 오늘의 정리
+
+- TypeScript는 JavaScript 위에 정적 타입 검사를 얹는다.
+- 타입 주석은 의도를 알려주지만 실제 외부 데이터까지 보증하지는 않는다.
+- `tsconfig.json`은 프로젝트의 타입 안전 수준을 결정한다.
+- 타입은 컴파일 후 대부분 사라지므로 런타임 검증은 따로 설계해야 한다.
+- TypeScript는 이름보다 구조를 보므로 타입이 객체를 봉인한다고 생각하면 안 된다.
+- `any`는 타입 검사를 끄는 구멍이며 가능하면 `unknown`과 좁히기로 대체하는 편이 낫다.
+
+---
+
+## 참고한 자료
+
+- Dan Vanderkam, 『Effective TypeScript, 2nd Edition』, Item 1–5
+- TypeScript Handbook, [TypeScript for JavaScript Programmers](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html)
+- TypeScript Handbook, [tsconfig.json](https://www.typescriptlang.org/docs/handbook/tsconfig-json.html)
+- TypeScript Handbook, [Narrowing](https://www.typescriptlang.org/docs/handbook/2/narrowing.html)
+
+---
+
+## 퀴즈
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="TypeScript 타입 선언에 대해 가장 정확한 설명은 무엇일까요?"
+    choices={[
+      "런타임에 남아서 API 응답을 자동 검증한다",
+      "컴파일 후 대부분 사라지므로 런타임 검증은 별도로 설계해야 한다",
+      "class와 interface는 모두 instanceof로 확인할 수 있다",
+      "타입 에러가 있으면 JavaScript 출력은 절대 만들어지지 않는다",
+    ]}
+    answer={1}
+    explanation="TypeScript 타입은 정적 검사 단계에서 쓰이고 런타임 JavaScript에는 대부분 남지 않습니다. 외부 데이터 검증은 타입 선언과 별도로 설계해야 합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="다음 중 TypeScript 프로젝트를 처음 리뷰할 때 먼저 확인할 값으로 가장 적절한 것은 무엇일까요?"
+    choices={[
+      "package.json의 name",
+      "tsconfig.json의 strict, noImplicitAny, strictNullChecks",
+      "README의 배지 개수",
+      "컴포넌트 파일의 줄 수",
+    ]}
+    answer={1}
+    explanation="같은 TypeScript 코드라도 tsconfig 설정에 따라 검사 강도가 크게 달라집니다. strict 계열 옵션은 프로젝트의 실제 타입 안전 수준을 판단하는 출발점입니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="외부 입력의 타입을 아직 모를 때 any보다 먼저 고려하기 좋은 타입은 무엇일까요?"
+    answer="unknown"
+    explanation="unknown은 값을 사용하기 전에 좁히기를 요구합니다. any처럼 타입 검사를 꺼버리지 않기 때문에 외부 입력 경계에서 더 안전한 출발점이 됩니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="AI가 생성한 코드에 const user = (await res.json()) as User;가 있습니다. 코드 리뷰에서 어떤 질문을 해야 할까요?"
+    answer="이 as User가 실제 검증 결과인지, 아니면 TypeScript를 조용하게 만들기 위한 주장인지 물어봐야 합니다. API 응답은 런타임 값이므로 타입 선언만으로 User임이 보장되지 않습니다. 필요한 경우 속성 검사, 태그, 스키마 검증 라이브러리 등으로 외부 입력을 확인한 뒤 타입을 좁혀야 합니다."
+    explanation="TypeScript 리뷰의 핵심은 타입 선언과 런타임 데이터 경계를 구분하는 것입니다. 특히 API, localStorage, form input처럼 외부에서 들어오는 값은 별도 검증이 필요합니다."
+  />
+</ArticleQuiz>
