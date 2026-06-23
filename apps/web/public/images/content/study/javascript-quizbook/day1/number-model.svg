@@ -40,10 +40,11 @@
   <rect x="336" y="268" width="190" height="38" class="pill"/>
   <text x="370" y="293" class="mono">fraction</text>
 
-  <rect x="620" y="160" width="500" height="170" class="good"/>
+  <rect x="620" y="160" width="500" height="184" class="good"/>
   <text x="650" y="205" class="label">안전한 정수 범위</text>
   <text x="650" y="244" class="mono">±(2^53 - 1)</text>
-  <text x="650" y="282" class="body">이 범위 밖에서는 서로 다른 정수가 같은 값처럼 보일 수 있다.</text>
+  <text x="650" y="282" class="body">이 범위 밖에서는 서로 다른 정수가</text>
+  <text x="650" y="314" class="body">같은 값처럼 보일 수 있다.</text>
 
   <path d="M580 245 C600 245 602 245 620 245" class="arrow"/>
 
