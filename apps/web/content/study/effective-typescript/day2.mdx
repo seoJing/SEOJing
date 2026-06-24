@@ -1,0 +1,380 @@
+---
+title: "이펙티브 타입스크립트 2판 Day 2: 타입을 값의 집합으로 보기"
+date: 2026-06-24
+tags:
+  - TypeScript
+  - 프론트엔드
+  - Effective TypeScript
+  - 타입 시스템
+  - 타입 단언
+description: Effective TypeScript 2판의 Item 6–10을 바탕으로 타입 시스템을 탐색하는 법, 타입을 값의 집합으로 보는 관점, type/value space, 타입 단언의 경계를 코드 리뷰 관점에서 정리합니다.
+cover:
+  src: /images/content/study/effective-typescript/day2/type-set-map.svg
+  alt: TypeScript 타입을 값의 집합, type space, value space, assertion 경계로 정리한 다이어그램
+  caption: TypeScript의 타입은 이름표가 아니라 가능한 값의 집합이며, as는 그 집합 판단을 우회하는 경계다
+---
+
+## 오늘의 범위
+
+Day 2는 Effective TypeScript 2판의 Item 6–10을 묶어서 읽습니다. 세부 item 이름을 외우기보다 하나의 질문으로 정리하면 이렇습니다.
+
+```text
+타입스크립트가 보는 타입 세계를 내가 직접 탐색하고 설명할 수 있는가?
+```
+
+Day 1에서 TypeScript가 JavaScript 위에 얹히는 정적 검사 계층이라는 경계를 봤습니다. 오늘은 그 검사기가 실제로 타입을 어떻게 생각하는지 쪽으로 들어갑니다.
+
+오늘 잡을 포인트는 네 가지입니다.
+
+1. 에디터와 컴파일러를 타입 탐색 도구로 쓰기
+2. 타입을 “값의 집합”으로 이해하기
+3. type space와 value space를 구분하기
+4. 타입 단언 `as`를 안전 경계가 아니라 우회 경계로 보기
+
+---
+
+## 먼저 지도를 그려보자
+
+![TypeScript 타입을 값의 집합, type space, value space, assertion 경계로 정리한 다이어그램](/images/content/study/effective-typescript/day2/type-set-map.svg)
+
+타입을 “변수 옆에 붙은 이름표”로만 보면 TypeScript의 오류 메시지가 답답해집니다. `string`, `number`, union, literal type, `unknown`, `never`가 서로 어떤 관계인지 감이 잘 안 옵니다.
+
+더 나은 관점은 타입을 가능한 값의 집합으로 보는 것입니다.
+
+```ts
+type A = string;
+type B = "ready" | "error";
+type C = never;
+type D = unknown;
+```
+
+이 타입들을 집합처럼 보면 다음과 같습니다.
+
+| 타입                   | 가능한 값의 범위                         |
+| ---------------------- | ---------------------------------------- |
+| `"ready"`              | 문자열 값 하나                           |
+| `"ready" 또는 "error"` | 두 개의 문자열 값                        |
+| `string`               | 모든 문자열 값                           |
+| `unknown`              | TypeScript가 표현할 수 있는 거의 모든 값 |
+| `never`                | 가능한 값이 없음                         |
+
+이 관점 하나만 있어도 union, narrowing, assignability, exhaustiveness를 훨씬 덜 신비롭게 볼 수 있습니다.
+
+---
+
+## 1. 타입 시스템을 탐색하는 습관
+
+TypeScript를 공부할 때 책이나 문서만 읽으면 금방 추상적이 됩니다. 실제 코드를 놓고 “지금 컴파일러가 이 값을 뭐라고 추론하는지”를 확인해야 합니다.
+
+예를 들어 이런 코드를 봅니다.
+
+```ts
+const status = "ready";
+let phase = "ready";
+```
+
+두 값은 같은 문자열로 초기화됐지만 타입은 다르게 추론됩니다.
+
+```ts
+// const status: "ready"
+// let phase: string
+```
+
+`const`는 재할당되지 않으므로 literal type으로 좁게 잡을 수 있습니다. `let`은 나중에 다른 문자열이 들어올 수 있으므로 `string`으로 넓게 잡힙니다.
+
+이런 차이는 에디터 hover, “Go to Definition”, “Quick Info”, `tsc --noEmit` 같은 도구로 바로 확인할 수 있습니다. 실무에서는 이 탐색 습관이 꽤 중요합니다. 타입 에러를 억지로 없애기 전에 먼저 물어야 합니다.
+
+```text
+TypeScript는 지금 이 값을 어떤 타입으로 보고 있지?
+내 의도보다 넓게 추론됐나, 좁게 추론됐나?
+```
+
+특히 객체와 배열에서는 이 차이가 자주 나옵니다.
+
+```ts
+const route = { kind: "post", slug: "ts-day-2" };
+
+// route.kind는 "post"가 아니라 string으로 넓어질 수 있다.
+```
+
+객체의 프로퍼티는 나중에 바뀔 수 있으므로 literal이 바로 보존되지 않는 경우가 있습니다. 이때 `as const`를 쓰면 좁아지지만, 무작정 붙이면 수정 가능성까지 막아버립니다. 먼저 추론 결과를 확인하고 의도를 결정하는 것이 순서입니다.
+
+---
+
+## 2. 타입은 값의 집합이다
+
+타입을 집합으로 보면 `extends`나 할당 가능성도 더 자연스럽습니다.
+
+```ts
+type Small = "ready" | "error";
+type Big = string;
+
+const a: Small = "ready";
+const b: Big = a;
+```
+
+`Small`의 값은 모두 `string` 안에 들어갑니다. 그래서 `Small` 값을 `string` 변수에 넣는 것은 안전합니다.
+
+반대는 아닙니다.
+
+```ts
+const anyString: string = "pending";
+const phase: Small = anyString;
+// Type 'string' is not assignable to type 'Small'.
+```
+
+`string`에는 `"ready"`, `"error"` 말고도 너무 많은 값이 들어올 수 있습니다. 그러니 좁은 집합에 바로 넣을 수 없습니다.
+
+이 감각은 API 상태 모델링에서 중요합니다.
+
+```ts
+type LoadState = "idle" | "loading" | "success" | "error";
+```
+
+이 타입은 “문자열 네 개 중 하나”입니다. 단순히 문자열에 이름을 붙인 게 아닙니다. 가능한 상태를 네 개로 제한한 것입니다. 그래서 리뷰에서는 이렇게 물을 수 있습니다.
+
+```text
+이 상태 타입은 실제 UI 상태 집합을 충분히 표현하는가?
+반대로 너무 넓게 string으로 열어둔 곳은 없는가?
+```
+
+---
+
+## 3. `unknown`과 `never`를 집합으로 이해하기
+
+`unknown`과 `never`는 처음 보면 낯설지만, 집합 관점에서는 단순합니다.
+
+`unknown`은 가장 넓은 쪽입니다. 어떤 값이든 들어올 수 있지만, 바로 사용할 수는 없습니다.
+
+```ts
+function renderValue(value: unknown) {
+  value.toUpperCase();
+  // Property 'toUpperCase' does not exist on type 'unknown'.
+}
+```
+
+`unknown`은 불편하지만 정직합니다. 외부에서 들어온 값이 무엇인지 모르면 먼저 좁히라고 요구합니다.
+
+```ts
+function renderValue(value: unknown) {
+  if (typeof value === "string") {
+    return value.toUpperCase();
+  }
+
+  return String(value);
+}
+```
+
+반대로 `never`는 가능한 값이 없는 타입입니다. 보통 모든 경우를 처리했는지 확인할 때 쓸모가 있습니다.
+
+```ts
+type Result =
+  | { type: "success"; data: string }
+  | { type: "error"; message: string };
+
+function render(result: Result) {
+  switch (result.type) {
+    case "success":
+      return result.data;
+    case "error":
+      return result.message;
+    default: {
+      const _exhaustive: never = result;
+      return _exhaustive;
+    }
+  }
+}
+```
+
+나중에 `Result`에 `{ type: "pending" }`이 추가되면 default의 `never` 체크가 깨집니다. 이건 좋은 실패입니다. UI 상태가 늘어났는데 렌더링 분기가 따라오지 않았다는 신호니까요.
+
+---
+
+## 4. type space와 value space를 섞지 않기
+
+TypeScript에는 타입으로만 존재하는 이름과 런타임 값으로 존재하는 이름이 있습니다. 둘은 문맥에 따라 다릅니다.
+
+```ts
+interface User {
+  name: string;
+}
+
+const User = {
+  label: "사용자",
+};
+```
+
+`interface User`는 type space에 있습니다. 런타임 JavaScript로 남지 않습니다. `const User`는 value space에 있습니다. 실제 실행 코드에 남습니다.
+
+헷갈리는 대표 사례는 `typeof`입니다.
+
+```ts
+const config = {
+  mode: "dark",
+  retry: 3,
+};
+
+type Config = typeof config;
+```
+
+여기서 `typeof config`는 런타임의 `typeof` 연산이 아니라 type space에서 값의 타입을 가져오는 문법입니다. 같은 단어라도 위치에 따라 의미가 달라집니다.
+
+클래스는 더 헷갈립니다. 클래스 이름은 타입으로도 쓰이고 값으로도 쓰입니다.
+
+```ts
+class Dialog {
+  open() {}
+}
+
+let instance: Dialog;
+const Constructor = Dialog;
+```
+
+`instance: Dialog`의 `Dialog`는 인스턴스 타입입니다. `const Constructor = Dialog`의 `Dialog`는 런타임 생성자 값입니다. 이 차이를 모르면 `typeof Dialog`, `InstanceType`, React 컴포넌트 props 타입을 읽을 때 자주 막힙니다.
+
+리뷰에서는 import도 확인해야 합니다.
+
+```ts
+import type { User } from "./types";
+import { createUser } from "./factory";
+```
+
+타입으로만 쓰는 것은 `import type`으로 분리하면 번들에 남을 값 import를 줄이고, type/value 경계를 더 분명히 할 수 있습니다.
+
+---
+
+## 5. 타입 단언은 변환이 아니다
+
+`as`는 TypeScript에게 “내가 더 잘 아니까 이렇게 봐줘”라고 말하는 문법입니다. 값을 바꾸지 않습니다.
+
+```ts
+const input = document.querySelector("input") as HTMLInputElement;
+
+input.value;
+```
+
+이 코드는 편하지만, 실제 DOM에 input이 없으면 런타임에서 깨질 수 있습니다. `as HTMLInputElement`는 `null`을 없애는 마법이 아닙니다. 타입 검사기를 설득했을 뿐입니다.
+
+더 안전한 코드는 런타임 체크를 같이 둡니다.
+
+```ts
+const input = document.querySelector("input");
+
+if (!(input instanceof HTMLInputElement)) {
+  throw new Error("input element not found");
+}
+
+input.value;
+```
+
+물론 모든 `as`가 나쁜 것은 아닙니다. TypeScript가 추론하지 못하지만 개발자가 런타임 조건을 이미 확인한 경우도 있습니다. 문제는 `as`가 빠른 해결책처럼 보인다는 점입니다.
+
+```ts
+const user = JSON.parse(raw) as User;
+```
+
+이 코드는 컴파일러를 조용하게 만들지만, `raw`가 정말 `User`인지 검증하지 않습니다. 외부 입력, API 응답, localStorage, URL query처럼 경계 밖에서 들어온 값에는 단언보다 검증이 먼저입니다.
+
+코드 리뷰 질문은 이렇게 바꿀 수 있습니다.
+
+```text
+이 as는 TypeScript의 한계를 보정하는가?
+아니면 실제로 필요한 런타임 검증을 숨기고 있는가?
+```
+
+---
+
+## 프론트엔드 코드 리뷰에서 보는 법
+
+Day 2의 내용은 타입 이론처럼 보이지만, 실제 리뷰에서는 꽤 구체적인 체크리스트가 됩니다.
+
+### 1. 추론 결과를 확인했는가
+
+상태, props, API 응답 타입이 이상할 때 바로 타입을 덧씌우지 말고 hover로 현재 추론 결과를 확인합니다. 타입이 너무 넓으면 생성 지점을 고치고, 너무 좁으면 확장될 가능성이 있는지 봅니다.
+
+```ts
+const tabs = ["home", "settings", "profile"];
+```
+
+이 배열이 단순 문자열 배열인지, 세 개의 탭 값으로 제한되어야 하는지에 따라 타입 모델이 달라집니다.
+
+### 2. union은 실제 상태 집합인가
+
+```ts
+type ModalState = "open" | "closed";
+```
+
+이 모델이 충분한지 봐야 합니다. 로딩 중, 제출 중, 에러 상태가 실제 UI에 있다면 두 값만으로는 부족할 수 있습니다. 타입을 값의 집합으로 보면 누락된 상태를 질문하기 쉬워집니다.
+
+### 3. `unknown`을 `any`로 도망치지 않았는가
+
+외부 입력은 처음에는 `unknown`으로 받는 편이 정직합니다. 바로 `any`로 바꾸면 타입 시스템의 도움을 잃습니다.
+
+```ts
+function handleMessage(message: unknown) {
+  // 좁힌 뒤 사용한다.
+}
+```
+
+### 4. `as`가 검증을 대체하고 있지 않은가
+
+DOM query, JSON parse, URL query, 서버 응답 뒤에 붙은 `as`를 특히 봅니다. 그 값이 실제로 그 타입인지 확인하는 코드가 없다면 타입 안정성이 아니라 타입 침묵일 수 있습니다.
+
+---
+
+## 오늘의 정리
+
+TypeScript를 잘 쓰려면 타입 문법을 많이 외우는 것보다, 컴파일러가 보는 세계를 탐색하는 습관이 먼저입니다.
+
+- 에디터 hover와 `tsc`는 타입 시스템을 관찰하는 도구다.
+- 타입은 가능한 값의 집합이다.
+- 좁은 타입은 넓은 타입에 들어갈 수 있지만, 넓은 타입은 좁은 타입에 바로 들어갈 수 없다.
+- `unknown`은 넓지만 안전하게 좁히라고 요구한다.
+- `never`는 가능한 값이 없어서 exhaustiveness 체크에 유용하다.
+- type space와 value space는 문맥에 따라 다르다.
+- `as`는 값을 바꾸지 않고 타입 검사기를 설득할 뿐이다.
+
+Day 2의 핵심은 타입을 “붙이는 것”이 아니라 “가능한 값의 범위를 설계하고 검증하는 것”입니다.
+
+---
+
+## 퀴즈
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="타입을 값의 집합으로 볼 때 ready 또는 error 두 값의 union과 string의 관계로 가장 맞는 것은 무엇일까요?"
+    choices={[
+      "서로 완전히 같은 집합이다",
+      "string이 더 좁은 집합이다",
+      "ready 또는 error 두 값의 union이 string보다 더 좁은 집합이다",
+      "둘은 비교할 수 없다",
+    ]}
+    answer={2}
+    explanation="두 literal 값의 union은 모든 문자열 중 일부만 허용합니다. 따라서 string보다 더 좁은 타입입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="`const input = document.querySelector('input') as HTMLInputElement`에 대한 설명으로 가장 정확한 것은 무엇일까요?"
+    choices={[
+      "런타임에서 input 요소로 자동 변환된다",
+      "null 가능성이 런타임에서도 제거된다",
+      "TypeScript 검사기에게 HTMLInputElement로 보라고 단언할 뿐 값은 바뀌지 않는다",
+      "querySelector가 실패하면 컴파일 단계에서 막힌다",
+    ]}
+    answer={2}
+    explanation="타입 단언은 런타임 변환이 아닙니다. 실제 DOM에 input이 없거나 다른 요소가 잡히면 별도 검증 없이는 런타임 문제가 남습니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="외부 입력처럼 아직 구조를 모르는 값을 안전하게 받기 위해 `any`보다 먼저 고려할 타입은 무엇일까요?"
+    answer="unknown"
+    explanation="unknown은 어떤 값이든 받을 수 있지만 사용 전에 좁히기를 요구합니다. any처럼 주변 타입 검사를 무력화하지 않습니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="코드 리뷰에서 `as User`를 발견했을 때 어떤 질문을 해야 하는지 한 문단으로 정리해보세요."
+    answer="먼저 그 값이 어디서 왔는지 확인해야 합니다. API 응답, JSON.parse, localStorage, URL query처럼 런타임 경계 밖에서 온 값이라면 `as User`는 검증을 대체하지 못합니다. TypeScript의 추론 한계를 보정하는 단언인지, 실제로 필요한 런타임 검증을 숨기는 단언인지 구분해야 합니다."
+    explanation="타입 단언은 빠른 해결책처럼 보이지만, 잘못 쓰면 타입 안정성이 아니라 타입 침묵을 만듭니다."
+  />
+</ArticleQuiz>

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">JavaScript equality algorithms map</title>
+  <desc id="desc">A comparison of double equals, triple equals, Object.is, and SameValueZero.</desc>
+  <rect width="1200" height="720" rx="42" fill="#111827"/>
+  <rect x="54" y="52" width="1092" height="616" rx="34" fill="#f8fafc"/>
+  <text x="92" y="120" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="42" font-weight="800" fill="#111827">같아 보이는 비교도 알고리즘이 다르다</text>
+  <text x="92" y="166" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="23" fill="#475569">JavaScript equality는 하나가 아니라 상황별 비교 규칙의 묶음이다.</text>
+
+  <g font-family="Inter, Apple SD Gothic Neo, sans-serif">
+    <rect x="90" y="218" width="245" height="310" rx="26" fill="#fef3c7" stroke="#f59e0b" stroke-width="4"/>
+    <text x="120" y="270" font-size="34" font-weight="800" fill="#92400e">==</text>
+    <text x="120" y="312" font-size="22" font-weight="700" fill="#92400e">Abstract Equality</text>
+    <text x="120" y="360" font-size="20" fill="#78350f">타입이 다르면</text>
+    <text x="120" y="391" font-size="20" fill="#78350f">먼저 변환을 시도한다</text>
+    <text x="120" y="445" font-size="20" fill="#78350f">리뷰 질문</text>
+    <text x="120" y="477" font-size="18" fill="#78350f">이 비교가 변환을</text>
+    <text x="120" y="504" font-size="18" fill="#78350f">의도한 코드인가?</text>
+
+    <rect x="365" y="218" width="245" height="310" rx="26" fill="#dbeafe" stroke="#3b82f6" stroke-width="4"/>
+    <text x="395" y="270" font-size="34" font-weight="800" fill="#1d4ed8">===</text>
+    <text x="395" y="312" font-size="22" font-weight="700" fill="#1d4ed8">Strict Equality</text>
+    <text x="395" y="360" font-size="20" fill="#1e3a8a">타입 변환은 없다</text>
+    <text x="395" y="391" font-size="20" fill="#1e3a8a">NaN은 자기와도 다르다</text>
+    <text x="395" y="445" font-size="20" fill="#1e3a8a">리뷰 질문</text>
+    <text x="395" y="477" font-size="18" fill="#1e3a8a">NaN과 -0 예외를</text>
+    <text x="395" y="504" font-size="18" fill="#1e3a8a">놓치지 않는가?</text>
+
+    <rect x="640" y="218" width="245" height="310" rx="26" fill="#dcfce7" stroke="#22c55e" stroke-width="4"/>
+    <text x="670" y="270" font-size="34" font-weight="800" fill="#166534">Object.is</text>
+    <text x="670" y="312" font-size="22" font-weight="700" fill="#166534">SameValue</text>
+    <text x="670" y="360" font-size="20" fill="#14532d">NaN은 같다</text>
+    <text x="670" y="391" font-size="20" fill="#14532d">-0과 0은 다르다</text>
+    <text x="670" y="445" font-size="20" fill="#14532d">리뷰 질문</text>
+    <text x="670" y="477" font-size="18" fill="#14532d">값의 미세한 차이가</text>
+    <text x="670" y="504" font-size="18" fill="#14532d">상태 변경인가?</text>
+
+    <rect x="915" y="218" width="195" height="310" rx="26" fill="#ede9fe" stroke="#8b5cf6" stroke-width="4"/>
+    <text x="934" y="270" font-size="25" font-weight="800" fill="#5b21b6">SameValueZero</text>
+    <text x="945" y="328" font-size="20" fill="#4c1d95">NaN은 같다</text>
+    <text x="945" y="359" font-size="20" fill="#4c1d95">-0과 0도 같다</text>
+    <text x="945" y="422" font-size="20" fill="#4c1d95">사용처</text>
+    <text x="945" y="454" font-size="18" fill="#4c1d95">includes</text>
+    <text x="945" y="481" font-size="18" fill="#4c1d95">Map / Set key</text>
+  </g>
+
+  <rect x="92" y="574" width="1018" height="48" rx="24" fill="#111827"/>
+  <text x="122" y="606" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="21" fill="#ffffff">암기 포인트가 아니라 리뷰 포인트: 이 API가 어떤 equality를 쓰는지까지 같이 확인한다.</text>
+</svg>

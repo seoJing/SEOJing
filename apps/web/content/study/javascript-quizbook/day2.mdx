@@ -1,0 +1,341 @@
+---
+title: "자바스크립트 퀴즈북 리마인드 Day 2: 같은 값인지 묻는 네 가지 방법"
+date: 2026-06-24
+tags:
+  - JavaScript
+  - 프론트엔드
+  - 자바스크립트 퀴즈북
+  - Equality
+  - Object.is
+description: ==, ===, Object.is, SameValueZero가 각각 어떤 비교 알고리즘을 쓰는지 정리하고, includes와 indexOf, Map/Set 키 비교에서 생기는 프론트엔드 리뷰 포인트를 잡습니다.
+cover:
+  src: /images/content/study/javascript-quizbook/day2/equality-algorithms.svg
+  alt: ==, ===, Object.is, SameValueZero의 차이를 정리한 JavaScript equality 다이어그램
+  caption: JavaScript에서 “같다”는 말은 하나의 규칙이 아니라 여러 equality 알고리즘을 고르는 문제다
+---
+
+## 오늘의 문제
+
+다음 코드는 전부 “같은 값인가?”를 묻는 것처럼 보입니다.
+
+```js
+console.log(NaN === NaN);
+console.log(Object.is(NaN, NaN));
+console.log([-0].includes(0));
+console.log([-0].indexOf(0));
+console.log([] == ![]);
+```
+
+결과는 이렇습니다.
+
+```text
+false
+true
+true
+0
+true
+```
+
+처음 보면 마지막 줄이 제일 이상합니다. 그런데 실무에서는 `[] == ![]` 같은 장난 문제보다 더 현실적인 형태로 나타납니다.
+
+```js
+const selectedIds = [NaN];
+
+selectedIds.includes(NaN); // true
+selectedIds.indexOf(NaN); // -1
+```
+
+둘 다 배열에서 값을 찾는 API인데 결과가 다릅니다. 이유는 간단합니다. JavaScript에는 “같다”가 하나만 있는 게 아닙니다. 비교 연산자와 API마다 쓰는 equality 알고리즘이 다릅니다.
+
+---
+
+## 흔한 착각: `===`만 쓰면 equality 문제는 끝난다
+
+코드 리뷰에서 `==`를 피하고 `===`를 쓰자는 규칙은 대체로 좋은 기본값입니다. 문제는 여기서 멈추면 `NaN`, `-0`, `includes`, `Map`, `Set` 같은 차이를 설명하지 못한다는 점입니다.
+
+`===`는 타입 변환을 하지 않습니다. 그래서 `==`보다 예측하기 쉽습니다. 하지만 `===`도 하나의 알고리즘일 뿐입니다.
+
+```js
+NaN === NaN; // false
+-0 === 0; // true
+```
+
+이 결과가 항상 실무 버그가 되는 것은 아닙니다. 대부분의 UI에서는 `-0`과 `0`을 구분하지 않아도 됩니다. 반대로 `NaN`을 상태값으로 다룬다면 `===` 비교만으로는 변화를 감지하지 못할 수 있습니다.
+
+그러니 오늘의 목표는 “`==`는 나쁘고 `===`는 좋다”가 아닙니다. 더 정확한 질문은 이겁니다.
+
+```text
+지금 이 코드가 기대하는 “같다”는 어떤 규칙인가?
+```
+
+---
+
+## equality 알고리즘을 한 장으로 보기
+
+![==, ===, Object.is, SameValueZero의 차이를 정리한 JavaScript equality 다이어그램](/images/content/study/javascript-quizbook/day2/equality-algorithms.svg)
+
+프론트엔드 코드 리뷰에서 자주 만나는 비교 규칙은 네 가지로 정리할 수 있습니다.
+
+| 비교 방식     | 타입 변환 | `NaN` vs `NaN` | `-0` vs `0` | 대표 사용처                        |
+| ------------- | --------- | -------------- | ----------- | ---------------------------------- |
+| `==`          | 있음      | false          | true        | 느슨한 비교 연산자                 |
+| `===`         | 없음      | false          | true        | 엄격 비교 연산자, `indexOf`        |
+| `Object.is`   | 없음      | true           | false       | SameValue 비교                     |
+| SameValueZero | 없음      | true           | true        | `includes`, `Map`, `Set`의 키 비교 |
+
+이 표에서 중요한 것은 단순 암기가 아닙니다. 같은 데이터라도 어떤 API를 통과하느냐에 따라 “같다”의 의미가 달라진다는 점입니다.
+
+---
+
+## 1. `==`: 변환이 먼저 끼어드는 비교
+
+`==`는 Abstract Equality Comparison을 사용합니다. 타입이 다르면 비교 전에 변환을 시도합니다.
+
+```js
+0 == false; // true
+"" == false; // true
+"42" == 42; // true
+null == undefined; // true
+```
+
+이 규칙은 때로 편해 보이지만 리뷰에서는 위험합니다. 비교 코드만 봐서는 어떤 변환이 일어나는지 바로 드러나지 않기 때문입니다.
+
+```js
+if (inputValue == 0) {
+  showEmptyState();
+}
+```
+
+이 코드는 숫자 `0`만 잡는 것처럼 보입니다. 하지만 빈 문자열도 `0`처럼 비교될 수 있습니다. 사용자가 폼 입력을 지웠을 때 의도치 않게 empty state가 뜨는 식의 버그로 이어질 수 있습니다.
+
+`[] == ![]`도 같은 맥락입니다.
+
+```js
+[] == ![];
+// [] == false
+// "" == false
+// 0 == 0
+// true
+```
+
+이 예제 자체를 외울 필요는 없습니다. 대신 타입이 다른 값을 `==`로 비교하면 변환 규칙까지 같이 읽어야 한다는 점만 기억하면 됩니다.
+
+---
+
+## 2. `===`: 타입 변환은 없지만 예외값은 남는다
+
+`===`는 타입 변환을 하지 않습니다. 그래서 리뷰 기본값으로 적합합니다.
+
+```js
+"42" === 42; // false
+0 === false; // false
+null === undefined; // false
+```
+
+하지만 `===`가 모든 equality 문제를 끝내지는 않습니다.
+
+```js
+NaN === NaN; // false
+-0 === 0; // true
+```
+
+`NaN`은 “숫자 계산이 실패했다”는 값을 표현합니다. 이 값은 자기 자신과도 `===`로 같지 않습니다. 따라서 값이 `NaN`인지 확인하려면 `Number.isNaN`이나 `Object.is`를 써야 합니다.
+
+```js
+Number.isNaN(NaN); // true
+Object.is(NaN, NaN); // true
+```
+
+반대로 `-0`과 `0`은 `===`에서 같습니다. 보통은 괜찮습니다. 다만 그래프 축, 수학 계산, 방향성 있는 0을 다루는 아주 좁은 영역에서는 `Object.is(-0, 0)` 차이가 의미를 가질 수 있습니다.
+
+---
+
+## 3. `Object.is`: 더 민감한 같음
+
+`Object.is`는 SameValue 비교를 사용합니다. `===`와 거의 비슷하지만 두 가지가 다릅니다.
+
+```js
+Object.is(NaN, NaN); // true
+Object.is(-0, 0); // false
+```
+
+이 차이는 상태 비교에서 가끔 중요해집니다. 예를 들어 값이 `NaN`에서 `NaN`으로 유지되는 경우를 “변화 없음”으로 볼지, 계산 실패가 다시 발생했다고 볼지 판단해야 할 때가 있습니다.
+
+React 내부에서도 과거부터 상태 변경 판단에 `Object.is`와 가까운 비교 감각이 중요하게 다뤄졌습니다. 그래서 프론트엔드 개발자는 `Object.is`를 “특이한 API”가 아니라 “`NaN`과 `-0`까지 구분하는 더 정확한 비교”로 기억해두는 편이 좋습니다.
+
+그렇다고 모든 비교를 `Object.is`로 바꾸라는 뜻은 아닙니다. 실무 질문은 이쪽입니다.
+
+```text
+이 값에서 NaN끼리 같게 보는 것이 맞는가?
+-0과 0을 구분해야 하는 도메인인가?
+```
+
+대부분의 서비스 UI에서는 두 번째 질문의 답이 “아니오”입니다. 그러면 `===`가 더 읽기 쉽습니다.
+
+---
+
+## 4. SameValueZero: `includes`, `Map`, `Set`이 쓰는 감각
+
+SameValueZero는 `Object.is`와 비슷하지만 `-0`과 `0`을 같게 봅니다.
+
+```js
+[NaN].includes(NaN); // true
+[-0].includes(0); // true
+
+const set = new Set([NaN, NaN, -0, 0]);
+set.size; // 2
+```
+
+배열의 `includes`는 SameValueZero를 씁니다. 그래서 `NaN`을 찾을 수 있습니다. 반면 `indexOf`는 `===`에 가까운 비교를 쓰기 때문에 `NaN`을 찾지 못합니다.
+
+```js
+[NaN].includes(NaN); // true
+[NaN].indexOf(NaN); // -1
+```
+
+이 차이는 검색 UI나 필터 상태에서 꽤 현실적인 버그가 됩니다. API에서 숫자 필터 값이 잘못 파싱되어 `NaN`이 섞였는데, `indexOf` 기반 로직은 못 찾고 `includes` 기반 로직은 찾는 식입니다.
+
+`Map`과 `Set`의 키 비교도 SameValueZero 감각으로 이해하면 됩니다.
+
+```js
+const cache = new Map();
+
+cache.set(NaN, "invalid number");
+cache.get(NaN); // "invalid number"
+
+cache.set(-0, "minus zero");
+cache.get(0); // "minus zero"
+```
+
+리뷰에서는 이런 질문을 하면 됩니다.
+
+```text
+이 컬렉션의 키에 NaN이 들어올 수 있는가?
+-0과 0을 같은 키로 봐도 되는가?
+배열 검색 API가 indexOf인지 includes인지에 따라 결과가 달라지는가?
+```
+
+---
+
+## 프론트엔드 코드 리뷰에서 보는 법
+
+비교 코드는 짧아서 대충 지나가기 쉽습니다. 하지만 리뷰할 때는 다음 네 가지를 분리해보면 좋습니다.
+
+### 1. 타입이 다른 값을 비교하고 있는가
+
+```js
+if (route.params.page == currentPage) {
+  // ...
+}
+```
+
+라우터 파라미터는 보통 문자열이고, 상태값은 숫자일 수 있습니다. 이때 `==`로 맞추기보다 변환 지점을 명시하는 편이 낫습니다.
+
+```js
+const pageFromRoute = Number(route.params.page);
+
+if (pageFromRoute === currentPage) {
+  // ...
+}
+```
+
+명시적 변환은 코드가 조금 길어지지만, “언제 문자열을 숫자로 해석하는가”가 리뷰에 드러납니다.
+
+### 2. 값에 `NaN`이 들어올 수 있는가
+
+사용자 입력, URL query, CSV, 서버 응답을 숫자로 파싱하면 `NaN` 가능성이 생깁니다.
+
+```js
+const amount = Number(input.value);
+
+if (amount === NaN) {
+  showError();
+}
+```
+
+이 코드는 의도대로 동작하지 않습니다. `NaN === NaN`은 false입니다.
+
+```js
+if (Number.isNaN(amount)) {
+  showError();
+}
+```
+
+### 3. 배열 검색의 목적이 위치인지 포함 여부인지
+
+```js
+if (values.indexOf(target) >= 0) {
+  // 포함됨
+}
+```
+
+위치를 실제로 쓰지 않는다면 `includes`가 의도를 더 잘 드러냅니다. 게다가 `NaN` 처리도 다릅니다.
+
+```js
+if (values.includes(target)) {
+  // 포함됨
+}
+```
+
+### 4. 식별자는 숫자인가 문자열인가
+
+큰 ID는 계산용 숫자가 아니라 식별자입니다. Day 1의 숫자 모델과 이어지는 지점입니다.
+
+```js
+user.id === selectedUserId;
+```
+
+둘 다 `number`처럼 보이더라도 서버가 큰 정수 ID를 문자열로 보내는지, 클라이언트가 Number로 바꾸고 있지는 않은지 확인해야 합니다. equality 문제는 타입 변환 문제와 자주 붙어 있습니다.
+
+---
+
+## 오늘의 정리
+
+`===`를 기본값으로 쓰는 습관은 좋습니다. 다만 그 규칙만으로 JavaScript equality를 다 이해했다고 보면 안 됩니다.
+
+- `==`는 타입 변환이 들어간다.
+- `===`는 타입 변환은 없지만 `NaN`과 `-0` 예외가 있다.
+- `Object.is`는 `NaN`끼리 같게 보고 `-0`과 `0`을 구분한다.
+- SameValueZero는 `NaN`끼리 같게 보고 `-0`과 `0`도 같게 본다.
+- `includes`, `Map`, `Set`은 `===`와 완전히 같은 비교 감각이 아니다.
+
+리뷰에서는 “`==`를 쓰지 마세요”에서 끝내지 말고, 이 비교가 어떤 equality 알고리즘을 기대하는지까지 물어보는 편이 더 실용적입니다.
+
+---
+
+## 퀴즈
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="다음 코드의 결과로 맞는 것은 무엇일까요?"
+    code={"console.log([NaN].includes(NaN));\nconsole.log([NaN].indexOf(NaN));"}
+    choices={["true, 0", "true, -1", "false, -1", "false, 0"]}
+    answer={1}
+    explanation="includes는 SameValueZero를 사용해서 NaN을 찾을 수 있습니다. indexOf는 NaN을 자기 자신과 같다고 보지 못하므로 -1을 반환합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="Object.is(-0, 0)의 결과와 그 이유로 가장 맞는 것은 무엇일까요?"
+    choices={[
+      "true, Strict Equality와 완전히 같기 때문에",
+      "true, SameValueZero를 쓰기 때문에",
+      "false, SameValue는 -0과 0을 구분하기 때문에",
+      "false, -0은 number 타입이 아니기 때문에",
+    ]}
+    answer={2}
+    explanation="Object.is는 SameValue 비교를 사용합니다. NaN끼리는 같게 보지만 -0과 0은 구분합니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="사용자 입력을 Number(input.value)로 바꾼 뒤 NaN 여부를 확인할 때 가장 직접적인 내장 함수는 무엇일까요?"
+    answer="Number.isNaN"
+    explanation="Number.isNaN은 값이 실제 NaN인지 확인합니다. 전역 isNaN처럼 먼저 숫자로 강제 변환하는 혼동을 줄일 수 있습니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="코드 리뷰에서 `===` 사용만 확인하고 넘어가면 놓칠 수 있는 equality 이슈를 한 문단으로 정리해보세요."
+    answer="===는 타입 변환을 막아주지만 NaN을 자기 자신과 다르게 보고 -0과 0을 같게 봅니다. 또한 배열 검색이나 컬렉션 키 비교에서는 includes, Map, Set처럼 SameValueZero를 쓰는 API도 있습니다. 그래서 리뷰에서는 연산자 하나만 볼 게 아니라 값의 도메인과 API가 쓰는 비교 알고리즘을 같이 확인해야 합니다."
+    explanation="좋은 리뷰는 규칙 암기가 아니라 해당 코드가 기대하는 '같다'의 의미를 드러내는 방향으로 진행됩니다."
+  />
+</ArticleQuiz>

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">TypeScript type set and value space map</title>
+  <desc id="desc">A diagram explaining type as a set of values, type space versus value space, and assertion boundaries.</desc>
+  <rect width="1200" height="720" rx="42" fill="#0f172a"/>
+  <rect x="58" y="56" width="1084" height="608" rx="34" fill="#f8fafc"/>
+  <text x="96" y="120" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="42" font-weight="800" fill="#0f172a">타입은 이름표가 아니라 값의 집합이다</text>
+  <text x="96" y="166" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="23" fill="#475569">Effective TypeScript Day 2: 타입 탐색, type/value space, assertion 경계</text>
+
+  <g font-family="Inter, Apple SD Gothic Neo, sans-serif">
+    <circle cx="308" cy="362" r="182" fill="#dbeafe" stroke="#2563eb" stroke-width="5"/>
+    <circle cx="308" cy="362" r="108" fill="#bfdbfe" stroke="#1d4ed8" stroke-width="4"/>
+    <circle cx="308" cy="362" r="42" fill="#60a5fa"/>
+    <text x="210" y="268" font-size="24" font-weight="800" fill="#1e3a8a">unknown</text>
+    <text x="242" y="340" font-size="23" font-weight="800" fill="#1d4ed8">string | number</text>
+    <text x="283" y="371" font-size="22" font-weight="800" fill="#ffffff">'ok'</text>
+    <text x="154" y="586" font-size="20" fill="#1e3a8a">좁은 타입일수록 가능한 값이 줄어든다</text>
+
+    <rect x="552" y="230" width="242" height="248" rx="28" fill="#ecfeff" stroke="#06b6d4" stroke-width="4"/>
+    <text x="586" y="286" font-size="30" font-weight="800" fill="#155e75">Type Space</text>
+    <text x="586" y="334" font-size="21" fill="#164e63">interface</text>
+    <text x="586" y="366" font-size="21" fill="#164e63">type alias</text>
+    <text x="586" y="398" font-size="21" fill="#164e63">generic</text>
+    <text x="586" y="430" font-size="21" fill="#164e63">type import</text>
+
+    <rect x="846" y="230" width="242" height="248" rx="28" fill="#fef3c7" stroke="#f59e0b" stroke-width="4"/>
+    <text x="880" y="286" font-size="30" font-weight="800" fill="#92400e">Value Space</text>
+    <text x="880" y="334" font-size="21" fill="#78350f">const / let</text>
+    <text x="880" y="366" font-size="21" fill="#78350f">function</text>
+    <text x="880" y="398" font-size="21" fill="#78350f">class runtime value</text>
+    <text x="880" y="430" font-size="21" fill="#78350f">value import</text>
+
+    <path d="M796 354 C820 330 824 330 846 354" fill="none" stroke="#64748b" stroke-width="5" stroke-linecap="round"/>
+    <path d="M838 338 L850 354 L832 360" fill="none" stroke="#64748b" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="748" y="522" font-size="21" fill="#334155">같은 이름도 문맥에 따라 타입이거나 값이다</text>
+
+    <rect x="552" y="555" width="536" height="54" rx="27" fill="#111827"/>
+    <text x="582" y="590" font-size="21" fill="#ffffff">as는 검사기를 설득할 뿐, 런타임 값을 바꾸지 않는다</text>
+  </g>
+</svg>
