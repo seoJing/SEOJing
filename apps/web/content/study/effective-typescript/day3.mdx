@@ -1,0 +1,361 @@
+---
+title: "이펙티브 타입스크립트 2판 Day 3: 타입 반복을 줄이는 리뷰 감각"
+date: 2026-06-25
+tags:
+  - TypeScript
+  - 프론트엔드
+  - Effective TypeScript
+  - 타입 설계
+  - 코드 리뷰
+description: Effective TypeScript 2판의 Item 11–15를 바탕으로 excess property check, 함수식 타입, type vs interface, readonly, 타입 반복 제거를 프론트엔드 코드 리뷰 관점에서 정리합니다.
+cover:
+  src: /images/content/study/effective-typescript/day3/type-duplication-review.svg
+  alt: 반복된 타입 선언을 원본 타입에서 파생한 타입으로 바꿔 리뷰 체크를 강하게 만드는 흐름 다이어그램
+  caption: 타입을 복붙하지 않고 파생하면 모델 변화가 한 곳에서 전파되고 리뷰 질문도 선명해진다
+---
+
+## 오늘의 범위
+
+Day 3은 Effective TypeScript 2판의 Item 11–15를 묶어서 읽습니다.
+
+```text
+Item 11–15: excess property, 함수식 타입, type vs interface, readonly, 타입 반복 제거
+```
+
+오늘의 질문은 하나입니다.
+
+```text
+타입을 많이 쓰고 있는데, 정말 체크가 강해지고 있는가?
+```
+
+TypeScript 코드에서 타입 선언이 많다고 해서 자동으로 안전해지는 것은 아닙니다. 오히려 같은 필드 목록을 여러 곳에 복붙하면 모델이 바뀔 때 한쪽만 오래된 타입으로 남습니다. 함수의 매개변수만 따로 타입을 붙이고 반환 타입은 흘려보내면 API 계약이 흐릿해집니다. 읽기 전용이어야 할 입력을 함수 내부에서 고치면 호출자 입장에서는 부작용을 예측하기 어렵습니다.
+
+Day 3은 이런 “타입을 썼는데도 리뷰가 약한 코드”를 잡는 날입니다.
+
+---
+
+## 먼저 지도를 그려보자
+
+![반복된 타입 선언을 원본 타입에서 파생한 타입으로 바꿔 리뷰 체크를 강하게 만드는 흐름](/images/content/study/effective-typescript/day3/type-duplication-review.svg)
+
+좋은 타입 설계는 거창한 추상화가 아닙니다. 실무에서는 보통 다음 네 가지 감각에서 시작합니다.
+
+1. 객체 literal 위치에서 불필요한 속성이 들어오는지 확인한다.
+2. 함수는 매개변수 조각보다 전체 함수 타입으로 계약을 잡는다.
+3. `type`과 `interface`는 팀/확장성/표현력 기준으로 일관되게 고른다.
+4. 같은 필드 목록은 복붙하지 말고 원본 타입에서 파생한다.
+
+---
+
+## 흔한 착각: excess property check는 “엄격한 객체 타입”이다
+
+다음 코드를 봅니다.
+
+```ts
+type User = {
+  id: string;
+  name: string;
+};
+
+const user: User = {
+  id: "u1",
+  name: "Jingyu",
+  role: "admin",
+};
+```
+
+객체 literal을 바로 `User`에 넣으면 `role`은 excess property로 잡힙니다. 그래서 “TypeScript 객체 타입은 선언된 필드만 허용하는구나”라고 생각하기 쉽습니다.
+
+하지만 한 번 변수에 담기면 감각이 달라집니다.
+
+```ts
+const payload = {
+  id: "u1",
+  name: "Jingyu",
+  role: "admin",
+};
+
+const user: User = payload; // 통과할 수 있음
+```
+
+TypeScript의 타입 시스템은 structural typing입니다. `payload`가 `User`에 필요한 필드를 가지고 있으면 할당 가능합니다. 불필요한 필드를 항상 금지하는 “정확한 객체 타입”으로 동작하는 것은 아닙니다.
+
+리뷰 포인트는 이겁니다.
+
+```text
+외부 API 경계에서 들어온 객체를 어디에서 검증하는가?
+객체 literal 단계에서 잡아야 할 오타를 중간 변수로 흘려보내고 있지는 않은가?
+```
+
+excess property check는 좋은 오타 방지 장치지만, 런타임 검증이나 정확한 스키마 검사를 대신하지 않습니다.
+
+---
+
+## 함수식은 전체 타입으로 잡을 때 더 잘 읽힌다
+
+콜백이나 핸들러를 작성할 때 매개변수에만 타입을 붙이는 코드를 자주 봅니다.
+
+```ts
+const onSelect = (id: string) => {
+  analytics.track("select", { id });
+  return id;
+};
+```
+
+이 코드만 보면 `onSelect`가 어떤 계약을 가진 함수인지 흐릿합니다. 반환값을 쓰는지, 비동기인지, 이벤트 핸들러인지가 타입 이름에 남지 않습니다.
+
+전체 함수 타입을 먼저 선언하면 리뷰 질문이 쉬워집니다.
+
+```ts
+type SelectHandler = (id: string) => void;
+
+const onSelect: SelectHandler = (id) => {
+  analytics.track("select", { id });
+};
+```
+
+이제 `return id`를 추가하면 계약과 어긋나는지 바로 드러납니다. 특히 React props, API mapper, command handler처럼 “이 함수가 어떤 역할인지”가 중요한 곳에서는 전체 함수 타입이 읽기 좋습니다.
+
+```ts
+type ArticleMapper = (raw: RawArticle) => ArticleCard;
+
+const toArticleCard: ArticleMapper = (raw) => ({
+  slug: raw.slug,
+  title: raw.title,
+  description: raw.summary ?? "",
+});
+```
+
+리뷰에서는 매개변수 하나의 타입보다 함수 전체의 입출력 계약을 먼저 봐야 합니다.
+
+---
+
+## `type` vs `interface`: 정답보다 일관성이 먼저다
+
+`type`과 `interface` 중 무엇을 써야 하냐는 질문은 오래된 논쟁입니다. Day 3에서 잡을 기준은 단순합니다.
+
+| 상황                                                   | 선호 기준                        |
+| ------------------------------------------------------ | -------------------------------- |
+| 객체 shape를 공개 API처럼 확장할 수 있어야 함          | `interface`가 자연스러울 수 있음 |
+| union, tuple, mapped/conditional type 등 조합이 필요함 | `type`이 더 표현력 있음          |
+| 팀 코드베이스가 이미 한쪽으로 강하게 통일됨            | 기존 규칙을 따른다               |
+
+중요한 것은 “둘 중 하나가 항상 옳다”가 아닙니다. 한 파일 안에서 비슷한 목적의 도메인 모델은 `interface`, 파생 유틸 타입은 `type`처럼 역할이 보이면 리뷰가 쉬워집니다.
+
+```ts
+interface Article {
+  slug: string;
+  title: string;
+  body: string;
+}
+
+type ArticlePreview = Pick<Article, "slug" | "title">;
+```
+
+이런 구분은 읽는 사람에게 신호를 줍니다.
+
+```text
+Article은 원본 도메인 shape다.
+ArticlePreview는 원본에서 파생한 화면용 타입이다.
+```
+
+---
+
+## `readonly`: 불변성 구현이 아니라 수정 금지 계약
+
+`readonly`를 런타임 불변성으로 오해하면 곤란합니다.
+
+```ts
+type Props = {
+  readonly items: string[];
+};
+```
+
+여기서 `items` 프로퍼티 자체를 다른 배열로 바꾸는 것은 막을 수 있습니다. 하지만 배열 내부 변경까지 항상 원하는 수준으로 막아주는 것은 아닙니다.
+
+```ts
+function render(props: Props) {
+  props.items.push("extra"); // 타입 설계에 따라 허용될 수 있음
+}
+```
+
+배열 내용까지 읽기 전용 계약으로 만들고 싶다면 `readonly string[]` 또는 `ReadonlyArray<string>` 같은 형태를 고민해야 합니다.
+
+```ts
+type Props = {
+  readonly items: readonly string[];
+};
+
+function render(props: Props) {
+  props.items.push("extra");
+  // Property 'push' does not exist on type 'readonly string[]'.
+}
+```
+
+프론트엔드에서는 이 차이가 큽니다. props, query result, shared cache data를 함수 내부에서 수정하면 React 렌더링이나 캐시 invalidation 추적이 어려워집니다. `readonly`는 “이 함수는 입력을 바꾸지 않는다”는 리뷰 가능한 계약입니다.
+
+---
+
+## 타입 반복 제거: DRY보다 동기화 비용 줄이기
+
+타입 반복 제거를 단순히 DRY로만 보면 과한 추상화를 만들기 쉽습니다. 더 실용적인 이유는 동기화 비용입니다.
+
+```ts
+type Article = {
+  slug: string;
+  title: string;
+  description: string;
+  publishedAt: string;
+};
+
+type ArticleCard = {
+  slug: string;
+  title: string;
+  description: string;
+};
+```
+
+처음에는 괜찮아 보입니다. 그런데 `description`이 선택값으로 바뀌면 두 타입을 모두 수정해야 합니다. 하나만 바뀌면 mapper나 UI가 오래된 계약을 믿게 됩니다.
+
+파생 타입을 쓰면 변화가 더 잘 전파됩니다.
+
+```ts
+type ArticleCard = Pick<Article, "slug" | "title" | "description">;
+```
+
+입력 폼처럼 일부 필드만 다르고 나머지는 원본과 연결되어야 하는 경우도 마찬가지입니다.
+
+```ts
+type ArticleDraft = Omit<Article, "publishedAt"> & {
+  status: "draft";
+};
+```
+
+물론 모든 타입을 `Pick`과 `Omit`으로만 만들면 읽기 어려워집니다. 리뷰 기준은 이렇게 잡으면 됩니다.
+
+```text
+같은 필드 목록이 반복되어 나중에 같이 바뀌어야 한다면 파생한다.
+역할이 다른 모델이라면 이름을 분리하고 명시적으로 둔다.
+```
+
+반복 제거의 목적은 코드 줄이기가 아니라 모델 변화가 한 곳에서 새도록 만드는 것입니다.
+
+---
+
+## 프론트엔드 코드 리뷰 체크리스트
+
+### 1. 객체 literal에서 잡아야 할 오타가 변수로 우회됐나
+
+```ts
+const options = { darkMode: true, retrys: 3 };
+createClient(options);
+```
+
+`retrys` 같은 오타가 함수 호출 경계에서 흐려질 수 있습니다. 필요한 곳에서는 `satisfies`나 명시 타입으로 객체 literal 단계의 체크를 살리는 편이 낫습니다.
+
+```ts
+const options = {
+  darkMode: true,
+  retrys: 3,
+} satisfies ClientOptions;
+```
+
+이 코드는 오타를 잡아야 합니다. 단, `satisfies`는 “타입을 맞춘다”는 힌트이지 런타임 검증이 아닙니다.
+
+### 2. 함수 계약이 이름으로 남아 있나
+
+```ts
+const normalize = (value: string) => value.trim().toLowerCase();
+```
+
+작은 유틸이면 괜찮습니다. 하지만 API mapper나 props callback이라면 전체 함수 타입을 붙이는 것이 더 낫습니다.
+
+### 3. 입력을 수정하지 않는다는 계약이 필요한가
+
+```ts
+function sortArticles(articles: Article[]) {
+  return articles.sort((a, b) => a.title.localeCompare(b.title));
+}
+```
+
+`sort`는 원본 배열을 바꿉니다. 입력을 수정하지 않는 함수라면 타입부터 이렇게 두는 편이 낫습니다.
+
+```ts
+function sortArticles(articles: readonly Article[]) {
+  return [...articles].sort((a, b) => a.title.localeCompare(b.title));
+}
+```
+
+### 4. 같은 필드 목록이 두 번 이상 반복되는가
+
+반복이 보이면 바로 추상화하기보다 먼저 관계를 묻습니다.
+
+```text
+이 타입들은 같은 도메인 모델의 화면별 투영인가?
+아니면 우연히 필드 이름이 같은 별도 계약인가?
+```
+
+같은 모델의 투영이면 `Pick`, `Omit`, mapped type이 후보입니다. 별도 계약이면 오히려 명시적인 이름을 유지하는 편이 안전합니다.
+
+---
+
+## 오늘의 정리
+
+Day 3의 핵심은 타입 선언을 더 많이 쓰는 것이 아닙니다. 체크가 실제로 강해지는 위치에 타입을 두는 것입니다.
+
+- excess property check는 객체 literal 오타를 잡는 데 유용하지만 정확한 런타임 객체 검증은 아니다.
+- 함수는 매개변수 조각보다 전체 입출력 계약으로 볼 때 리뷰가 쉬워진다.
+- `type`과 `interface`는 절대 정답보다 표현력, 확장성, 팀 일관성이 중요하다.
+- `readonly`는 입력을 수정하지 않는다는 계약을 코드에 남긴다.
+- 타입 반복 제거는 줄 수 줄이기가 아니라 모델 변화의 동기화 비용을 줄이는 일이다.
+
+---
+
+## 참고문헌
+
+- Dan Vanderkam, _Effective TypeScript, 2nd Edition_, Item 11–15
+- TypeScript Handbook, Object Types / Type Manipulation / Utility Types
+- SEOJing Effective TypeScript 2판 14일 읽기 계획
+
+---
+
+## 리뷰 퀴즈
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="객체 literal을 바로 타입에 할당할 때 excess property check가 특히 잘 잡는 것은 무엇일까요?"
+    choices={[
+      "런타임 API 응답의 모든 추가 필드",
+      "객체 literal에 적힌 오타나 불필요한 필드",
+      "배열 내부 값의 불변성",
+      "함수 반환값의 비동기 여부",
+    ]}
+    answer={1}
+    explanation="excess property check는 객체 literal 단계에서 선언 타입에 없는 필드를 잡는 데 유용합니다. 하지만 런타임 검증이나 exact object type을 완전히 대신하지는 않습니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="`readonly Article[]` 매개변수를 쓰는 가장 실용적인 이유로 맞는 것은 무엇일까요?"
+    choices={[
+      "런타임에서 배열을 완전히 freeze하기 위해",
+      "함수 내부에서 입력 배열을 수정하지 않는 계약을 타입으로 드러내기 위해",
+      "Article 타입을 interface로 바꾸기 위해",
+      "excess property check를 끄기 위해",
+    ]}
+    answer={1}
+    explanation="readonly 배열은 호출자가 넘긴 입력을 함수가 수정하지 않는다는 의도를 타입으로 표현합니다. 런타임 freeze와는 다른 문제입니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="Article 타입에서 slug와 title만 뽑아 ArticleCard를 만들 때 가장 직접적인 TypeScript 유틸 타입은 무엇일까요?"
+    answer="Pick"
+    explanation="Pick<Article, 'slug' | 'title'>처럼 원본 타입에서 필요한 필드만 파생할 수 있습니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="같은 필드 목록이 여러 타입에 반복될 때 무조건 하나로 합치면 안 되는 이유를 코드 리뷰 관점에서 설명해보세요."
+    answer="반복된 필드가 같은 도메인 모델의 투영이라면 Pick/Omit 등으로 파생해 동기화 비용을 줄이는 것이 좋습니다. 하지만 우연히 필드 이름만 같은 별도 API 계약이라면 하나로 합치는 순간 두 경계가 불필요하게 결합됩니다. 리뷰에서는 필드 반복 자체보다 두 타입이 함께 바뀌어야 하는 관계인지 먼저 확인해야 합니다."
+    explanation="타입 반복 제거의 목표는 DRY가 아니라 모델 변화가 안전하게 전파되도록 만드는 것입니다. 관계가 다른 타입까지 합치면 오히려 변경 범위가 커집니다."
+  />
+</ArticleQuiz>

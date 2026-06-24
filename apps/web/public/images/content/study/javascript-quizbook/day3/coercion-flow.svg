@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">JavaScript ToPrimitive와 + 연산자 변환 흐름</title>
+  <desc id="desc">객체가 원시값으로 바뀐 뒤 문자열 연결 또는 숫자 덧셈으로 갈라지는 과정을 보여준다.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fffaf0" />
+      <stop offset="100%" stop-color="#eef4ff" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#1f2937" flood-opacity="0.14" />
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#334155" />
+    </marker>
+    <style>
+      .title { font: 700 34px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; fill: #111827; }
+      .subtitle { font: 500 18px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; fill: #475569; }
+      .box { fill: white; stroke: #cbd5e1; stroke-width: 2; rx: 24; filter: url(#shadow); }
+      .small { fill: #f8fafc; stroke: #dbe3ef; stroke-width: 2; rx: 18; }
+      .label { font: 700 22px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; fill: #0f172a; }
+      .body { font: 500 17px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; fill: #334155; }
+      .mono { font: 600 17px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fill: #1e3a8a; }
+      .warn { fill: #fff7ed; stroke: #fdba74; stroke-width: 2; rx: 18; }
+      .ok { fill: #ecfdf5; stroke: #86efac; stroke-width: 2; rx: 18; }
+      .line { stroke: #334155; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .mutedLine { stroke: #94a3b8; stroke-width: 2; stroke-dasharray: 8 8; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1200" height="680" fill="url(#bg)" />
+  <text x="70" y="70" class="title">ToPrimitive를 지나야 +의 의미가 보인다</text>
+  <text x="70" y="104" class="subtitle">객체 변환 → primitive 결정 → 문자열 연결/숫자 덧셈 분기</text>
+
+  <rect x="70" y="150" width="250" height="120" class="box" />
+  <text x="100" y="194" class="label">입력값</text>
+  <text x="100" y="226" class="mono">obj + value</text>
+  <text x="100" y="252" class="body">객체가 끼면 먼저 원시값으로 변환</text>
+
+  <path d="M320 210 H410" class="line" />
+
+  <rect x="410" y="130" width="360" height="170" class="box" />
+  <text x="442" y="174" class="label">ToPrimitive(obj, hint)</text>
+  <text x="442" y="207" class="body">1. Symbol.toPrimitive가 있으면 우선</text>
+  <text x="442" y="235" class="body">2. 없으면 valueOf / toString 순서</text>
+  <text x="442" y="263" class="body">3. 객체가 아닌 primitive를 돌려야 함</text>
+
+  <path d="M770 210 H875" class="line" />
+
+  <rect x="875" y="130" width="255" height="170" class="box" />
+  <text x="905" y="174" class="label">primitive 결과</text>
+  <text x="905" y="210" class="mono">string?</text>
+  <text x="905" y="240" class="mono">number?</text>
+  <text x="905" y="270" class="mono">boolean?</text>
+
+  <path d="M1000 300 V390" class="line" />
+  <path d="M1000 300 C1000 350 810 350 810 390" class="mutedLine" />
+
+  <rect x="715" y="390" width="255" height="120" class="warn" />
+  <text x="745" y="433" class="label">문자열 연결</text>
+  <text x="745" y="466" class="mono">"1" + 2 → "12"</text>
+  <text x="745" y="493" class="body">둘 중 하나가 string이면 concat</text>
+
+  <rect x="995" y="390" width="150" height="120" class="ok" />
+  <text x="1023" y="433" class="label">숫자 덧셈</text>
+  <text x="1023" y="466" class="mono">1 + 2 → 3</text>
+  <text x="1023" y="493" class="body">그 외엔 numeric</text>
+
+  <rect x="90" y="410" width="520" height="150" class="small" />
+  <text x="125" y="452" class="label">리뷰 질문</text>
+  <text x="125" y="488" class="body">• 이 +는 의도적으로 문자열을 만들고 있나?</text>
+  <text x="125" y="518" class="body">• 객체의 valueOf/toString/Symbol.toPrimitive가 끼나?</text>
+  <text x="125" y="548" class="body">• 폼 입력 공백, Date, 배열이 들어오면 결과가 바뀌나?</text>
+
+  <text x="70" y="635" class="subtitle">SEOJing study diagram · authored SVG</text>
+</svg>

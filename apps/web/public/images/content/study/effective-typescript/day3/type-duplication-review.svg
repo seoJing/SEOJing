@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">Effective TypeScript Day 3 타입 재사용과 excess property 체크</title>
+  <desc id="desc">객체 literal, excess property check, 타입 추출, readonly, mapped type로 타입 반복을 줄이는 흐름을 보여준다.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7fee7" />
+      <stop offset="100%" stop-color="#eff6ff" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.14" />
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M2,2 L10,6 L2,10 Z" fill="#334155" /></marker>
+    <style>
+      .title { font: 700 34px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; fill:#111827; }
+      .sub { font: 500 18px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; fill:#475569; }
+      .box { fill:#fff; stroke:#cbd5e1; stroke-width:2; rx:24; filter:url(#shadow); }
+      .bad { fill:#fff7ed; stroke:#fdba74; stroke-width:2; rx:20; }
+      .good { fill:#ecfdf5; stroke:#86efac; stroke-width:2; rx:20; }
+      .label { font:700 22px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; fill:#0f172a; }
+      .body { font:500 17px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; fill:#334155; }
+      .mono { font:600 16px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fill:#1e40af; }
+      .line { stroke:#334155; stroke-width:3; fill:none; marker-end:url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1200" height="680" fill="url(#bg)" />
+  <text x="70" y="70" class="title">타입 반복을 줄이면 체크가 더 강해진다</text>
+  <text x="70" y="104" class="sub">Effective TypeScript Item 11–15: excess property, 함수식 타입, readonly, mapped type</text>
+
+  <rect x="70" y="150" width="290" height="150" class="bad" />
+  <text x="100" y="194" class="label">반복된 타입 선언</text>
+  <text x="100" y="230" class="mono">type Card = ...</text>
+  <text x="100" y="258" class="mono">type CardForm = ...</text>
+  <text x="100" y="286" class="body">필드가 늘 때 한쪽만 바뀌기 쉽다</text>
+
+  <path d="M360 225 H455" class="line" />
+
+  <rect x="455" y="125" width="310" height="205" class="box" />
+  <text x="485" y="170" class="label">체크가 작동하는 지점</text>
+  <text x="485" y="206" class="body">• 객체 literal은 excess property를 잡기 좋다</text>
+  <text x="485" y="236" class="body">• 함수식에 전체 타입을 붙이면 매개변수/반환이 같이 고정된다</text>
+  <text x="485" y="266" class="body">• readonly는 “수정하지 않음”을 계약으로 만든다</text>
+  <text x="485" y="296" class="body">• Pick/Omit/mapped type으로 원본에서 파생한다</text>
+
+  <path d="M765 225 H860" class="line" />
+
+  <rect x="860" y="150" width="270" height="150" class="good" />
+  <text x="890" y="194" class="label">파생 타입</text>
+  <text x="890" y="230" class="mono">Pick&lt;Card, ...&gt;</text>
+  <text x="890" y="258" class="mono">Readonly&lt;T&gt;</text>
+  <text x="890" y="286" class="body">한 곳의 모델 변화가 같이 전파된다</text>
+
+  <rect x="95" y="390" width="475" height="155" class="box" />
+  <text x="125" y="432" class="label">리뷰에서 빨간불</text>
+  <text x="125" y="468" class="body">• 같은 필드 목록이 여러 type/interface에 복붙됨</text>
+  <text x="125" y="498" class="body">• 콜백 매개변수만 따로 주석처럼 타입 지정됨</text>
+  <text x="125" y="528" class="body">• 읽기 전용 입력을 함수 안에서 수정함</text>
+
+  <rect x="630" y="390" width="475" height="155" class="box" />
+  <text x="660" y="432" class="label">리뷰에서 초록불</text>
+  <text x="660" y="468" class="body">• 원본 도메인 타입에서 입력/출력 타입을 파생</text>
+  <text x="660" y="498" class="body">• 객체 literal 위치에서 불필요한 속성 체크</text>
+  <text x="660" y="528" class="body">• API 경계와 내부 상태 경계를 타입 이름으로 분리</text>
+
+  <text x="70" y="635" class="sub">SEOJing study diagram · authored SVG</text>
+</svg>
