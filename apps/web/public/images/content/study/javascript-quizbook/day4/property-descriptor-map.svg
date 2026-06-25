@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">Object property descriptor mental model</title>
+  <desc id="desc">A JavaScript property is not just a key and value. It also has writable, enumerable, configurable, get, and set rules.</desc>
+  <rect width="960" height="520" fill="#f8f5ef"/>
+  <text x="64" y="70" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="30" font-weight="700" fill="#222">프로퍼티는 key/value만이 아니다</text>
+  <text x="64" y="105" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="17" fill="#5f574d">descriptor를 보면 “값이 있나?”보다 “어떻게 읽히고, 바뀌고, 보이나?”를 리뷰할 수 있다.</text>
+  <rect x="76" y="155" width="310" height="220" rx="18" fill="#fff" stroke="#222" stroke-width="2"/>
+  <text x="110" y="198" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="24" font-weight="700" fill="#222">data descriptor</text>
+  <text x="110" y="238" font-family="Menlo, monospace" font-size="18" fill="#1d4f7a">value</text>
+  <text x="110" y="273" font-family="Menlo, monospace" font-size="18" fill="#1d4f7a">writable</text>
+  <text x="110" y="308" font-family="Menlo, monospace" font-size="18" fill="#1d4f7a">enumerable</text>
+  <text x="110" y="343" font-family="Menlo, monospace" font-size="18" fill="#1d4f7a">configurable</text>
+  <rect x="574" y="155" width="310" height="220" rx="18" fill="#fff" stroke="#222" stroke-width="2"/>
+  <text x="608" y="198" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="24" font-weight="700" fill="#222">accessor descriptor</text>
+  <text x="608" y="238" font-family="Menlo, monospace" font-size="18" fill="#8a3b12">get()</text>
+  <text x="608" y="273" font-family="Menlo, monospace" font-size="18" fill="#8a3b12">set(next)</text>
+  <text x="608" y="308" font-family="Menlo, monospace" font-size="18" fill="#8a3b12">enumerable</text>
+  <text x="608" y="343" font-family="Menlo, monospace" font-size="18" fill="#8a3b12">configurable</text>
+  <path d="M405 265H555" stroke="#222" stroke-width="2.5" stroke-dasharray="8 8"/>
+  <text x="430" y="247" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="16" fill="#555">둘 중 하나의 모양</text>
+  <rect x="250" y="420" width="460" height="48" rx="24" fill="#222"/>
+  <text x="305" y="451" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="18" font-weight="700" fill="#fff">freeze/seal/preventExtensions는 “객체 전체 규칙”이다</text>
+</svg>

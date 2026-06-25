@@ -1,0 +1,306 @@
+---
+title: "자바스크립트 퀴즈북 리마인드 Day 4: 프로퍼티 descriptor와 freeze의 경계"
+date: 2026-06-26
+tags:
+  - JavaScript
+  - 프론트엔드
+  - 자바스크립트 퀴즈북
+  - Object
+  - Property Descriptor
+description: 객체 프로퍼티를 key/value가 아니라 descriptor로 읽는 법, getter/setter와 defineProperty, preventExtensions/seal/freeze의 경계를 코드 리뷰 관점에서 정리합니다.
+cover:
+  src: /images/content/study/javascript-quizbook/day4/property-descriptor-map.svg
+  alt: JavaScript 프로퍼티 descriptor가 data descriptor와 accessor descriptor로 갈라지는 구조 다이어그램
+  caption: 프로퍼티는 값 하나가 아니라 writable, enumerable, configurable, get/set 규칙까지 포함한 작은 계약이다
+---
+
+## 오늘의 문제
+
+다음 코드는 무엇을 출력할까요?
+
+```js
+const user = {};
+
+Object.defineProperty(user, "name", {
+  value: "Jingyu",
+  writable: false,
+  enumerable: true,
+  configurable: false,
+});
+
+user.name = "SEOJing";
+console.log(user.name);
+console.log(Object.keys(user));
+delete user.name;
+console.log("name" in user);
+```
+
+정답은 strict mode 여부에 따라 대입 실패가 조용히 무시되거나 에러가 될 수 있지만, 핵심 결과는 이렇습니다.
+
+```text
+Jingyu
+["name"]
+true
+```
+
+`name`은 값만 가진 필드처럼 보입니다. 하지만 실제로는 “쓸 수 있는가”, “열거되는가”, “삭제/재정의할 수 있는가”라는 규칙을 함께 갖고 있습니다. 오늘은 객체를 단순한 key-value map으로만 보면 놓치는 descriptor 감각을 잡습니다.
+
+---
+
+## 흔한 착각: 객체 프로퍼티는 key와 value다
+
+일상적인 객체 literal은 이렇게 보입니다.
+
+```js
+const article = {
+  title: "Hello",
+  views: 0,
+};
+```
+
+그래서 프로퍼티를 `title -> "Hello"`, `views -> 0` 정도로만 읽기 쉽습니다. 하지만 JavaScript 엔진 입장에서는 각 프로퍼티가 descriptor를 가집니다. 객체 literal로 만든 일반 프로퍼티는 대략 이런 기본값을 갖습니다.
+
+```js
+{
+  value: "Hello",
+  writable: true,
+  enumerable: true,
+  configurable: true,
+}
+```
+
+이 기본값을 모르면 `Object.defineProperty`로 만든 프로퍼티가 왜 평소와 다르게 동작하는지 헷갈립니다. `defineProperty`는 기본값이 관대하지 않습니다. 명시하지 않은 boolean 속성은 보통 `false`입니다.
+
+```js
+const config = {};
+Object.defineProperty(config, "apiBase", {
+  value: "/api",
+});
+
+Object.keys(config); // []
+config.apiBase = "/v2"; // 바뀌지 않음 또는 strict mode에서 TypeError
+```
+
+리뷰에서는 “왜 값이 있는데 JSON/keys/spread에서 안 보이지?” 같은 증상을 descriptor부터 의심할 수 있어야 합니다.
+
+---
+
+## descriptor를 한 장으로 보기
+
+![JavaScript 프로퍼티 descriptor가 data descriptor와 accessor descriptor로 갈라지는 구조](/images/content/study/javascript-quizbook/day4/property-descriptor-map.svg)
+
+프로퍼티 descriptor는 크게 두 모양입니다.
+
+| 모양                | 핵심 필드           | 읽는 질문                          |
+| ------------------- | ------------------- | ---------------------------------- |
+| data descriptor     | `value`, `writable` | 값이 무엇이고 다시 쓸 수 있는가?   |
+| accessor descriptor | `get`, `set`        | 읽고 쓸 때 어떤 함수가 실행되는가? |
+
+둘 다 공통으로 `enumerable`, `configurable`을 가질 수 있습니다.
+
+```js
+const product = { price: 1000 };
+
+Object.getOwnPropertyDescriptor(product, "price");
+// {
+//   value: 1000,
+//   writable: true,
+//   enumerable: true,
+//   configurable: true
+// }
+```
+
+descriptor를 확인하는 습관은 라이브러리 코드나 프레임워크 내부 객체를 읽을 때 특히 좋습니다. “분명 프로퍼티가 있는데 반복문에서는 왜 안 나오지?”, “대입했는데 왜 값이 안 바뀌지?”를 추측 대신 확인할 수 있습니다.
+
+---
+
+## getter/setter: 필드처럼 보이는 함수 호출
+
+accessor descriptor는 프로퍼티 접근을 함수 호출처럼 바꿉니다.
+
+```js
+const cart = {
+  items: [1000, 2000],
+
+  get total() {
+    console.log("recompute");
+    return this.items.reduce((sum, price) => sum + price, 0);
+  },
+};
+
+cart.total; // recompute -> 3000
+cart.total; // recompute -> 3000
+```
+
+`cart.total`은 필드처럼 보이지만 매번 getter가 실행됩니다. 캐시된 값인지, 매번 계산되는 값인지, 사이드 이펙트가 있는지에 따라 리뷰 포인트가 달라집니다.
+
+setter도 마찬가지입니다.
+
+```js
+const state = {
+  _name: "",
+  set name(next) {
+    this._name = next.trim();
+  },
+  get name() {
+    return this._name;
+  },
+};
+
+state.name = "  SEOJing  ";
+state.name; // "SEOJing"
+```
+
+폼 상태나 도메인 객체에서 setter가 검증/정규화를 숨기면 읽는 사람은 단순 대입으로 착각할 수 있습니다. 실무에서는 이런 질문을 해야 합니다.
+
+```text
+이 프로퍼티 접근은 값 조회인가, 함수 실행인가?
+getter/setter가 네트워크 요청, 로그, 상태 변경 같은 부작용을 숨기고 있지는 않은가?
+```
+
+---
+
+## `preventExtensions`, `seal`, `freeze`는 어디까지 막을까
+
+객체 전체에 거는 잠금도 세 단계로 나눠서 봅니다.
+
+| API                             | 새 프로퍼티 추가 | 기존 프로퍼티 삭제/설정 변경 | 기존 값 변경      |
+| ------------------------------- | ---------------- | ---------------------------- | ----------------- |
+| `Object.preventExtensions(obj)` | 막음             | 대체로 허용 가능             | 가능              |
+| `Object.seal(obj)`              | 막음             | 막음                         | writable이면 가능 |
+| `Object.freeze(obj)`            | 막음             | 막음                         | 막음              |
+
+여기서 중요한 함정은 “얕은 freeze”입니다.
+
+```js
+const state = Object.freeze({
+  user: { name: "Jingyu" },
+});
+
+state.user = { name: "SEOJing" }; // 막힘
+state.user.name = "SEOJing"; // 내부 객체는 바뀔 수 있음
+```
+
+`freeze`는 객체 자신의 프로퍼티 descriptor를 고정합니다. 중첩 객체까지 자동으로 깊게 얼리지 않습니다. React props나 캐시 데이터를 다룰 때 `Object.freeze`를 보고 “전체 데이터가 완전히 불변이다”라고 판단하면 위험합니다.
+
+---
+
+## `as const`와 런타임 불변성은 다른 층이다
+
+TypeScript에서 자주 보는 `as const`도 같이 구분해야 합니다.
+
+```ts
+const routes = {
+  home: "/",
+  blog: "/blog",
+} as const;
+```
+
+`as const`는 타입 층에서 literal type과 readonly 성격을 줍니다. 하지만 런타임 객체를 `Object.freeze`처럼 실제로 잠그는 것은 아닙니다. 컴파일된 JavaScript에서 외부 코드가 같은 객체를 잡고 바꾸는 상황까지 막아주지 않습니다.
+
+그래서 리뷰 질문은 이렇게 나뉩니다.
+
+```text
+타입 레벨에서 수정 금지 신호가 필요한가?
+런타임에서도 객체 변경을 막아야 하는가?
+중첩 객체까지 막아야 하는가?
+```
+
+이 세 질문은 답이 다를 수 있습니다.
+
+---
+
+## 코드 리뷰에서 보는 네 가지
+
+### 1. `defineProperty` 기본값을 의도했나
+
+```js
+Object.defineProperty(obj, "id", { value: "a1" });
+```
+
+이 프로퍼티는 기본적으로 writable/enumerable/configurable이 false입니다. 의도한 보안/숨김 장치라면 좋지만, 단순 필드 추가 의도였다면 버그입니다.
+
+### 2. 열거 가능성에 의존하는 코드인가
+
+```js
+const clone = { ...obj };
+```
+
+spread는 enumerable own property를 봅니다. non-enumerable 필드는 빠집니다. 직렬화, 로그, diff, 폼 payload에서 값이 사라진다면 descriptor를 봐야 합니다.
+
+### 3. getter가 비싼 계산이나 부작용을 숨기나
+
+```js
+const total = cart.total;
+```
+
+필드처럼 보이지만 계산이 무거울 수 있습니다. 렌더링 중 반복 접근되는 getter라면 성능/부작용 체크가 필요합니다.
+
+### 4. freeze를 깊은 불변성으로 오해하지 않았나
+
+```js
+Object.freeze(options);
+```
+
+중첩 객체가 있다면 여전히 바뀔 수 있습니다. 정말 깊은 불변성이 필요하면 데이터 생성 경계, deep freeze, immutable update 패턴, 타입 readonly를 함께 봐야 합니다.
+
+---
+
+## 오늘의 정리
+
+객체를 읽을 때 “프로퍼티가 있다/없다”에서 멈추지 말고 descriptor를 함께 봐야 합니다.
+
+1. data descriptor는 `value`와 `writable`을 가진다.
+2. accessor descriptor는 `get`/`set`으로 읽기와 쓰기를 함수 실행으로 바꾼다.
+3. `enumerable`은 `Object.keys`, spread, 직렬화 감각에 영향을 준다.
+4. `configurable`은 삭제와 descriptor 재정의 가능성을 좌우한다.
+5. `preventExtensions`, `seal`, `freeze`는 객체 전체 규칙이지만 deep freeze는 아니다.
+6. `as const`는 타입 층의 신호이지 런타임 잠금이 아니다.
+
+이 감각이 있으면 라이브러리 객체, 브라우저 API, 프레임워크 내부 상태를 볼 때 “왜 평범한 객체처럼 안 움직이지?”라는 질문에 훨씬 빨리 답할 수 있습니다.
+
+---
+
+## 참고문헌
+
+- 프런트엔드 레벨을 높이는 자바스크립트 퀴즈북, 객체/프로퍼티 descriptor 관련 문제와 진규의 Notion 복습 노트
+- MDN Web Docs, `Object.defineProperty`, property descriptors, `Object.freeze`, `Object.seal`, `Object.preventExtensions`
+- ECMAScript Language Specification, Property Descriptor and Integrity Level abstract operations
+
+---
+
+## 오늘의 복습 퀴즈
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="Object.defineProperty(obj, 'x', { value: 1 })로 만든 x의 기본 enumerable 값은 무엇일까요?"
+    choices={["true", "false", "객체 literal과 같음", "환경마다 다름"]}
+    answer={1}
+    explanation="defineProperty에서 boolean descriptor 필드를 생략하면 보통 false입니다. 그래서 Object.keys나 spread에서 빠질 수 있습니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="Object.freeze(obj)가 자동으로 보장하지 않는 것은 무엇일까요?"
+    choices={[
+      "새 프로퍼티 추가 방지",
+      "기존 data property 값 변경 방지",
+      "프로퍼티 descriptor 재정의 방지",
+      "중첩 객체까지 깊게 불변으로 만들기",
+    ]}
+    answer={3}
+    explanation="Object.freeze는 얕게 동작합니다. obj 안의 중첩 객체가 따로 freeze되지 않았다면 그 내부 상태는 바뀔 수 있습니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="프로퍼티가 Object.keys에는 나오지 않지만 obj.hidden으로는 읽히는 상황에서 먼저 확인할 descriptor 필드는 무엇일까요?"
+    answer="enumerable"
+    explanation="Object.keys와 spread는 enumerable own property를 기준으로 보기 때문에, 값이 존재해도 enumerable이 false면 목록에서 빠집니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="코드 리뷰에서 getter를 단순 필드처럼 넘기지 말고 확인해야 하는 이유를 정리해보세요."
+    answer="getter는 프로퍼티 접근 문법으로 보이지만 실제로는 함수가 실행됩니다. 계산 비용, 캐시 여부, 예외, 로그/상태 변경 같은 부작용이 숨어 있을 수 있으므로 렌더링이나 반복 접근 경로에서는 의도를 확인해야 합니다."
+    explanation="descriptor 감각의 목적은 객체를 외우는 것이 아니라, 필드처럼 보이는 코드 뒤에 어떤 실행 규칙이 있는지 리뷰할 수 있게 만드는 것입니다."
+  />
+</ArticleQuiz>

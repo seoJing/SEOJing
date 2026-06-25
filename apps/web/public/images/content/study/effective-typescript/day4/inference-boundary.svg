@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">TypeScript inference boundary map</title>
+  <desc id="desc">A diagram showing how TypeScript inference becomes stronger when values are created close to their intended type and weaker when broad index signatures or premature annotations erase details.</desc>
+  <rect width="960" height="520" fill="#f7f4ed"/>
+  <text x="64" y="70" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="30" font-weight="700" fill="#202020">추론은 “어디서 시작했는가”에 좌우된다</text>
+  <text x="64" y="106" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="17" fill="#5a554d">넓은 타입으로 먼저 담으면 세부 정보가 사라지고, 사용 지점에 가까운 생성은 더 정확한 체크를 만든다.</text>
+  <rect x="70" y="165" width="240" height="180" rx="18" fill="#fff" stroke="#222" stroke-width="2"/>
+  <text x="103" y="210" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="22" font-weight="700" fill="#222">너무 넓은 시작</text>
+  <text x="103" y="250" font-family="Menlo, monospace" font-size="17" fill="#7b2f2f">Record&lt;string, string&gt;</text>
+  <text x="103" y="285" font-family="Menlo, monospace" font-size="17" fill="#7b2f2f">string[]</text>
+  <text x="103" y="320" font-family="Menlo, monospace" font-size="17" fill="#7b2f2f">any</text>
+  <path d="M320 255H438" stroke="#222" stroke-width="3" marker-end="url(#arrow)"/>
+  <rect x="450" y="145" width="210" height="220" rx="18" fill="#fff8df" stroke="#222" stroke-width="2"/>
+  <text x="486" y="195" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="22" font-weight="700" fill="#222">세부 정보 손실</text>
+  <text x="486" y="238" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="17" fill="#444">key 이름</text>
+  <text x="486" y="273" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="17" fill="#444">literal 값</text>
+  <text x="486" y="308" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="17" fill="#444">undefined 가능성</text>
+  <path d="M672 255H790" stroke="#222" stroke-width="3" marker-end="url(#arrow)"/>
+  <rect x="805" y="165" width="85" height="180" rx="18" fill="#222"/>
+  <text x="824" y="247" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="18" font-weight="700" fill="#fff">리뷰</text>
+  <text x="826" y="280" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="15" fill="#fff">약함</text>
+  <rect x="116" y="410" width="728" height="54" rx="27" fill="#1f5d7a"/>
+  <text x="174" y="444" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="18" font-weight="700" fill="#fff">값 생성 지점에서 의도를 좁히고, 필요할 때만 annotation으로 경계를 세운다</text>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#222"/>
+    </marker>
+  </defs>
+</svg>
