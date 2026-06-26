@@ -1,0 +1,166 @@
+---
+title: "자바스크립트 퀴즈북 리마인드 Day 5: 참조, 복사, Map/Set의 메모리 감각"
+date: 2026-06-27
+tags:
+  - JavaScript
+  - 프론트엔드
+  - 자바스크립트 퀴즈북
+  - Object
+  - Map
+  - Set
+description: 객체 참조와 얕은 복사, Object와 Map/Set의 차이, WeakMap/WeakSet이 필요한 메모리 상황을 프론트엔드 코드 리뷰 관점에서 정리합니다.
+cover:
+  src: /images/content/study/javascript-quizbook/day5/reference-collection-map.svg
+  alt: JavaScript 객체 참조와 Map, Set, WeakMap의 참조 구조를 비교한 다이어그램
+  caption: 객체는 값처럼 복사되지 않고, 컬렉션은 어떤 참조를 붙잡는지에 따라 메모리 감각이 달라진다
+---
+
+## 오늘의 문제
+
+```js
+const user = { name: "Jingyu", profile: { level: 1 } };
+const copied = { ...user };
+
+copied.name = "SEOJing";
+copied.profile.level = 2;
+
+const cache = new Map();
+cache.set(user, "cached");
+
+console.log(user.name);
+console.log(user.profile.level);
+console.log(cache.get(copied));
+```
+
+정답은 `Jingyu`, `2`, `undefined`입니다. 최상위 `name`은 새 객체에서만 바뀌었지만, `profile`은 원본과 복사본이 같은 내부 객체를 보고 있습니다. `copied`도 `user`와 내용은 비슷해 보여도 `Map`의 key로는 다른 객체입니다.
+
+오늘은 “객체를 복사했다”를 더 잘게 읽습니다. 새 껍데기만 만든 것인지, 내부 객체까지 새로 만든 것인지, 컬렉션이 어떤 참조를 붙잡고 있는지까지 봐야 프론트엔드 버그가 보입니다.
+
+## 참조와 컬렉션을 한 장으로 보기
+
+![객체 참조와 Map, Set, WeakMap의 참조 구조](/images/content/study/javascript-quizbook/day5/reference-collection-map.svg)
+
+객체 대입은 값을 하나 더 만드는 게 아니라 같은 객체를 가리키는 이름을 하나 더 만드는 일에 가깝습니다.
+
+```js
+const a = { count: 1 };
+const b = a;
+b.count = 2;
+
+console.log(a.count); // 2
+```
+
+spread도 안심하면 안 됩니다. `{ ...obj }`, `Object.assign`, 배열 spread는 보통 얕은 복사입니다.
+
+```js
+const original = { settings: { theme: "dark" } };
+const next = { ...original };
+next.settings.theme = "light";
+
+console.log(original.settings.theme); // "light"
+```
+
+리뷰 질문은 이렇습니다.
+
+| 질문               | 확인할 것               | 자주 생기는 버그                         |
+| ------------------ | ----------------------- | ---------------------------------------- |
+| 같은 객체인가?     | `a === b`               | 한쪽 수정이 다른 UI 상태까지 바꿈        |
+| 얕은 복사인가?     | nested object 공유 여부 | spread 후 내부 필드 수정이 원본에 반영됨 |
+| 컬렉션이 붙잡는가? | Map/Set의 강한 참조     | 캐시가 객체를 계속 잡아 메모리 누수      |
+
+## Object, Map, Set을 구분해서 쓰기
+
+일반 객체를 key-value 저장소처럼 쓸 수는 있지만, key는 기본적으로 문자열 또는 Symbol 중심입니다.
+
+```js
+const a = { id: 1 };
+const b = { id: 2 };
+const store = {};
+
+store[a] = "A";
+store[b] = "B";
+
+console.log(store); // { "[object Object]": "B" }
+```
+
+객체 자체를 key로 구분해야 하면 `Map`이 더 솔직합니다.
+
+```js
+const store = new Map();
+store.set(a, "A");
+store.set(b, "B");
+```
+
+`Set`은 “중복 없는 배열”보다 “존재 여부 모델”로 읽는 편이 좋습니다. 다만 객체를 넣을 때는 내용 비교가 아니라 참조 비교입니다.
+
+```js
+new Set([{ id: 1 }, { id: 1 }]).size; // 2
+```
+
+id 기준 중복 제거가 목적이면 객체를 그대로 `Set`에 넣는 게 아니라 id를 key로 삼아야 합니다.
+
+## WeakMap은 캐시의 수명 문제를 드러낸다
+
+`Map`과 `Set`은 객체를 강하게 참조합니다. 로컬 변수에서 놓아도 컬렉션이 key나 value로 붙잡고 있으면 객체가 바로 사라졌다고 말할 수 없습니다.
+
+```js
+const metadata = new WeakMap();
+
+function attachMetadata(element, data) {
+  metadata.set(element, data);
+}
+```
+
+DOM element나 임시 객체별 metadata처럼 “객체가 사라지면 부가 정보도 사라져야 하는” 경우에는 `WeakMap`이 후보입니다. 대신 key를 순회할 수 없습니다. 순회가 필요하면 WeakMap이 아니라 명시적인 cleanup 설계를 먼저 봐야 합니다.
+
+## 코드 리뷰 체크포인트
+
+- 상태 업데이트가 얕은 복사에 기대고 있지 않은가?
+- Object를 임의 key 컬렉션처럼 쓰고 있지 않은가?
+- Set으로 객체 구조 중복 제거를 기대하고 있지 않은가?
+- 캐시가 객체나 DOM node를 계속 붙잡고 있지 않은가?
+- WeakMap을 쓰면서 key 목록 순회를 요구하고 있지 않은가?
+
+## 참고문헌
+
+- 프런트엔드 레벨을 높이는 자바스크립트 퀴즈북, 객체/컬렉션 관련 장
+- 진규 Notion export: `[0225] 객체 마무리`, `2 객체 질문 정리`
+- MDN Web Docs: `Map`, `Set`, `WeakMap`, `WeakSet`
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="다음 코드의 출력으로 맞는 것은 무엇일까요?"
+    code={
+      "const a = { nested: { n: 1 } };\nconst b = { ...a };\nb.nested.n = 2;\nconsole.log(a.nested.n);"
+    }
+    choices={["1", "2", "undefined", "TypeError"]}
+    answer={1}
+    explanation="객체 spread는 최상위 객체만 새로 만들고 nested 객체 참조는 공유합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="객체를 key로 안전하게 구분해야 할 때 Map이 나은 이유는 무엇일까요?"
+    choices={[
+      "Map은 모든 값을 문자열로 바꾸기 때문이다",
+      "Map은 객체 key를 참조 기준으로 그대로 보존할 수 있기 때문이다",
+      "Map은 항상 깊은 비교를 하기 때문이다",
+      "Map은 가비지 컬렉션을 막지 않기 때문이다",
+    ]}
+    answer={1}
+    explanation="Map은 객체 자체를 key로 보존하므로 서로 다른 객체를 같은 문자열로 뭉개지 않습니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="new Set([{ id: 1 }, { id: 1 }]).size의 결과는 무엇일까요?"
+    code={"new Set([{ id: 1 }, { id: 1 }]).size;"}
+    answer="2"
+    explanation="두 객체 literal은 내용이 같아 보여도 서로 다른 참조입니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="DOM element별 metadata 캐시를 리뷰할 때 Map과 WeakMap 중 무엇을 먼저 의심해야 하는지 설명해보세요."
+    answer="DOM element가 화면에서 사라진 뒤에도 캐시가 key로 계속 붙잡으면 메모리 누수가 될 수 있으므로 WeakMap을 먼저 검토합니다. 다만 전체 key 순회가 필요하면 명시적인 cleanup 설계가 필요합니다."
+    explanation="WeakMap은 객체 key를 약하게 잡는 대신 순회를 포기합니다. 메모리 안전성과 관찰 가능성 중 무엇이 필요한지 리뷰해야 합니다."
+  />
+</ArticleQuiz>

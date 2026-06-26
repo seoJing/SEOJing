@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">객체 참조, 얕은 복사, Map/Set, WeakMap의 참조 구조</title>
+  <desc id="desc">변수는 객체를 직접 담지 않고 참조를 가리키며 Map과 Set은 강한 참조를, WeakMap은 약한 참조를 갖는다는 구조를 보여준다.</desc>
+  <rect width="960" height="520" rx="28" fill="#f8f5ef"/>
+  <text x="64" y="72" font-family="Pretendard, Arial, sans-serif" font-size="30" font-weight="800" fill="#222">Reference / Copy / Collection mental model</text>
+  <text x="64" y="108" font-family="Pretendard, Arial, sans-serif" font-size="16" fill="#6f665a">객체는 값처럼 복사되지 않고, 컬렉션은 어떤 참조를 붙잡는지에 따라 메모리 감각이 달라진다.</text>
+
+  <g font-family="Pretendard, Arial, sans-serif">
+    <rect x="70" y="165" width="165" height="70" rx="18" fill="#ffffff" stroke="#111" stroke-width="2"/>
+    <text x="105" y="195" font-size="17" font-weight="700" fill="#111">const a</text>
+    <text x="105" y="218" font-size="14" fill="#6f665a">reference</text>
+
+    <rect x="70" y="285" width="165" height="70" rx="18" fill="#ffffff" stroke="#111" stroke-width="2"/>
+    <text x="105" y="315" font-size="17" font-weight="700" fill="#111">const b = a</text>
+    <text x="105" y="338" font-size="14" fill="#6f665a">same target</text>
+
+    <rect x="330" y="202" width="220" height="120" rx="24" fill="#fff8df" stroke="#d99a00" stroke-width="3"/>
+    <text x="382" y="245" font-size="19" font-weight="800" fill="#5e4300">user object</text>
+    <text x="370" y="276" font-size="14" fill="#5e4300">{ name, profile, ... }</text>
+
+    <path d="M235 200 C270 205 292 230 330 245" fill="none" stroke="#111" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M235 320 C275 315 295 285 330 270" fill="none" stroke="#111" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <rect x="645" y="145" width="210" height="86" rx="22" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+    <text x="690" y="180" font-size="18" font-weight="800" fill="#1d4ed8">Map / Set</text>
+    <text x="680" y="206" font-size="14" fill="#1d4ed8">strong reference</text>
+
+    <rect x="645" y="295" width="210" height="86" rx="22" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+    <text x="682" y="330" font-size="18" font-weight="800" fill="#047857">WeakMap</text>
+    <text x="670" y="356" font-size="14" fill="#047857">weak object keys</text>
+
+    <path d="M645 188 C610 190 585 215 550 242" fill="none" stroke="#2563eb" stroke-width="3" marker-end="url(#arrowBlue)"/>
+    <path d="M645 338 C608 333 585 305 550 282" fill="none" stroke="#059669" stroke-width="3" stroke-dasharray="8 8" marker-end="url(#arrowGreen)"/>
+
+    <rect x="118" y="410" width="724" height="54" rx="16" fill="#111" opacity="0.9"/>
+    <text x="147" y="443" font-size="17" fill="#fff">리뷰 질문: “이 코드는 새 객체를 만든 걸까, 같은 객체를 다른 이름으로 잡은 걸까?”</text>
+  </g>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#111"/></marker>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/></marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#059669"/></marker>
+  </defs>
+</svg>

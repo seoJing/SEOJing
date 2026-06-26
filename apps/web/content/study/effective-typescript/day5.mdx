@@ -1,0 +1,164 @@
+---
+title: "이펙티브 타입스크립트 2판 Day 5: 타입 추론을 방해하지 않는 API 설계"
+date: 2026-06-27
+tags:
+  - TypeScript
+  - Effective TypeScript
+  - 프론트엔드
+  - 타입 추론
+  - API 설계
+description: Effective TypeScript 2판 Item 19–22를 바탕으로 타입 추론, 타입 넓히기, 함수형 기법, 유니온 설계를 코드 리뷰 관점에서 정리합니다.
+cover:
+  src: /images/content/study/effective-typescript/day5/inference-api-design.svg
+  alt: 타입스크립트 추론이 값에서 API 경계로 흐르는 과정을 보여주는 다이어그램
+  caption: 좋은 타입 설계는 추론을 억누르는 것이 아니라 올바른 방향으로 흐르게 만든다
+---
+
+## 오늘의 범위
+
+Effective TypeScript 2판 Day 5는 Item 19–22입니다.
+
+- Item 19: 추론 가능한 타입을 직접 쓰지 않기
+- Item 20: 타입 넓히기가 일어나는 방식 이해하기
+- Item 21: 타입 흐름을 돕는 함수형 기법 사용하기
+- Item 22: 한꺼번에 선택지를 담은 유니온보다 명확한 모델 만들기
+
+핵심은 “타입을 많이 쓰기”가 아니라 “추론이 API 경계까지 제대로 흐르게 하기”입니다.
+
+## 문제 상황
+
+```ts
+type Status = "idle" | "loading" | "success" | "error";
+
+const state = {
+  status: "idle",
+};
+
+function render(status: Status) {
+  return status;
+}
+
+render(state.status);
+```
+
+겉으로는 `"idle"`이니까 될 것 같지만, `state.status`는 `string`으로 넓혀질 수 있습니다. TypeScript는 이후에 `state.status = "anything"` 같은 변경 가능성을 고려하기 때문입니다.
+
+해결은 상황에 따라 다릅니다.
+
+```ts
+const state = {
+  status: "idle",
+} as const;
+```
+
+또는 API 경계에 맞는 타입을 명시합니다.
+
+```ts
+type State = { status: Status };
+const state: State = { status: "idle" };
+```
+
+## 추론은 적이 아니다
+
+![타입 추론과 API 경계](/images/content/study/effective-typescript/day5/inference-api-design.svg)
+
+불필요한 annotation은 코드만 길게 만들고 실제 모델을 흐릴 수 있습니다.
+
+```ts
+const ids: string[] = users.map((user: User): string => user.id);
+```
+
+대부분은 이렇게 충분합니다.
+
+```ts
+const ids = users.map((user) => user.id);
+```
+
+리뷰 기준은 단순합니다. 지역 변수처럼 바로 읽히는 값은 추론에 맡기고, 함수 입력/출력, 공개 API, 복잡한 객체 경계에는 타입을 명확히 둡니다.
+
+| 위치             | 기본 판단      |
+| ---------------- | -------------- |
+| 지역 변수        | 추론 우선      |
+| 콜백 내부        | 문맥 타입 활용 |
+| 함수 매개변수    | 명시           |
+| 공개 함수 반환   | 명시 고려      |
+| 외부 데이터 경계 | 명시 + 검증    |
+
+## 타입 넓히기는 설계 신호다
+
+`let x = "idle"`은 보통 `string`이 됩니다. 재할당 가능한 값이기 때문입니다.
+
+```ts
+let status = "idle";
+status = "loading";
+status = "done"; // 타입 관점에서는 가능
+```
+
+반면 좁은 선택지만 허용하고 싶다면 변수 선언보다 모델을 먼저 잡아야 합니다.
+
+```ts
+type Status = "idle" | "loading" | "success" | "error";
+let status: Status = "idle";
+```
+
+객체 literal에서도 같은 문제가 생깁니다. `as const`는 값을 매우 좁고 readonly하게 만들고, 타입 annotation은 API 모델에 맞춰 값을 제한합니다. 둘은 용도가 다릅니다.
+
+## 함수형 기법은 타입 흐름을 보존한다
+
+명령형으로 중간 객체를 계속 바꾸면 타입이 넓어지거나 optional 처리가 흐려질 때가 있습니다.
+
+```ts
+const result: Record<string, number> = {};
+for (const item of items) {
+  result[item.id] = item.count;
+}
+```
+
+이 코드가 나쁜 것은 아니지만, 변환 의도가 강하면 `map`, `filter`, `reduce`가 타입 흐름을 더 잘 보이게 만들 수 있습니다.
+
+```ts
+const entries = items.map((item) => [item.id, item.count] as const);
+const result = Object.fromEntries(entries);
+```
+
+리뷰 포인트는 “함수형을 쓰자”가 아닙니다. 데이터가 어떤 모양에서 어떤 모양으로 바뀌는지 TypeScript가 따라갈 수 있느냐입니다.
+
+## 유니온은 한 필드로 판별되게 만들기
+
+선택지를 여러 boolean으로 표현하면 불가능한 상태가 생깁니다.
+
+```ts
+type RequestState = {
+  loading: boolean;
+  error?: string;
+  data?: User;
+};
+```
+
+`loading: true`인데 `data`도 있는 상태가 타입상 가능해집니다. 대신 판별 가능한 유니온이 더 안전합니다.
+
+```ts
+type RequestState =
+  | { status: "loading" }
+  | { status: "error"; error: string }
+  | { status: "success"; data: User };
+```
+
+프론트엔드 상태 리뷰에서는 이 차이가 큽니다. UI branch가 많아질수록 “나올 수 없는 조합”을 타입으로 막는 편이 런타임 조건문을 줄입니다.
+
+## 코드 리뷰 체크리스트
+
+- 추론 가능한 지역 변수에 annotation을 반복하고 있지 않은가?
+- literal 값이 `string`으로 넓어져 API 타입과 충돌하지 않는가?
+- `as const`를 모델링 대신 남용하지 않았는가?
+- 데이터 변환 흐름이 타입으로 따라가기 어렵게 작성되지 않았는가?
+- 여러 boolean/optional 조합 대신 판별 유니온이 필요한 상태는 아닌가?
+
+## 짧은 복습
+
+1. 지역 변수의 타입 annotation을 줄여도 되는 기준은 무엇인가?
+2. `const obj = { status: "idle" }`에서 `status`가 넓어질 수 있는 이유는 무엇인가?
+3. `as const`와 명시적 타입 annotation은 각각 어떤 상황에 어울리는가?
+4. `loading/error/data` 조합보다 `status` 판별 유니온이 나은 이유는 무엇인가?
+
+오늘의 결론은 간단합니다. TypeScript를 잘 쓰는 코드는 타입을 많이 적는 코드가 아니라, 값의 의도와 API 경계를 맞춰 추론이 자연스럽게 흐르는 코드입니다.

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">TypeScript inference and API boundary</title>
+  <desc id="desc">Values flow through local inference, literal widening, explicit API boundaries, and discriminated union modeling.</desc>
+  <rect width="1200" height="620" rx="36" fill="#f8f4ea"/>
+  <rect x="70" y="70" width="1060" height="480" rx="28" fill="#fffaf0" stroke="#1f2937" stroke-width="3"/>
+  <text x="100" y="130" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="34" font-weight="800" fill="#111827">값에서 API 경계까지 흐르는 타입 추론</text>
+  <g font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="24" font-weight="700">
+    <rect x="105" y="210" width="215" height="155" rx="20" fill="#dbeafe" stroke="#1d4ed8" stroke-width="3"/>
+    <text x="135" y="265" fill="#1e3a8a">지역 값</text>
+    <text x="135" y="305" font-size="18" font-weight="500" fill="#1f2937">const ids = users.map(...)</text>
+
+    <rect x="375" y="210" width="215" height="155" rx="20" fill="#fef3c7" stroke="#b45309" stroke-width="3"/>
+    <text x="405" y="265" fill="#78350f">넓히기</text>
+    <text x="405" y="305" font-size="18" font-weight="500" fill="#1f2937">"idle" → string?</text>
+
+    <rect x="645" y="210" width="215" height="155" rx="20" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+    <text x="675" y="265" fill="#14532d">API 경계</text>
+    <text x="675" y="305" font-size="18" font-weight="500" fill="#1f2937">Status, Props, Response</text>
+
+    <rect x="915" y="210" width="170" height="155" rx="20" fill="#fce7f3" stroke="#be185d" stroke-width="3"/>
+    <text x="945" y="265" fill="#831843">판별 유니온</text>
+    <text x="945" y="305" font-size="18" font-weight="500" fill="#1f2937">status로 분기</text>
+  </g>
+  <g stroke="#111827" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M320 288 H375"/>
+    <path d="M590 288 H645"/>
+    <path d="M860 288 H915"/>
+    <path d="M360 280 l15 8 -15 8"/>
+    <path d="M630 280 l15 8 -15 8"/>
+    <path d="M900 280 l15 8 -15 8"/>
+  </g>
+  <g font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="23" fill="#111827">
+    <text x="115" y="440">리뷰 기준: 지역 추론은 살리고, 외부 경계와 상태 모델은 명시한다.</text>
+    <text x="115" y="485">타입 annotation은 많이 쓰는 것이 아니라, 값의 의미가 바뀌는 지점에 놓는다.</text>
+  </g>
+</svg>
