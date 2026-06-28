@@ -84,6 +84,15 @@ async function generateContentFiles(contentDir: string, basePath: string = "") {
   return count;
 }
 
+function readBackendArticleSlugs(): Set<string> {
+  return new Set(
+    (process.env.SEOJING_BACKEND_ARTICLE_SLUGS ?? "")
+      .split(",")
+      .map((slug) => slug.trim().replace(/^\/+|\/+$/g, ""))
+      .filter(Boolean),
+  );
+}
+
 async function main() {
   if (!fs.existsSync(CONTENT_DIR)) {
     console.error(`content 디렉토리가 없습니다: ${CONTENT_DIR}`);
@@ -142,7 +151,18 @@ async function main() {
   );
   console.log(`mdx-search-index.json 생성 완료: ${searchIndex.length}개 chunk`);
 
+  const backendArticleSlugs = readBackendArticleSlugs();
+  const backendArticleSlugList = slugs.filter((slug) =>
+    backendArticleSlugs.has(slug),
+  );
+  if (backendArticleSlugList.length > 0) {
+    console.log(
+      `backend article API loader 활성화: ${backendArticleSlugList.join(", ")}`,
+    );
+  }
+
   const loaderLines = [
+    `import { loadBackendArticleContent } from "@/shared/content/backend-article";`,
     `import type { ContentFrontmatter } from "@app/utils";`,
     `import type { MDXModule } from "mdx/types";`,
     ``,
@@ -152,21 +172,33 @@ async function main() {
     `  compiled: MDXModule;`,
     `}`,
     ``,
-    `interface ContentLoaderEntry {`,
+    `interface BundledContentLoaderEntry {`,
+    `  kind: "bundled";`,
     `  json: () => Promise<{ default: { frontmatter: ContentFrontmatter; source: string } }>;`,
     `  compiled: () => Promise<MDXModule>;`,
     `}`,
+    ``,
+    `interface BackendArticleLoaderEntry {`,
+    `  kind: "backend";`,
+    `}`,
+    ``,
+    `type ContentLoaderEntry = BundledContentLoaderEntry | BackendArticleLoaderEntry;`,
     ``,
     `const contentLoaders: Record<string, ContentLoaderEntry> = {`,
   ];
   for (const slug of slugs) {
     loaderLines.push(`  "${slug}": {`);
-    loaderLines.push(
-      `    json: () => import("@/generated/content/${slug}.json"),`,
-    );
-    loaderLines.push(
-      `    compiled: () => import("@/generated/content/${slug}.compiled.jsx"),`,
-    );
+    if (backendArticleSlugs.has(slug)) {
+      loaderLines.push(`    kind: "backend",`);
+    } else {
+      loaderLines.push(`    kind: "bundled",`);
+      loaderLines.push(
+        `    json: () => import("@/generated/content/${slug}.json"),`,
+      );
+      loaderLines.push(
+        `    compiled: () => import("@/generated/content/${slug}.compiled.jsx"),`,
+      );
+    }
     loaderLines.push(`  },`);
   }
   loaderLines.push(`};`);
@@ -177,6 +209,9 @@ async function main() {
   loaderLines.push(`  const key = slug.join("/");`);
   loaderLines.push(`  const entry = contentLoaders[key];`);
   loaderLines.push(`  if (!entry) return null;`);
+  loaderLines.push(`  if (entry.kind === "backend") {`);
+  loaderLines.push(`    return loadBackendArticleContent(key);`);
+  loaderLines.push(`  }`);
   loaderLines.push(`  try {`);
   loaderLines.push(`    const [jsonMod, compiledMod] = await Promise.all([`);
   loaderLines.push(`      entry.json(),`);
