@@ -37,6 +37,8 @@ export interface BackendArticleContentData {
   compiled: MDXModule;
 }
 
+const backendArticleHtmlClassName = "backend-article-html";
+
 export async function loadBackendArticleContent(
   slug: string,
 ): Promise<BackendArticleContentData | null> {
@@ -98,6 +100,7 @@ export function toBackendArticleContentData(
   const compiled = {
     default: function BackendArticleHtmlContent() {
       return React.createElement("div", {
+        className: backendArticleHtmlClassName,
         "data-backend-article-html": article.slug,
         dangerouslySetInnerHTML: { __html: html },
       });

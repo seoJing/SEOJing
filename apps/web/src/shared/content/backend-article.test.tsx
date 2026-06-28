@@ -41,10 +41,10 @@ describe("backend article content adapter", () => {
       tags: [],
     });
     expect(content.source).toContain("API 본문입니다.");
-    expect(renderToStaticMarkup(<Component />)).toContain(
-      "data-backend-article-html",
-    );
-    expect(renderToStaticMarkup(<Component />)).toContain("API 본문입니다.");
+    const markup = renderToStaticMarkup(<Component />);
+    expect(markup).toContain("data-backend-article-html");
+    expect(markup).toContain("API 본문입니다.");
+    expect(markup).toContain("backend-article-html");
   });
 
   it("encodes slash-containing slugs for the backend article endpoint", async () => {
