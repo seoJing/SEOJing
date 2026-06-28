@@ -1,4 +1,5 @@
 import * as React from "react";
+import { env as cloudflareEnv } from "cloudflare:workers";
 
 import type { ContentFrontmatter } from "@app/utils";
 import type { MDXModule } from "mdx/types";
@@ -112,9 +113,15 @@ export function toBackendArticleContentData(
 }
 
 function readBackendArticleApiOrigin(): string | null {
+  const runtimeEnv = cloudflareEnv as Partial<{
+    SEOJING_BACKEND_ARTICLE_API_ORIGIN: string;
+    SEOJING_BACKEND_API_ORIGIN: string;
+  }>;
   const origin =
     process.env.SEOJING_BACKEND_ARTICLE_API_ORIGIN ??
-    process.env.SEOJING_BACKEND_API_ORIGIN;
+    process.env.SEOJING_BACKEND_API_ORIGIN ??
+    runtimeEnv.SEOJING_BACKEND_ARTICLE_API_ORIGIN ??
+    runtimeEnv.SEOJING_BACKEND_API_ORIGIN;
   return origin?.trim() || null;
 }
 

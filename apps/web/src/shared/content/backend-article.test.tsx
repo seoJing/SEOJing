@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { env as cloudflareEnv } from "cloudflare:workers";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -160,5 +161,25 @@ describe("backend article content adapter", () => {
 
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
+  });
+
+  it("uses the Cloudflare Worker env binding when process env is absent", async () => {
+    const runtimeEnv = cloudflareEnv as Record<string, string | undefined>;
+    runtimeEnv.SEOJING_BACKEND_ARTICLE_API_ORIGIN = "http://127.0.0.1:4000";
+    const fetchMock = vi.fn(async () => Response.json(article));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const content = await loadBackendArticleContent("study/backend/day1");
+
+    expect(content?.frontmatter.title).toBe("백엔드 스터디 Day 1");
+    expect(fetchMock).toHaveBeenCalledWith(
+      new URL("http://127.0.0.1:4000/articles/study%2Fbackend%2Fday1"),
+      expect.objectContaining({
+        headers: { Accept: "application/json" },
+      }),
+    );
+
+    delete runtimeEnv.SEOJING_BACKEND_ARTICLE_API_ORIGIN;
+    vi.unstubAllGlobals();
   });
 });
