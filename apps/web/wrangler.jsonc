@@ -19,6 +19,9 @@
     "not_found_handling": "none",
     "binding": "ASSETS",
   },
+  "vars": {
+    "SEOJING_BACKEND_ARTICLE_API_ORIGIN": "https://api.seojing.com",
+  },
   "images": {
     "binding": "IMAGES",
   },

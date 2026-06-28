@@ -63,6 +63,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+        env:
+          SEOJING_BACKEND_ARTICLE_PREFIXES: study
       - name: Check Cloudflare Worker bundle size
         run: pnpm --filter @app/web run worker:size:check
 
@@ -83,6 +85,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+        env:
+          SEOJING_BACKEND_ARTICLE_PREFIXES: study
 
       - name: Deploy to Cloudflare Workers
         run: pnpm --filter web exec wrangler deploy --config dist/server/wrangler.json

@@ -1,0 +1,105 @@
+---
+title: "자바스크립트 퀴즈북 리마인드 Day 6: 스코프 체인과 호이스팅"
+description: "스코프 체인, 클로저, var/let/const 호이스팅 차이를 콜백·상태 버그 리뷰 관점에서 짧게 정리합니다."
+date: "2026-06-28"
+tags:
+  [
+    "JavaScript",
+    "프론트엔드",
+    "자바스크립트 퀴즈북",
+    "Scope",
+    "Closure",
+    "Hoisting",
+  ]
+category: "study"
+series: "javascript-quizbook"
+cover:
+  src: "/images/content/study/javascript-quizbook/day6/scope-chain-hoisting.svg"
+  alt: "스코프 체인과 호이스팅 관계를 단순화한 다이어그램"
+  caption: "작성 SVG · 스코프 체인과 호이스팅을 코드 리뷰 관점으로 단순화"
+  kind: "diagram"
+---
+
+> 예상 읽기 시간: 12분<br />
+> 오늘의 질문: “콜백 안에서 읽는 값은 함수가 만들어진 곳을 볼까, 호출된 곳을 볼까?”
+
+## 먼저 맞혀보기
+
+```js
+const label = "global";
+
+function makeLogger() {
+  const label = "local";
+  return function log() {
+    console.log(label);
+  };
+}
+
+const log = makeLogger();
+log();
+```
+
+출력은 `local`입니다. 함수는 **호출된 위치**가 아니라 **생성된 위치의 렉시컬 환경**을 기억합니다. 이게 스코프 체인과 클로저의 핵심입니다.
+
+## 틀리기 쉬운 직감
+
+“나중에 실행됐으니까 그때 주변 값을 보겠지”라고 생각하면 비동기 콜백, 이벤트 핸들러, React effect에서 자주 틀립니다. 자바스크립트 함수는 실행 시점마다 아무 스코프나 다시 고르지 않습니다. 함수 객체가 만들어질 때 바깥 환경 참조가 함께 붙고, 실행 때는 그 참조를 따라 이름을 찾습니다.
+
+![스코프 체인과 호이스팅 관계](/images/content/study/javascript-quizbook/day6/scope-chain-hoisting.svg)
+
+## `var`와 `let/const`의 차이
+
+둘 다 선언은 스코프의 시작 지점에서 준비됩니다. 차이는 “읽을 수 있는가”입니다.
+
+| 선언    | 선언 전 읽기 | 스코프 | 리뷰 포인트                               |
+| ------- | ------------ | ------ | ----------------------------------------- |
+| `var`   | `undefined`  | 함수   | 루프·콜백에서 같은 바인딩을 공유하기 쉽다 |
+| `let`   | TDZ 에러     | 블록   | 선언 순서가 의도를 더 잘 드러낸다         |
+| `const` | TDZ 에러     | 블록   | 재할당 금지이지 객체 불변은 아니다        |
+
+```js
+console.log(a); // undefined
+var a = 1;
+
+console.log(b); // ReferenceError
+let b = 1;
+```
+
+`var`가 “안전”한 게 아닙니다. 오히려 버그를 조용히 숨길 수 있습니다. 리뷰할 때는 `undefined`가 의도된 값인지, 선언 순서가 읽는 사람에게 명확한지 확인해야 합니다.
+
+## 프론트엔드 리뷰에서 보는 부분
+
+- 이벤트 핸들러가 오래된 상태를 닫아두고 있지 않은가?
+- 루프 안 콜백이 같은 `var` 바인딩을 공유하지 않는가?
+- `const` 객체를 내부에서 바꾸면서 불변처럼 말하고 있지 않은가?
+- 선언보다 사용이 먼저 나와서 TDZ나 `undefined` 흐름을 만들지 않는가?
+
+스코프 체인은 문법 지식보다 “이 함수가 어떤 값을 기억하고 실행되는지”를 추적하는 도구에 가깝습니다.
+
+<ArticleQuiz title="Day 6 복습 퀴즈">
+  <ArticleQuizItem
+    mode="multiple"
+    question="첫 번째 예제의 출력은?"
+    options={["global", "local", "undefined", "ReferenceError"]}
+    answer="local"
+    explanation="반환된 함수는 makeLogger 안에서 만들어졌고, 그때의 label 바인딩을 스코프 체인으로 기억합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="선언 전 console.log(x)가 undefined를 출력할 가능성이 가장 큰 선언은?"
+    options={["const x = 1", "let x = 1", "var x = 1", "class x {}"]}
+    answer="var x = 1"
+    explanation="var는 함수 스코프에 준비되고 초기값이 undefined로 잡힙니다. let/const/class는 선언 전 접근이 TDZ 에러입니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="클로저를 한 문장으로 설명해보세요."
+    answer="함수가 만들어진 위치의 바깥 변수 바인딩을 기억하고 나중에 실행될 때도 그 환경을 참조하는 구조입니다."
+    explanation="값을 복사해 둔 상자가 아니라 렉시컬 환경 참조를 따라 이름을 찾는다는 점이 중요합니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="React effect나 이벤트 핸들러 리뷰에서 스코프 체인을 왜 확인해야 할까요?"
+    explanation="콜백이 오래된 props/state를 닫아두면 화면은 최신처럼 보여도 실행 로직은 과거 값을 읽을 수 있습니다. 의존성 배열, 함수 생성 위치, 상태 업데이트 방식을 함께 봐야 합니다."
+  />
+</ArticleQuiz>

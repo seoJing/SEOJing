@@ -29,7 +29,11 @@ function collectSlugs(contentDir: string, basePath: string = ""): string[] {
   return slugs;
 }
 
-async function generateContentFiles(contentDir: string, basePath: string = "") {
+async function generateContentFiles(
+  contentDir: string,
+  backendArticleSlugs: Set<string>,
+  basePath: string = "",
+) {
   const dirPath = path.join(contentDir, basePath);
   const entries = fs.readdirSync(dirPath, { withFileTypes: true });
   let count = 0;
@@ -38,9 +42,17 @@ async function generateContentFiles(contentDir: string, basePath: string = "") {
     const relativePath = basePath ? `${basePath}/${entry.name}` : entry.name;
 
     if (entry.isDirectory()) {
-      count += await generateContentFiles(contentDir, relativePath);
+      count += await generateContentFiles(
+        contentDir,
+        backendArticleSlugs,
+        relativePath,
+      );
     } else if (entry.name.endsWith(".mdx") || entry.name.endsWith(".md")) {
       const slug = relativePath.replace(/\.(mdx|md)$/, "");
+      if (backendArticleSlugs.has(slug)) {
+        console.log(`${slug} (backend article API)`);
+        continue;
+      }
       const result = getContentBySlug(contentDir, slug.split("/"));
 
       if (!result) continue;
@@ -84,13 +96,25 @@ async function generateContentFiles(contentDir: string, basePath: string = "") {
   return count;
 }
 
-function readBackendArticleSlugs(): Set<string> {
-  return new Set(
-    (process.env.SEOJING_BACKEND_ARTICLE_SLUGS ?? "")
-      .split(",")
-      .map((slug) => slug.trim().replace(/^\/+|\/+$/g, ""))
-      .filter(Boolean),
-  );
+function readCommaSeparatedEnv(name: string): string[] {
+  return (process.env[name] ?? "")
+    .split(",")
+    .map((slug) => slug.trim().replace(/^\/+|\/+$/g, ""))
+    .filter(Boolean);
+}
+
+function readBackendArticleSlugs(slugs: string[]): Set<string> {
+  const explicitSlugs = readCommaSeparatedEnv("SEOJING_BACKEND_ARTICLE_SLUGS");
+  const prefixes = readCommaSeparatedEnv("SEOJING_BACKEND_ARTICLE_PREFIXES");
+
+  return new Set([
+    ...explicitSlugs,
+    ...slugs.filter((slug) =>
+      prefixes.some(
+        (prefix) => slug === prefix || slug.startsWith(`${prefix}/`),
+      ),
+    ),
+  ]);
 }
 
 async function main() {
@@ -126,13 +150,21 @@ async function main() {
     `content-tree.json 생성 완료: 파일 ${fileCount}개, 폴더 ${folderCount}개`,
   );
 
+  const slugs = collectSlugs(CONTENT_DIR);
+  const backendArticleSlugs = readBackendArticleSlugs(slugs);
+
+  fs.rmSync(CONTENT_OUTPUT_DIR, { recursive: true, force: true });
+
   // 개별 content 파일 생성 (JSON + compiled JSX)
-  const jsonCount = await generateContentFiles(CONTENT_DIR);
+  const jsonCount = await generateContentFiles(
+    CONTENT_DIR,
+    backendArticleSlugs,
+  );
   console.log(`content 파일 생성 완료: ${jsonCount}개`);
 
   // content-loader.ts 생성
-  const slugs = collectSlugs(CONTENT_DIR);
   const searchInputs = slugs.flatMap((slug) => {
+    if (backendArticleSlugs.has(slug)) return [];
     const result = getContentBySlug(CONTENT_DIR, slug.split("/"));
     if (!result) return [];
     return [
@@ -151,7 +183,6 @@ async function main() {
   );
   console.log(`mdx-search-index.json 생성 완료: ${searchIndex.length}개 chunk`);
 
-  const backendArticleSlugs = readBackendArticleSlugs();
   const backendArticleSlugList = slugs.filter((slug) =>
     backendArticleSlugs.has(slug),
   );

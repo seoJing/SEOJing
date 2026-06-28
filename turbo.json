@@ -1,5 +1,11 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "SEOJING_BACKEND_ARTICLE_API_ORIGIN",
+    "SEOJING_BACKEND_API_ORIGIN",
+    "SEOJING_BACKEND_ARTICLE_PREFIXES",
+    "SEOJING_BACKEND_ARTICLE_SLUGS"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

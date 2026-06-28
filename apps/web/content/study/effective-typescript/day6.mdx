@@ -1,0 +1,103 @@
+---
+title: "이펙티브 타입스크립트 2판 Day 6: 유효한 상태만 표현하는 타입 설계"
+description: "Item 28–34 범위를 바탕으로 추론 위치, API 경계, null 처리, union 설계를 프론트엔드 코드 리뷰 관점에서 정리합니다."
+date: "2026-06-28"
+tags:
+  [
+    "TypeScript",
+    "Effective TypeScript",
+    "프론트엔드",
+    "타입 설계",
+    "유니온",
+    "API 경계",
+  ]
+category: "study"
+series: "effective-typescript"
+cover:
+  src: "/images/content/study/effective-typescript/day6/state-union-api-boundary.svg"
+  alt: "API 응답을 유효한 상태 유니온으로 변환하는 흐름 다이어그램"
+  caption: "작성 SVG · API 경계에서 불확실성을 좁히고 UI 내부는 유효한 상태만 다루기"
+  kind: "diagram"
+---
+
+> 예상 읽기 시간: 13분<br />
+> 범위: Effective TypeScript 2판 Item 28–34<br />
+> 오늘의 질문: “타입이 넓어지는 문제를 타입 단언으로 막아도 괜찮을까?”
+
+## 먼저 보는 코드
+
+```ts
+type User = { id: string; name: string };
+
+type ViewState =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; user: User };
+```
+
+이 타입의 장점은 “ready인데 user가 없음” 같은 상태를 아예 표현하지 않는다는 점입니다. Day 6의 핵심은 타입을 많이 쓰는 게 아니라 **불가능한 상태를 줄이는 설계**입니다.
+
+![API 경계에서 유효한 상태 유니온으로 좁히는 흐름](/images/content/study/effective-typescript/day6/state-union-api-boundary.svg)
+
+## 틀리기 쉬운 직감
+
+가장 흔한 대응은 이겁니다.
+
+```ts
+const user = response.data as User;
+```
+
+하지만 단언은 런타임 데이터를 검증하지 않습니다. API가 `name: null`을 보내도 컴파일러는 이미 믿어버립니다. 그래서 경계에서는 확인하고, 내부에서는 좁혀진 타입만 흘리는 편이 낫습니다.
+
+```ts
+function toUser(input: unknown): User | null {
+  if (!input || typeof input !== "object") return null;
+  const value = input as Record<string, unknown>;
+  if (typeof value.id !== "string") return null;
+  if (typeof value.name !== "string") return null;
+  return { id: value.id, name: value.name };
+}
+```
+
+## 추론 위치를 고르기
+
+타입스크립트는 선언 위치의 단서를 보고 타입을 추론합니다. 너무 이른 곳에서 넓게 잡히면 뒤에서 계속 보정해야 합니다.
+
+```ts
+const tabs = ["home", "settings"];
+// string[]
+
+const fixedTabs = ["home", "settings"] as const;
+// readonly ['home', 'settings']
+```
+
+`as const`는 “이 값의 모양을 좁게 보존하겠다”는 신호입니다. 옵션 목록, 라우트 이름, 상태 태그처럼 리터럴 자체가 의미를 가질 때 유용합니다. 반대로 서버 응답처럼 실제 값이 불확실한 곳에 무작정 붙이면 거짓 안정감이 됩니다.
+
+## null과 undefined는 경계를 정한다
+
+`null | undefined | [] | {}`가 섞이면 UI 조건문이 지저분해집니다. 더 나은 방식은 경계에서 한 번 정리하는 것입니다.
+
+```ts
+function normalizeUsers(users: User[] | null | undefined): User[] {
+  return users ?? [];
+}
+```
+
+컴포넌트 내부에서는 `User[]`만 다루게 만들면 렌더링 조건이 단순해지고 테스트도 줄어듭니다. 단, “아직 로딩 중”과 “결과가 비어 있음”은 다른 상태이므로 `[]` 하나로 모두 합치면 안 됩니다. 그런 차이는 `ViewState` 같은 유니온으로 남겨야 합니다.
+
+## 코드 리뷰 체크리스트
+
+- `as`가 검증 대신 쓰이고 있지 않은가?
+- API 경계의 `unknown`이 내부까지 흘러 들어오지 않는가?
+- `loading`, `error`, `ready`, `empty`가 서로 모순 없이 표현되는가?
+- 리터럴 union이 필요한 값에 `string`이 너무 넓게 잡히지 않았는가?
+- `null`/`undefined` 정규화가 의미 차이를 지워버리지 않는가?
+
+## 짧은 복습
+
+1. 타입 단언은 런타임 검증이 아니다.
+2. 불가능한 상태는 optional 필드 여러 개보다 discriminated union으로 줄인다.
+3. `as const`는 리터럴 의미를 보존할 때 쓰고, 외부 데이터를 믿게 만드는 용도로 쓰지 않는다.
+4. API 경계에서 좁히고 UI 내부는 좁혀진 타입만 받게 만든다.
+
+이렇게 보면 타입 설계는 “컴파일러를 만족시키는 장식”이 아니라 리뷰할 상태 공간을 줄이는 작업입니다.

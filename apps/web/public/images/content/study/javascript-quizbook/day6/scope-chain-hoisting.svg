@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">JavaScript scope chain and hoisting diagram</title>
+  <desc id="desc">A nested function resolves variables from local scope to outer lexical environments, while hoisted bindings are prepared before execution.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#eef2ff"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#334155"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="28" fill="url(#bg)"/>
+  <text x="48" y="62" font-family="ui-sans-serif, system-ui, -apple-system" font-size="28" font-weight="700" fill="#0f172a">where declared beats where called</text>
+  <text x="48" y="96" font-family="ui-sans-serif, system-ui, -apple-system" font-size="16" fill="#475569">함수는 호출 위치가 아니라 만들어진 lexical environment를 따라 이름을 찾는다.</text>
+
+  <rect x="54" y="132" width="270" height="286" rx="20" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="78" y="170" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" font-weight="700" fill="#1e293b">Global Environment</text>
+  <rect x="78" y="194" width="220" height="46" rx="12" fill="#e0f2fe"/>
+  <text x="96" y="223" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#075985">const tax = 0.1</text>
+  <rect x="78" y="258" width="220" height="46" rx="12" fill="#fef3c7"/>
+  <text x="96" y="287" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#92400e">function make()</text>
+  <text x="78" y="354" font-family="ui-sans-serif, system-ui, -apple-system" font-size="15" fill="#64748b">선언/초기화 준비 단계가 먼저 지나간다.</text>
+
+  <rect x="365" y="168" width="250" height="220" rx="20" fill="#ffffff" stroke="#a5b4fc" stroke-width="2"/>
+  <text x="389" y="206" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" font-weight="700" fill="#3730a3">make() Lexical Env</text>
+  <rect x="389" y="230" width="202" height="46" rx="12" fill="#ede9fe"/>
+  <text x="407" y="259" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#5b21b6">let discount = 5</text>
+  <rect x="389" y="294" width="202" height="46" rx="12" fill="#f0fdf4"/>
+  <text x="407" y="323" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#166534">return render</text>
+
+  <rect x="664" y="196" width="238" height="164" rx="20" fill="#ffffff" stroke="#86efac" stroke-width="2"/>
+  <text x="688" y="234" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" font-weight="700" fill="#14532d">render() Env</text>
+  <rect x="688" y="258" width="190" height="46" rx="12" fill="#dcfce7"/>
+  <text x="706" y="287" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#166534">price = 100</text>
+
+  <path d="M664 280 C640 280 638 280 615 280" stroke="#334155" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M365 280 C344 280 346 280 324 280" stroke="#334155" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <text x="635" y="260" font-family="ui-sans-serif, system-ui, -apple-system" font-size="14" fill="#334155">outer</text>
+  <text x="337" y="260" font-family="ui-sans-serif, system-ui, -apple-system" font-size="14" fill="#334155">outer</text>
+
+  <rect x="72" y="444" width="816" height="42" rx="14" fill="#0f172a" opacity="0.92"/>
+  <text x="94" y="471" font-family="ui-sans-serif, system-ui, -apple-system" font-size="16" fill="#f8fafc">리뷰 질문: 이 콜백은 지금 값의 스냅샷을 보는가, 아니면 선언 당시 environment의 binding을 계속 보는가?</text>
+</svg>
