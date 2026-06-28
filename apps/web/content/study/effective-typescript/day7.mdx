@@ -1,0 +1,164 @@
+---
+title: "이펙티브 타입스크립트 2판 Day 7: 문자열보다 도메인 의미를 좁히기"
+description: "Item 35–41 범위를 바탕으로 string 남용, optional 필드, 특수 값, 도메인 이름 설계를 코드 리뷰 관점에서 정리합니다."
+date: "2026-06-29"
+tags:
+  [
+    "TypeScript",
+    "Effective TypeScript",
+    "프론트엔드",
+    "타입 설계",
+    "도메인 모델링",
+    "Union",
+  ]
+category: "study"
+series: "effective-typescript"
+cover:
+  src: "/images/content/study/effective-typescript/day7/domain-type-design.svg"
+  alt: "넓은 문자열과 선택적 필드를 도메인 이름과 유효 상태 유니온으로 좁히는 다이어그램"
+  caption: "작성 SVG · string과 optional 필드를 도메인 의미가 있는 타입으로 좁히는 리뷰 흐름"
+  kind: "diagram"
+---
+
+> 범위: Effective TypeScript 2판 Item 35–41<br />
+> 오늘의 질문: “`string`이면 충분한 값을 왜 굳이 더 좁혀야 할까?”
+
+## 먼저 보는 코드
+
+```ts
+type Toast = {
+  kind: string;
+  message?: string;
+  duration?: number;
+};
+
+function showToast(toast: Toast) {
+  if (toast.kind === "error") {
+    console.error(toast.message?.toUpperCase());
+  }
+}
+```
+
+겉보기에는 유연합니다. 하지만 리뷰할 때는 오히려 물어볼 것이 많습니다.
+
+- `kind`에는 어떤 문자열이 들어올 수 있나?
+- `error`인데 `message`가 없어도 되나?
+- `duration: -1`은 무슨 뜻인가?
+- 빈 문자열 `""`은 정상 메시지인가, 누락인가?
+
+Item 35–41 구간의 핵심은 “값의 원시 타입”보다 **도메인에서 가능한 의미**를 타입으로 표현하는 감각입니다.
+
+![도메인 의미를 좁히는 타입 설계](/images/content/study/effective-typescript/day7/domain-type-design.svg)
+
+## 틀리기 쉬운 직감: 문자열은 충분히 구체적이다
+
+`kind: string`은 타입스크립트 입장에서는 거의 아무 약속도 아닙니다. 오타도, 새 상태도, 아직 합의되지 않은 서버 값도 모두 통과합니다.
+
+```ts
+type Toast =
+  | { kind: "success"; message: string; durationMs?: number }
+  | { kind: "error"; message: string; retryable: boolean }
+  | { kind: "loading" };
+```
+
+이렇게 바꾸면 리뷰 질문이 바뀝니다. “message가 있을까?”가 아니라 “이 상태에서 message가 필요한가?”를 봅니다. 상태마다 필요한 필드가 타입에 붙어 있으니 UI 조건문도 덜 방어적으로 됩니다.
+
+## optional은 편하지만 의미를 흐릴 수 있다
+
+선택적 필드는 “정말 없어도 되는 값”에 좋습니다. 하지만 서로 다른 상태를 optional 하나로 뭉개면 타입이 느슨해집니다.
+
+```ts
+type UserCardProps = {
+  userId?: string;
+  loading?: boolean;
+  error?: string;
+};
+```
+
+이 타입은 `loading: true`이면서 `userId`와 `error`가 동시에 있는 상태도 표현합니다. 실제 UI에서는 하나만 유효할 수 있는데 타입은 모든 조합을 허용합니다.
+
+```ts
+type UserCardProps =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; userId: UserId };
+
+type UserId = string;
+```
+
+`UserId = string`은 런타임 검증을 추가하지는 않습니다. 그래도 “아무 문자열”이 아니라 “사용자 식별자 역할의 문자열”이라는 이름을 붙여 리뷰 대화를 선명하게 만듭니다. 더 강한 구분이 필요하면 brand 타입이나 경계 검증을 추가할 수 있습니다.
+
+## 특수 값은 타입으로 끌어올리기
+
+프론트엔드 코드에는 이런 값이 자주 나옵니다.
+
+```ts
+const selectedId = ""; // 선택 없음
+const page = -1; // 아직 계산 전
+const status = "N"; // 비활성
+```
+
+짧게 쓰기는 편하지만, 다음 사람이 의미를 다시 추리해야 합니다. 특수 값이 비즈니스 의미를 갖는다면 이름 있는 타입으로 끌어올리는 편이 낫습니다.
+
+```ts
+type Selection = { kind: "none" } | { kind: "selected"; id: UserId };
+
+type PageState = { kind: "pending" } | { kind: "ready"; page: number };
+```
+
+이렇게 하면 `""`, `-1`, `null`의 의미를 코드 밖 문서나 관습에 맡기지 않아도 됩니다.
+
+## 코드 리뷰 체크리스트
+
+- `string`이 도메인 값의 전체 범위를 너무 넓게 열어두고 있지 않은가?
+- optional 필드 여러 개가 사실은 서로 배타적인 상태를 나타내고 있지 않은가?
+- `""`, `-1`, `null` 같은 sentinel 값의 의미가 타입 이름 없이 숨어 있지 않은가?
+- 사용자 ID, 게시글 slug, 라우트 이름처럼 역할이 다른 문자열을 같은 `string`으로 섞고 있지 않은가?
+- 상태 태그와 필드가 함께 움직이도록 discriminated union을 쓸 수 있는가?
+
+## 짧은 복습
+
+1. `string`은 원시 타입일 뿐, 도메인 약속을 설명하지 않는다.
+2. optional 필드는 편하지만 불가능한 조합을 허용하기 쉽다.
+3. sentinel 값은 이름 있는 union으로 바꾸면 리뷰 비용이 줄어든다.
+4. 타입 별칭은 런타임 안전을 만들지는 않지만, 코드의 의도를 읽히게 한다.
+
+타입을 좁힌다는 건 멋진 제네릭을 쓰는 일이 아닙니다. 리뷰해야 할 상태 공간을 줄이고, 값의 역할을 코드 안에 남기는 일에 더 가깝습니다.
+
+<ArticleQuiz title="Day 7 타입 설계 점검">
+  <ArticleQuizItem
+    mode="multiple"
+    question="다음 중 discriminated union으로 바꾸는 이점이 가장 큰 타입은?"
+    options={[
+      "{ x: number; y: number }",
+      "{ status?: string; data?: User; error?: string }",
+      "type UserId = string",
+      "readonly string[]",
+    ]}
+    answer="{ status?: string; data?: User; error?: string }"
+    explanation="상태와 필드가 서로 배타적인데 optional로 흩어져 있으면 불가능한 조합을 많이 허용합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="type UserId = string의 설명으로 가장 적절한 것은?"
+    options={[
+      "런타임에서 자동으로 ID 형식을 검증한다.",
+      "문자열 역할을 이름으로 드러내지만 구조적으로는 string과 같다.",
+      "숫자도 자동으로 문자열로 바꿔준다.",
+      "모든 API 응답을 안전하게 만든다.",
+    ]}
+    answer="문자열 역할을 이름으로 드러내지만 구조적으로는 string과 같다."
+    explanation="단순 별칭은 의도를 표현하지만 런타임 검증이나 강한 nominal 구분을 제공하지는 않습니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="sentinel 값의 예시를 하나 들고, 왜 타입으로 끌어올리는 편이 나은지 짧게 설명해보세요."
+    answer="예: selectedId = ''로 선택 없음을 표현하는 경우. {kind:'none'} | {kind:'selected'; id: UserId}처럼 바꾸면 빈 문자열의 숨은 의미를 추리하지 않아도 됩니다."
+    explanation="특수 값의 의미가 관습에 숨어 있으면 조건문과 리뷰 비용이 늘어납니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="코드 리뷰에서 'string이면 충분하지 않나요?'라는 질문을 받았을 때, 어떤 기준으로 더 좁힐지 판단할지 정리해보세요."
+    explanation="값이 유한한 상태 집합인지, 오타가 실제 버그가 되는지, 서로 다른 도메인 문자열이 섞일 위험이 있는지, optional 조합이 불가능한 상태를 허용하는지 보면 됩니다. 좁힌 타입이 런타임 검증을 대체하지 않는다는 점도 함께 설명해야 합니다."
+  />
+</ArticleQuiz>

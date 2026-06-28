@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">클로저가 값 복사가 아니라 바인딩 참조를 기억하는 흐름</title>
+  <desc id="desc">렌더 시점, 콜백 생성, 나중 실행, 리뷰 포인트를 연결한 다이어그램</desc>
+  <rect width="960" height="520" rx="28" fill="#f8f4ec" />
+  <style>
+    .box { fill: #fffdf8; stroke: #1e293b; stroke-width: 2; }
+    .muted { fill: #f0e7d8; stroke: #7c5e3c; stroke-width: 1.5; }
+    .title { font: 700 24px system-ui, -apple-system, BlinkMacSystemFont, sans-serif; fill: #111827; }
+    .text { font: 500 18px system-ui, -apple-system, BlinkMacSystemFont, sans-serif; fill: #1f2937; }
+    .small { font: 500 15px system-ui, -apple-system, BlinkMacSystemFont, sans-serif; fill: #475569; }
+    .warn { fill: #9a3412; font-weight: 700; }
+    .arrow { stroke: #334155; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
+    </marker>
+  </defs>
+  <text x="48" y="54" class="title">Day 7 · stale closure 리뷰 지도</text>
+  <rect x="56" y="96" width="230" height="130" rx="18" class="box" />
+  <text x="82" y="132" class="text">① 렌더/실행 시점</text>
+  <text x="82" y="166" class="small">count = 0 바인딩</text>
+  <text x="82" y="196" class="small">콜백 함수가 생성됨</text>
+  <rect x="365" y="96" width="230" height="130" rx="18" class="box" />
+  <text x="391" y="132" class="text">② 콜백이 기억</text>
+  <text x="391" y="166" class="small">값 스냅샷이 아니라</text>
+  <text x="391" y="196" class="small">생성 위치의 환경 참조</text>
+  <rect x="674" y="96" width="230" height="130" rx="18" class="box" />
+  <text x="700" y="132" class="text">③ 나중에 실행</text>
+  <text x="700" y="166" class="small">화면은 count = 5</text>
+  <text x="700" y="196" class="small warn">콜백은 오래된 경로 가능</text>
+  <path d="M286 161 H357" class="arrow" />
+  <path d="M595 161 H666" class="arrow" />
+  <rect x="118" y="306" width="300" height="118" rx="18" class="muted" />
+  <text x="146" y="342" class="text">루프/타이머/이벤트</text>
+  <text x="146" y="375" class="small">함수가 언제 만들어졌는지</text>
+  <text x="146" y="405" class="small">어떤 바인딩을 닫았는지 추적</text>
+  <rect x="542" y="306" width="300" height="118" rx="18" class="muted" />
+  <text x="570" y="342" class="text">코드 리뷰 질문</text>
+  <text x="570" y="375" class="small">의존성 배열, updater 함수,</text>
+  <text x="570" y="405" class="small">let/var 바인딩 차이를 확인</text>
+  <path d="M480 226 C480 268 268 260 268 298" class="arrow" />
+  <path d="M480 226 C480 268 692 260 692 298" class="arrow" />
+</svg>

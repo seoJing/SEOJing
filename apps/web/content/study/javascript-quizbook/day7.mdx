@@ -1,0 +1,137 @@
+---
+title: "자바스크립트 퀴즈북 리마인드 Day 7: 클로저 버그와 오래된 값"
+description: "클로저가 값 복사가 아니라 렉시컬 환경 참조라는 점을 stale closure, 루프 콜백, React 이벤트 리뷰 관점에서 정리합니다."
+date: "2026-06-29"
+tags:
+  [
+    "JavaScript",
+    "프론트엔드",
+    "자바스크립트 퀴즈북",
+    "Closure",
+    "Scope",
+    "React",
+  ]
+category: "study"
+series: "javascript-quizbook"
+cover:
+  src: "/images/content/study/javascript-quizbook/day7/stale-closure-live-binding.svg"
+  alt: "클로저가 생성 위치의 바인딩을 기억해 나중 실행에서 오래된 값을 읽을 수 있음을 보여주는 다이어그램"
+  caption: "작성 SVG · stale closure를 값 복사 문제가 아니라 생성 위치와 바인딩 참조 문제로 보기"
+  kind: "diagram"
+---
+
+> 오늘의 질문: “클로저는 값을 복사해 둔 스냅샷일까, 변수 바인딩을 계속 따라가는 참조일까?”
+
+## 먼저 맞혀보기
+
+```js
+function makeCounters() {
+  const result = [];
+
+  for (var i = 0; i < 3; i += 1) {
+    result.push(function read() {
+      return i;
+    });
+  }
+
+  return result;
+}
+
+const [a, b, c] = makeCounters();
+console.log(a(), b(), c());
+```
+
+출력은 `3 3 3`입니다. 세 함수가 각각 `0`, `1`, `2`를 복사해 둔 게 아니라, `var i`라는 같은 함수 스코프 바인딩을 닫아두었기 때문입니다. 루프가 끝난 뒤 그 바인딩의 값은 `3`입니다.
+
+`let`으로 바꾸면 결과가 달라집니다.
+
+```js
+for (let i = 0; i < 3; i += 1) {
+  result.push(() => i);
+}
+// 0, 1, 2
+```
+
+`let`은 반복마다 새 블록 바인딩을 만들기 때문에 각 콜백이 닫아두는 대상이 달라집니다.
+
+## 틀리기 쉬운 직감
+
+“함수가 만들어질 때 값이 복사된다”라고 생각하면 클로저 버그를 잘못 고칩니다. 클로저가 기억하는 것은 보통 값 자체가 아니라 **렉시컬 환경에 있는 바인딩**입니다. 그래서 같은 바인딩을 여러 함수가 공유하면 나중 값이 같이 보이고, 렌더·이벤트·타이머 사이에 생성 시점이 어긋나면 오래된 경로를 읽습니다.
+
+![클로저와 오래된 바인딩 리뷰 지도](/images/content/study/javascript-quizbook/day7/stale-closure-live-binding.svg)
+
+## stale closure는 “React만의 버그”가 아니다
+
+React에서 자주 보일 뿐, 원인은 자바스크립트 함수 생성 위치입니다.
+
+```jsx
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      console.log(count);
+    }, 1000);
+
+    return () => clearInterval(id);
+  }, []);
+}
+```
+
+의존성 배열이 비어 있으면 interval 콜백은 처음 렌더의 `count` 바인딩을 닫아둡니다. 화면에서는 값이 바뀌어도 이 콜백은 계속 첫 렌더의 경로를 볼 수 있습니다.
+
+코드 리뷰에서는 “왜 `count`가 최신이 아니지?”보다 먼저 “이 함수가 어느 렌더에서 만들어졌지?”를 묻는 편이 낫습니다.
+
+## 고치는 방식도 원인에 맞춰야 한다
+
+| 상황                            | 의심할 부분                          | 흔한 해결 방향                                  |
+| ------------------------------- | ------------------------------------ | ----------------------------------------------- |
+| 루프 안 콜백이 모두 같은 값     | 같은 `var` 바인딩 공유               | `let`, 별도 함수, 값 인자 전달                  |
+| 타이머가 오래된 상태 출력       | 콜백 생성 시점과 상태 변경 시점 분리 | 의존성 배열 보정, ref, updater 함수             |
+| 이벤트 핸들러가 과거 props 사용 | 핸들러가 오래된 렌더에서 생성        | 최신 값을 인자로 넘기거나 핸들러 갱신           |
+| async 후 상태 업데이트 꼬임     | 완료 시점이 생성 시점보다 늦음       | 취소 플래그, AbortController, functional update |
+
+핵심은 “클로저를 없앤다”가 아닙니다. 클로저는 유용합니다. 다만 어떤 바인딩을 닫아두는지 코드가 말해주지 않으면 나중 실행에서 버그가 됩니다.
+
+## 프론트엔드 리뷰 체크리스트
+
+- 콜백이 만들어지는 위치와 실행되는 위치가 멀리 떨어져 있지 않은가?
+- 반복문 안 콜백이 같은 바인딩을 공유하지 않는가?
+- `useEffect`, `useCallback`, 이벤트 리스너의 의존성이 실제로 읽는 값과 맞는가?
+- 최신 값이 필요하다면 state updater, ref, 인자 전달 중 어떤 모델이 더 명확한가?
+- 오래된 async 결과가 최신 화면 상태를 덮어쓸 가능성은 없는가?
+
+클로저를 값 저장소로 외우면 “왜 예전 값이지?”에서 멈춥니다. 바인딩 참조로 보면 생성 위치, 공유 여부, 실행 지연을 순서대로 추적할 수 있습니다.
+
+<ArticleQuiz title="Day 7 복습 퀴즈">
+  <ArticleQuizItem
+    mode="multiple"
+    question="var를 쓴 첫 예제의 출력은?"
+    options={["0 1 2", "1 2 3", "3 3 3", "undefined undefined undefined"]}
+    answer="3 3 3"
+    explanation="세 함수가 반복마다 다른 값을 복사한 것이 아니라 같은 함수 스코프의 var i 바인딩을 참조합니다. 루프 종료 후 i는 3입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="stale closure를 리뷰할 때 가장 먼저 확인할 질문은?"
+    options={[
+      "함수 이름이 충분히 짧은가?",
+      "콜백이 어느 렌더/스코프에서 만들어졌는가?",
+      "console.log가 몇 개 있는가?",
+      "변수명이 camelCase인가?",
+    ]}
+    answer="콜백이 어느 렌더/스코프에서 만들어졌는가?"
+    explanation="오래된 값 문제는 대개 함수 생성 위치와 나중 실행 시점의 차이에서 출발합니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="클로저가 기억하는 대상을 한 문장으로 설명해보세요."
+    answer="함수는 만들어진 렉시컬 환경의 바인딩을 기억하고, 실행될 때 그 환경 참조를 따라 이름을 찾습니다."
+    explanation="값을 항상 복사해 둔다는 설명은 var 루프나 React stale closure를 설명하기 어렵습니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="타이머나 이벤트 핸들러에서 최신 상태가 필요할 때, 무조건 의존성 배열만 늘리는 방식이 부족할 수 있는 이유를 설명해보세요."
+    explanation="의존성 배열 보정은 콜백을 다시 만들지만, 이벤트 등록/해제 비용이나 async 완료 순서까지 자동으로 해결하지는 않습니다. 최신 값 참조가 목적인지, 이전 상태 기반 업데이트가 목적인지, 오래된 요청 취소가 목적인지 나눠서 ref, functional update, AbortController 같은 모델을 골라야 합니다."
+  />
+</ArticleQuiz>

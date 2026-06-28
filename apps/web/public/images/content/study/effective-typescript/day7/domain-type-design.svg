@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">문자열과 선택적 값의 도메인 타입 설계</title>
+  <desc id="desc">문자열, 선택적 필드, 특수 값을 도메인 이름과 유니온으로 좁히는 과정을 보여준다</desc>
+  <rect width="960" height="520" rx="28" fill="#f7f7fb" />
+  <style>
+    .box { fill: #ffffff; stroke: #1f2937; stroke-width: 2; }
+    .bad { fill: #fff1f2; stroke: #be123c; stroke-width: 2; }
+    .good { fill: #eefcf3; stroke: #15803d; stroke-width: 2; }
+    .title { font: 700 24px system-ui, -apple-system, BlinkMacSystemFont, sans-serif; fill: #111827; }
+    .text { font: 600 18px system-ui, -apple-system, BlinkMacSystemFont, sans-serif; fill: #1f2937; }
+    .small { font: 500 15px system-ui, -apple-system, BlinkMacSystemFont, sans-serif; fill: #475569; }
+    .code { font: 600 15px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #111827; }
+    .arrow { stroke: #334155; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
+    </marker>
+  </defs>
+  <text x="48" y="54" class="title">Day 7 · 타입은 값의 종류보다 도메인 의미를 좁힌다</text>
+  <rect x="62" y="98" width="250" height="150" rx="18" class="bad" />
+  <text x="88" y="136" class="text">넓은 문자열</text>
+  <text x="88" y="174" class="code">status: string</text>
+  <text x="88" y="204" class="code">userId?: string</text>
+  <text x="88" y="230" class="small">오타·빈 문자열·상태 혼합</text>
+  <rect x="356" y="98" width="250" height="150" rx="18" class="box" />
+  <text x="382" y="136" class="text">도메인 이름 붙이기</text>
+  <text x="382" y="174" class="code">type UserId = string</text>
+  <text x="382" y="204" class="code">type Status = ...</text>
+  <text x="382" y="230" class="small">값이 맡은 역할을 드러냄</text>
+  <rect x="650" y="98" width="250" height="150" rx="18" class="good" />
+  <text x="676" y="136" class="text">유효 상태 모델</text>
+  <text x="676" y="174" class="code">{status:'ready'; userId: UserId}</text>
+  <text x="676" y="204" class="code">{status:'guest'}</text>
+  <text x="676" y="230" class="small">불가능한 조합 제거</text>
+  <path d="M312 173 H348" class="arrow" />
+  <path d="M606 173 H642" class="arrow" />
+  <rect x="110" y="326" width="320" height="110" rx="18" class="box" />
+  <text x="138" y="362" class="text">선택적 필드 리뷰</text>
+  <text x="138" y="394" class="small">없음이 로딩/게스트/권한없음 중</text>
+  <text x="138" y="420" class="small">무엇을 뜻하는지 타입에 남긴다</text>
+  <rect x="530" y="326" width="320" height="110" rx="18" class="box" />
+  <text x="558" y="362" class="text">특수 값 리뷰</text>
+  <text x="558" y="394" class="small">'' · null · -1 같은 sentinel은</text>
+  <text x="558" y="420" class="small">명명된 union으로 바꿀 수 있는지 본다</text>
+</svg>
