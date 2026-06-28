@@ -21,6 +21,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "worker:size:check": "node scripts/check-worker-bundle-size.mjs",
     "export:presentation": "tsx scripts/export-presentation-pptx.ts"
   },
   "dependencies": {

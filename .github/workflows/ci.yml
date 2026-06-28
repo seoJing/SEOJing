@@ -63,6 +63,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - name: Check Cloudflare Worker bundle size
+        run: pnpm --filter @app/web run worker:size:check
 
   deploy:
     name: Deploy
