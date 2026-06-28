@@ -65,7 +65,6 @@ describe("backend article content adapter", () => {
       new URL("http://127.0.0.1:4000/articles/study%2Fbackend%2Fday1"),
       expect.objectContaining({
         headers: { Accept: "application/json" },
-        cache: "force-cache",
       }),
     );
 

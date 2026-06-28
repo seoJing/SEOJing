@@ -65,7 +65,6 @@ export async function fetchBackendArticle(
   try {
     const response = await fetch(articleUrl, {
       headers: { Accept: "application/json" },
-      cache: "force-cache",
     });
 
     if (response.status === 404) {
