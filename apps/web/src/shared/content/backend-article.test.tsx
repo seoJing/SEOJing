@@ -233,6 +233,113 @@ describe("backend article content adapter", () => {
     expect(markup).toContain("legacy()");
   });
 
+  it("covers defensive structured-block fallbacks for sparse backend content", () => {
+    const content = toBackendArticleContentData({
+      ...article,
+      body: {
+        html: "<p>fallback should not duplicate structured blocks</p>",
+        blocks: [
+          {
+            id: "bad-heading",
+            type: "HEADING",
+            sortOrder: 0,
+            content: { level: "not-a-number", text: "기본 heading" },
+            plainText: "기본 heading",
+          },
+          {
+            id: "deep-heading",
+            type: "HEADING",
+            sortOrder: 1,
+            content: { level: 9, text: "깊은 heading" },
+            plainText: "깊은 heading",
+          },
+          {
+            id: "html-paragraph",
+            type: "PARAGRAPH",
+            sortOrder: 2,
+            content: { html: "inline <strong>HTML</strong>" },
+            plainText: null,
+          },
+          {
+            id: "empty-table",
+            type: "PARAGRAPH",
+            sortOrder: 3,
+            content: { table: { headers: ["A"], rows: [[], "bad"] } },
+            plainText: "table fallback",
+          },
+          {
+            id: "plain-code",
+            type: "CODE",
+            sortOrder: 4,
+            content: {},
+            plainText: "plain();",
+          },
+          {
+            id: "image-alt-text",
+            type: "IMAGE",
+            sortOrder: 5,
+            content: { src: "/images/fallback.png", altText: "대체 설명" },
+            plainText: null,
+          },
+          {
+            id: "single-quiz",
+            type: "QUIZ",
+            sortOrder: 6,
+            content: {
+              question: "서술형 질문",
+              choices: "['A', 'B']",
+              answer: true,
+            },
+            plainText: null,
+          },
+          {
+            id: "unsupported-quiz",
+            type: "QUIZ",
+            sortOrder: 7,
+            content: { items: [{ props: { question: "답 없음" } }] },
+            plainText: null,
+          },
+          {
+            id: "callout",
+            type: "CALLOUT",
+            sortOrder: 8,
+            content: {
+              props: { title: "주의", tone: "warning" },
+              bodyText: "콜아웃 본문",
+            },
+            plainText: null,
+          },
+          {
+            id: "unknown",
+            type: "CUSTOM",
+            sortOrder: 9,
+            content: { componentName: "CustomBox", rawMdx: "<CustomBox />" },
+            plainText: null,
+          },
+        ],
+      },
+    });
+    const Component = content.compiled.default;
+    const markup = renderToStaticMarkup(<Component />);
+
+    expect(markup).toContain("<h2>기본 heading</h2>");
+    expect(markup).toContain("<h6>깊은 heading</h6>");
+    expect(markup).toContain("inline <strong>HTML</strong>");
+    expect(markup).toContain("table fallback");
+    expect(markup).toContain('data-language="text"');
+    expect(markup).toContain("plain();");
+    expect(markup).toContain("/images/fallback.png");
+    expect(markup).toContain("대체 설명");
+    expect(markup).toContain("서술형 질문");
+    expect(markup).toContain('data-answer="true"');
+    expect(markup).toContain("QUIZ fallback");
+    expect(markup).toContain('data-callout-tone="warning"');
+    expect(markup).toContain("콜아웃 본문");
+    expect(markup).toContain("CustomBox fallback");
+    expect(markup).toContain("&lt;CustomBox /&gt;");
+    expect(markup).not.toContain("fallback should not duplicate");
+  });
+
   it("encodes slash-containing slugs for the backend article endpoint", async () => {
     const fetchMock = vi.fn(async () =>
       Response.json(article, {
