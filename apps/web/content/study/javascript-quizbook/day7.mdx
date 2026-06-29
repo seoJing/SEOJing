@@ -105,13 +105,30 @@ function Counter() {
 
 ## Day 7 복습 퀴즈
 
-1. `var`를 쓴 첫 예제의 출력은 무엇일까요?
-   - 정답: `3 3 3`
-   - 이유: 세 함수가 반복마다 다른 값을 복사한 것이 아니라 같은 함수 스코프의 `var i` 바인딩을 참조합니다. 루프 종료 후 `i`는 `3`입니다.
-2. stale closure를 리뷰할 때 가장 먼저 확인할 질문은 무엇일까요?
-   - 정답: “콜백이 어느 렌더/스코프에서 만들어졌는가?”
-   - 이유: 오래된 값 문제는 대개 함수 생성 위치와 나중 실행 시점의 차이에서 출발합니다.
-3. 클로저가 기억하는 대상을 한 문장으로 설명해보세요.
-   - 예시 답: 함수는 만들어진 렉시컬 환경의 바인딩을 기억하고, 실행될 때 그 환경 참조를 따라 이름을 찾습니다.
-4. 타이머나 이벤트 핸들러에서 최신 상태가 필요할 때, 무조건 의존성 배열만 늘리는 방식이 부족할 수 있는 이유를 설명해보세요.
-   - 힌트: 콜백 재생성, 이벤트 등록/해제, async 완료 순서, `ref`, functional update, `AbortController`를 나눠서 생각해보면 좋습니다.
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="var를 쓴 첫 예제의 출력은 무엇일까요?"
+    choices={["0 1 2", "1 2 3", "3 3 3", "undefined undefined undefined"]}
+    answer={2}
+    explanation="세 함수가 반복마다 다른 값을 복사한 것이 아니라 같은 함수 스코프의 var i 바인딩을 참조합니다. 루프 종료 후 i는 3입니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="stale closure를 리뷰할 때 가장 먼저 확인할 질문은 무엇일까요?"
+    answer="콜백이 어느 렌더/스코프에서 만들어졌는가?"
+    explanation="오래된 값 문제는 대개 함수 생성 위치와 나중 실행 시점의 차이에서 출발합니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="클로저가 기억하는 대상을 한 문장으로 설명해보세요."
+    answer="함수는 만들어진 렉시컬 환경의 바인딩을 기억하고, 실행될 때 그 환경 참조를 따라 이름을 찾습니다."
+    explanation="값 자체를 복사해 둔 스냅샷으로 외우면 var 루프나 stale closure 버그를 잘못 해석하기 쉽습니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="타이머나 이벤트 핸들러에서 최신 상태가 필요할 때, 무조건 의존성 배열만 늘리는 방식이 부족할 수 있는 이유를 설명해보세요."
+    answer="콜백 재생성, 이벤트 등록/해제, async 완료 순서, ref, functional update, AbortController처럼 실행 시점과 최신 값 접근 방식을 함께 따져야 합니다."
+    explanation="최신 값을 읽어야 하는지, 실행을 취소해야 하는지, 이전 상태로부터 계산하면 되는지에 따라 더 명확한 해결책이 달라집니다."
+  />
+</ArticleQuiz>
