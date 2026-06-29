@@ -30,9 +30,10 @@
   <text x="382" y="230" class="small">값이 맡은 역할을 드러냄</text>
   <rect x="650" y="98" width="250" height="150" rx="18" class="good" />
   <text x="676" y="136" class="text">유효 상태 모델</text>
-  <text x="676" y="174" class="code">{status:'ready'; userId: UserId}</text>
-  <text x="676" y="204" class="code">{status:'guest'}</text>
-  <text x="676" y="230" class="small">불가능한 조합 제거</text>
+  <text x="676" y="174" class="code">{status:'ready';</text>
+  <text x="696" y="200" class="code">userId: UserId}</text>
+  <text x="676" y="226" class="code">{status:'guest'}</text>
+  <text x="676" y="250" class="small">불가능한 조합 제거</text>
   <path d="M312 173 H348" class="arrow" />
   <path d="M606 173 H642" class="arrow" />
   <rect x="110" y="326" width="320" height="110" rx="18" class="box" />

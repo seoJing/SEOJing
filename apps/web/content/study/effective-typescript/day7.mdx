@@ -125,40 +125,16 @@ type PageState = { kind: "pending" } | { kind: "ready"; page: number };
 
 타입을 좁힌다는 건 멋진 제네릭을 쓰는 일이 아닙니다. 리뷰해야 할 상태 공간을 줄이고, 값의 역할을 코드 안에 남기는 일에 더 가깝습니다.
 
-<ArticleQuiz title="Day 7 타입 설계 점검">
-  <ArticleQuizItem
-    mode="multiple"
-    question="다음 중 discriminated union으로 바꾸는 이점이 가장 큰 타입은?"
-    options={[
-      "{ x: number; y: number }",
-      "{ status?: string; data?: User; error?: string }",
-      "type UserId = string",
-      "readonly string[]",
-    ]}
-    answer="{ status?: string; data?: User; error?: string }"
-    explanation="상태와 필드가 서로 배타적인데 optional로 흩어져 있으면 불가능한 조합을 많이 허용합니다."
-  />
-  <ArticleQuizItem
-    mode="multiple"
-    question="type UserId = string의 설명으로 가장 적절한 것은?"
-    options={[
-      "런타임에서 자동으로 ID 형식을 검증한다.",
-      "문자열 역할을 이름으로 드러내지만 구조적으로는 string과 같다.",
-      "숫자도 자동으로 문자열로 바꿔준다.",
-      "모든 API 응답을 안전하게 만든다.",
-    ]}
-    answer="문자열 역할을 이름으로 드러내지만 구조적으로는 string과 같다."
-    explanation="단순 별칭은 의도를 표현하지만 런타임 검증이나 강한 nominal 구분을 제공하지는 않습니다."
-  />
-  <ArticleQuizItem
-    mode="description"
-    question="sentinel 값의 예시를 하나 들고, 왜 타입으로 끌어올리는 편이 나은지 짧게 설명해보세요."
-    answer="예: selectedId = ''로 선택 없음을 표현하는 경우. {kind:'none'} | {kind:'selected'; id: UserId}처럼 바꾸면 빈 문자열의 숨은 의미를 추리하지 않아도 됩니다."
-    explanation="특수 값의 의미가 관습에 숨어 있으면 조건문과 리뷰 비용이 늘어납니다."
-  />
-  <ArticleQuizItem
-    mode="essay"
-    question="코드 리뷰에서 'string이면 충분하지 않나요?'라는 질문을 받았을 때, 어떤 기준으로 더 좁힐지 판단할지 정리해보세요."
-    explanation="값이 유한한 상태 집합인지, 오타가 실제 버그가 되는지, 서로 다른 도메인 문자열이 섞일 위험이 있는지, optional 조합이 불가능한 상태를 허용하는지 보면 됩니다. 좁힌 타입이 런타임 검증을 대체하지 않는다는 점도 함께 설명해야 합니다."
-  />
-</ArticleQuiz>
+## Day 7 타입 설계 점검
+
+1. 다음 중 discriminated union으로 바꾸는 이점이 가장 큰 타입은 무엇일까요?
+   - 보기: `{ x: number; y: number }`, `{ status?: string; data?: User; error?: string }`, `type UserId = string`, `readonly string[]`
+   - 정답: `{ status?: string; data?: User; error?: string }`
+   - 이유: 상태와 필드가 서로 배타적인데 optional로 흩어져 있으면 불가능한 조합을 많이 허용합니다.
+2. `type UserId = string`의 설명으로 가장 적절한 것은 무엇일까요?
+   - 정답: 문자열 역할을 이름으로 드러내지만 구조적으로는 `string`과 같습니다.
+   - 이유: 단순 별칭은 의도를 표현하지만 런타임 검증이나 강한 nominal 구분을 제공하지는 않습니다.
+3. sentinel 값의 예시를 하나 들고, 왜 타입으로 끌어올리는 편이 나은지 짧게 설명해보세요.
+   - 예시 답: `selectedId = ""`로 선택 없음을 표현하는 경우, `{kind:"none"} | {kind:"selected"; id: UserId}`처럼 바꾸면 빈 문자열의 숨은 의미를 추리하지 않아도 됩니다.
+4. 코드 리뷰에서 “string이면 충분하지 않나요?”라는 질문을 받았을 때, 어떤 기준으로 더 좁힐지 정리해보세요.
+   - 힌트: 유한한 상태 집합인지, 오타가 실제 버그가 되는지, 서로 다른 도메인 문자열이 섞일 위험이 있는지, optional 조합이 불가능한 상태를 허용하는지 보면 됩니다.
