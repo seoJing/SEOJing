@@ -29,7 +29,9 @@ export default async function Home() {
           tags={content.frontmatter.tags}
           readingTime={calculateReadingTime(content.source)}
         />
-        <MDXContent components={mdxComponents as MDXComponents} />
+        <div className="article-prose" data-article-content>
+          <MDXContent components={mdxComponents as MDXComponents} />
+        </div>
         <ArticleToolbar slug={"resume"} title={content.frontmatter.title} />
       </Paper>
     </>
