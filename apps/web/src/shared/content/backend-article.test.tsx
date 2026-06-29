@@ -163,6 +163,60 @@ describe("backend article content adapter", () => {
     expect(markup).not.toContain("fallback should not duplicate");
   });
 
+  it("renders basic markdown inline text and structured tables from backend blocks", () => {
+    const content = toBackendArticleContentData({
+      ...article,
+      body: {
+        html: "<p>fallback should not duplicate structured blocks</p>",
+        blocks: [
+          {
+            id: "quote",
+            type: "QUOTE",
+            sortOrder: 0,
+            content: { text: "예상 읽기 시간: 12분<br />" },
+            plainText: "예상 읽기 시간: 12분<br />",
+          },
+          {
+            id: "paragraph",
+            type: "PARAGRAPH",
+            sortOrder: 1,
+            content: {
+              text: "출력은 `local`이고 **생성 위치**를 기억합니다.",
+            },
+            plainText: null,
+          },
+          {
+            id: "table",
+            type: "PARAGRAPH",
+            sortOrder: 2,
+            content: {
+              table: {
+                headers: ["선언", "선언 전 읽기"],
+                rows: [
+                  ["`var`", "`undefined`"],
+                  ["`let`", "TDZ 에러"],
+                ],
+              },
+            },
+            plainText: null,
+          },
+        ],
+      },
+    });
+    const Component = content.compiled.default;
+    const markup = renderToStaticMarkup(<Component />);
+
+    expect(markup).toContain("예상 읽기 시간: 12분<br/>");
+    expect(markup).toContain("출력은 <code>local</code>이고 ");
+    expect(markup).toContain("<strong>생성 위치</strong>");
+    expect(markup).toContain("<table>");
+    expect(markup).toContain("<th>선언</th>");
+    expect(markup).toContain("<td><code>var</code></td>");
+    expect(markup).not.toContain("fallback should not duplicate");
+    expect(markup).not.toContain("&lt;br /&gt;");
+    expect(markup).not.toContain("**생성 위치**");
+  });
+
   it("keeps sanitized HTML fallback when no structured blocks are provided", () => {
     const content = toBackendArticleContentData({
       ...article,

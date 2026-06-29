@@ -210,11 +210,22 @@ function renderParagraphBlock(
   plainText: string | null,
   key: string,
 ) {
+  const table = readMarkdownTable(content.table);
+  if (table) {
+    return <MarkdownTable key={key} table={table} />;
+  }
+
   const html = readStringField(content.html);
   if (html) {
     return <p key={key} dangerouslySetInnerHTML={{ __html: html }} />;
   }
-  return <p key={key}>{readStringField(content.text) ?? plainText ?? ""}</p>;
+  return (
+    <p key={key}>
+      <InlineMarkdownText
+        text={readStringField(content.text) ?? plainText ?? ""}
+      />
+    </p>
+  );
 }
 
 function renderQuoteBlock(
@@ -224,7 +235,9 @@ function renderQuoteBlock(
 ) {
   return (
     <blockquote key={key}>
-      {readStringField(content.text) ?? plainText ?? ""}
+      <InlineMarkdownText
+        text={readStringField(content.text) ?? plainText ?? ""}
+      />
     </blockquote>
   );
 }
@@ -344,6 +357,93 @@ function readBlockContent(value: unknown): BackendArticleBlockContent {
     return value as BackendArticleBlockContent;
   }
   return {};
+}
+
+interface MarkdownTableData {
+  headers: string[];
+  rows: string[][];
+}
+
+function MarkdownTable({ table }: { table: MarkdownTableData }) {
+  return (
+    <div className="my-8 overflow-x-auto">
+      <table>
+        <thead>
+          <tr>
+            {table.headers.map((header) => (
+              <th key={header}>
+                <InlineMarkdownText text={header} />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {table.rows.map((row, rowIndex) => (
+            <tr key={`${row.join("|")}-${rowIndex}`}>
+              {row.map((cell, cellIndex) => (
+                <td key={`${cell}-${cellIndex}`}>
+                  <InlineMarkdownText text={cell} />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function readMarkdownTable(value: unknown): MarkdownTableData | null {
+  const table = readBlockContent(value);
+  const headers = readStringArray(table.headers);
+  if (!headers?.length || !Array.isArray(table.rows)) {
+    return null;
+  }
+
+  const rows = table.rows
+    .map((row) => {
+      if (!Array.isArray(row)) {
+        return null;
+      }
+      const cells = row.map((cell) => readStringField(cell) ?? "");
+      return cells.length ? cells : null;
+    })
+    .filter((row): row is string[] => row != null);
+
+  return rows.length ? { headers, rows } : null;
+}
+
+function InlineMarkdownText({ text }: { text: string }) {
+  return <>{parseInlineMarkdown(text)}</>;
+}
+
+function parseInlineMarkdown(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  const pattern = /(<br\s*\/?>(?:\s*)|`([^`]+)`|\*\*([^*]+)\*\*)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) != null) {
+    if (match.index > lastIndex) {
+      nodes.push(text.slice(lastIndex, match.index));
+    }
+
+    if (match[0].startsWith("<br")) {
+      nodes.push(<br key={`br-${match.index}`} />);
+    } else if (match[2]) {
+      nodes.push(<code key={`code-${match.index}`}>{match[2]}</code>);
+    } else if (match[3]) {
+      nodes.push(<strong key={`strong-${match.index}`}>{match[3]}</strong>);
+    }
+
+    lastIndex = pattern.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+
+  return nodes;
 }
 
 function readStringField(value: unknown): string | undefined {
