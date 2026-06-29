@@ -1,6 +1,53 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { env as cloudflareEnv } from "cloudflare:workers";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
+
+type MockArticleImageProps = { src: string; alt: string; caption?: string };
+type MockChildrenProps = { children: ReactNode };
+type MockArticleQuizItemProps = {
+  question: ReactNode;
+  choices?: string[];
+  answer: string | number;
+  explanation?: ReactNode;
+};
+type MockCodeBlockProps = { language?: string; children: ReactNode };
+
+vi.mock("@app/ui", async () => {
+  const React = await import("react");
+  return {
+    ArticleImage: ({ src, alt, caption }: MockArticleImageProps) =>
+      React.createElement(
+        "figure",
+        { "data-article-image": true },
+        React.createElement("img", { src, alt }),
+        caption ? React.createElement("figcaption", null, caption) : null,
+      ),
+    ArticleQuiz: ({ children }: MockChildrenProps) =>
+      React.createElement("section", { "data-article-quiz": true }, children),
+    ArticleQuizItem: ({
+      question,
+      choices,
+      answer,
+      explanation,
+    }: MockArticleQuizItemProps) =>
+      React.createElement(
+        "div",
+        { "data-article-quiz-item": true, "data-answer": answer },
+        question,
+        choices?.map((choice: string) =>
+          React.createElement("span", { key: choice }, choice),
+        ),
+        explanation,
+      ),
+    CodeBlock: ({ language, children }: MockCodeBlockProps) =>
+      React.createElement(
+        "pre",
+        { "data-code-block": true, "data-language": language },
+        React.createElement("code", null, children),
+      ),
+  };
+});
 
 import {
   fetchBackendArticle,
@@ -25,6 +72,13 @@ const article: BackendArticleApiResponse = {
         content: { level: 2, text: "도입" },
         plainText: "도입",
       },
+      {
+        id: "intro-body",
+        type: "PARAGRAPH",
+        sortOrder: 1,
+        content: { text: "API 본문입니다." },
+        plainText: "API 본문입니다.",
+      },
     ],
   },
 };
@@ -42,9 +96,87 @@ describe("backend article content adapter", () => {
     });
     expect(content.source).toContain("API 본문입니다.");
     const markup = renderToStaticMarkup(<Component />);
-    expect(markup).toContain("data-backend-article-html");
+    expect(markup).toContain("data-backend-article-blocks");
     expect(markup).toContain("API 본문입니다.");
+    expect(markup).toContain("article-prose");
+    expect(markup).not.toContain("data-backend-article-html");
+  });
+
+  it("reuses existing CodeBlock, ArticleQuiz, and ArticleImage renderers for structured blocks", () => {
+    const content = toBackendArticleContentData({
+      ...article,
+      body: {
+        html: "<p>fallback should not duplicate structured blocks</p>",
+        blocks: [
+          {
+            id: "code",
+            type: "CODE",
+            sortOrder: 0,
+            content: { language: "ts", code: "const answer: number = 42;" },
+            plainText: "const answer: number = 42;",
+          },
+          {
+            id: "quiz",
+            type: "QUIZ",
+            sortOrder: 1,
+            content: {
+              renderHint: "ArticleQuiz",
+              items: [
+                {
+                  props: {
+                    mode: "multiple",
+                    question: "정답은?",
+                    choices: '["41", "42"]',
+                    answer: "1",
+                    explanation: "42입니다.",
+                  },
+                  rawMdx: "<ArticleQuizItem />",
+                },
+              ],
+            },
+            plainText: null,
+          },
+          {
+            id: "image",
+            type: "IMAGE",
+            sortOrder: 2,
+            content: {
+              url: "/images/example.png",
+              alt: "예시 이미지",
+              caption: "예시 캡션",
+            },
+            plainText: "예시 이미지",
+          },
+        ],
+      },
+    });
+    const Component = content.compiled.default;
+    const markup = renderToStaticMarkup(<Component />);
+
+    expect(markup).toContain("data-code-block");
+    expect(markup).toContain('data-language="ts"');
+    expect(markup).toContain("const answer: number = 42;");
+    expect(markup).toContain("data-article-quiz");
+    expect(markup).toContain("정답은?");
+    expect(markup).toContain("/images/example.png");
+    expect(markup).toContain("예시 캡션");
+    expect(markup).not.toContain("fallback should not duplicate");
+  });
+
+  it("keeps sanitized HTML fallback when no structured blocks are provided", () => {
+    const content = toBackendArticleContentData({
+      ...article,
+      body: {
+        html: '<h2 id="legacy">Legacy</h2><pre><code>legacy()</code></pre>',
+        blocks: [],
+      },
+    });
+    const Component = content.compiled.default;
+    const markup = renderToStaticMarkup(<Component />);
+
+    expect(markup).toContain("data-backend-article-html");
     expect(markup).toContain("backend-article-html");
+    expect(markup).toContain("legacy()");
   });
 
   it("encodes slash-containing slugs for the backend article endpoint", async () => {

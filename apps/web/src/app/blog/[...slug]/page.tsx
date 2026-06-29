@@ -102,7 +102,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             title={content.frontmatter.title}
           />
           <BlogAudioPlayer slug={slug.join("/")} />
-          <div data-article-content>
+          <div className="article-prose" data-article-content>
             <MDXContent components={mdxComponents as MDXComponents} />
           </div>
           <SectionQaPrompts slug={slug.join("/")} />
