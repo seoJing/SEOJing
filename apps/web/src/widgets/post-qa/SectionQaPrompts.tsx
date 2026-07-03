@@ -151,7 +151,8 @@ function SectionQaPrompt({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           slug,
-          question: `[${prompt.title} 부분에 대한 질문] ${trimmedQuestion}`,
+          question: trimmedQuestion,
+          section_id: prompt.id,
         }),
       });
       if (!response.ok) throw new Error("section qa request failed");
