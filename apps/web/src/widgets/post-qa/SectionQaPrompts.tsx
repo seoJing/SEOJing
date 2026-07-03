@@ -151,8 +151,7 @@ function SectionQaPrompt({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           slug,
-          question: trimmedQuestion,
-          section_id: prompt.id,
+          question: `[${prompt.title}] ${trimmedQuestion}`,
         }),
       });
       if (!response.ok) throw new Error("section qa request failed");

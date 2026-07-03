@@ -138,8 +138,7 @@ describe("SectionQaPrompts", () => {
           method: "POST",
           body: JSON.stringify({
             slug: "study/backend/day1",
-            question: "왜 여기서 Controller부터 보나요?",
-            section_id: "intro",
+            question: "[오늘의 목표] 왜 여기서 Controller부터 보나요?",
           }),
         }),
       ),
