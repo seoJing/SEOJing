@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">이벤트 루프와 마이크로태스크 실행 순서</title>
+  <desc id="desc">콜 스택이 비워진 뒤 마이크로태스크 큐가 먼저 비워지고, 그 다음 렌더와 다음 태스크가 진행되는 흐름</desc>
+  <rect width="960" height="540" rx="32" fill="#f7f0df"/>
+  <text x="64" y="68" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="30" font-weight="700" fill="#1f2933">Promise 타이밍을 볼 때의 최소 지도</text>
+  <text x="64" y="104" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="16" fill="#5f665f">스택 → 마이크로태스크 전부 → 렌더 기회 → 다음 태스크</text>
+
+  <g font-family="Pretendard, Apple SD Gothic Neo, sans-serif">
+    <rect x="62" y="158" width="190" height="118" rx="20" fill="#fffdf7" stroke="#1f2933" stroke-width="2"/>
+    <text x="88" y="198" font-size="22" font-weight="700" fill="#1f2933">Call Stack</text>
+    <text x="88" y="230" font-size="15" fill="#465048">현재 동기 코드</text>
+    <text x="88" y="254" font-size="15" fill="#465048">비워져야 다음 단계</text>
+
+    <rect x="332" y="142" width="252" height="150" rx="20" fill="#e8f4ff" stroke="#315d86" stroke-width="2"/>
+    <text x="360" y="184" font-size="22" font-weight="700" fill="#193957">Microtask Queue</text>
+    <text x="360" y="216" font-size="15" fill="#315d86">Promise.then / await 이후</text>
+    <text x="360" y="240" font-size="15" fill="#315d86">비어질 때까지 계속 실행</text>
+    <text x="360" y="264" font-size="15" fill="#315d86">새 microtask도 같은 턴에 추가</text>
+
+    <rect x="664" y="158" width="220" height="118" rx="20" fill="#fff4d8" stroke="#956b18" stroke-width="2"/>
+    <text x="694" y="198" font-size="22" font-weight="700" fill="#5c3d05">Render 기회</text>
+    <text x="694" y="230" font-size="15" fill="#6f541d">DOM 반영/paint는</text>
+    <text x="694" y="254" font-size="15" fill="#6f541d">microtask 뒤에 온다</text>
+
+    <rect x="332" y="364" width="252" height="96" rx="20" fill="#f1e7ff" stroke="#6a4a8d" stroke-width="2"/>
+    <text x="360" y="404" font-size="22" font-weight="700" fill="#47245f">Task Queue</text>
+    <text x="360" y="436" font-size="15" fill="#5f4278">setTimeout / click / message</text>
+  </g>
+
+  <g fill="none" stroke="#1f2933" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M253 217 H321"/>
+    <path d="M312 207 L324 217 L312 227"/>
+    <path d="M585 217 H652"/>
+    <path d="M643 207 L655 217 L643 227"/>
+    <path d="M767 278 C758 344 681 412 598 412"/>
+    <path d="M608 399 L591 413 L612 422"/>
+    <path d="M331 412 C215 407 156 344 157 290"/>
+    <path d="M146 301 L157 282 L168 302"/>
+  </g>
+
+  <g font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="15" fill="#324036">
+    <text x="275" y="202">스택이 비면</text>
+    <text x="602" y="202">먼저 전부 비움</text>
+    <text x="646" y="358">그 뒤 렌더/다음 태스크</text>
+    <text x="108" y="360">새 태스크가 다시 스택으로</text>
+  </g>
+</svg>

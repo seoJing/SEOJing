@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">any와 unknown 경계 설계</title>
+  <desc id="desc">외부 입력은 unknown으로 받고 검증 경계를 통과한 뒤 도메인 타입으로 좁히며, any는 타입 검사를 우회해 내부로 번지는 위험을 보여준다</desc>
+  <rect width="960" height="540" rx="32" fill="#f7f0df"/>
+  <text x="64" y="68" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="30" font-weight="700" fill="#1f2933">외부 입력은 unknown, 내부 확신은 검증 뒤에</text>
+  <text x="64" y="104" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="16" fill="#5f665f">any를 빨리 편하게 쓰면 타입 경계가 사라지고, unknown은 확인을 강제한다.</text>
+
+  <g font-family="Pretendard, Apple SD Gothic Neo, sans-serif">
+    <rect x="58" y="166" width="212" height="154" rx="22" fill="#fffdf7" stroke="#1f2933" stroke-width="2"/>
+    <text x="88" y="210" font-size="22" font-weight="700" fill="#1f2933">외부 JSON</text>
+    <text x="88" y="244" font-size="15" fill="#465048">API / localStorage</text>
+    <text x="88" y="268" font-size="15" fill="#465048">URLSearchParams</text>
+    <text x="88" y="292" font-size="15" fill="#465048">형태를 믿기 어렵다</text>
+
+    <rect x="346" y="136" width="268" height="214" rx="24" fill="#e8f4ff" stroke="#315d86" stroke-width="2"/>
+    <text x="382" y="184" font-size="22" font-weight="700" fill="#193957">unknown 경계</text>
+    <text x="382" y="220" font-size="15" fill="#315d86">읽기 전 검사 필요</text>
+    <text x="382" y="246" font-size="15" fill="#315d86">type guard / schema</text>
+    <text x="382" y="272" font-size="15" fill="#315d86">실패 경로도 코드에 남김</text>
+    <rect x="382" y="296" width="188" height="34" rx="17" fill="#fffdf7" stroke="#315d86"/>
+    <text x="405" y="318" font-size="14" fill="#193957">검증 후 UserPayload</text>
+
+    <rect x="690" y="166" width="212" height="154" rx="22" fill="#eef9ea" stroke="#3c7a3c" stroke-width="2"/>
+    <text x="720" y="210" font-size="22" font-weight="700" fill="#225022">도메인 타입</text>
+    <text x="720" y="244" font-size="15" fill="#3c693c">컴포넌트 props</text>
+    <text x="720" y="268" font-size="15" fill="#3c693c">서비스 함수</text>
+    <text x="720" y="292" font-size="15" fill="#3c693c">리뷰 가능한 상태</text>
+
+    <path d="M106 398 C251 454 448 456 790 396" fill="none" stroke="#b34b4b" stroke-width="4" stroke-dasharray="10 8"/>
+    <text x="265" y="430" font-size="18" font-weight="700" fill="#8c2f2f">any shortcut: 검사 없이 내부 전체로 번짐</text>
+  </g>
+
+  <g fill="none" stroke="#1f2933" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M272 243 H334"/>
+    <path d="M325 233 L337 243 L325 253"/>
+    <path d="M615 243 H678"/>
+    <path d="M669 233 L681 243 L669 253"/>
+  </g>
+
+  <g font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="15" fill="#324036">
+    <text x="287" y="224">일단 모른다고 둔다</text>
+    <text x="632" y="224">좁힌 뒤 넘긴다</text>
+  </g>
+</svg>

@@ -1,0 +1,167 @@
+---
+title: "이펙티브 타입스크립트 2판 Day 8: any를 밖에 세우고 unknown으로 검증하기"
+description: "Item 42–48 범위를 바탕으로 any, unknown, 타입 단언, monkey patching, soundness 함정을 외부 입력 경계와 코드 리뷰 관점에서 정리합니다."
+date: "2026-07-04"
+tags:
+  [
+    "TypeScript",
+    "Effective TypeScript",
+    "프론트엔드",
+    "any",
+    "unknown",
+    "타입 안정성",
+  ]
+category: "study"
+series: "effective-typescript"
+cover:
+  src: "/images/content/study/effective-typescript/day8/any-unknown-boundary.svg"
+  alt: "외부 JSON을 unknown으로 받고 검증 뒤 도메인 타입으로 넘기는 경계와 any가 내부로 번지는 위험을 보여주는 다이어그램"
+  caption: "작성 SVG · any를 내부로 들이지 않고 unknown 경계에서 검증하기"
+  kind: "diagram"
+---
+
+> 범위: Effective TypeScript 2판 Item 42–48<br />
+> 오늘의 질문: “API 응답 타입을 모를 때 `any`로 빨리 넘기는 게 정말 더 빠를까?”
+
+## 먼저 보는 코드
+
+```ts
+async function loadUser(id: string) {
+  const response = await fetch(`/api/users/${id}`);
+  const data: any = await response.json();
+
+  return {
+    id: data.id,
+    name: data.profile.name,
+    isAdmin: data.role === "admin",
+  };
+}
+```
+
+이 코드는 타입 에러가 거의 나지 않습니다. 그래서 안전해 보이기도 합니다. 하지만 실제로는 타입스크립트가 “검사할 근거를 잃은” 상태에 가깝습니다. `data.profile`이 없거나 `id`가 숫자여도 내부 코드까지 `any`가 번지면 리뷰 포인트가 사라집니다.
+
+Item 42–48 구간의 핵심은 타입 시스템을 이기는 요령이 아니라, **검사가 필요한 경계와 검사가 끝난 내부를 분리하는 습관**입니다.
+
+![any와 unknown 경계 설계](/images/content/study/effective-typescript/day8/any-unknown-boundary.svg)
+
+## 틀리기 쉬운 직감: any는 생산성을 높인다
+
+`any`는 가끔 필요한 탈출구입니다. 문제는 탈출구가 통로가 될 때입니다. 외부 입력, 서드파티 라이브러리, 오래된 JS 모듈에서 들어온 값을 `any`로 받아 내부 타입까지 오염시키면, 타입스크립트가 해주던 질문이 사라집니다.
+
+```ts
+function renderUser(user: any) {
+  return user.profile.displayName.toUpperCase();
+}
+```
+
+이 함수는 모든 호출을 받아들입니다. 리뷰할 때는 “타입이 맞나?”를 볼 수 없고, 런타임에서 터진 뒤에야 경계가 없었다는 사실을 알게 됩니다.
+
+반대로 `unknown`은 불편합니다. 그 불편함이 장점입니다.
+
+```ts
+type UserPayload = {
+  id: string;
+  profile: { displayName: string };
+};
+
+function isUserPayload(value: unknown): value is UserPayload {
+  if (typeof value !== "object" || value === null) return false;
+
+  const record = value as Record<string, unknown>;
+  const profile = record.profile;
+
+  return (
+    typeof record.id === "string" &&
+    typeof profile === "object" &&
+    profile !== null &&
+    typeof (profile as Record<string, unknown>).displayName === "string"
+  );
+}
+```
+
+`unknown`은 바로 읽을 수 없기 때문에, 검증 함수나 스키마를 경계에 세우도록 압박합니다. 내부로 들어온 뒤에는 `UserPayload`로 다룰 수 있으니 컴포넌트와 서비스 함수가 덜 방어적으로 됩니다.
+
+## 타입 단언은 검증이 아니다
+
+```ts
+const data = (await response.json()) as UserPayload;
+```
+
+이 코드는 짧습니다. 하지만 `as UserPayload`는 런타임 값을 바꾸지 않습니다. 타입스크립트에게 “내가 맞다고 치자”라고 말하는 것에 가깝습니다. 호출자가 정말 그 형태를 보장한다면 괜찮지만, 외부 API 응답처럼 변할 수 있는 경계에서는 단언만으로 충분하지 않습니다.
+
+코드 리뷰에서는 단언을 보면 이렇게 나눠 봅니다.
+
+| 단언 위치                  | 리뷰 판단                                                |
+| -------------------------- | -------------------------------------------------------- |
+| 테스트 픽스처              | 의도적으로 좁힌 데이터면 허용 가능                       |
+| DOM API처럼 TS가 모르는 곳 | null 체크나 환경 조건이 옆에 있으면 허용 가능            |
+| 외부 JSON 응답             | 단언만 있으면 위험, 검증 함수/스키마 경계가 필요         |
+| 내부 도메인 변환 후        | 변환 함수가 검증을 끝냈다면 단언 없이 타입이 좁아져야 함 |
+
+## monkey patching은 타입과 런타임을 같이 바꾼다
+
+브라우저 전역 객체나 라이브러리 객체에 필드를 붙이는 코드는 타입스크립트에서 두 겹의 위험을 만듭니다.
+
+```ts
+(window as any).analyticsClient = createClient();
+```
+
+런타임 전역 상태도 생기고, 타입 시스템도 우회합니다. 정말 전역 확장이 필요하다면 최소한 타입 선언과 초기화 경계를 같이 둬야 합니다.
+
+```ts
+declare global {
+  interface Window {
+    analyticsClient?: AnalyticsClient;
+  }
+}
+
+window.analyticsClient = createClient();
+```
+
+그래도 리뷰 질문은 남습니다. “전역이어야 하는가?”, “초기화 전 접근은 어떻게 막는가?”, “테스트에서 격리되는가?”입니다.
+
+## 프론트엔드 코드 리뷰 체크리스트
+
+- `any`가 외부 경계에서 끝나는가, 아니면 컴포넌트 내부 props/state까지 번지는가?
+- `unknown`을 받은 뒤 실제 검증 또는 narrowing이 있는가?
+- `as SomeType`이 런타임 검증처럼 쓰이고 있지 않은가?
+- monkey patching이 전역 상태와 타입 선언을 동시에 바꾸는지, 초기화 순서가 안전한가?
+- 타입스크립트가 일부러 막아준 오류를 `any`/단언으로 침묵시키고 있지 않은가?
+
+`any`를 완전히 금지하자는 뜻은 아닙니다. 중요한 건 `any`가 어디서 들어오고 어디서 멈추는지입니다. 외부 입력은 `unknown`으로 받고, 경계에서 검증하고, 내부에는 도메인 타입만 흘려보내는 쪽이 리뷰 가능한 코드에 가깝습니다.
+
+## Day 8 타입 안정성 점검
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="외부 API 응답을 처음 받는 타입으로 가장 안전한 기본값은 무엇일까요?"
+    choices={["any", "unknown", "never", "string"]}
+    answer={1}
+    explanation="unknown은 값을 바로 사용할 수 없게 만들어 검증과 narrowing을 강제합니다. any는 내부로 번지면 타입 검사를 우회합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="`const data = json as UserPayload`에 대한 설명으로 가장 적절한 것은 무엇일까요?"
+    choices={[
+      "런타임에서 json을 UserPayload 형태로 변환한다",
+      "필드가 없으면 자동으로 예외를 던진다",
+      "타입스크립트에게 해당 타입이라고 믿게 할 뿐 런타임 검증은 하지 않는다",
+      "unknown보다 항상 안전하다",
+    ]}
+    answer={2}
+    explanation="타입 단언은 컴파일러의 판단을 바꾸지만 실제 값의 구조를 검증하거나 변환하지 않습니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="코드베이스 안에서 any가 허용될 수 있는 위치를 한 문장으로 정리해보세요."
+    answer="외부 라이브러리/입력 경계처럼 unavoidable한 지점에 좁게 두고, 검증 뒤 내부 타입으로 바꾸는 위치입니다."
+    explanation="any 자체보다 any가 내부 도메인 코드로 번지는 것이 더 큰 문제입니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="PR에서 `(window as any).foo = ...`를 봤을 때 어떤 리뷰 질문을 해야 할까요?"
+    answer="전역 확장이 꼭 필요한지, 타입 선언과 초기화 순서가 명확한지, 접근 전 undefined 상태를 처리하는지, 테스트에서 격리되는지 확인해야 합니다."
+    explanation="monkey patching은 런타임 전역 상태와 타입 경계를 동시에 바꾸므로 단순히 타입 에러만 지우는 수정이면 위험합니다."
+  />
+</ArticleQuiz>
