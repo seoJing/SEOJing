@@ -20,10 +20,28 @@ type TtsAnalyticsAction =
   | "ended"
   | "speed_change";
 
+type TtsBackendJobStatus = "queued" | "running" | "done" | "failed";
+
+interface TtsBackendJob {
+  id: string;
+  status: TtsBackendJobStatus;
+  audioUrl?: string;
+  error?: string;
+}
+
+interface TtsBackendJobState {
+  status: TtsBackendJobStatus;
+  jobId?: string;
+  audioUrl?: string;
+  error?: string;
+}
+
 const PLAYBACK_RATES = [1.2, 1.5, 1.8, 2.0] as const;
 const DEFAULT_PLAYBACK_RATE = 1.5;
 const STORAGE_PREFIX = "seojing_blog_audio_player_v1";
 const DESKTOP_QUERY = "(min-width: 1280px)";
+const TTS_JOB_POLL_INTERVAL_MS = 1_000;
+const TTS_JOB_POLL_LIMIT = 60;
 
 /**
  * 블로그별 TTS manifest가 있을 때만 노출되는 로컬 우선 오디오 플레이어.
@@ -39,8 +57,13 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
     DEFAULT_PLAYBACK_RATE,
   );
   const [resumeNotice, setResumeNotice] = useState<string | null>(null);
+  const [backendJobs, setBackendJobs] = useState<
+    Record<string, TtsBackendJobState>
+  >({});
+  const backendJobsRef = useRef<Record<string, TtsBackendJobState>>({});
   const wrapperRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLElement>(null);
+  const inFlightBackendJobs = useRef(new Map<string, AbortController>());
   const [isDocked, setIsDocked] = useState(false);
   const [placeholderHeight, setPlaceholderHeight] = useState<
     number | undefined
@@ -142,7 +165,7 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
   const playableArtifacts = useMemo(
     () =>
       manifest?.artifacts.filter(
-        (artifact) => artifact.status !== "failed" && artifact.audioPath,
+        (artifact) => artifact.status !== "failed" && artifact.text,
       ) ?? [],
     [manifest],
   );
@@ -245,6 +268,83 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
     [manifest, selectedArtifact, slug],
   );
 
+  const setBackendJobState = useCallback(
+    (artifactId: string, state: TtsBackendJobState) => {
+      backendJobsRef.current = {
+        ...backendJobsRef.current,
+        [artifactId]: state,
+      };
+      setBackendJobs(backendJobsRef.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!manifest || !selectedArtifact || !selectedArtifact.text) return;
+    const currentManifest = manifest;
+    const currentArtifact = selectedArtifact;
+    const artifactId = currentArtifact.id;
+    const existingState = backendJobsRef.current[artifactId];
+    if (
+      existingState?.status === "done" ||
+      existingState?.status === "failed"
+    ) {
+      return;
+    }
+    const inFlightJobs = inFlightBackendJobs.current;
+    const activeController = inFlightJobs.get(artifactId);
+    if (activeController && !activeController.signal.aborted) return;
+
+    const controller = new AbortController();
+    inFlightJobs.set(artifactId, controller);
+
+    async function createAndPollJob() {
+      try {
+        setBackendJobState(artifactId, { status: "queued" });
+        const createdJob = await createTtsJob({
+          artifact: currentArtifact,
+          manifest: currentManifest,
+          signal: controller.signal,
+        });
+        setBackendJobState(artifactId, jobToState(createdJob));
+
+        let currentJob = createdJob;
+        for (let attempt = 0; attempt < TTS_JOB_POLL_LIMIT; attempt += 1) {
+          if (controller.signal.aborted) return;
+          if (currentJob.status === "done" || currentJob.status === "failed") {
+            return;
+          }
+          await wait(TTS_JOB_POLL_INTERVAL_MS, controller.signal);
+          currentJob = await readTtsJob(createdJob.id, controller.signal);
+          setBackendJobState(artifactId, jobToState(currentJob));
+        }
+        setBackendJobState(artifactId, {
+          status: "failed",
+          jobId: createdJob.id,
+          error: "tts job timed out",
+        });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setBackendJobState(artifactId, {
+          status: "failed",
+          error: error instanceof Error ? error.message : "tts request failed",
+        });
+      } finally {
+        if (inFlightJobs.get(artifactId) === controller) {
+          inFlightJobs.delete(artifactId);
+        }
+      }
+    }
+
+    void createAndPollJob();
+    return () => {
+      controller.abort();
+      if (inFlightJobs.get(artifactId) === controller) {
+        inFlightJobs.delete(artifactId);
+      }
+    };
+  }, [manifest, selectedArtifact, setBackendJobState]);
+
   if (!manifest || playableArtifacts.length === 0 || !selectedArtifact) {
     return null;
   }
@@ -256,6 +356,10 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
   const sectionClass = isDocked
     ? "fixed bottom-5 right-6 z-40 max-h-[calc(100vh-2.5rem)] w-[min(22rem,calc(100vw-2.5rem))] overflow-y-auto rounded-3xl border border-gray-200 bg-white/95 p-4 text-sm shadow-xl backdrop-blur dark:border-gray-800 dark:bg-gray-950/95"
     : "my-8 rounded-3xl border border-gray-200 bg-white/70 p-5 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-950/60";
+
+  const selectedBackendJob = backendJobs[selectedArtifact.id];
+  const audioSrc = resolveAudioSrc(selectedArtifact, selectedBackendJob);
+  const ttsStatusMessage = ttsStatusText(selectedBackendJob, audioSrc);
 
   const player = (
     <section
@@ -274,9 +378,7 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
           </h2>
           <p className="text-xs text-gray-600 dark:text-gray-400">
             속도·구간·이어듣기는 이 브라우저에만 저장돼요.
-            {selectedArtifact.status === "pending"
-              ? " 오디오 파일이 아직 생성 중이면 재생이 지연될 수 있어요."
-              : null}
+            {ttsStatusMessage ? ` ${ttsStatusMessage}` : null}
           </p>
         </div>
 
@@ -285,13 +387,19 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
           className="w-full"
           controls
           preload="metadata"
-          src={selectedArtifact.audioPath}
+          src={audioSrc}
           onLoadedMetadata={handleLoadedMetadata}
           onTimeUpdate={handleTimeUpdate}
           onPlay={() => emitAudioEvent("play")}
           onPause={() => emitAudioEvent("pause")}
           onEnded={() => emitAudioEvent("ended")}
         />
+
+        {selectedBackendJob?.status === "failed" ? (
+          <p role="alert" className="text-xs text-red-600 dark:text-red-300">
+            오디오 생성/API 연결에 실패했어요: {selectedBackendJob.error}
+          </p>
+        ) : null}
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
@@ -375,6 +483,149 @@ export function BlogAudioPlayer({ slug }: BlogAudioPlayerProps) {
         : player}
     </div>
   );
+}
+
+function resolveAudioSrc(
+  artifact: TtsArtifact,
+  backendJob: TtsBackendJobState | undefined,
+) {
+  if (backendJob?.status === "done") {
+    if (backendJob.audioUrl) {
+      return buildTtsApiUrl(backendJob.audioUrl);
+    }
+    if (backendJob.jobId) {
+      return buildTtsApiUrl(
+        `/tts/audio/${encodeURIComponent(backendJob.jobId)}`,
+      );
+    }
+  }
+  return artifact.status === "ready" ? artifact.audioPath : undefined;
+}
+
+function ttsStatusText(
+  backendJob: TtsBackendJobState | undefined,
+  audioSrc: string | undefined,
+) {
+  if (backendJob?.status === "done" && audioSrc) {
+    return "백엔드 오디오 API로 재생 준비가 끝났어요.";
+  }
+  if (backendJob?.status === "running" || backendJob?.status === "queued") {
+    return "백엔드에서 오디오를 생성하는 중이에요.";
+  }
+  if (backendJob?.status === "failed") {
+    return "현재 오디오 API를 사용할 수 없어요.";
+  }
+  if (audioSrc) return "정적 오디오 파일로 재생해요.";
+  return "백엔드 오디오 API 연결을 준비하고 있어요.";
+}
+
+async function createTtsJob(options: {
+  artifact: TtsArtifact;
+  manifest: TtsArticleManifest;
+  signal: AbortSignal;
+}) {
+  const response = await fetch(buildTtsApiUrl("/tts/jobs"), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "idempotency-key": `${options.manifest.cacheKey}:${options.artifact.id}`,
+    },
+    body: JSON.stringify({
+      text: options.artifact.text,
+      article_id: options.manifest.slug,
+      idempotency_key: `${options.manifest.cacheKey}:${options.artifact.id}`,
+      metadata: {
+        source: "seojing-article-ui",
+        slug: options.manifest.slug,
+        artifact_id: options.artifact.id,
+        artifact_kind: options.artifact.kind,
+        section_id: options.artifact.sectionId,
+        canonical_url: options.manifest.canonicalUrl,
+      },
+    }),
+    signal: options.signal,
+  });
+  const body = (await response.json().catch(() => null)) as {
+    job?: TtsBackendJob;
+    error?: { message?: string };
+  } | null;
+  if (!response.ok || !body?.job) {
+    throw new Error(
+      body?.error?.message ?? `tts job create failed: ${response.status}`,
+    );
+  }
+  return body.job;
+}
+
+async function readTtsJob(jobId: string, signal: AbortSignal) {
+  const response = await fetch(buildTtsApiUrl(`/tts/jobs/${jobId}`), {
+    signal,
+  });
+  const body = (await response.json().catch(() => null)) as {
+    job?: TtsBackendJob;
+    error?: { message?: string };
+  } | null;
+  if (!response.ok || !body?.job) {
+    throw new Error(
+      body?.error?.message ?? `tts job read failed: ${response.status}`,
+    );
+  }
+  return body.job;
+}
+
+function jobToState(job: TtsBackendJob): TtsBackendJobState {
+  return {
+    status: job.status,
+    jobId: job.id,
+    audioUrl: job.audioUrl,
+    error: job.error,
+  };
+}
+
+function wait(ms: number, signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    const timeout = window.setTimeout(resolve, ms);
+    signal.addEventListener(
+      "abort",
+      () => {
+        window.clearTimeout(timeout);
+        reject(new DOMException("aborted", "AbortError"));
+      },
+      { once: true },
+    );
+  });
+}
+
+function buildTtsApiUrl(path: string) {
+  if (/^https?:\/\//.test(path)) return path;
+  return new URL(path, readTtsApiOrigin()).toString();
+}
+
+function readTtsApiOrigin() {
+  const env = readRuntimeEnv();
+  const configuredOrigin =
+    env.VITE_SEOJING_BACKEND_TTS_API_ORIGIN?.trim() ||
+    env.VITE_SEOJING_BACKEND_API_ORIGIN?.trim() ||
+    env.SEOJING_BACKEND_TTS_API_ORIGIN?.trim() ||
+    env.SEOJING_BACKEND_API_ORIGIN?.trim();
+  if (configuredOrigin) return configuredOrigin;
+  if (
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1"].includes(window.location.hostname)
+  ) {
+    return "http://127.0.0.1:4000";
+  }
+  return "https://api.seojing.com";
+}
+
+function readRuntimeEnv(): Record<string, string | undefined> {
+  const processEnv = typeof process === "undefined" ? undefined : process.env;
+  const importMetaEnv = (
+    import.meta as unknown as {
+      env?: Record<string, string | undefined>;
+    }
+  ).env;
+  return { ...importMetaEnv, ...processEnv };
 }
 
 function buildManifestPath(slug: string) {

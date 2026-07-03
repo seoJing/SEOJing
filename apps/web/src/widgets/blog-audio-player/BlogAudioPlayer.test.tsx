@@ -18,6 +18,11 @@ function stubDesktopMedia(matches: boolean) {
   );
 }
 
+const readyJob = {
+  id: "TTS-ready",
+  status: "done",
+};
+
 const manifest = {
   version: 1,
   slug: "study/backend/day1",
@@ -86,13 +91,28 @@ describe("BlogAudioPlayer", () => {
     stubDesktopMedia(true);
     vi.stubGlobal(
       "fetch",
-      vi.fn(
-        async () =>
-          new Response(JSON.stringify(manifest), {
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.endsWith("/tts-artifacts/study/backend/day1/manifest.json")) {
+          return new Response(JSON.stringify(manifest), {
             status: 200,
             headers: { "content-type": "application/json" },
-          }),
-      ),
+          });
+        }
+        if (url === "http://127.0.0.1:4000/tts/jobs") {
+          return new Response(JSON.stringify({ ok: true, job: readyJob }), {
+            status: 202,
+            headers: { "content-type": "application/json" },
+          });
+        }
+        if (url === "http://127.0.0.1:4000/tts/jobs/TTS-ready") {
+          return new Response(JSON.stringify({ ok: true, job: readyJob }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+        return new Response("not found", { status: 404 });
+      }),
     );
   });
 
@@ -117,6 +137,100 @@ describe("BlogAudioPlayer", () => {
       "true",
     );
     expect(screen.getByRole("button", { name: "2.0x" })).toBeInTheDocument();
+  });
+
+  it("creates a backend TTS job and uses the backend audio API URL", async () => {
+    render(<BlogAudioPlayer slug="study/backend/day1" />);
+
+    await screen.findByLabelText("블로그 오디오 플레이어");
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "http://127.0.0.1:4000/tts/jobs",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            "content-type": "application/json",
+            "idempotency-key":
+              "tts:v1:study/backend/day1:study__backend__day1__summary-2m",
+          }),
+          body: expect.stringContaining('"article_id":"study/backend/day1"'),
+        }),
+      ),
+    );
+
+    await waitFor(() =>
+      expect(document.querySelector("audio")).toHaveAttribute(
+        "src",
+        "http://127.0.0.1:4000/tts/audio/TTS-ready",
+      ),
+    );
+    expect(
+      screen.getByText(/백엔드 오디오 API로 재생 준비/),
+    ).toBeInTheDocument();
+  });
+
+  it("uses an absolute backend audio URL when the job returns one", async () => {
+    vi.mocked(fetch).mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/tts-artifacts/study/backend/day1/manifest.json")) {
+        return new Response(JSON.stringify(manifest), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      if (url === "http://127.0.0.1:4000/tts/jobs") {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            job: {
+              id: "TTS-absolute",
+              status: "done",
+              audioUrl: "https://api.seojing.com/tts/audio/TTS-absolute",
+            },
+          }),
+          { status: 202, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response("not found", { status: 404 });
+    });
+
+    render(<BlogAudioPlayer slug="study/backend/day1" />);
+
+    await screen.findByLabelText("블로그 오디오 플레이어");
+    await waitFor(() =>
+      expect(document.querySelector("audio")).toHaveAttribute(
+        "src",
+        "https://api.seojing.com/tts/audio/TTS-absolute",
+      ),
+    );
+  });
+
+  it("shows an error state when backend TTS creation fails", async () => {
+    vi.mocked(fetch).mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/tts-artifacts/study/backend/day1/manifest.json")) {
+        return new Response(JSON.stringify(manifest), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      if (url === "http://127.0.0.1:4000/tts/jobs") {
+        return new Response(
+          JSON.stringify({ error: { message: "worker offline" } }),
+          { status: 503, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response("not found", { status: 404 });
+    });
+
+    render(<BlogAudioPlayer slug="study/backend/day1" />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "worker offline",
+    );
+    expect(
+      screen.getByText(/현재 오디오 API를 사용할 수 없어요/),
+    ).toBeInTheDocument();
   });
 
   it("switches modes, jumps to section headings, and remembers the selected artifact", async () => {
