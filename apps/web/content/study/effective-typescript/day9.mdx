@@ -1,0 +1,187 @@
+---
+title: "이펙티브 타입스크립트 2판 Day 9: 제네릭은 관계를 보존할 때만 강하다"
+description: "Item 49–54 범위를 바탕으로 type coverage, 제네릭, 조건부 타입, 템플릿 리터럴 타입을 코드 리뷰에서 어떻게 판단할지 정리합니다."
+date: "2026-07-05"
+tags:
+  [
+    "TypeScript",
+    "Effective TypeScript",
+    "프론트엔드",
+    "Generic",
+    "Conditional Types",
+    "Template Literal Types",
+  ]
+category: "study"
+series: "effective-typescript"
+cover:
+  src: "/images/content/study/effective-typescript/day9/generic-template-boundary.svg"
+  alt: "외부 경계, 제네릭, 조건부 타입, 템플릿 리터럴 타입의 역할과 과한 타입 계산의 위험을 보여주는 다이어그램"
+  caption: "작성 SVG · 제네릭과 조건부 타입을 관계 보존 도구로 보기"
+  kind: "diagram"
+---
+
+> 범위: Effective TypeScript 2판 Item 49–54<br />
+> 오늘의 질문: “제네릭을 넣으면 타입 설계가 항상 더 좋아질까?”
+
+## 먼저 보는 코드
+
+```ts
+type ApiResponse<T> = {
+  ok: boolean;
+  data?: T;
+  error?: string;
+};
+
+async function getJson<T>(url: string): Promise<ApiResponse<T>> {
+  const response = await fetch(url);
+  return response.json();
+}
+```
+
+겉으로는 좋아 보입니다. 호출자는 `getJson<User>("/api/user")`처럼 쓸 수 있고, 결과도 `User`로 보입니다. 하지만 여기에는 질문이 남습니다.
+
+> 런타임 JSON이 정말 `User`인지 누가 확인했을까?
+
+Item 49–54 구간을 코드 리뷰 관점으로 읽으면 핵심은 “복잡한 타입을 만들자”가 아닙니다. **타입이 실제 코드의 관계를 보존하는지, 아니면 검증되지 않은 믿음을 예쁘게 포장하는지**를 보는 일입니다.
+
+![제네릭과 조건부 타입의 경계](/images/content/study/effective-typescript/day9/generic-template-boundary.svg)
+
+## type coverage는 숫자보다 경계가 중요하다
+
+`type coverage`를 올리는 일은 중요합니다. `any`가 넓게 퍼진 코드베이스는 타입스크립트의 질문을 잃습니다. 하지만 coverage 수치만 보고 안전하다고 말하기도 어렵습니다.
+
+```ts
+const user = (await response.json()) as User;
+```
+
+이 한 줄은 coverage를 좋아 보이게 만들 수 있습니다. 하지만 외부 입력 검증이 없다면 런타임 안전성은 올라가지 않습니다. 리뷰에서는 `any`가 줄었는지보다 “검증되지 않은 경계가 타입 단언으로만 닫혔는지”를 봐야 합니다.
+
+좋은 coverage 개선은 보통 이런 모양입니다.
+
+```ts
+const value: unknown = await response.json();
+
+if (!isUser(value)) {
+  throw new Error("Invalid user payload");
+}
+
+renderUser(value);
+```
+
+타입이 늘어난 것이 아니라, **검증 위치가 생기고 내부 타입이 좁아진 것**이 중요합니다.
+
+## 제네릭은 “모든 타입을 받을 수 있음”이 아니다
+
+제네릭의 장점은 타입을 아무거나 받는 데 있지 않습니다. 입력과 출력의 관계를 보존하는 데 있습니다.
+
+```ts
+function first<T>(items: T[]): T | undefined {
+  return items[0];
+}
+```
+
+이 함수는 `string[]`을 넣으면 `string | undefined`, `User[]`를 넣으면 `User | undefined`를 돌려줍니다. `T`가 단순히 멋있어서가 아니라, 호출자가 준 원소 타입과 반환 타입이 연결되어 있기 때문에 의미가 있습니다.
+
+반대로 이런 제네릭은 의심해야 합니다.
+
+```ts
+function parse<T>(text: string): T {
+  return JSON.parse(text);
+}
+```
+
+호출자가 `parse<User>(text)`라고 적으면 타입은 `User`가 되지만, 실제 검증은 없습니다. 이 경우 제네릭은 관계를 보존한 것이 아니라 호출자의 희망을 받아 적은 것에 가깝습니다.
+
+코드 리뷰에서는 이렇게 묻습니다.
+
+- `T`가 입력과 출력 사이의 실제 관계를 표현하는가?
+- `T`가 런타임 검증 없이 외부 데이터를 믿게 만드는가?
+- 제네릭을 빼고 더 구체적인 타입을 쓰는 편이 더 명확하지 않은가?
+
+## 조건부 타입은 API 규칙을 담을 때 강하다
+
+조건부 타입은 타입 안에서 분기합니다.
+
+```ts
+type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
+```
+
+이런 타입은 유틸리티로 가치가 있습니다. Promise로 감싸진 타입이면 내부 타입을 꺼내고, 아니면 그대로 둔다는 규칙이 명확하기 때문입니다.
+
+하지만 조건부 타입이 길어질수록 리뷰 비용도 늘어납니다. 타입 에러가 났을 때 팀원이 “어느 분기에서 왜 이 타입이 나왔는지” 설명할 수 있어야 합니다. 구현을 간단히 만드는 타입이면 좋고, 구현보다 타입 퍼즐이 어려워지면 위험 신호입니다.
+
+## 템플릿 리터럴 타입은 문자열 규칙을 좁힐 때 쓴다
+
+프론트엔드 코드에는 문자열 규약이 많습니다. 라우트, 이벤트 이름, cache key, analytics key가 대표적입니다.
+
+```ts
+type UserRoute = `/users/${string}`;
+type MetricEvent = `article:${"view" | "click" | "share"}`;
+```
+
+이런 타입은 오타를 줄이고 규칙을 코드에 남깁니다.
+
+```ts
+function track(event: MetricEvent) {
+  // ...
+}
+
+track("article:view");
+track("article:delete"); // 타입 에러
+```
+
+다만 템플릿 리터럴 타입도 런타임 검증을 대신하지 않습니다. URL 파라미터나 서버 응답처럼 외부에서 온 문자열은 여전히 검증이 필요합니다. 타입은 개발 중 규칙을 좁혀 주고, 런타임 경계는 별도로 닫아야 합니다.
+
+## 프론트엔드 코드 리뷰 체크리스트
+
+| 코드 변화                       | 좋은 신호                                      | 위험 신호                               |
+| ------------------------------- | ---------------------------------------------- | --------------------------------------- |
+| `any` 제거                      | `unknown` + 검증 뒤 내부 타입으로 좁힘         | `as SomeType`만 늘어남                  |
+| 제네릭 추가                     | 입력/출력/콜백 사이 관계가 보존됨              | 호출자가 원하는 타입을 임의로 주입함    |
+| 조건부 타입 추가                | 반복되는 타입 규칙을 짧고 설명 가능하게 표현함 | 분기가 길고 에러 메시지를 해석하기 힘듦 |
+| 템플릿 리터럴 타입으로 key 제한 | route/event/cache key 규칙이 드러남            | 외부 문자열 검증까지 해결했다고 착각함  |
+| type coverage 수치 개선         | 검증 경계와 테스트가 같이 생김                 | 숫자만 좋아지고 런타임 위험은 그대로    |
+
+이번 범위의 결론은 “타입스크립트 고급 기능을 많이 쓰자”가 아닙니다. 제네릭, 조건부 타입, 템플릿 리터럴 타입은 모두 관계와 규칙을 표현하는 도구입니다. 관계가 없다면 제네릭은 장식이고, 검증이 없다면 타입 단언은 약속일 뿐입니다.
+
+## Day 9 타입 설계 점검
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="다음 제네릭 함수의 가장 큰 문제는 무엇일까요?"
+    code={"function parse<T>(text: string): T {\n  return JSON.parse(text);\n}"}
+    choices={[
+      "제네릭 함수는 JSON을 파싱할 수 없다",
+      "T가 입력과 실제 검증 결과의 관계를 보존하지 않고 호출자의 희망 타입만 받아들인다",
+      "반환 타입에는 Promise가 반드시 있어야 한다",
+      "JSON.parse는 항상 unknown을 반환하므로 컴파일되지 않는다",
+    ]}
+    answer={1}
+    explanation="호출자가 `parse<User>`라고 쓰면 타입은 User가 되지만 런타임 검증은 없습니다. 제네릭이 관계를 보존하지 못하고 단언처럼 쓰인 사례입니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="템플릿 리터럴 타입이 가장 잘 어울리는 상황은 무엇일까요?"
+    choices={[
+      "서버에서 온 임의 JSON을 검증 없이 신뢰할 때",
+      "라우트나 이벤트 이름처럼 반복되는 문자열 규칙을 좁힐 때",
+      "모든 타입 에러를 없애고 싶을 때",
+      "런타임 문자열 값을 자동으로 변환하고 싶을 때",
+    ]}
+    answer={1}
+    explanation="템플릿 리터럴 타입은 개발 중 문자열 규칙을 타입으로 표현하는 데 강합니다. 외부 값의 런타임 검증은 별도입니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="좋은 제네릭인지 판단하는 핵심 질문을 한 문장으로 적어보세요."
+    answer="이 타입 매개변수가 입력, 출력, 콜백 사이의 실제 관계를 보존하는가?"
+    explanation="관계가 없으면 제네릭은 호출자가 원하는 타입을 주입하는 장식이 되기 쉽습니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="type coverage가 올라간 PR을 리뷰할 때 수치 외에 무엇을 확인해야 할까요?"
+    answer="any가 단순히 as 단언으로 바뀐 것인지, unknown 경계와 런타임 검증이 생겼는지, 내부 도메인 타입이 실제로 좁아졌는지 확인해야 합니다."
+    explanation="coverage는 좋은 신호일 수 있지만 안전성의 증거는 아닙니다. 외부 입력 경계와 검증 루틴이 같이 생겼는지가 더 중요합니다."
+  />
+</ArticleQuiz>

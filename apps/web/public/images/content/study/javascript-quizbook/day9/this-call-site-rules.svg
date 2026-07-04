@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="640" viewBox="0 0 1120 640" role="img" aria-labelledby="title desc">
+  <title id="title">this 바인딩 호출 지점 결정 흐름</title>
+  <desc id="desc">함수를 어디에 저장했는지가 아니라 어떻게 호출했는지에 따라 this가 결정되는 과정을 보여주는 다이어그램</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#eef2ff"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#334155" flood-opacity="0.16"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#475569"/>
+    </marker>
+    <style>
+      .label{font:700 28px system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;fill:#0f172a}
+      .body{font:500 21px system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;fill:#334155}
+      .code{font:600 20px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;fill:#1e293b}
+      .small{font:500 18px system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;fill:#64748b}
+      .box{fill:#fff;stroke:#cbd5e1;stroke-width:2;rx:24;filter:url(#shadow)}
+      .accent{fill:#dbeafe;stroke:#60a5fa;stroke-width:2;rx:20}
+      .warn{fill:#fff7ed;stroke:#fb923c;stroke-width:2;rx:20}
+      .ok{fill:#ecfdf5;stroke:#34d399;stroke-width:2;rx:20}
+      .arrow{stroke:#475569;stroke-width:3;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1120" height="640" fill="url(#bg)"/>
+  <text x="64" y="70" class="label">this는 “정의된 곳”보다 “호출된 모양”을 먼저 본다</text>
+  <text x="64" y="110" class="body">코드 리뷰에서는 함수 값이 이동한 뒤 호출 지점이 바뀌었는지를 확인한다.</text>
+
+  <rect x="70" y="165" width="250" height="130" class="box"/>
+  <text x="96" y="210" class="code">user.say()</text>
+  <text x="96" y="248" class="body">메서드 호출</text>
+  <text x="96" y="276" class="small">this → user</text>
+
+  <rect x="435" y="165" width="250" height="130" class="warn"/>
+  <text x="462" y="210" class="code">const f = user.say</text>
+  <text x="462" y="248" class="body">분리된 함수</text>
+  <text x="462" y="276" class="small">this 연결이 사라짐</text>
+
+  <rect x="800" y="165" width="250" height="130" class="accent"/>
+  <text x="827" y="210" class="code">button.onclick = f</text>
+  <text x="827" y="248" class="body">새 호출자가 생김</text>
+  <text x="827" y="276" class="small">this → button 또는 undefined</text>
+
+  <path d="M325 230 H425" class="arrow"/>
+  <path d="M690 230 H790" class="arrow"/>
+
+  <rect x="160" y="380" width="350" height="130" class="ok"/>
+  <text x="190" y="425" class="code">user.say.bind(user)</text>
+  <text x="190" y="464" class="body">의도적으로 고정</text>
+  <text x="190" y="492" class="small">콜백으로 넘겨도 this 보존</text>
+
+  <rect x="610" y="380" width="350" height="130" class="ok"/>
+  <text x="640" y="425" class="code">() =&gt; this.say()</text>
+  <text x="640" y="464" class="body">바깥 this를 캡처</text>
+  <text x="640" y="492" class="small">클래스/컴포넌트 콜백에서 의도 확인</text>
+
+  <path d="M560 300 C520 345 455 360 390 374" class="arrow"/>
+  <path d="M600 300 C650 345 720 360 785 374" class="arrow"/>
+
+  <text x="70" y="585" class="small">리뷰 질문: “이 함수가 호출될 때 왼쪽의 객체가 남아 있는가, 아니면 값만 빠져나갔는가?”</text>
+</svg>

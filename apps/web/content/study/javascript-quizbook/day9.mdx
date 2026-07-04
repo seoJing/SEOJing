@@ -1,0 +1,185 @@
+---
+title: "자바스크립트 퀴즈북 리마인드 Day 9: this는 호출한 쪽이 정한다"
+description: "this 바인딩을 정의 위치가 아니라 호출 형태, 메서드 분리, arrow function, bind 기준으로 읽는 방법을 코드 리뷰 관점에서 정리합니다."
+date: "2026-07-05"
+tags:
+  [
+    "JavaScript",
+    "프론트엔드",
+    "자바스크립트 퀴즈북",
+    "this",
+    "Callback",
+    "Class",
+  ]
+category: "study"
+series: "javascript-quizbook"
+cover:
+  src: "/images/content/study/javascript-quizbook/day9/this-call-site-rules.svg"
+  alt: "메서드 호출, 분리된 함수, 이벤트 콜백, bind와 arrow function의 this 차이를 보여주는 다이어그램"
+  caption: "작성 SVG · this를 함수 정의 위치가 아니라 호출 지점으로 추적하기"
+  kind: "diagram"
+---
+
+> 오늘의 질문: “객체 안에 있던 메서드를 콜백으로 넘기면 `this`도 같이 따라갈까?”
+
+## 먼저 맞혀보기
+
+```js
+const user = {
+  name: "Jing",
+  sayName() {
+    return this.name;
+  },
+};
+
+const say = user.sayName;
+
+console.log(user.sayName());
+console.log(say());
+```
+
+첫 번째는 `"Jing"`입니다. 두 번째는 strict mode 기준으로 `TypeError`가 나거나, 환경에 따라 전역 객체를 보면서 `undefined`처럼 보일 수 있습니다. 같은 함수처럼 보여도 호출 형태가 달라졌기 때문입니다.
+
+`this`는 “함수가 어디에 적혀 있었는가”보다 **함수가 호출될 때 왼쪽에 어떤 객체가 남아 있는가**를 먼저 봅니다.
+
+![this 호출 지점 결정 흐름](/images/content/study/javascript-quizbook/day9/this-call-site-rules.svg)
+
+## 틀리기 쉬운 직감: 메서드로 만들면 this가 고정된다
+
+객체 안에 함수를 넣으면 `this`가 그 객체에 영구히 묶인다고 생각하기 쉽습니다. 하지만 자바스크립트에서 함수는 값입니다. 값을 변수에 담거나 콜백으로 넘기는 순간, 원래 객체와의 연결은 자동으로 따라가지 않습니다.
+
+```js
+const profile = {
+  name: "Jing",
+  print() {
+    console.log(this.name);
+  },
+};
+
+setTimeout(profile.print, 0); // 의도한 this가 아니다
+```
+
+이 코드는 “나중에 `profile.print()`를 호출한다”가 아닙니다. `profile.print`라는 함수 값을 꺼내서 timer에게 넘긴 것입니다. timer가 나중에 그 함수를 어떻게 호출하는지는 `profile` 객체와 별개입니다.
+
+## 리뷰할 때 보는 네 가지 호출 모양
+
+| 호출 모양                     | this 판단                                        | 리뷰 질문                          |
+| ----------------------------- | ------------------------------------------------ | ---------------------------------- |
+| `obj.method()`                | `this`는 보통 `obj`                              | 왼쪽 객체가 호출 순간에 남아 있나? |
+| `const fn = obj.method; fn()` | 메서드 연결이 사라짐                             | 값만 분리한 뒤 호출하지 않았나?    |
+| `fn.call(obj)` / `bind(obj)`  | 명시적으로 `this`를 지정하거나 고정              | 의도한 객체를 정말 고정해야 하나?  |
+| `() => this.method()`         | arrow가 자기 `this`를 만들지 않고 바깥 값을 캡처 | 바깥 `this`가 안전한 위치인가?     |
+
+`this` 문제는 대부분 문법 암기보다 “함수 값이 이동했는가?”를 추적하면 잡힙니다.
+
+## 클래스 메서드도 자동으로 안전하지 않다
+
+프론트엔드 코드에서 자주 보는 실수는 클래스나 객체 메서드를 이벤트 핸들러로 바로 넘기는 경우입니다.
+
+```js
+class Counter {
+  count = 0;
+
+  increment() {
+    this.count += 1;
+  }
+}
+
+const counter = new Counter();
+button.addEventListener("click", counter.increment);
+```
+
+`increment`는 `Counter` 안에 정의되어 있지만, 이벤트 리스너로 넘어갈 때는 함수 값만 전달됩니다. 그래서 `this`가 `counter`라고 보장되지 않습니다.
+
+의도가 “항상 counter를 증가시킨다”라면 고정해야 합니다.
+
+```js
+button.addEventListener("click", counter.increment.bind(counter));
+```
+
+또는 클래스 필드 arrow function처럼 처음부터 바깥 인스턴스를 캡처하는 방식도 있습니다.
+
+```js
+class Counter {
+  count = 0;
+
+  increment = () => {
+    this.count += 1;
+  };
+}
+```
+
+둘 중 무엇이 낫다는 규칙보다, 리뷰에서는 “이 함수가 어디로 전달되고, 호출자가 누구인가?”를 먼저 봐야 합니다.
+
+## arrow function은 만능 해결책이 아니다
+
+arrow function은 자기만의 `this`를 만들지 않습니다. 이 말은 메서드로 쓰면 오히려 의도가 틀어질 수 있다는 뜻이기도 합니다.
+
+```js
+const user = {
+  name: "Jing",
+  sayName: () => this.name,
+};
+```
+
+여기서 `this`는 `user`가 아닙니다. 객체 리터럴이 새 `this`를 만들어 주지 않기 때문입니다. arrow function은 “호출 지점의 this를 무시하고 바깥 this를 쓰겠다”는 선택에 가깝습니다.
+
+그래서 리뷰 기준은 단순합니다.
+
+- 객체의 동작을 메서드로 표현해야 하면 일반 메서드가 자연스럽다.
+- 콜백으로 넘겨도 인스턴스/상위 스코프를 보존해야 하면 arrow나 `bind`를 고려한다.
+- `this`를 쓰지 않아도 되면 아예 인자를 명시적으로 받는 함수가 더 읽기 쉽다.
+
+## 프론트엔드 코드 리뷰 체크리스트
+
+- 메서드를 변수에 담거나 props/callback으로 넘기면서 `this` 연결이 끊기지 않았는가?
+- 이벤트 핸들러, timer, Promise callback 안에서 `this`가 실제 호출자를 기준으로 안전한가?
+- `bind`가 렌더마다 새 함수를 만들며 불필요한 리렌더나 removeEventListener 실패를 만들지 않는가?
+- arrow function을 객체 메서드처럼 쓰면서 `this`가 객체라고 착각하지 않았는가?
+- `this` 대신 명시적 인자나 closure가 더 단순한 설계는 아닌가?
+
+`this`는 특별한 마법이라기보다 호출 규칙입니다. 코드 리뷰에서는 “이 함수가 정의된 자리”보다 “나중에 누가 어떤 모양으로 부르는지”를 따라가면 훨씬 덜 헷갈립니다.
+
+## Day 9 복습 퀴즈
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="다음 코드에서 strict mode 기준으로 두 번째 호출이 위험한 이유는 무엇일까요?"
+    code={"const say = user.sayName;\nsay();"}
+    choices={[
+      "sayName 함수가 사라졌기 때문에",
+      "메서드 호출 형태가 사라져 this가 user로 묶이지 않기 때문에",
+      "const로 선언한 함수는 호출할 수 없기 때문에",
+      "객체 메서드는 항상 한 번만 호출할 수 있기 때문에",
+    ]}
+    answer={1}
+    explanation="함수 값을 변수에 담으면 `user.sayName()`의 왼쪽 객체 정보가 사라집니다. 호출 순간의 형태가 this를 결정합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="객체 리터럴의 메서드로 가장 자연스러운 형태는 무엇일까요?"
+    choices={[
+      "sayName: () => this.name",
+      "sayName() { return this.name; }",
+      "sayName = function() { return this.name; }",
+      "this.sayName = () => name",
+    ]}
+    answer={1}
+    explanation="일반 메서드 축약 문법은 `obj.sayName()` 호출에서 this를 obj로 받을 수 있습니다. arrow는 바깥 this를 캡처하므로 객체 자신을 가리키지 않습니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="메서드를 콜백으로 넘기는 코드를 리뷰할 때 먼저 확인할 질문을 한 문장으로 적어보세요."
+    answer="그 함수가 실제로 호출될 때 원래 객체가 왼쪽에 남아 있는가, 아니면 함수 값만 분리되어 호출되는가?"
+    explanation="this 버그는 대부분 함수 값이 이동하면서 호출 형태가 바뀐 지점에서 생깁니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question={
+      '`button.addEventListener("click", counter.increment.bind(counter))`를 봤을 때 좋은 리뷰 질문은 무엇일까요?'
+    }
+    answer="counter를 this로 고정하는 의도는 맞는지, 이 바인딩이 반복 렌더마다 새 함수로 만들어져 removeEventListener나 성능 문제가 생기지 않는지 확인해야 합니다."
+    explanation="bind는 this를 고정하는 해법이지만 함수 identity도 바꿉니다. 프론트엔드에서는 등록/해제와 렌더 비용까지 같이 봐야 합니다."
+  />
+</ArticleQuiz>
