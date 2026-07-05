@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 460" role="img" aria-labelledby="title desc">
+  <title id="title">함수를 값과 경계로 읽는 흐름</title>
+  <desc id="desc">입력, 순수 계산, 부수 효과, 비동기 반환, 호출자가 보는 계약을 나누어 보여주는 다이어그램</desc>
+  <rect width="920" height="460" rx="28" fill="#fbf7ef"/>
+  <rect x="42" y="42" width="836" height="376" rx="22" fill="#fffdf8" stroke="#d9c9ad" stroke-width="2"/>
+  <text x="70" y="92" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif" font-size="26" font-weight="700" fill="#2f2418">Function as architecture</text>
+  <text x="70" y="124" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif" font-size="15" fill="#6f604c">함수는 문법 단위가 아니라 값, 계약, 부수 효과 경계다.</text>
+
+  <g font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif">
+    <rect x="70" y="178" width="150" height="92" rx="18" fill="#f5ead7" stroke="#c6aa7d"/>
+    <text x="145" y="216" text-anchor="middle" font-size="18" font-weight="700" fill="#3b2d1f">Input</text>
+    <text x="145" y="242" text-anchor="middle" font-size="13" fill="#725f49">명시적 인자</text>
+
+    <path d="M230 224 H310" stroke="#9c7f56" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <rect x="320" y="162" width="180" height="124" rx="20" fill="#eef6ed" stroke="#92b884"/>
+    <text x="410" y="205" text-anchor="middle" font-size="18" font-weight="700" fill="#223322">Pure core</text>
+    <text x="410" y="232" text-anchor="middle" font-size="13" fill="#4f6a48">같은 입력 → 같은 출력</text>
+    <text x="410" y="253" text-anchor="middle" font-size="13" fill="#4f6a48">테스트하기 쉬움</text>
+
+    <path d="M510 224 H590" stroke="#9c7f56" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <rect x="600" y="178" width="150" height="92" rx="18" fill="#e9f1fb" stroke="#88a9cf"/>
+    <text x="675" y="216" text-anchor="middle" font-size="18" font-weight="700" fill="#1e3347">Output</text>
+    <text x="675" y="242" text-anchor="middle" font-size="13" fill="#4d657e">반환값/Promise</text>
+
+    <rect x="284" y="318" width="252" height="54" rx="16" fill="#fff4e8" stroke="#d5a66c" stroke-dasharray="6 5"/>
+    <text x="410" y="351" text-anchor="middle" font-size="15" font-weight="700" fill="#6d451d">Side-effect shell: fetch, log, DOM, storage</text>
+
+    <path d="M410 292 V316" stroke="#d5a66c" stroke-width="3" marker-end="url(#arrowWarm)"/>
+    <text x="608" y="344" font-size="14" fill="#6f604c">리뷰 질문: 부수 효과가 core 안으로 새어 들어왔나?</text>
+  </g>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#9c7f56"/>
+    </marker>
+    <marker id="arrowWarm" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#d5a66c"/>
+    </marker>
+  </defs>
+</svg>

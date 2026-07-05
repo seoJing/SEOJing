@@ -1,0 +1,214 @@
+---
+title: "이펙티브 타입스크립트 2판 Day 10: 타입도 테스트하고 빠지는 분기는 막는다"
+description: "Item 55–59 범위를 바탕으로 type test, 타입 표시, 꼬리 재귀 한계, 코드 생성, never exhaustiveness를 코드 리뷰에서 다루는 방법을 정리합니다."
+date: "2026-07-06"
+tags:
+  [
+    "TypeScript",
+    "Effective TypeScript",
+    "프론트엔드",
+    "Type Test",
+    "never",
+    "Codegen",
+  ]
+category: "study"
+series: "effective-typescript"
+cover:
+  src: "/images/content/study/effective-typescript/day10/type-test-exhaustive-flow.svg"
+  alt: "타입 계약, 타입 테스트, never exhaustiveness, 코드 생성 경계를 보여주는 다이어그램"
+  caption: "작성 SVG · 타입 설계 변경도 회귀 테스트와 누락 분기 차단이 필요하다"
+  kind: "diagram"
+---
+
+> 범위: Effective TypeScript 2판 Item 55–59<br />
+> 오늘의 질문: “런타임 테스트가 통과했으면 타입 설계도 안전하다고 봐도 될까?”
+
+## 먼저 보는 코드
+
+```ts
+type Result =
+  | { kind: "success"; value: string }
+  | { kind: "error"; message: string };
+
+function render(result: Result) {
+  if (result.kind === "success") {
+    return result.value;
+  }
+
+  return "다시 시도해주세요";
+}
+```
+
+지금은 괜찮아 보입니다. 그런데 나중에 `loading` 상태가 추가되면 어떨까요?
+
+```ts
+type Result =
+  | { kind: "success"; value: string }
+  | { kind: "error"; message: string }
+  | { kind: "loading" };
+```
+
+런타임 테스트가 success/error만 보고 있었다면 `loading` 누락을 놓칠 수 있습니다. 타입스크립트는 이런 변경을 알려줄 수 있지만, 코드가 그 신호를 받도록 작성되어 있어야 합니다.
+
+![타입 테스트와 누락 분기 차단 흐름](/images/content/study/effective-typescript/day10/type-test-exhaustive-flow.svg)
+
+## 타입도 테스트 대상이다
+
+런타임 테스트는 값의 동작을 확인합니다. 하지만 타입 설계의 의도는 값으로만 드러나지 않을 때가 있습니다.
+
+예를 들어 public API 타입을 바꿀 때 이런 것을 확인하고 싶습니다.
+
+- 특정 prop 조합은 허용되어야 한다.
+- 서로 배타적인 prop 조합은 막혀야 한다.
+- 반환 타입이 넓어지지 않아야 한다.
+- 잘못된 호출은 계속 컴파일 에러여야 한다.
+
+이때는 타입 테스트가 필요합니다.
+
+```ts
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
+    ? true
+    : false;
+
+type Expect<T extends true> = T;
+
+type _UserIdIsString = Expect<Equal<User["id"], string>>;
+```
+
+실무에서는 `tsd`, `expect-type`, `vitest`의 타입 테스트 패턴처럼 도구를 쓸 수 있습니다. 중요한 점은 도구 이름이 아니라 **타입 관계가 깨졌을 때 PR에서 실패 신호가 나야 한다**는 것입니다.
+
+## @ts-expect-error는 의도한 실패를 고정한다
+
+타입 테스트는 “이 타입이 맞다”뿐 아니라 “이 호출은 실패해야 한다”도 남깁니다.
+
+```ts
+createButton({ label: "저장", href: "/save" });
+
+// @ts-expect-error href와 onClick은 동시에 받을 수 없다.
+createButton({ label: "저장", href: "/save", onClick: () => {} });
+```
+
+`@ts-ignore`와 달리 `@ts-expect-error`는 에러가 사라지면 오히려 실패합니다. 그래서 타입 설계가 느슨해졌을 때 알아차리기 쉽습니다.
+
+리뷰에서는 이런 질문을 합니다.
+
+> 이 타입 변경이 허용해야 할 예시와 막아야 할 예시를 둘 다 남겼나?
+
+## 타입 표시가 어려우면 API도 어려울 수 있다
+
+복잡한 조건부 타입이나 재귀 타입을 쓰면 IDE가 보여주는 타입이 길어질 수 있습니다. 타입 표시가 길다고 무조건 나쁜 것은 아니지만, 팀원이 에러 메시지를 읽고 수정 방향을 알 수 없다면 비용이 큽니다.
+
+```ts
+type DeepReadonly<T> = {
+  readonly [K in keyof T]: DeepReadonly<T[K]>;
+};
+```
+
+이런 유틸리티는 쓸모가 있지만, 깊은 객체·순환 구조·라이브러리 타입과 만나면 에러가 어려워질 수 있습니다. Item 55–59 구간의 감각은 “타입 시스템으로 어디까지 표현할까?”를 묻습니다.
+
+타입이 구현보다 어렵다면 한 번 멈춰야 합니다.
+
+- public API에서 정말 필요한 제약인가?
+- 더 단순한 union이나 명시적 overload로 충분하지 않은가?
+- 타입 테스트로 의도를 설명할 수 있는가?
+- 에러 메시지가 소비자에게 읽히는가?
+
+## never로 빠지는 분기를 막는다
+
+discriminated union을 쓸 때는 마지막 분기가 중요합니다.
+
+```ts
+function assertNever(value: never): never {
+  throw new Error(`Unexpected value: ${JSON.stringify(value)}`);
+}
+
+function render(result: Result) {
+  switch (result.kind) {
+    case "success":
+      return result.value;
+    case "error":
+      return result.message;
+    default:
+      return assertNever(result);
+  }
+}
+```
+
+`Result`에 `loading`이 추가되면 `default`의 `result`는 더 이상 `never`가 아닙니다. 컴파일러가 누락된 분기를 알려줍니다.
+
+프론트엔드에서는 상태 모델이 계속 바뀝니다. `idle`, `loading`, `success`, `empty`, `error`, `refreshing` 같은 상태가 늘어납니다. `never` exhaustiveness는 “새 상태를 추가했는데 화면 분기를 안 고친” 실수를 줄여 줍니다.
+
+## 코드 생성은 타입의 출처를 분명하게 한다
+
+API 스키마, GraphQL schema, OpenAPI, Prisma schema처럼 이미 권위 있는 출처가 있다면 타입을 손으로 맞추기보다 생성하는 편이 낫습니다.
+
+```text
+OpenAPI schema → generated client types → frontend API wrapper
+```
+
+좋은 코드 생성 흐름은 타입을 자동으로 만든다는 점보다, **타입의 출처가 하나로 정리된다**는 점이 큽니다. 서버 계약이 바뀌면 생성 결과가 바뀌고, 프론트엔드가 그 변경을 컴파일 단계에서 봅니다.
+
+다만 코드 생성도 만능은 아닙니다.
+
+- 생성물이 너무 커서 리뷰가 어려우면 생성물과 작성 코드를 분리해야 한다.
+- schema가 느슨하면 생성 타입도 느슨하다.
+- 런타임 검증이 필요한 외부 입력은 여전히 검증해야 한다.
+- 생성 스크립트가 CI에서 재현되지 않으면 로컬에서만 맞는 타입이 된다.
+
+## 프론트엔드 코드 리뷰 체크리스트
+
+| 변화                        | 확인할 질문                                    |
+| --------------------------- | ---------------------------------------------- |
+| public type 변경            | 허용/거부 예시가 타입 테스트로 남았나?         |
+| `@ts-expect-error` 추가     | 실제로 의도한 실패를 고정하는가?               |
+| 조건부/재귀 타입 추가       | 에러 메시지와 표시 타입이 소비자에게 읽히는가? |
+| union 상태 추가             | `never` exhaustiveness로 누락 분기를 잡는가?   |
+| API 타입 코드 생성          | schema→생성→사용 흐름이 CI에서 재현되는가?     |
+| 타입 설계가 런타임을 대신함 | 외부 입력 검증을 생략한 것은 아닌가?           |
+
+이번 범위의 핵심은 타입스크립트를 더 화려하게 쓰자는 말이 아닙니다. 타입 설계도 회귀할 수 있고, public API 타입도 깨질 수 있습니다. 그래서 타입은 문서이면서 테스트 대상이고, union은 상태 모델이면서 누락 분기를 막는 계약입니다.
+
+## Day 10 타입 리뷰 퀴즈
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="@ts-expect-error를 타입 테스트에 쓰는 가장 큰 이유는 무엇일까요?"
+    choices={[
+      "모든 타입 에러를 숨기기 위해서",
+      "의도한 컴파일 실패가 사라졌을 때 오히려 실패 신호를 내기 위해서",
+      "런타임 예외를 자동으로 처리하기 위해서",
+      "생성된 타입 파일을 더 작게 만들기 위해서",
+    ]}
+    answer={1}
+    explanation="@ts-expect-error는 해당 줄에 타입 에러가 있어야 한다고 기대합니다. 타입이 느슨해져 에러가 사라지면 그 자체가 회귀 신호가 됩니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="never exhaustiveness가 가장 잘 잡아 주는 실수는 무엇일까요?"
+    code={
+      "switch (state.kind) {\n  case 'success': return state.value;\n  case 'error': return state.message;\n  default: return assertNever(state);\n}"
+    }
+    choices={[
+      "CSS 클래스 이름 오타",
+      "union에 새 상태가 추가됐는데 switch 분기를 고치지 않은 실수",
+      "fetch 요청이 느린 문제",
+      "배열 정렬 순서 문제",
+    ]}
+    answer={1}
+    explanation="새 union 멤버가 추가되면 default의 값이 never가 아니게 됩니다. 컴파일러가 빠진 분기를 알려줄 수 있습니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="타입 테스트가 필요한 PR인지 판단하는 기준을 한 문장으로 적어보세요."
+    answer="public API 타입이나 유틸리티 타입의 허용/거부 관계가 바뀌어 런타임 테스트만으로 의도한 타입 계약을 고정하기 어렵다면 타입 테스트가 필요하다."
+    explanation="값의 동작은 런타임 테스트가 잡고, 타입 관계의 회귀는 타입 테스트가 잡습니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="API 타입을 코드 생성으로 관리할 때 코드 리뷰에서 무엇을 확인해야 할까요?"
+    answer="schema가 권위 있는 출처인지, 생성 스크립트가 CI에서 재현되는지, 생성물과 사람이 작성한 wrapper가 분리되어 있는지, schema가 느슨해서 런타임 검증을 생략하게 만들지 않는지 확인해야 합니다."
+    explanation="코드 생성은 타입 출처를 정리해 주지만 schema 품질과 재현성이 없으면 오히려 깨진 계약을 자동으로 퍼뜨릴 수 있습니다."
+  />
+</ArticleQuiz>

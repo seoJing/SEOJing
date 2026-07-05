@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 460" role="img" aria-labelledby="title desc">
+  <title id="title">타입 테스트와 never exhaustiveness 흐름</title>
+  <desc id="desc">타입 설계 변경, 타입 테스트, 분기 누락, 코드 생성 경계를 보여주는 다이어그램</desc>
+  <rect width="920" height="460" rx="28" fill="#f7f8fb"/>
+  <rect x="42" y="42" width="836" height="376" rx="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="70" y="92" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif" font-size="25" font-weight="700" fill="#172033">Types need regression tests too</text>
+  <text x="70" y="124" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif" font-size="15" fill="#5b6678">고급 타입은 런타임 테스트만으로 깨짐을 잡기 어렵다. 의도한 타입 관계를 별도로 고정한다.</text>
+
+  <g font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif">
+    <rect x="72" y="176" width="168" height="94" rx="18" fill="#eef2ff" stroke="#8ea0e8"/>
+    <text x="156" y="212" text-anchor="middle" font-size="17" font-weight="700" fill="#26326a">Type contract</text>
+    <text x="156" y="238" text-anchor="middle" font-size="13" fill="#4d5b95">public API / union</text>
+
+    <path d="M250 224 H318" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <rect x="328" y="162" width="182" height="124" rx="20" fill="#ecfdf5" stroke="#7fc69b"/>
+    <text x="419" y="204" text-anchor="middle" font-size="17" font-weight="700" fill="#1f5135">Type tests</text>
+    <text x="419" y="231" text-anchor="middle" font-size="13" fill="#407553">Expect / Equal</text>
+    <text x="419" y="252" text-anchor="middle" font-size="13" fill="#407553">@ts-expect-error</text>
+
+    <path d="M520 224 H588" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <rect x="598" y="176" width="168" height="94" rx="18" fill="#fff7ed" stroke="#e5a765"/>
+    <text x="682" y="212" text-anchor="middle" font-size="17" font-weight="700" fill="#7a4419">Review signal</text>
+    <text x="682" y="238" text-anchor="middle" font-size="13" fill="#8a5c2f">깨진 관계를 PR에서 발견</text>
+
+    <rect x="114" y="322" width="216" height="52" rx="16" fill="#fef2f2" stroke="#e58a8a"/>
+    <text x="222" y="354" text-anchor="middle" font-size="15" font-weight="700" fill="#7f1d1d">never로 누락 분기 차단</text>
+
+    <rect x="374" y="322" width="216" height="52" rx="16" fill="#eff6ff" stroke="#85aeda"/>
+    <text x="482" y="354" text-anchor="middle" font-size="15" font-weight="700" fill="#1e3a5f">코드 생성은 경계에 둔다</text>
+
+    <text x="620" y="352" font-size="14" fill="#5b6678">리뷰 질문: 타입이 커진 만큼 실패 신호도 남겼나?</text>
+  </g>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#64748b"/>
+    </marker>
+  </defs>
+</svg>
