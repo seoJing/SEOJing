@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">자바스크립트 프로토타입 조회 경로</title>
+  <desc id="desc">인스턴스에서 프로퍼티를 찾고 없으면 프로토타입과 상위 프로토타입으로 올라가는 과정을 보여준다.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2f5f7c" />
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#183548" flood-opacity="0.12" />
+    </filter>
+  </defs>
+  <rect width="960" height="520" rx="28" fill="#f6f1e8" />
+  <text x="54" y="60" font-family="Pretendard, -apple-system, BlinkMacSystemFont, sans-serif" font-size="28" font-weight="700" fill="#26343d">프로퍼티 조회는 “객체 → 프로토타입 → 더 위” 순서로 올라간다</text>
+  <text x="54" y="92" font-family="Pretendard, -apple-system, BlinkMacSystemFont, sans-serif" font-size="16" fill="#65737d">class 문법을 보더라도 런타임에서는 메서드 위치와 lookup 경로를 구분해서 읽어야 한다.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="58" y="145" width="235" height="220" rx="18" fill="#ffffff" stroke="#c9d6df" />
+    <text x="82" y="185" font-family="Pretendard, sans-serif" font-size="22" font-weight="700" fill="#20313d">userCard 인스턴스</text>
+    <text x="82" y="225" font-family="Pretendard, sans-serif" font-size="16" fill="#405461">name: "Jin"</text>
+    <text x="82" y="255" font-family="Pretendard, sans-serif" font-size="16" fill="#405461">role: "frontend"</text>
+    <line x1="82" y1="286" x2="268" y2="286" stroke="#e5ecef" />
+    <text x="82" y="320" font-family="Pretendard, sans-serif" font-size="15" fill="#8a5a44">render() 없음 → 위로 찾기</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="365" y="145" width="245" height="220" rx="18" fill="#ffffff" stroke="#b9ceda" />
+    <text x="389" y="185" font-family="Pretendard, sans-serif" font-size="22" font-weight="700" fill="#20313d">UserCard.prototype</text>
+    <text x="389" y="225" font-family="Pretendard, sans-serif" font-size="16" fill="#405461">render()</text>
+    <text x="389" y="255" font-family="Pretendard, sans-serif" font-size="16" fill="#405461">update()</text>
+    <line x1="389" y1="286" x2="585" y2="286" stroke="#e5ecef" />
+    <text x="389" y="320" font-family="Pretendard, sans-serif" font-size="15" fill="#356a54">메서드는 보통 여기 공유됨</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="685" y="145" width="215" height="220" rx="18" fill="#ffffff" stroke="#c9d6df" />
+    <text x="709" y="185" font-family="Pretendard, sans-serif" font-size="22" font-weight="700" fill="#20313d">Object.prototype</text>
+    <text x="709" y="225" font-family="Pretendard, sans-serif" font-size="16" fill="#405461">toString()</text>
+    <text x="709" y="255" font-family="Pretendard, sans-serif" font-size="16" fill="#405461">hasOwnProperty()</text>
+    <line x1="709" y1="286" x2="872" y2="286" stroke="#e5ecef" />
+    <text x="709" y="320" font-family="Pretendard, sans-serif" font-size="15" fill="#8a5a44">여기도 없으면 undefined</text>
+  </g>
+
+  <path d="M 295 255 C 320 255, 335 255, 360 255" stroke="#2f5f7c" stroke-width="4" fill="none" marker-end="url(#arrow)" />
+  <path d="M 612 255 C 640 255, 655 255, 682 255" stroke="#2f5f7c" stroke-width="4" fill="none" marker-end="url(#arrow)" />
+
+  <rect x="90" y="410" width="780" height="58" rx="14" fill="#e7f0f5" stroke="#c3d5df" />
+  <text x="116" y="446" font-family="Pretendard, sans-serif" font-size="17" fill="#2c4453">리뷰 질문: 이 프로퍼티는 인스턴스 자신의 값인가, 프로토타입에서 공유되는 메서드인가?</text>
+</svg>

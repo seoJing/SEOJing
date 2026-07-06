@@ -1,0 +1,213 @@
+---
+title: "자바스크립트 퀴즈북 리마인드 Day 11: class를 봐도 프로토타입을 읽는다"
+description: "프로토타입 조회, class 문법, 인스턴스 필드와 prototype 메서드 차이를 프론트엔드 코드 리뷰 관점에서 정리합니다."
+date: "2026-07-07"
+tags:
+  [
+    "JavaScript",
+    "프론트엔드",
+    "자바스크립트 퀴즈북",
+    "Prototype",
+    "Class",
+    "Code Review",
+  ]
+category: "study"
+series: "javascript-quizbook"
+cover:
+  src: "/images/content/study/javascript-quizbook/day11/prototype-lookup-path.svg"
+  alt: "인스턴스에서 프로토타입과 Object.prototype으로 이어지는 프로퍼티 조회 경로 다이어그램"
+  caption: "작성 SVG · class 문법 뒤의 프로토타입 조회 경로"
+  kind: "diagram"
+---
+
+> 오늘의 질문: “class로 만들었으니 자바나 타입스크립트의 class처럼만 읽으면 될까?”
+
+## 먼저 보는 코드
+
+```js
+class UserCard {
+  constructor(user) {
+    this.user = user;
+  }
+
+  render() {
+    return `<article>${this.user.name}</article>`;
+  }
+}
+
+const card = new UserCard({ name: "Jin" });
+```
+
+겉으로는 익숙한 class입니다. 하지만 자바스크립트에서 `render`는 각 인스턴스 안에 복사되는 함수가 아니라 `UserCard.prototype`에 놓이는 메서드입니다. `card.render()`를 호출하면 엔진은 먼저 `card` 자신의 프로퍼티를 보고, 없으면 프로토타입 체인을 따라 올라가서 `render`를 찾습니다.
+
+![프로토타입 조회 경로](/images/content/study/javascript-quizbook/day11/prototype-lookup-path.svg)
+
+## 틀리기 쉬운 직감: class가 prototype을 숨겨 준다
+
+class 문법은 prototype을 없애지 않습니다. 더 읽기 쉬운 문법으로 감싼 것입니다.
+
+```js
+class ButtonView {
+  click() {
+    return "clicked";
+  }
+}
+
+const view = new ButtonView();
+
+Object.hasOwn(view, "click"); // false
+Object.hasOwn(ButtonView.prototype, "click"); // true
+```
+
+리뷰할 때 이 차이가 중요한 이유는 메서드 위치가 동작과 성능에 영향을 주기 때문입니다. prototype 메서드는 인스턴스들이 공유합니다. 반대로 constructor 안에서 함수를 매번 만들면 인스턴스마다 새 함수가 생깁니다.
+
+```js
+class ItemRow {
+  constructor(item) {
+    this.item = item;
+    this.render = () => `<li>${this.item.title}</li>`;
+  }
+}
+```
+
+이런 코드가 항상 틀린 것은 아닙니다. arrow function 필드나 constructor 바인딩은 `this` 문제를 줄이는 데 쓰이기도 합니다. 다만 “왜 공유 메서드가 아니라 인스턴스별 함수여야 하는가?”를 설명할 수 있어야 합니다.
+
+## 프로퍼티 조회는 가까운 곳부터 본다
+
+프로토타입 체인은 상속이라기보다 조회 경로로 읽는 편이 안전합니다.
+
+```js
+const base = {
+  role: "guest",
+  canEdit() {
+    return false;
+  },
+};
+
+const user = Object.create(base);
+user.name = "Jin";
+user.role = "admin";
+
+user.role; // "admin"
+user.canEdit(); // false
+```
+
+`role`은 `user` 자신의 값이 있으므로 거기서 끝납니다. `canEdit`은 자기 자신에게 없으니 `base`에서 찾습니다. 같은 이름의 프로퍼티가 더 가까운 객체에 있으면 위쪽 값은 가려집니다.
+
+프론트엔드에서는 이 감각이 테스트 mock, 라이브러리 객체 확장, class 상속 디버깅에서 필요합니다. 어떤 값이 “원래 객체에 있는 값”인지, “prototype에서 올라온 값”인지 구분하지 못하면 원인을 잘못 짚습니다.
+
+## 상속보다 합성이 더 읽기 쉬울 때가 많다
+
+자바스크립트 class 상속은 쓸 수 있지만, UI 코드에서 깊은 상속 구조는 리뷰 비용을 키웁니다.
+
+```js
+class TrackingButton extends Button {
+  click() {
+    analytics.track("button_click");
+    return super.click();
+  }
+}
+```
+
+이 코드를 보려면 `TrackingButton.click`, `Button.click`, 그리고 `super` 호출 순서를 함께 봐야 합니다. 간단한 확장은 괜찮지만, 상태·렌더링·네트워크·분석 이벤트가 상속 계층에 흩어지면 변경 영향이 흐려집니다.
+
+많은 프론트엔드 코드에서는 합성이 더 선명합니다.
+
+```js
+function createTrackingButton(button, analytics) {
+  return {
+    click() {
+      analytics.track("button_click");
+      return button.click();
+    },
+  };
+}
+```
+
+합성이 항상 정답이라는 뜻은 아닙니다. 다만 리뷰 질문은 명확해집니다.
+
+> 이 동작은 “is-a” 관계로 묶어야 하나, 아니면 기존 객체에 기능을 덧붙이는 편이 충분한가?
+
+## instance field와 prototype method를 구분한다
+
+요즘 문법에서는 class field도 자주 보입니다.
+
+```js
+class SearchBox {
+  query = "";
+
+  onChange = (event) => {
+    this.query = event.target.value;
+  };
+
+  reset() {
+    this.query = "";
+  }
+}
+```
+
+`query`와 `onChange`는 인스턴스마다 생깁니다. `reset`은 prototype에 놓입니다. `onChange`를 arrow field로 만들면 callback으로 넘겨도 `this`가 덜 흔들립니다. 대신 인스턴스마다 함수가 만들어진다는 비용이 있습니다.
+
+그래서 코드 리뷰에서는 이렇게 봅니다.
+
+| 코드 모양          | 좋은 이유                    | 확인할 점                                   |
+| ------------------ | ---------------------------- | ------------------------------------------- |
+| prototype method   | 인스턴스들이 메서드를 공유함 | callback으로 빼도 `this`가 안전한가?        |
+| arrow field method | `this`가 lexical하게 고정됨  | 인스턴스마다 함수가 필요한가?               |
+| extends/super      | 기존 구현을 재사용함         | 호출 순서와 부수 효과가 숨어 있지 않은가?   |
+| Object.create      | 명시적 prototype 연결        | 소유 프로퍼티와 상속 프로퍼티를 구분하는가? |
+
+## 프론트엔드 코드 리뷰 체크리스트
+
+- `obj.method`가 자기 자신의 프로퍼티인지 prototype에서 온 것인지 확인했는가?
+- class 메서드, class field, constructor 바인딩이 각각 왜 선택됐는지 설명할 수 있는가?
+- 상속 계층이 UI 상태·부수 효과·렌더링을 너무 멀리 흩어 놓지 않는가?
+- `super` 호출 전후에 부수 효과 순서가 중요하지 않은가?
+- 테스트 mock이 prototype 메서드를 바꿔야 하는지, 인스턴스 프로퍼티를 바꿔야 하는지 구분했는가?
+- 라이브러리 객체나 전역 prototype을 수정하는 위험한 패턴이 없는가?
+
+class를 보더라도 핵심은 “객체가 어떤 설계 철학을 따르는가”가 아닙니다. 런타임에서 프로퍼티를 어디서 찾고, 메서드가 어디에 놓이며, 변경 영향이 어느 객체까지 퍼지는지를 읽는 것입니다.
+
+## Day 11 복습 퀴즈
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="다음 코드에서 click 메서드는 어디에 있을까요?"
+    code={
+      "class Button {\n  click() { return 'ok'; }\n}\nconst b = new Button();"
+    }
+    choices={[
+      "b 자신의 프로퍼티",
+      "Button.prototype",
+      "Object.prototype",
+      "전역 객체",
+    ]}
+    answer={1}
+    explanation="class 본문에 선언한 일반 메서드는 prototype에 놓입니다. 인스턴스에서 찾지 못하면 Button.prototype에서 조회됩니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="class field arrow method를 쓸 때 코드 리뷰에서 같이 봐야 할 점은 무엇일까요?"
+    choices={[
+      "prototype 메서드보다 항상 빠르다",
+      "this가 안정적인 대신 인스턴스마다 함수가 만들어질 수 있다",
+      "super 호출이 자동으로 제거된다",
+      "객체의 prototype 체인이 사라진다",
+    ]}
+    answer={1}
+    explanation="arrow field는 callback this 문제를 줄일 수 있지만 인스턴스별 함수가 됩니다. 의도와 비용을 함께 봐야 합니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="Object.hasOwn(obj, key)와 key in obj의 차이를 한 문장으로 적어보세요."
+    answer="Object.hasOwn은 자기 자신의 프로퍼티만 보지만, in 연산자는 프로토타입 체인에 있는 프로퍼티까지 포함해 존재 여부를 확인한다."
+    explanation="prototype에서 올라온 값과 직접 가진 값을 구분해야 mock, 상속, 라이브러리 객체 디버깅이 정확해집니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="UI 코드에서 깊은 class 상속보다 합성이 더 나을 수 있는 상황을 코드 리뷰 관점에서 설명해보세요."
+    answer="상태 변경, 렌더링, analytics, 네트워크 같은 부수 효과가 여러 부모 class와 super 호출에 흩어지면 변경 영향과 실행 순서를 따라가기 어렵습니다. 단순히 기존 객체에 기능을 덧붙이는 정도라면 합성으로 관계를 드러내는 편이 테스트와 리뷰가 쉽습니다."
+    explanation="상속은 도구일 뿐입니다. 프론트엔드 리뷰에서는 런타임 조회 경로와 부수 효과 위치가 선명한지 먼저 봅니다."
+  />
+</ArticleQuiz>

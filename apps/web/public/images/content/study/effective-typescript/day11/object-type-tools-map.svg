@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">타입스크립트 객체 타입 도구 지도</title>
+  <desc id="desc">객체 순회, Record, tuple/rest, XOR, brand, @types 버전 관리를 코드 리뷰 질문으로 연결한다.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#345f72" />
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#183548" flood-opacity="0.12" />
+    </filter>
+  </defs>
+  <rect width="960" height="520" rx="28" fill="#f7f2e9" />
+  <text x="54" y="58" font-family="Pretendard, -apple-system, BlinkMacSystemFont, sans-serif" font-size="28" font-weight="700" fill="#26343d">객체 타입 도구는 “제약”이 아니라 리뷰 질문을 만든다</text>
+  <text x="54" y="90" font-family="Pretendard, sans-serif" font-size="16" fill="#65737d">Item 60–66: Object iteration, Record, tuple/rest, XOR, brand, @types 버전 경계</text>
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="145" width="220" height="110" rx="16" fill="#fff" stroke="#cdd9df" />
+    <text x="95" y="183" font-family="Pretendard, sans-serif" font-size="21" font-weight="700" fill="#26343d">순회</text>
+    <text x="95" y="215" font-family="Pretendard, sans-serif" font-size="15" fill="#405461">Object.keys는 string[]</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="370" y="145" width="220" height="110" rx="16" fill="#fff" stroke="#cdd9df" />
+    <text x="395" y="183" font-family="Pretendard, sans-serif" font-size="21" font-weight="700" fill="#26343d">Record / Map</text>
+    <text x="395" y="215" font-family="Pretendard, sans-serif" font-size="15" fill="#405461">키 공간이 닫혔는가?</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="670" y="145" width="220" height="110" rx="16" fill="#fff" stroke="#cdd9df" />
+    <text x="695" y="183" font-family="Pretendard, sans-serif" font-size="21" font-weight="700" fill="#26343d">tuple / rest</text>
+    <text x="695" y="215" font-family="Pretendard, sans-serif" font-size="15" fill="#405461">위치와 길이가 계약인가?</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="220" y="315" width="220" height="110" rx="16" fill="#fff" stroke="#cdd9df" />
+    <text x="245" y="353" font-family="Pretendard, sans-serif" font-size="21" font-weight="700" fill="#26343d">XOR</text>
+    <text x="245" y="385" font-family="Pretendard, sans-serif" font-size="15" fill="#405461">둘 중 하나만 허용?</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="520" y="315" width="220" height="110" rx="16" fill="#fff" stroke="#cdd9df" />
+    <text x="545" y="353" font-family="Pretendard, sans-serif" font-size="21" font-weight="700" fill="#26343d">brand / @types</text>
+    <text x="545" y="385" font-family="Pretendard, sans-serif" font-size="15" fill="#405461">명목적 경계와 버전 동기화</text>
+  </g>
+
+  <path d="M290 200 H365" stroke="#345f72" stroke-width="4" fill="none" marker-end="url(#arrow)" />
+  <path d="M590 200 H665" stroke="#345f72" stroke-width="4" fill="none" marker-end="url(#arrow)" />
+  <path d="M480 255 C480 285,395 292,355 315" stroke="#345f72" stroke-width="4" fill="none" marker-end="url(#arrow)" />
+  <path d="M480 255 C480 285,565 292,605 315" stroke="#345f72" stroke-width="4" fill="none" marker-end="url(#arrow)" />
+
+  <rect x="86" y="455" width="788" height="42" rx="14" fill="#e8f0f4" stroke="#c3d5df" />
+  <text x="112" y="482" font-family="Pretendard, sans-serif" font-size="16" fill="#2c4453">좋은 타입은 “값이 어떤 모양인가”보다 “어떤 호출을 허용하고 막을 것인가”를 드러낸다.</text>
+</svg>
