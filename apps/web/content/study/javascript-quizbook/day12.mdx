@@ -1,0 +1,196 @@
+---
+title: "자바스크립트 퀴즈북 리마인드 Day 12: 이벤트는 target에서 끝나지 않는다"
+description: "DOM 이벤트의 capture/bubble, delegation, default action, React synthetic event 경계를 프론트엔드 코드 리뷰 관점에서 정리합니다."
+date: "2026-07-08"
+tags:
+  [
+    "JavaScript",
+    "프론트엔드",
+    "자바스크립트 퀴즈북",
+    "DOM Event",
+    "Event Delegation",
+    "React",
+    "Code Review",
+  ]
+category: "study"
+series: "javascript-quizbook"
+cover:
+  src: "/images/content/study/javascript-quizbook/day12/event-propagation-path.svg"
+  alt: "DOM 이벤트가 capture 단계로 내려가고 bubble 단계로 올라가는 경로 다이어그램"
+  caption: "작성 SVG · 이벤트 전파 경로와 delegation 리뷰 포인트"
+  kind: "diagram"
+---
+
+> 오늘의 질문: “버튼에 클릭 핸들러를 달았으니 이 이벤트는 버튼에서만 처리된다고 봐도 될까?”
+
+## 먼저 보는 코드
+
+```js
+const list = document.querySelector(".todo-list");
+
+list.addEventListener("click", (event) => {
+  if (event.target.matches("button[data-delete]")) {
+    deleteTodo(event.target.dataset.id);
+  }
+});
+```
+
+삭제 버튼마다 핸들러를 붙인 코드가 아닙니다. 리스트 하나에 핸들러를 붙여 두고, 클릭 이벤트가 위로 올라오는 흐름을 이용합니다. 이것이 event delegation입니다. 새 항목이 나중에 추가되어도 리스트의 핸들러 하나가 계속 처리할 수 있습니다.
+
+![DOM 이벤트 전파 경로](/images/content/study/javascript-quizbook/day12/event-propagation-path.svg)
+
+## 틀리기 쉬운 직감: 이벤트는 target에서만 일어난다
+
+브라우저 이벤트는 보통 세 단계를 거칩니다.
+
+| 단계    | 방향                  | 코드 리뷰에서 볼 질문                       |
+| ------- | --------------------- | ------------------------------------------- |
+| capture | 바깥 → target         | 부모가 먼저 가로채야 하는 이유가 있는가?    |
+| target  | 실제 이벤트 발생 요소 | `event.target`과 현재 핸들러 위치가 같은가? |
+| bubble  | target → 바깥         | delegation이나 부모 공통 처리를 의도했는가? |
+
+기본 `addEventListener("click", handler)`는 bubble 단계에서 동작합니다. capture 단계에서 듣고 싶다면 세 번째 인자나 options를 써야 합니다.
+
+```js
+document.addEventListener("click", logBeforeTarget, { capture: true });
+document.addEventListener("click", logAfterTarget);
+```
+
+이 차이를 모르면 “왜 부모 핸들러가 먼저 실행되지?” 또는 “왜 modal 바깥 클릭이 버튼 클릭까지 같이 닫아 버리지?” 같은 버그를 잘못 읽습니다.
+
+## target과 currentTarget은 다르다
+
+이벤트 핸들러에서 자주 섞이는 값이 `target`과 `currentTarget`입니다.
+
+```js
+list.addEventListener("click", (event) => {
+  console.log(event.target); // 실제 클릭된 가장 안쪽 요소
+  console.log(event.currentTarget); // 핸들러가 붙어 있는 list
+});
+```
+
+버튼 안에 아이콘 `<span>`이 있으면 `event.target`은 버튼이 아니라 span일 수 있습니다. 그래서 delegation 코드는 대개 `closest`로 의도를 조금 더 안전하게 표현합니다.
+
+```js
+list.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-delete]");
+  if (!button || !list.contains(button)) return;
+
+  deleteTodo(button.dataset.id);
+});
+```
+
+리뷰 질문은 간단합니다.
+
+> 이 코드는 실제 클릭된 노드가 바뀌어도 의도한 요소를 찾을 수 있는가?
+
+## stopPropagation은 마지막 수단에 가깝다
+
+`event.stopPropagation()`은 이벤트가 더 위로 올라가지 못하게 합니다. modal, dropdown, nested clickable card 같은 곳에서 필요할 수 있습니다. 하지만 습관적으로 넣으면 부모의 접근성 처리, analytics, delegation 핸들러를 조용히 끊을 수 있습니다.
+
+```js
+button.addEventListener("click", (event) => {
+  event.stopPropagation();
+  openMenu();
+});
+```
+
+리뷰에서는 “정말 전파를 막아야 하는가?”를 봅니다. 단순히 부모 핸들러가 귀찮아서 막는다면 구조를 다시 잡는 편이 낫습니다. 예를 들어 부모가 클릭 위치를 더 명확히 검사하거나, 버튼과 카드의 역할을 분리할 수 있습니다.
+
+## preventDefault는 기본 동작을 막는다
+
+`preventDefault()`는 전파를 막는 함수가 아닙니다. 링크 이동, 폼 제출, 체크박스 토글 같은 브라우저의 기본 동작을 막습니다.
+
+```js
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await saveForm(new FormData(form));
+});
+```
+
+프론트엔드에서 이 둘을 섞으면 버그가 생깁니다.
+
+| 원하는 일                    | 맞는 도구              |
+| ---------------------------- | ---------------------- |
+| 폼의 새로고침 제출 막기      | `preventDefault()`     |
+| 부모 클릭 핸들러로 안 올리기 | `stopPropagation()`    |
+| 둘 다 필요한지 판단하기      | 의도를 별도로 설명하기 |
+
+## React synthetic event는 브라우저 이벤트를 감싼다
+
+React에서 `onClick`은 브라우저의 native event를 그대로 노출하기보다 React의 synthetic event 시스템을 거칩니다. 최신 React에서는 예전처럼 event pooling 때문에 값을 비동기에서 못 읽는 문제는 크게 줄었지만, 리뷰 포인트는 여전히 남습니다.
+
+```tsx
+function Card({ onOpen }: { onOpen: () => void }) {
+  return (
+    <article onClick={onOpen}>
+      <button
+        onClick={(event) => {
+          event.stopPropagation();
+          bookmark();
+        }}
+      >
+        저장
+      </button>
+    </article>
+  );
+}
+```
+
+여기서 버튼 클릭이 카드 열기까지 이어지면 UX가 깨집니다. 반대로 모든 내부 버튼에 `stopPropagation`을 흩뿌리면 나중에 analytics나 키보드 접근성 흐름이 끊길 수 있습니다. React 코드에서도 결국 질문은 같습니다.
+
+- 부모 클릭 영역이 너무 넓지 않은가?
+- 버튼/링크/카드의 역할이 겹치지 않는가?
+- 이벤트를 막는 코드가 local fix인지, 구조 문제를 숨기는지 설명되는가?
+
+## 프론트엔드 코드 리뷰 체크리스트
+
+- delegation을 쓴다면 `target`, `closest`, `contains` 검사가 충분한가?
+- capture가 필요한 코드인지, 기본 bubble 단계로 충분한지 설명되는가?
+- `stopPropagation`이 부모의 공통 처리나 analytics를 끊지 않는가?
+- `preventDefault`와 `stopPropagation`을 목적에 맞게 구분했는가?
+- React에서 clickable card 안에 button/link를 중첩해 역할 충돌을 만들지 않았는가?
+- 키보드 접근성과 기본 브라우저 동작을 불필요하게 막지 않았는가?
+
+이벤트 코드는 “핸들러가 어디 붙었는가”만 보면 부족합니다. 실제 클릭된 노드, 현재 핸들러 위치, 전파 단계, 기본 동작, 프레임워크의 이벤트 레이어까지 이어서 읽어야 합니다.
+
+## Day 12 복습 퀴즈
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="event.target과 event.currentTarget의 차이로 가장 알맞은 것은 무엇일까요?"
+    choices={[
+      "target은 핸들러가 붙은 요소, currentTarget은 실제 클릭된 요소다",
+      "target은 실제 이벤트가 시작된 요소, currentTarget은 현재 핸들러가 실행 중인 요소다",
+      "둘은 항상 같은 객체다",
+      "React에서만 존재하는 값이다",
+    ]}
+    answer={1}
+    explanation="delegation 코드에서는 실제 클릭된 가장 안쪽 요소와 핸들러가 붙은 부모 요소가 다를 수 있습니다. 이 차이를 구분해야 안전합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="폼 submit에서 페이지 새로고침을 막고 직접 저장하려면 주로 무엇을 써야 할까요?"
+    choices={[
+      "event.stopPropagation()",
+      "event.preventDefault()",
+      "event.currentTarget()",
+      "Object.freeze(event)",
+    ]}
+    answer={1}
+    explanation="preventDefault는 브라우저 기본 동작을 막습니다. 전파를 막는 stopPropagation과 목적이 다릅니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="event delegation을 쓰는 코드에서 closest와 contains를 함께 확인하는 이유를 한 문장으로 적어보세요."
+    answer="실제 클릭된 안쪽 노드에서 의도한 버튼/링크를 찾되, 그 요소가 현재 컨테이너 안에 있는지 확인해 잘못된 상위 DOM 매칭을 피하기 위해서다."
+    explanation="delegation은 편하지만 target이 항상 원하는 요소라는 보장은 없습니다. DOM 구조가 조금 바뀌어도 의도가 유지되는지 봐야 합니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="React에서 clickable card 안의 button마다 stopPropagation을 넣는 PR을 리뷰할 때 어떤 질문을 해야 할까요?"
+    answer="먼저 카드 전체가 클릭 영역이어야 하는지, 내부 버튼/링크와 역할이 충돌하지 않는지 봅니다. stopPropagation이 필요한 경우도 있지만 analytics, 키보드 접근성, 부모 공통 처리까지 끊지 않는지 확인해야 합니다. 구조적으로 카드의 클릭 영역을 좁히거나 역할을 분리하는 편이 더 나을 수도 있습니다."
+    explanation="이벤트 전파 제어는 local patch가 될 수 있지만, UI 역할 설계 문제를 가릴 수도 있습니다. 코드 리뷰에서는 둘을 나눠 봐야 합니다."
+  />
+</ArticleQuiz>

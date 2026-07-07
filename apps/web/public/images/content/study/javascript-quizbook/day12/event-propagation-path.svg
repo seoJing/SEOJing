@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">DOM 이벤트 전파 경로</title>
+  <desc id="desc">window에서 target으로 내려가는 capture 단계와 target에서 다시 window로 올라가는 bubble 단계를 보여준다.</desc>
+  <rect width="960" height="540" fill="#fbf7ef" />
+  <rect x="44" y="40" width="872" height="460" rx="28" fill="#fffaf2" stroke="#1f2937" stroke-width="3" />
+  <text x="80" y="88" font-family="ui-sans-serif, system-ui, sans-serif" font-size="30" font-weight="700" fill="#111827">DOM event propagation</text>
+  <text x="80" y="124" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" fill="#4b5563">capture는 바깥에서 안쪽으로, bubble은 target에서 다시 바깥으로 올라간다.</text>
+
+  <g font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="650" text-anchor="middle">
+    <rect x="110" y="170" width="740" height="250" rx="24" fill="#fef3c7" stroke="#92400e" stroke-width="2" />
+    <text x="480" y="205" fill="#92400e">window / document</text>
+    <rect x="190" y="235" width="580" height="145" rx="22" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2" />
+    <text x="480" y="266" fill="#1d4ed8">section</text>
+    <rect x="300" y="300" width="360" height="55" rx="16" fill="#dcfce7" stroke="#166534" stroke-width="2" />
+    <text x="480" y="335" fill="#166534">button target</text>
+  </g>
+
+  <path d="M250 452 C250 250 350 222 470 222" fill="none" stroke="#dc2626" stroke-width="5" stroke-linecap="round" marker-end="url(#arrow-red)" />
+  <text x="180" y="468" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20" font-weight="700" fill="#dc2626">capture</text>
+
+  <path d="M710 452 C710 250 610 222 490 222" fill="none" stroke="#2563eb" stroke-width="5" stroke-linecap="round" marker-end="url(#arrow-blue)" transform="rotate(180 600 335)" />
+  <text x="720" y="468" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20" font-weight="700" fill="#2563eb">bubble</text>
+
+  <g font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" fill="#374151">
+    <rect x="94" y="438" width="310" height="38" rx="12" fill="#fff" stroke="#e5e7eb" />
+    <text x="112" y="463">addEventListener(type, handler, true)</text>
+    <rect x="556" y="438" width="306" height="38" rx="12" fill="#fff" stroke="#e5e7eb" />
+    <text x="574" y="463">delegation은 bubble을 자주 이용한다</text>
+  </g>
+
+  <defs>
+    <marker id="arrow-red" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#dc2626" />
+    </marker>
+    <marker id="arrow-blue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#2563eb" />
+    </marker>
+  </defs>
+</svg>

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Public API 타입 경계</title>
+  <desc id="desc">라이브러리 내부 구현 타입과 외부에 노출되는 public API 타입을 분리하고 문서, this callback, module augmentation, source map을 점검하는 흐름.</desc>
+  <rect width="960" height="540" fill="#f8fafc" />
+  <rect x="56" y="52" width="848" height="436" rx="28" fill="#fff" stroke="#0f172a" stroke-width="3" />
+  <text x="92" y="102" font-family="ui-sans-serif, system-ui, sans-serif" font-size="30" font-weight="750" fill="#0f172a">Public API type boundary</text>
+  <text x="92" y="136" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" fill="#475569">내부 타입을 그대로 내보내기보다, 사용자가 붙잡을 계약만 선명하게 노출한다.</text>
+
+  <g font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" text-anchor="middle">
+    <rect x="100" y="206" width="250" height="140" rx="22" fill="#e0f2fe" stroke="#0369a1" stroke-width="2" />
+    <text x="225" y="254" font-weight="700" fill="#0369a1">Internal implementation</text>
+    <text x="225" y="286" fill="#075985">helper types</text>
+    <text x="225" y="314" fill="#075985">private shapes</text>
+
+    <rect x="610" y="206" width="250" height="140" rx="22" fill="#dcfce7" stroke="#15803d" stroke-width="2" />
+    <text x="735" y="254" font-weight="700" fill="#15803d">Public API contract</text>
+    <text x="735" y="286" fill="#166534">stable options</text>
+    <text x="735" y="314" fill="#166534">documented callbacks</text>
+  </g>
+
+  <path d="M370 276 H590" stroke="#111827" stroke-width="5" stroke-linecap="round" marker-end="url(#arrow)" />
+  <text x="480" y="250" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="700" fill="#111827">export deliberately</text>
+
+  <g font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" fill="#334155">
+    <rect x="120" y="386" width="164" height="44" rx="12" fill="#fff7ed" stroke="#fdba74" />
+    <text x="202" y="414" text-anchor="middle">TSDoc</text>
+    <rect x="310" y="386" width="164" height="44" rx="12" fill="#fff7ed" stroke="#fdba74" />
+    <text x="392" y="414" text-anchor="middle">this callback</text>
+    <rect x="500" y="386" width="164" height="44" rx="12" fill="#fff7ed" stroke="#fdba74" />
+    <text x="582" y="414" text-anchor="middle">augmentation</text>
+    <rect x="690" y="386" width="164" height="44" rx="12" fill="#fff7ed" stroke="#fdba74" />
+    <text x="772" y="414" text-anchor="middle">source map</text>
+  </g>
+
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#111827" />
+    </marker>
+  </defs>
+</svg>
