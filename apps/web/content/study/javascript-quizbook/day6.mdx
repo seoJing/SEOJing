@@ -76,6 +76,92 @@ let b = 1;
 
 스코프 체인은 문법 지식보다 “이 함수가 어떤 값을 기억하고 실행되는지”를 추적하는 도구에 가깝습니다.
 
+## 렉시컬 환경을 코드 리뷰 언어로 바꾸기
+
+스코프를 외울 때 `global scope`, `function scope`, `block scope` 같은 이름만 외우면 실제 버그 앞에서 멈춥니다. 리뷰에서는 이름보다 질문이 중요합니다.
+
+1. 이 식별자는 어느 스코프에서 선언됐나?
+2. 이 함수는 어느 시점에 만들어졌나?
+3. 나중에 실행될 때 같은 바인딩을 읽나, 새 바인딩을 읽나?
+4. 선언 전 접근이 `undefined` 흐름인가, TDZ 에러인가?
+
+```js
+function createHandlers() {
+  const handlers = [];
+
+  for (var index = 0; index < 3; index += 1) {
+    handlers.push(() => index);
+  }
+
+  return handlers;
+}
+
+console.log(createHandlers().map((handler) => handler())); // [3, 3, 3]
+```
+
+여기서 문제는 “화살표 함수라서”가 아닙니다. 세 콜백이 같은 `index` 바인딩을 닫아둔 것이 문제입니다. `let`은 반복마다 새 바인딩을 만들기 때문에 결과가 달라집니다.
+
+```js
+for (let index = 0; index < 3; index += 1) {
+  handlers.push(() => index);
+}
+// [0, 1, 2]
+```
+
+## TDZ는 귀찮은 제약이 아니라 조기 경고다
+
+`let`/`const`의 Temporal Dead Zone은 초보자에게는 불편해 보입니다. 하지만 리뷰 관점에서는 선언 순서 문제를 빨리 드러내는 장치입니다.
+
+```js
+function render() {
+  console.log(theme);
+  const theme = getTheme();
+}
+```
+
+이 코드는 바로 실패합니다. 반대로 `var`였다면 `undefined`가 먼저 흘러가고, 나중에 조건문이나 fallback에서 더 멀리 떨어진 버그로 보일 수 있습니다.
+
+```js
+function render() {
+  console.log(theme); // undefined
+  var theme = getTheme();
+}
+```
+
+그러니 “var는 에러가 안 나서 안전하다”가 아니라 “var는 선언 순서 버그를 조용히 뒤로 미룰 수 있다”로 보는 편이 맞습니다.
+
+## `const`는 객체 불변이 아니다
+
+Day 5의 참조와 바로 이어집니다. `const`는 바인딩 재할당을 막습니다. 객체 내부 변경을 막지는 않습니다.
+
+```js
+const config = { theme: "dark" };
+config.theme = "light"; // 가능
+config = {}; // TypeError
+```
+
+코드 리뷰에서 “const니까 안전하다”는 말이 나오면, 무엇이 안전한지 다시 물어야 합니다. 바인딩이 바뀌지 않는 것인지, 객체 내부가 바뀌지 않는 것인지 다릅니다. 내부 불변이 필요하면 업데이트 방식을 바꾸거나, `Object.freeze`, immutable data pattern, 타입 레벨 readonly 같은 별도 설계가 필요합니다.
+
+## AI가 만든 코드에서 자주 보이는 실수
+
+AI는 `var`를 `let`/`const`로 기계적으로 바꾸는 리팩터링을 잘합니다. 하지만 루프 콜백, 함수 스코프 의존 코드, hoisting에 기대던 오래된 코드에서는 의미가 바뀔 수 있습니다.
+
+```js
+for (var i = 0; i < nodes.length; i += 1) {
+  nodes[i].onclick = function () {
+    console.log(i);
+  };
+}
+```
+
+이 코드를 `let`으로 바꾸면 많은 경우 버그가 고쳐집니다. 하지만 기존 코드가 일부러 최종 index를 읽고 있었다면 동작이 바뀝니다. 좋은 리뷰는 “modern syntax로 바꿨다”에서 끝나지 않고, 각 콜백이 어떤 바인딩을 읽어야 하는지 확인합니다.
+
+## 연결해서 읽기
+
+- Day 7 closure 글은 여기서 나온 스코프 체인이 타이머·이벤트·React render에서 어떻게 오래된 값 문제로 보이는지 다룹니다.
+- Day 5 reference 글은 `const` 객체 내부 변경과 얕은 복사 문제를 이어서 봐야 합니다.
+- Effective TypeScript Day 5의 narrowing도 같은 질문을 공유합니다. “지금 좁힌 값이 나중에도 같은 값인가?”를 스코프/바인딩 관점으로 다시 확인해야 합니다.
+
 <ArticleQuiz title="Day 6 복습 퀴즈">
   <ArticleQuizItem
     mode="multiple"

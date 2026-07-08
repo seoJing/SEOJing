@@ -1,164 +1,306 @@
 ---
-title: "이펙티브 타입스크립트 2판 Day 5: 타입 추론을 방해하지 않는 API 설계"
-date: 2026-06-27
+title: "이펙티브 타입스크립트 2판 Day 5: 좁혀진 타입은 언제 다시 넓어지는가"
+description: "Item 22–27 범위를 바탕으로 narrowing, alias, context inference, evolving type, async/type flow를 프론트엔드 코드 리뷰 관점에서 다시 정리합니다."
+date: "2026-06-27"
 tags:
-  - TypeScript
-  - Effective TypeScript
-  - 프론트엔드
-  - 타입 추론
-  - API 설계
-description: Effective TypeScript 2판 Item 19–22를 바탕으로 타입 추론, 타입 넓히기, 함수형 기법, 유니온 설계를 코드 리뷰 관점에서 정리합니다.
+  [
+    "TypeScript",
+    "Effective TypeScript",
+    "프론트엔드",
+    "Narrowing",
+    "타입 추론",
+    "Async",
+    "Code Review",
+  ]
+category: "study"
+series: "effective-typescript"
 cover:
-  src: /images/content/study/effective-typescript/day5/inference-api-design.svg
-  alt: 타입스크립트 추론이 값에서 API 경계로 흐르는 과정을 보여주는 다이어그램
-  caption: 좋은 타입 설계는 추론을 억누르는 것이 아니라 올바른 방향으로 흐르게 만든다
+  src: "/images/content/study/effective-typescript/day5/inference-api-design.svg"
+  alt: "타입스크립트 추론이 값에서 API 경계로 흐르는 과정을 보여주는 다이어그램"
+  caption: "작성 SVG · 타입 추론과 API 경계"
+  kind: "diagram"
 ---
 
-## 오늘의 범위
+> 범위: Effective TypeScript 2판 Item 22–27<br />
+> 오늘의 질문: “`if`로 한 번 확인한 값은 그 뒤에서도 계속 안전하다고 봐도 될까?”
 
-Effective TypeScript 2판 Day 5는 Item 19–22입니다.
+## 이 글의 원천 앵커
 
-- Item 19: 추론 가능한 타입을 직접 쓰지 않기
-- Item 20: 타입 넓히기가 일어나는 방식 이해하기
-- Item 21: 타입 흐름을 돕는 함수형 기법 사용하기
-- Item 22: 한꺼번에 선택지를 담은 유니온보다 명확한 모델 만들기
+이 글은 기존 Day 5를 다시 쓴 개정판입니다. 이전 글은 추론/넓히기와 유니온 설계를 너무 짧게 묶어 설명했고, 원래 Day 5 범위인 narrowing, alias, context inference, evolving type, async/type flow가 충분히 살아 있지 않았습니다.
 
-핵심은 “타입을 많이 쓰기”가 아니라 “추론이 API 경계까지 제대로 흐르게 하기”입니다.
+이번 글에서 잃으면 안 되는 포인트는 이겁니다.
 
-## 문제 상황
+- TypeScript의 narrowing은 코드 흐름을 따라가지만, 모든 런타임 변화를 대신 보장하지 않는다.
+- alias를 만들면 원래 객체와 좁혀진 값의 관계가 흐려질 수 있다.
+- 문맥 타입이 있으면 콜백과 객체 literal의 타입을 더 잘 추론할 수 있다.
+- evolving type은 편하지만, 빈 배열/중간 변수의 의도가 늦게 드러날 수 있다.
+- `await`, callback, closure를 지나면 “아까 확인한 값”이 여전히 같은 값인지 다시 봐야 한다.
+
+## 먼저 보는 코드
 
 ```ts
-type Status = "idle" | "loading" | "success" | "error";
-
-const state = {
-  status: "idle",
+type User = {
+  id: string;
+  profile?: {
+    name?: string;
+  };
 };
 
-function render(status: Status) {
-  return status;
+function renderName(user: User) {
+  if (user.profile?.name) {
+    return user.profile.name.toUpperCase();
+  }
+  return "익명";
 }
-
-render(state.status);
 ```
 
-겉으로는 `"idle"`이니까 될 것 같지만, `state.status`는 `string`으로 넓혀질 수 있습니다. TypeScript는 이후에 `state.status = "anything"` 같은 변경 가능성을 고려하기 때문입니다.
-
-해결은 상황에 따라 다릅니다.
+이 코드는 자연스럽습니다. `if (user.profile?.name)` 안에서는 `name`이 truthy한 문자열로 좁혀집니다. 하지만 조금만 구조가 바뀌면 narrowing이 기대처럼 유지되지 않을 수 있습니다.
 
 ```ts
-const state = {
-  status: "idle",
-} as const;
+function renderName(user: User) {
+  const profile = user.profile;
+
+  if (profile?.name) {
+    user.profile = undefined;
+    return profile.name.toUpperCase();
+  }
+
+  return "익명";
+}
 ```
 
-또는 API 경계에 맞는 타입을 명시합니다.
-
-```ts
-type State = { status: Status };
-const state: State = { status: "idle" };
-```
-
-## 추론은 적이 아니다
+여기서는 `profile`이라는 alias가 기존 객체를 붙잡고 있습니다. `user.profile`을 바꿔도 `profile` 변수는 이전 객체를 가리킵니다. 이게 의도라면 괜찮지만, 리뷰어는 “지금 좁힌 값이 무엇이고, 이후에 바뀔 수 있는 값은 무엇인가?”를 봐야 합니다.
 
 ![타입 추론과 API 경계](/images/content/study/effective-typescript/day5/inference-api-design.svg)
 
-불필요한 annotation은 코드만 길게 만들고 실제 모델을 흐릴 수 있습니다.
+## narrowing은 값의 흐름을 읽는다
+
+TypeScript는 `typeof`, `in`, discriminant field, truthy check, equality check 등을 보고 타입을 좁힙니다.
 
 ```ts
-const ids: string[] = users.map((user: User): string => user.id);
-```
+type Result =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "success"; data: User };
 
-대부분은 이렇게 충분합니다.
-
-```ts
-const ids = users.map((user) => user.id);
-```
-
-리뷰 기준은 단순합니다. 지역 변수처럼 바로 읽히는 값은 추론에 맡기고, 함수 입력/출력, 공개 API, 복잡한 객체 경계에는 타입을 명확히 둡니다.
-
-| 위치             | 기본 판단      |
-| ---------------- | -------------- |
-| 지역 변수        | 추론 우선      |
-| 콜백 내부        | 문맥 타입 활용 |
-| 함수 매개변수    | 명시           |
-| 공개 함수 반환   | 명시 고려      |
-| 외부 데이터 경계 | 명시 + 검증    |
-
-## 타입 넓히기는 설계 신호다
-
-`let x = "idle"`은 보통 `string`이 됩니다. 재할당 가능한 값이기 때문입니다.
-
-```ts
-let status = "idle";
-status = "loading";
-status = "done"; // 타입 관점에서는 가능
-```
-
-반면 좁은 선택지만 허용하고 싶다면 변수 선언보다 모델을 먼저 잡아야 합니다.
-
-```ts
-type Status = "idle" | "loading" | "success" | "error";
-let status: Status = "idle";
-```
-
-객체 literal에서도 같은 문제가 생깁니다. `as const`는 값을 매우 좁고 readonly하게 만들고, 타입 annotation은 API 모델에 맞춰 값을 제한합니다. 둘은 용도가 다릅니다.
-
-## 함수형 기법은 타입 흐름을 보존한다
-
-명령형으로 중간 객체를 계속 바꾸면 타입이 넓어지거나 optional 처리가 흐려질 때가 있습니다.
-
-```ts
-const result: Record<string, number> = {};
-for (const item of items) {
-  result[item.id] = item.count;
+function render(result: Result) {
+  if (result.status === "success") {
+    return result.data.name;
+  }
+  if (result.status === "error") {
+    return result.message;
+  }
+  return "로딩 중";
 }
 ```
 
-이 코드가 나쁜 것은 아니지만, 변환 의도가 강하면 `map`, `filter`, `reduce`가 타입 흐름을 더 잘 보이게 만들 수 있습니다.
+이런 코드는 리뷰하기 좋습니다. `status` 하나가 branch를 나누고, 각 branch에서 필요한 필드가 선명합니다. 반대로 truthy check만으로 도메인 의미를 표현하면 헷갈릴 수 있습니다.
 
 ```ts
-const entries = items.map((item) => [item.id, item.count] as const);
-const result = Object.fromEntries(entries);
+if (user.name) {
+  render(user.name);
+}
 ```
 
-리뷰 포인트는 “함수형을 쓰자”가 아닙니다. 데이터가 어떤 모양에서 어떤 모양으로 바뀌는지 TypeScript가 따라갈 수 있느냐입니다.
+이 코드는 `undefined`와 빈 문자열을 같이 제외합니다. 빈 문자열이 유효한 이름인지, “이름 없음”인지 도메인 규칙에 따라 판단이 달라집니다. narrowing이 편하다고 해서 도메인 의미까지 자동으로 맞아지는 것은 아닙니다.
 
-## 유니온은 한 필드로 판별되게 만들기
+## alias는 읽기 비용을 만든다
 
-선택지를 여러 boolean으로 표현하면 불가능한 상태가 생깁니다.
+alias 자체가 나쁜 건 아닙니다. 오히려 긴 표현을 줄이고, 한 번 좁힌 값을 안정적으로 잡아둘 수 있습니다.
 
 ```ts
-type RequestState = {
-  loading: boolean;
-  error?: string;
-  data?: User;
+const name = user.profile?.name;
+
+if (typeof name === "string") {
+  return name.toUpperCase();
+}
+```
+
+이 코드는 좋습니다. 이후에는 `user.profile.name`을 다시 따라가지 않고, `name`이라는 지역 값을 다룹니다.
+
+문제는 alias가 원본 객체와 섞일 때입니다.
+
+```ts
+const options = props.options;
+
+if (options?.theme) {
+  updateProps();
+  applyTheme(options.theme);
+}
+```
+
+`updateProps()`가 실제로 `props.options`를 바꾸는지, `options`가 이전 객체를 붙잡는지, 둘 중 무엇이 의도인지 읽어야 합니다. React 코드에서는 props/state가 렌더 사이에 새 값으로 들어오고, callback은 이전 render의 값을 닫아둘 수 있습니다. JS Quizbook Day 7의 stale closure와 같은 문제입니다.
+
+리뷰 질문은 이겁니다.
+
+- 좁힌 값은 지역 primitive인가, 객체 참조인가?
+- 원본 객체를 이후에 다시 읽는가?
+- callback/async 경계를 지나도 같은 값을 기대하는가?
+- alias가 의도를 선명하게 하는가, 원본과 복사본처럼 착각하게 하는가?
+
+## 문맥 타입은 콜백을 살린다
+
+TypeScript는 값이 놓인 문맥을 보고 타입을 추론합니다.
+
+```ts
+type ButtonProps = {
+  onClick: (event: MouseEvent) => void;
+};
+
+const props: ButtonProps = {
+  onClick(event) {
+    console.log(event.clientX);
+  },
 };
 ```
 
-`loading: true`인데 `data`도 있는 상태가 타입상 가능해집니다. 대신 판별 가능한 유니온이 더 안전합니다.
+`event`에 직접 annotation을 쓰지 않아도 `ButtonProps`의 문맥 덕분에 `MouseEvent`로 추론됩니다. 이게 context inference입니다.
+
+프론트엔드에서는 컴포넌트 props, event handler, array method callback, form resolver에서 자주 드러납니다.
 
 ```ts
-type RequestState =
-  | { status: "loading" }
-  | { status: "error"; error: string }
-  | { status: "success"; data: User };
+const names = users.map((user) => user.name);
 ```
 
-프론트엔드 상태 리뷰에서는 이 차이가 큽니다. UI branch가 많아질수록 “나올 수 없는 조합”을 타입으로 막는 편이 런타임 조건문을 줄입니다.
+`users`가 `User[]`라면 `user`는 자연스럽게 `User`입니다. 콜백마다 `user: User`를 반복할 필요가 없습니다. 하지만 문맥이 사라지면 추론도 약해집니다.
 
-## 코드 리뷰 체크리스트
+```ts
+const handlers = {
+  click(event) {
+    console.log(event.clientX);
+  },
+};
+```
 
-- 추론 가능한 지역 변수에 annotation을 반복하고 있지 않은가?
-- literal 값이 `string`으로 넓어져 API 타입과 충돌하지 않는가?
-- `as const`를 모델링 대신 남용하지 않았는가?
-- 데이터 변환 흐름이 타입으로 따라가기 어렵게 작성되지 않았는가?
-- 여러 boolean/optional 조합 대신 판별 유니온이 필요한 상태는 아닌가?
+이 객체가 어떤 계약을 만족해야 하는지 없으면 `event`는 암묵적 `any`가 될 수 있습니다. 해결은 “모든 콜백에 타입을 쓰자”가 아니라, 객체 전체가 놓인 계약을 알려주는 것입니다.
 
-## 짧은 복습
+```ts
+type Handlers = {
+  click: (event: MouseEvent) => void;
+};
 
-1. 지역 변수의 타입 annotation을 줄여도 되는 기준은 무엇인가?
-2. `const obj = { status: "idle" }`에서 `status`가 넓어질 수 있는 이유는 무엇인가?
-3. `as const`와 명시적 타입 annotation은 각각 어떤 상황에 어울리는가?
-4. `loading/error/data` 조합보다 `status` 판별 유니온이 나은 이유는 무엇인가?
+const handlers: Handlers = {
+  click(event) {
+    console.log(event.clientX);
+  },
+};
+```
 
-오늘의 결론은 간단합니다. TypeScript를 잘 쓰는 코드는 타입을 많이 적는 코드가 아니라, 값의 의도와 API 경계를 맞춰 추론이 자연스럽게 흐르는 코드입니다.
+## evolving type은 편하지만 의도가 늦게 보인다
+
+빈 배열에서 시작해 값을 넣으면 TypeScript가 타입을 진화시키는 경우가 있습니다.
+
+```ts
+const ids = [];
+ids.push("a");
+ids.push("b");
+```
+
+작은 함수 안에서는 괜찮습니다. 하지만 중간에 조건이 많아지면 “이 배열에는 결국 무엇이 들어가는가?”가 늦게 드러납니다.
+
+```ts
+const items = [];
+
+if (includeUsers) {
+  items.push({ type: "user", id: user.id });
+}
+
+if (includeTeams) {
+  items.push({ type: "team", id: team.id });
+}
+```
+
+이럴 때는 의도를 먼저 세우는 편이 낫습니다.
+
+```ts
+type SearchItem = { type: "user"; id: string } | { type: "team"; id: string };
+
+const items: SearchItem[] = [];
+```
+
+지역 계산에서는 추론이 좋지만, 도메인 리스트나 공개 반환값에서는 타입을 먼저 잡는 게 리뷰에 유리합니다.
+
+## async 경계는 narrowing을 다시 의심하게 만든다
+
+가장 위험한 착각은 “확인했으니까 나중에도 안전하다”입니다.
+
+```ts
+let currentUser: User | null = null;
+
+async function saveProfile() {
+  if (!currentUser) return;
+
+  await saveDraft();
+  return currentUser.id;
+}
+```
+
+TypeScript가 이 코드를 어떻게 좁히는지와 별개로, 런타임에서는 `await saveDraft()` 동안 다른 코드가 `currentUser = null`로 바꿀 수 있습니다. 모듈 스코프 mutable state, React ref, 외부 store를 다룰 때 특히 그렇습니다.
+
+더 안전한 방식은 좁힌 값을 지역 상수로 붙잡는 것입니다.
+
+```ts
+async function saveProfile() {
+  const user = currentUser;
+  if (!user) return;
+
+  await saveDraft();
+  return user.id;
+}
+```
+
+이 코드는 “저장 시작 시점의 user로 처리한다”는 의도를 드러냅니다. 반대로 항상 최신 user가 필요하다면 `await` 뒤에 다시 읽고 다시 확인해야 합니다.
+
+## 프론트엔드 코드 리뷰 체크리스트
+
+| 변화                  | 확인할 질문                                                   |
+| --------------------- | ------------------------------------------------------------- |
+| `if` narrowing 추가   | truthy check가 도메인 의미를 잘 표현하는가?                   |
+| alias 추가            | 원본 객체와 alias가 섞여 읽기 비용을 만들지 않는가?           |
+| 콜백 타입 생략        | 문맥 타입이 충분해서 생략된 것인가, 암묵적 any인가?           |
+| 빈 배열/객체 누적     | evolving type이 의도를 늦게 숨기지 않는가?                    |
+| `await` 뒤 값 사용    | 좁힌 값이 async 경계 뒤에도 같은 값이어야 하는가?             |
+| React callback/effect | stale closure가 타입상 안전해 보이는 값을 오래 붙잡지 않는가? |
+
+Day 5의 결론은 “타입스크립트의 narrowing을 믿지 말자”가 아닙니다. 오히려 narrowing을 제대로 쓰려면 값의 수명, alias, 문맥, async 경계를 같이 읽어야 한다는 쪽에 가깝습니다.
+
+## Day 5 타입 리뷰 퀴즈
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="truthy check로 `if (user.name)`을 쓸 때 주의할 점은 무엇일까요?"
+    choices={[
+      "문자열은 TypeScript에서 narrowing되지 않는다",
+      "빈 문자열도 함께 제외되므로 도메인에서 빈 문자열이 어떤 의미인지 확인해야 한다",
+      "truthy check는 런타임에서 실행되지 않는다",
+      "name이 string이면 항상 number로 바뀐다",
+    ]}
+    answer={1}
+    explanation="truthy check는 undefined/null뿐 아니라 빈 문자열도 제외합니다. narrowing이 도메인 의미와 맞는지 봐야 합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="context inference가 잘 작동하는 예로 가장 알맞은 것은 무엇일까요?"
+    choices={[
+      "아무 계약 없는 객체 literal의 callback 매개변수가 자동으로 MouseEvent가 된다",
+      "ButtonProps 타입이 붙은 객체 안의 onClick callback 매개변수가 MouseEvent로 추론된다",
+      "모든 빈 배열은 자동으로 User[]가 된다",
+      "await 뒤의 전역 변수는 절대 바뀌지 않는다",
+    ]}
+    answer={1}
+    explanation="문맥 타입이 있을 때 콜백 매개변수 타입을 자연스럽게 추론할 수 있습니다. 문맥이 없으면 암묵적 any가 생길 수 있습니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="async 함수에서 좁힌 전역/모듈 상태를 `await` 뒤에도 안전하게 쓰려면 어떤 선택지가 있을까요?"
+    answer="좁힌 값을 지역 상수로 붙잡아 시작 시점의 값을 쓰거나, 최신 값이 필요하다면 await 뒤에 다시 읽고 다시 확인해야 한다."
+    explanation="await는 다른 작업이 끼어들 수 있는 경계입니다. 타입상 좁혀졌다는 사실과 런타임 값의 수명은 구분해야 합니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="빈 배열에서 시작해 push로 값을 모으는 코드가 리뷰에서 문제가 될 수 있는 경우를 설명해보세요."
+    answer="작은 지역 계산에서는 괜찮지만, 조건이 많고 여러 종류의 객체를 push하면 배열의 최종 의도가 늦게 드러납니다. 도메인 리스트나 공개 반환값이라면 `SearchItem[]` 같은 타입을 먼저 세워 어떤 값이 들어갈 수 있는지 보여주는 편이 리뷰와 유지보수에 유리합니다."
+    explanation="evolving type은 편의 기능입니다. 의도가 늦게 보이는 설계까지 좋은 설계로 만들어주지는 않습니다."
+  />
+</ArticleQuiz>

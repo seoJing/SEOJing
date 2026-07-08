@@ -121,6 +121,52 @@ DOM element나 임시 객체별 metadata처럼 “객체가 사라지면 부가 
 - 캐시가 객체나 DOM node를 계속 붙잡고 있지 않은가?
 - WeakMap을 쓰면서 key 목록 순회를 요구하고 있지 않은가?
 
+## AI가 만든 코드에서 자주 보이는 실수
+
+AI가 객체 복사 코드를 만들 때 가장 자주 하는 실수는 “spread를 썼으니 안전하다”는 전제입니다. 예를 들어 React state를 갱신하면서 최상위 객체만 복사하고 nested object를 직접 바꾸는 코드가 자주 나옵니다.
+
+```js
+setUser((prev) => {
+  const next = { ...prev };
+  next.profile.level += 1;
+  return next;
+});
+```
+
+이 코드는 `next`라는 새 객체를 반환하므로 겉보기에는 immutable update처럼 보입니다. 하지만 `profile`은 여전히 이전 객체와 공유됩니다. 다른 memoized selector, undo stack, optimistic cache가 같은 nested 객체를 들고 있다면 예상보다 넓은 범위가 같이 바뀔 수 있습니다.
+
+더 안전한 갱신은 바뀌는 경로를 따라 새 객체를 만듭니다.
+
+```js
+setUser((prev) => ({
+  ...prev,
+  profile: {
+    ...prev.profile,
+    level: prev.profile.level + 1,
+  },
+}));
+```
+
+두 번째 실수는 `Set`을 구조적 중복 제거 도구처럼 쓰는 겁니다.
+
+```js
+const uniqueUsers = [...new Set(users)];
+```
+
+`users`가 같은 객체 참조를 중복으로 담고 있다면 동작합니다. 하지만 API에서 온 `{ id: 1 }` 객체가 매번 새로 만들어진다면 내용이 같아도 제거되지 않습니다. id 기준 중복 제거가 목적이면 기준을 코드에 드러내야 합니다.
+
+```js
+const uniqueUsers = [...new Map(users.map((user) => [user.id, user])).values()];
+```
+
+세 번째 실수는 `Map` 캐시의 수명을 닫지 않는 겁니다. 컴포넌트, DOM node, request object를 key로 캐싱하면서 cleanup이 없다면 캐시가 오래 살아남습니다. `WeakMap`은 “key가 사라지면 metadata도 같이 사라져도 되는” 상황에 맞고, 순회·디버깅·명시적 무효화가 필요하면 `Map`과 cleanup 정책을 같이 설계해야 합니다.
+
+## 연결해서 읽기
+
+- Day 2 equality 글과 이어집니다. `Map`/`Set`의 객체 key 비교는 내용 비교가 아니라 참조 동일성 쪽에 가깝습니다.
+- Day 4 property descriptor 글과 이어집니다. `freeze`를 써도 얕은 freeze인지 깊은 freeze인지 구분해야 합니다.
+- Effective TypeScript Day 6과도 연결됩니다. API response와 앱 내부 model을 같은 객체로 계속 넘기면 참조 공유 범위가 커집니다.
+
 ## 참고문헌
 
 - 프런트엔드 레벨을 높이는 자바스크립트 퀴즈북, 객체/컬렉션 관련 장

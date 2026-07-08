@@ -1,0 +1,255 @@
+---
+title: "이펙티브 타입스크립트 2판 Day 13: 타입은 런타임과 테스트를 대신하지 않는다"
+description: "Item 74–78 범위를 바탕으로 런타임 타입 재구성, DOM과 환경 모델, 단위 테스트 관계, 컴파일러 성능을 코드 리뷰 관점에서 정리합니다."
+date: "2026-07-09"
+tags:
+  [
+    "TypeScript",
+    "Effective TypeScript",
+    "프론트엔드",
+    "Runtime Validation",
+    "DOM",
+    "Testing",
+    "Compiler Performance",
+    "Code Review",
+  ]
+category: "study"
+series: "effective-typescript"
+cover:
+  src: "/images/content/study/effective-typescript/day13/runtime-dom-test-boundary.svg"
+  alt: "런타임 값 검증, DOM 환경, 테스트, 컴파일러 성능으로 이어지는 타입스크립트 경계 다이어그램"
+  caption: "작성 SVG · 타입이 사라진 뒤 남는 런타임/환경/테스트 경계"
+  kind: "diagram"
+---
+
+> 범위: Effective TypeScript 2판 Item 74–78<br />
+> 오늘의 질문: “타입스크립트가 있으니 런타임 검증과 테스트는 조금 덜 봐도 될까?”
+
+## 이 글의 원천 앵커
+
+이번 범위는 타입스크립트의 바깥을 봅니다. 타입을 잘 설계해도 브라우저가 실행하는 것은 타입이 지워진 자바스크립트입니다. DOM은 환경마다 다르게 구현되고, 테스트는 타입이 놓치는 런타임 분기를 확인합니다. 타입이 너무 복잡하면 컴파일러도 느려집니다.
+
+이번 글에서 잃으면 안 되는 포인트는 이겁니다.
+
+- 타입은 런타임에 사라지므로 외부 값은 다시 확인해야 한다.
+- 런타임 타입 정보를 얻으려면 값, 태그, 스키마, 판별자 같은 단서가 필요하다.
+- DOM 타입 선언은 실제 브라우저/테스트 환경의 API 존재를 보장하지 않는다.
+- 단위 테스트와 타입 검사는 서로 대체 관계가 아니라 서로 다른 실패를 잡는다.
+- 타입 수준 프로그래밍은 표현력이 있지만, 컴파일러 성능과 팀 디버깅 비용을 만든다.
+
+![런타임과 테스트 경계](/images/content/study/effective-typescript/day13/runtime-dom-test-boundary.svg)
+
+## 먼저 보는 코드
+
+```ts
+type User = {
+  id: string;
+  name: string;
+};
+
+async function loadUser(): Promise<User> {
+  const response = await fetch("/api/me");
+  const data = await response.json();
+  return data as User;
+}
+```
+
+이 코드는 타입스크립트 입장에서는 깔끔합니다. `loadUser()`는 `Promise<User>`를 반환합니다. 하지만 런타임에서는 `response.json()`이 어떤 값을 줄지 모릅니다. 서버가 `name: null`을 보내도, 인증 실패 HTML이 섞여도, 오래된 API가 `user_name`을 보내도 `as User`는 아무것도 확인하지 않습니다.
+
+이 범위의 핵심은 “타입을 믿지 말자”가 아닙니다. 타입이 책임지는 구역과 런타임 코드가 책임지는 구역을 나누자는 말입니다.
+
+## 런타임 타입은 값에서 다시 만들어야 한다
+
+`unknown`을 내부 타입으로 바꾸려면 검증 코드가 필요합니다.
+
+```ts
+type User = {
+  id: string;
+  name: string;
+};
+
+function isUser(value: unknown): value is User {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return typeof record.id === "string" && typeof record.name === "string";
+}
+
+async function loadUser(): Promise<User | null> {
+  const response = await fetch("/api/me");
+  const data: unknown = await response.json();
+  return isUser(data) ? data : null;
+}
+```
+
+여기서 `isUser`는 타입과 런타임을 이어주는 다리입니다. `value is User`라는 반환 타입만 중요한 게 아니라, 함수 본문이 실제 값을 확인한다는 점이 중요합니다.
+
+리뷰할 때는 다음을 봅니다.
+
+- `unknown`이 경계에서 바로 좁혀지는가?
+- `as SomeType`가 검증 없이 외부 데이터를 믿게 만들지 않는가?
+- 실패했을 때 `null`, `Result`, `throw`, error state 중 무엇으로 표현하는가?
+- 검증 코드와 타입 정의가 서로 어긋날 가능성은 없는가?
+
+작은 앱에서는 직접 type guard를 써도 됩니다. 데이터가 복잡하거나 API가 많아지면 Zod 같은 스키마 검증 도구를 쓰는 편이 더 일관적일 수 있습니다. 중요한 건 도구 이름이 아니라, 런타임 값이 타입으로 들어오는 관문이 있다는 사실입니다.
+
+## 타입만으로는 DOM 환경을 보장하지 못한다
+
+DOM 코드는 타입 선언이 있어도 실제 환경에서 깨질 수 있습니다.
+
+```ts
+const dialog = document.querySelector("dialog") as HTMLDialogElement;
+dialog.showModal();
+```
+
+브라우저에서는 맞을 수 있습니다. 하지만 테스트 환경이 jsdom이면 `showModal`이 구현되어 있지 않을 수 있습니다. 오래된 브라우저나 WebView도 마찬가지입니다. 타입 선언은 “이 API가 표준 DOM 모델에 있다”는 정보를 줄 뿐, 지금 실행 환경에 반드시 구현되어 있다는 보장은 아닙니다.
+
+더 안전한 코드는 환경 차이를 드러냅니다.
+
+```ts
+const dialog = document.querySelector("dialog");
+
+if (!(dialog instanceof HTMLDialogElement)) {
+  throw new Error("dialog element is missing");
+}
+
+if (typeof dialog.showModal !== "function") {
+  // 테스트 환경이나 구형 환경에서는 fallback 처리
+  dialog.setAttribute("open", "");
+} else {
+  dialog.showModal();
+}
+```
+
+프론트엔드 코드 리뷰에서는 DOM 타입을 볼 때 다음 질문이 필요합니다.
+
+- selector 결과가 `null`일 수 있는가?
+- `as HTMLElement`가 실제 element 종류를 확인하지 않고 있지 않은가?
+- 브라우저, jsdom, Storybook, SSR 환경에서 같은 API를 기대하는가?
+- 접근성/기본 동작을 타입만 보고 생략하지 않았는가?
+
+Day 12의 browser event 글과도 이어집니다. `target`은 타입상 `EventTarget`이고, 실제로는 텍스트 노드나 내부 span일 수 있습니다. 타입을 좁히는 코드가 이벤트 흐름을 제대로 반영해야 합니다.
+
+## 테스트는 타입이 모르는 실패를 본다
+
+타입은 많은 실수를 컴파일 전에 막습니다. 하지만 테스트가 봐야 하는 영역은 여전히 남습니다.
+
+```ts
+type Price = {
+  amount: number;
+  currency: "KRW" | "USD";
+};
+
+function formatPrice(price: Price) {
+  if (price.currency === "KRW") return `${price.amount.toLocaleString()}원`;
+  return `$${price.amount.toFixed(2)}`;
+}
+```
+
+타입은 `currency`가 두 값 중 하나라는 사실을 보장합니다. 하지만 다음은 타입만으로 충분하지 않습니다.
+
+- `KRW`가 소수점 없이 표시되는가?
+- `USD`가 소수점 두 자리로 표시되는가?
+- `NaN`, `Infinity`, 음수, 0은 어떻게 보이는가?
+- locale이 바뀌면 결과가 달라지는가?
+
+테스트는 타입이 아니라 동작을 확인합니다.
+
+```ts
+it("formats KRW without decimal places", () => {
+  expect(formatPrice({ amount: 12000, currency: "KRW" })).toBe("12,000원");
+});
+
+it("formats USD with two decimals", () => {
+  expect(formatPrice({ amount: 12, currency: "USD" })).toBe("$12.00");
+});
+```
+
+반대로 테스트가 타입을 대체하지도 않습니다. 타입이 없으면 테스트가 커버하지 않은 호출 조합이 계속 생깁니다. 좋은 방향은 둘을 나누는 겁니다.
+
+| 도구               | 잘 잡는 것                                         | 못 잡는 것                                          |
+| ------------------ | -------------------------------------------------- | --------------------------------------------------- |
+| TypeScript         | 잘못된 호출 모양, 빠진 필드, 불가능한 union branch | 실제 렌더링 결과, 외부 API 응답, 브라우저 구현 차이 |
+| Unit test          | 구체적인 입력/출력, 실패 branch, 환경 fallback     | 모든 호출 조합, 타입 설계 의도                      |
+| Runtime validation | 외부 값의 실제 shape                               | UI 동작, 성능, 접근성                               |
+
+코드 리뷰에서는 “타입이 있으니 테스트 생략”과 “테스트가 있으니 타입 대충”을 둘 다 경계해야 합니다.
+
+## 컴파일러 성능도 설계 비용이다
+
+타입스크립트 타입은 꽤 강력합니다. conditional type, mapped type, template literal type, recursive type을 조합하면 많은 규칙을 타입으로 표현할 수 있습니다.
+
+```ts
+type DotPath<T> = T extends object
+  ? {
+      [K in keyof T & string]: T[K] extends object
+        ? K | `${K}.${DotPath<T[K]>}`
+        : K;
+    }[keyof T & string]
+  : never;
+```
+
+이런 타입은 폼 경로, i18n key, route key를 표현할 때 유용할 수 있습니다. 하지만 객체가 커지고 union이 섞이면 컴파일러가 계산해야 할 조합이 급격히 늘어납니다. 에디터 자동완성이 느려지고, `tsc --noEmit` 시간이 늘고, 팀원이 타입 에러를 읽기 어려워질 수 있습니다.
+
+타입 수준 설계도 리뷰 대상입니다.
+
+- 이 복잡한 타입이 실제 버그를 줄이는가?
+- 런타임 코드나 codegen으로 푸는 편이 더 단순하지 않은가?
+- public API에 노출되어 사용자 에러 메시지를 어렵게 만들지 않는가?
+- 큰 union/recursive type이 에디터 성능을 망치지 않는가?
+- 타입 테스트가 있어 변경 시 깨지는 지점을 알 수 있는가?
+
+Day 10에서 타입 테스트를 다룬 이유가 여기서 다시 중요해집니다. 복잡한 타입을 쓰려면 “잘 동작하겠지”가 아니라 타입 테스트와 성능 감각이 같이 있어야 합니다.
+
+## 프론트엔드 코드 리뷰 체크리스트
+
+| 변화               | 확인할 질문                                                      |
+| ------------------ | ---------------------------------------------------------------- |
+| `as SomeType` 추가 | 외부 값을 검증하지 않고 믿게 만드는가?                           |
+| type guard 추가    | 실제 런타임 값의 필드를 확인하는가, 이름만 guard인가?            |
+| DOM API 사용       | 브라우저/jsdom/SSR 환경 차이를 고려했는가?                       |
+| 테스트 삭제        | 타입이 정말 그 동작을 보장하는가?                                |
+| 테스트 추가        | 타입으로 막을 수 있는 호출 조합까지 테스트로 떠안고 있지 않은가? |
+| 복잡한 타입 추가   | 버그 감소 효과가 컴파일/디버깅 비용보다 큰가?                    |
+
+이번 범위의 결론은 분명합니다. 타입스크립트는 리뷰 범위를 줄여주지만, 런타임을 없애지는 않습니다. 타입이 사라진 뒤에도 데이터, DOM, 테스트, 컴파일러 성능이라는 경계는 남습니다. 좋은 TS 코드는 이 경계를 숨기지 않습니다.
+
+## Day 13 타입 리뷰 퀴즈
+
+<ArticleQuiz>
+  <ArticleQuizItem
+    mode="multiple"
+    question="외부 API 응답에 `as User`를 바로 붙이는 코드의 가장 큰 문제는 무엇일까요?"
+    choices={[
+      "타입스크립트가 Promise를 지원하지 않기 때문에",
+      "런타임 값이 실제로 User 모양인지 확인하지 않는데 컴파일러에게는 User라고 믿게 만들기 때문에",
+      "type alias는 객체 타입에 사용할 수 없기 때문에",
+      "fetch 응답은 항상 HTML이기 때문에",
+    ]}
+    answer={1}
+    explanation="type assertion은 런타임 검증이 아닙니다. 외부 값은 unknown으로 받고 type guard나 schema로 좁히는 경계가 필요합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="DOM 타입 선언과 실제 실행 환경의 관계로 가장 알맞은 설명은 무엇일까요?"
+    choices={[
+      "타입 선언에 있는 DOM API는 모든 테스트/브라우저 환경에서 반드시 구현되어 있다",
+      "타입 선언은 API 모델을 알려주지만 jsdom, SSR, 구형 브라우저에서는 실제 구현이 다를 수 있다",
+      "DOM API는 TypeScript에서만 실행된다",
+      "querySelector는 절대 null을 반환하지 않는다",
+    ]}
+    answer={1}
+    explanation="DOM 타입은 표준 모델을 설명하지만 현재 런타임 구현을 보장하지 않습니다. selector null, API 존재 여부, 테스트 환경 차이를 확인해야 합니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question="타입과 테스트가 서로 대체 관계가 아닌 이유를 한 문장으로 적어보세요."
+    answer="타입은 호출 모양과 상태 공간을 줄이고, 테스트는 실제 입력/출력·실패 branch·환경 차이 같은 런타임 동작을 확인하기 때문이다."
+    explanation="타입과 테스트는 같은 버그를 다른 방식으로 잡는 도구가 아닙니다. 각각 책임지는 경계가 다릅니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="복잡한 conditional/template literal type을 추가한 PR을 리뷰할 때 어떤 질문을 해야 할까요?"
+    answer="먼저 그 타입이 실제 버그를 줄이는지, 런타임 코드나 codegen보다 단순한지 봅니다. public API에 노출되어 에러 메시지를 어렵게 만들지 않는지, 큰 union/recursive type 때문에 에디터와 tsc 성능이 나빠지지 않는지도 확인합니다. 복잡한 타입이라면 타입 테스트로 기대 동작을 고정해야 합니다."
+    explanation="타입 수준 프로그래밍도 설계 비용이 있습니다. 표현력이 높다는 이유만으로 좋은 선택이 되지는 않습니다."
+  />
+</ArticleQuiz>
