@@ -1,6 +1,6 @@
 ---
 title: "자바스크립트 퀴즈북 리마인드 Day 6: 스코프 체인과 호이스팅"
-description: "스코프 체인, 클로저, var/let/const 호이스팅 차이를 콜백·상태 버그 리뷰 관점에서 짧게 정리합니다."
+description: "스코프 체인, 렉시컬 환경, var/let/const 호이스팅 차이를 콜백·상태 버그 리뷰 관점에서 다시 정리합니다."
 date: "2026-06-28"
 tags:
   [
@@ -20,8 +20,18 @@ cover:
   kind: "diagram"
 ---
 
-> 예상 읽기 시간: 12분<br />
+> 예상 읽기 시간: 15분<br />
 > 오늘의 질문: “콜백 안에서 읽는 값은 함수가 만들어진 곳을 볼까, 호출된 곳을 볼까?”
+
+## 이 글의 원천 앵커
+
+이 글은 자바스크립트 퀴즈북의 스코프·호이스팅·클로저 앞부분을 프론트엔드 코드 리뷰용으로 다시 묶은 글입니다. 단어를 외우는 순서는 별로 중요하지 않습니다. 실제 리뷰에서는 아래 질문을 계속 따라가야 합니다.
+
+- 식별자는 어느 렉시컬 환경에서 선언됐나?
+- 함수는 어느 위치에서 만들어졌고, 나중에 어느 위치에서 실행되나?
+- `var`, `let`, `const` 중 어떤 바인딩을 닫아두고 있나?
+- 선언 전 접근이 조용한 `undefined` 흐름인지, TDZ 에러인지?
+- `const`라는 말이 “재할당 금지”인지, “객체 내부 불변”인지?
 
 ## 먼저 맞혀보기
 
@@ -36,20 +46,70 @@ function makeLogger() {
 }
 
 const log = makeLogger();
-log();
+
+function run(callback) {
+  const label = "runner";
+  callback();
+}
+
+run(log);
 ```
 
-출력은 `local`입니다. 함수는 **호출된 위치**가 아니라 **생성된 위치의 렉시컬 환경**을 기억합니다. 이게 스코프 체인과 클로저의 핵심입니다.
+출력은 `local`입니다. `log`가 `run` 안에서 호출되었으니 `runner`를 볼 것 같지만, 자바스크립트 함수는 호출 위치의 주변 변수를 새로 고르지 않습니다. 함수가 **만들어진 위치**의 렉시컬 환경을 기억하고, 실행될 때 그 환경 체인을 따라 이름을 찾습니다.
 
-## 틀리기 쉬운 직감
-
-“나중에 실행됐으니까 그때 주변 값을 보겠지”라고 생각하면 비동기 콜백, 이벤트 핸들러, React effect에서 자주 틀립니다. 자바스크립트 함수는 실행 시점마다 아무 스코프나 다시 고르지 않습니다. 함수 객체가 만들어질 때 바깥 환경 참조가 함께 붙고, 실행 때는 그 참조를 따라 이름을 찾습니다.
+이 한 문장이 Day 7의 stale closure, Day 8의 async 실행 순서, Day 12의 이벤트 핸들러까지 이어집니다.
 
 ![스코프 체인과 호이스팅 관계](/images/content/study/javascript-quizbook/day6/scope-chain-hoisting.svg)
 
+## 틀리기 쉬운 직감
+
+초보 때는 “함수가 실행되는 곳의 주변 값을 보겠지”라고 생각하기 쉽습니다. 하지만 함수는 호출될 때 아무 스코프나 다시 선택하지 않습니다. 함수 객체가 만들어질 때 바깥 렉시컬 환경에 대한 참조가 함께 붙고, 실행 때는 그 참조를 따라갑니다.
+
+그래서 프론트엔드 버그는 이런 모양으로 나옵니다.
+
+```js
+function createSubmitHandler(user) {
+  return function handleSubmit() {
+    sendAnalytics(user.id);
+  };
+}
+```
+
+`handleSubmit`은 실행 시점의 최신 user를 자동으로 찾아오지 않습니다. 만들어질 때 인자로 받은 `user` 바인딩을 닫아둡니다. React 컴포넌트에서 핸들러가 어느 렌더에서 만들어졌는지 묻는 이유가 여기에 있습니다.
+
+## 스코프 체인은 “이름 찾기 순서”다
+
+스코프 체인은 어려운 내부 구조라기보다 이름을 찾는 순서로 보면 됩니다.
+
+```js
+const taxRate = 0.1;
+
+function createPriceFormatter(discount) {
+  return function format(price) {
+    const discounted = price - discount;
+    return discounted + discounted * taxRate;
+  };
+}
+
+const format = createPriceFormatter(5);
+console.log(format(100));
+```
+
+`format` 안에서 `price`는 자기 실행 환경에서 찾습니다. `discount`는 바깥 `createPriceFormatter` 환경에서 찾습니다. `taxRate`는 더 바깥 전역 환경에서 찾습니다. 이름을 찾지 못하면 그때 ReferenceError가 납니다.
+
+리뷰할 때는 “이 변수 값이 어디서 왔지?”를 아래 순서로 좁히면 됩니다.
+
+1. 함수 안 지역 선언인가?
+2. 매개변수인가?
+3. 바깥 함수가 만든 바인딩인가?
+4. 모듈/전역 스코프인가?
+5. 실행 시점에 바뀔 수 있는 mutable binding인가?
+
+마지막 질문이 중요합니다. 클로저는 보통 값을 복사해 두는 스냅샷이 아니라 바인딩을 따라갑니다. 바인딩이 바뀌면 나중 실행에서 보이는 값도 달라질 수 있습니다.
+
 ## `var`와 `let/const`의 차이
 
-둘 다 선언은 스코프의 시작 지점에서 준비됩니다. 차이는 “읽을 수 있는가”입니다.
+`var`, `let`, `const` 모두 선언 처리 단계와 관련이 있습니다. 차이는 “어느 스코프에 바인딩이 생기고, 초기화 전 읽을 수 있는가”입니다.
 
 | 선언    | 선언 전 읽기 | 스코프 | 리뷰 포인트                               |
 | ------- | ------------ | ------ | ----------------------------------------- |
@@ -65,25 +125,31 @@ console.log(b); // ReferenceError
 let b = 1;
 ```
 
-`var`가 “안전”한 게 아닙니다. 오히려 버그를 조용히 숨길 수 있습니다. 리뷰할 때는 `undefined`가 의도된 값인지, 선언 순서가 읽는 사람에게 명확한지 확인해야 합니다.
+`var`가 안전해서 에러가 안 나는 것이 아닙니다. 버그가 더 멀리 흘러갈 뿐입니다. 선언 전에 읽은 `undefined`가 fallback 로직을 타거나, API payload에 섞이거나, 렌더링 조건을 바꾸면 원인을 찾기 어려워집니다.
 
-## 프론트엔드 리뷰에서 보는 부분
+TDZ는 귀찮은 제약이 아니라 조기 경고에 가깝습니다.
 
-- 이벤트 핸들러가 오래된 상태를 닫아두고 있지 않은가?
-- 루프 안 콜백이 같은 `var` 바인딩을 공유하지 않는가?
-- `const` 객체를 내부에서 바꾸면서 불변처럼 말하고 있지 않은가?
-- 선언보다 사용이 먼저 나와서 TDZ나 `undefined` 흐름을 만들지 않는가?
+```js
+function renderTheme() {
+  console.log(theme);
+  const theme = getTheme();
+}
+```
 
-스코프 체인은 문법 지식보다 “이 함수가 어떤 값을 기억하고 실행되는지”를 추적하는 도구에 가깝습니다.
+이 코드는 바로 실패합니다. 반대로 `var`였다면 아래처럼 조용히 `undefined`를 흘릴 수 있습니다.
 
-## 렉시컬 환경을 코드 리뷰 언어로 바꾸기
+```js
+function renderTheme() {
+  console.log(theme); // undefined
+  var theme = getTheme();
+}
+```
 
-스코프를 외울 때 `global scope`, `function scope`, `block scope` 같은 이름만 외우면 실제 버그 앞에서 멈춥니다. 리뷰에서는 이름보다 질문이 중요합니다.
+리뷰에서는 “에러가 안 났다”보다 “선언 순서와 초기화 시점이 독자에게 보이는가”를 봐야 합니다.
 
-1. 이 식별자는 어느 스코프에서 선언됐나?
-2. 이 함수는 어느 시점에 만들어졌나?
-3. 나중에 실행될 때 같은 바인딩을 읽나, 새 바인딩을 읽나?
-4. 선언 전 접근이 `undefined` 흐름인가, TDZ 에러인가?
+## 루프 콜백은 바인딩 공유를 의심한다
+
+스코프와 호이스팅이 실제 버그로 튀어나오는 대표 예시는 루프 안 콜백입니다.
 
 ```js
 function createHandlers() {
@@ -99,36 +165,29 @@ function createHandlers() {
 console.log(createHandlers().map((handler) => handler())); // [3, 3, 3]
 ```
 
-여기서 문제는 “화살표 함수라서”가 아닙니다. 세 콜백이 같은 `index` 바인딩을 닫아둔 것이 문제입니다. `let`은 반복마다 새 바인딩을 만들기 때문에 결과가 달라집니다.
+여기서 문제는 “화살표 함수라서”가 아닙니다. 세 콜백이 같은 `index` 바인딩을 닫아두었기 때문입니다. `var`는 함수 스코프 바인딩 하나를 만들고, 루프가 그 바인딩을 계속 바꿉니다. 루프가 끝난 뒤 `index`는 `3`입니다.
+
+`let`은 반복마다 새 바인딩을 만듭니다.
 
 ```js
-for (let index = 0; index < 3; index += 1) {
-  handlers.push(() => index);
+function createHandlers() {
+  const handlers = [];
+
+  for (let index = 0; index < 3; index += 1) {
+    handlers.push(() => index);
+  }
+
+  return handlers;
 }
-// [0, 1, 2]
+
+console.log(createHandlers().map((handler) => handler())); // [0, 1, 2]
 ```
 
-## TDZ는 귀찮은 제약이 아니라 조기 경고다
+이 차이를 “var는 나쁘고 let은 좋다”로만 외우면 부족합니다. 리뷰 질문은 더 구체적이어야 합니다.
 
-`let`/`const`의 Temporal Dead Zone은 초보자에게는 불편해 보입니다. 하지만 리뷰 관점에서는 선언 순서 문제를 빨리 드러내는 장치입니다.
+> 이 콜백들은 같은 바인딩을 공유해야 하는가, 반복마다 다른 바인딩을 닫아야 하는가?
 
-```js
-function render() {
-  console.log(theme);
-  const theme = getTheme();
-}
-```
-
-이 코드는 바로 실패합니다. 반대로 `var`였다면 `undefined`가 먼저 흘러가고, 나중에 조건문이나 fallback에서 더 멀리 떨어진 버그로 보일 수 있습니다.
-
-```js
-function render() {
-  console.log(theme); // undefined
-  var theme = getTheme();
-}
-```
-
-그러니 “var는 에러가 안 나서 안전하다”가 아니라 “var는 선언 순서 버그를 조용히 뒤로 미룰 수 있다”로 보는 편이 맞습니다.
+대부분의 UI 핸들러는 반복마다 다른 항목 ID나 index를 닫아야 합니다. 하지만 일부 코드는 의도적으로 shared mutable binding을 사용합니다. 그러면 그 의도를 이름과 주석, 더 작은 함수로 드러내야 합니다.
 
 ## `const`는 객체 불변이 아니다
 
@@ -136,15 +195,26 @@ Day 5의 참조와 바로 이어집니다. `const`는 바인딩 재할당을 막
 
 ```js
 const config = { theme: "dark" };
+
 config.theme = "light"; // 가능
 config = {}; // TypeError
 ```
 
 코드 리뷰에서 “const니까 안전하다”는 말이 나오면, 무엇이 안전한지 다시 물어야 합니다. 바인딩이 바뀌지 않는 것인지, 객체 내부가 바뀌지 않는 것인지 다릅니다. 내부 불변이 필요하면 업데이트 방식을 바꾸거나, `Object.freeze`, immutable data pattern, 타입 레벨 readonly 같은 별도 설계가 필요합니다.
 
+```js
+const options = { retry: 3 };
+
+function updateOptions() {
+  options.retry += 1;
+}
+```
+
+이 코드는 `const`지만 전역 mutable object입니다. 테스트 사이에 값이 새거나, 이벤트 핸들러가 예전 가정을 들고 실행될 수 있습니다. “재할당하지 않는다”와 “상태가 변하지 않는다”를 구분해야 합니다.
+
 ## AI가 만든 코드에서 자주 보이는 실수
 
-AI는 `var`를 `let`/`const`로 기계적으로 바꾸는 리팩터링을 잘합니다. 하지만 루프 콜백, 함수 스코프 의존 코드, hoisting에 기대던 오래된 코드에서는 의미가 바뀔 수 있습니다.
+AI는 `var`를 `let`/`const`로 기계적으로 바꾸는 리팩터링을 잘합니다. 많은 경우 이 변화는 맞습니다. 하지만 루프 콜백, 함수 스코프 의존 코드, hoisting에 기대던 오래된 코드에서는 의미가 바뀔 수 있습니다.
 
 ```js
 for (var i = 0; i < nodes.length; i += 1) {
@@ -154,28 +224,54 @@ for (var i = 0; i < nodes.length; i += 1) {
 }
 ```
 
-이 코드를 `let`으로 바꾸면 많은 경우 버그가 고쳐집니다. 하지만 기존 코드가 일부러 최종 index를 읽고 있었다면 동작이 바뀝니다. 좋은 리뷰는 “modern syntax로 바꿨다”에서 끝나지 않고, 각 콜백이 어떤 바인딩을 읽어야 하는지 확인합니다.
+이 코드를 `let`으로 바꾸면 많은 UI 버그가 고쳐집니다. 각 핸들러가 자기 반복의 `i`를 닫기 때문입니다. 다만 기존 코드가 일부러 최종 index를 읽고 있었다면 동작이 바뀝니다. 좋은 리뷰는 “modern syntax로 바꿨다”에서 끝나지 않고, 각 콜백이 어떤 바인딩을 읽어야 하는지 확인합니다.
+
+AI 코드에서 또 하나 자주 보이는 패턴은 선언을 위로 끌어올리며 의미를 흐리는 것입니다.
+
+```js
+let selectedUser;
+
+if (response.ok) {
+  selectedUser = response.user;
+}
+
+renderProfile(selectedUser);
+```
+
+이 코드는 타입이나 린트가 잡아주지 않으면 `undefined` 흐름을 만들기 쉽습니다. 차라리 분기 안에서 return하거나, 성공/실패 상태를 명시적으로 모델링하는 편이 낫습니다. 여기서 Effective TypeScript Day 6의 “유효한 상태만 표현하기”와 연결됩니다.
+
+## 프론트엔드 리뷰 체크리스트
+
+- 콜백이 만들어지는 위치와 실행되는 위치가 떨어져 있는가?
+- 루프 안 콜백이 같은 `var` 바인딩을 공유하고 있지 않은가?
+- `let`/`const` 선언 전 접근이 TDZ 에러로 드러나는가, 아니면 `var`의 `undefined`가 조용히 흐르는가?
+- `const` 객체를 내부에서 바꾸면서 불변처럼 말하고 있지 않은가?
+- 함수 밖 mutable binding을 여러 이벤트/요청이 공유하고 있지 않은가?
+- AI 리팩터링이 문법만 바꾸고 바인딩 공유 의미를 확인하지 않았는가?
+
+스코프 체인은 문법 지식보다 “이 함수가 어떤 바인딩을 기억하고 실행되는지”를 추적하는 도구에 가깝습니다. Day 7에서는 이 모델이 오래된 값(stale closure) 문제로 어떻게 이어지는지 봅니다.
 
 ## 연결해서 읽기
 
-- Day 7 closure 글은 여기서 나온 스코프 체인이 타이머·이벤트·React render에서 어떻게 오래된 값 문제로 보이는지 다룹니다.
 - Day 5 reference 글은 `const` 객체 내부 변경과 얕은 복사 문제를 이어서 봐야 합니다.
+- Day 7 closure 글은 여기서 나온 스코프 체인이 타이머·이벤트·React render에서 어떻게 오래된 값 문제로 보이는지 다룹니다.
+- Day 8 event loop 글은 “나중에 실행된다”는 사실이 task/microtask 순서와 결합될 때 어떤 버그를 만드는지 다룹니다.
 - Effective TypeScript Day 5의 narrowing도 같은 질문을 공유합니다. “지금 좁힌 값이 나중에도 같은 값인가?”를 스코프/바인딩 관점으로 다시 확인해야 합니다.
 
 <ArticleQuiz title="Day 6 복습 퀴즈">
   <ArticleQuizItem
     mode="multiple"
-    question="첫 번째 예제의 출력은?"
-    options={["global", "local", "undefined", "ReferenceError"]}
-    answer="local"
-    explanation="반환된 함수는 makeLogger 안에서 만들어졌고, 그때의 label 바인딩을 스코프 체인으로 기억합니다."
+    question="첫 번째 예제에서 run(log)를 호출했을 때 출력은 무엇일까요?"
+    choices={["global", "local", "runner", "ReferenceError"]}
+    answer={1}
+    explanation="log 함수는 makeLogger 안에서 만들어졌고, 그때의 label 바인딩을 스코프 체인으로 기억합니다. 호출 위치인 run의 label을 새로 보지 않습니다."
   />
   <ArticleQuizItem
     mode="multiple"
     question="선언 전 console.log(x)가 undefined를 출력할 가능성이 가장 큰 선언은?"
-    options={["const x = 1", "let x = 1", "var x = 1", "class x {}"]}
-    answer="var x = 1"
-    explanation="var는 함수 스코프에 준비되고 초기값이 undefined로 잡힙니다. let/const/class는 선언 전 접근이 TDZ 에러입니다."
+    choices={["const x = 1", "let x = 1", "var x = 1", "class x {}"]}
+    answer={2}
+    explanation="var는 함수 스코프에 바인딩이 준비되고 초기값이 undefined로 잡힙니다. let/const/class는 선언 전 접근이 TDZ 에러입니다."
   />
   <ArticleQuizItem
     mode="description"
@@ -185,7 +281,8 @@ for (var i = 0; i < nodes.length; i += 1) {
   />
   <ArticleQuizItem
     mode="essay"
-    question="React effect나 이벤트 핸들러 리뷰에서 스코프 체인을 왜 확인해야 할까요?"
-    explanation="콜백이 오래된 props/state를 닫아두면 화면은 최신처럼 보여도 실행 로직은 과거 값을 읽을 수 있습니다. 의존성 배열, 함수 생성 위치, 상태 업데이트 방식을 함께 봐야 합니다."
+    question="루프 안 콜백 리뷰에서 ‘var를 let으로 바꿨다’만으로 충분하지 않은 이유를 설명해보세요."
+    answer="문법 변경보다 각 콜백이 같은 바인딩을 공유해야 하는지, 반복마다 다른 바인딩을 닫아야 하는지 확인해야 합니다. 대부분은 let이 맞지만 기존 코드가 공유 바인딩을 의도했다면 동작이 바뀔 수 있습니다."
+    explanation="스코프 리뷰의 핵심은 modern syntax 여부가 아니라 바인딩 생성 위치와 공유 여부입니다."
   />
 </ArticleQuiz>

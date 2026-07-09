@@ -217,9 +217,9 @@ function normalizeUsers(users: User[] | null | undefined): User[] {
 좋은 union은 단순히 TypeScript다운 코드가 아닙니다. 리뷰어가 확인해야 할 조합을 줄입니다.
 
 | 약한 모델                                    | 문제             | 더 나은 모델                        |
-| -------------------------------------------- | ---------------- | ----------------------------------- | ------------------ | ---------------------------------- |
+| -------------------------------------------- | ---------------- | ----------------------------------- |
 | `loading: boolean; data?: T; error?: string` | 모순 조합 가능   | `status` 판별 유니온                |
-| `value: string                               | null             | undefined`                          | 없음의 의미가 섞임 | `not-loaded` / `empty` / `present` |
+| `value: string \| null \| undefined`         | 없음의 의미 섞임 | `not-loaded` / `empty` / `present`  |
 | `type: string`                               | 모든 문자열 허용 | literal union                       |
 | request/response/internal 단일 타입          | 경계별 보장 혼합 | `Input` / `Response` / `Model` 분리 |
 
