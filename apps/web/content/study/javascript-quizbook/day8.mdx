@@ -20,7 +20,20 @@ cover:
   kind: "diagram"
 ---
 
+> 예상 읽기 시간: 18분<br />
 > 오늘의 질문: “`setTimeout(..., 0)`은 정말 바로 실행될까?”
+
+## 이 글의 원천 앵커
+
+이 글은 기존 Day 8을 보강한 개정판입니다. 처음 글은 Promise와 timer의 순서를 설명하는 데는 충분했지만, 자바스크립트 퀴즈북에서 이어지는 “비동기 코드를 코드 리뷰에서 어떻게 읽을 것인가”까지는 조금 얇았습니다. 이번 보강에서 붙잡을 범위는 이렇습니다.
+
+- call stack이 비기 전에는 어떤 callback도 끼어들지 못한다.
+- `Promise.then`, `queueMicrotask`, `await` 뒤쪽은 task보다 먼저 이어질 수 있다.
+- microtask가 길어지면 렌더 기회와 다음 입력 이벤트가 밀릴 수 있다.
+- `async` 함수 호출은 반환된 Promise를 기다리는 쪽까지 같이 봐야 한다.
+- `setTimeout(fn, 0)`은 “렌더 후”, “상태 반영 후”, “네트워크 완료 후” 같은 의미를 정확히 보장하지 않는다.
+
+Day 6이 “함수가 어느 바인딩을 기억하는가”를 묻고, Day 7이 “그 바인딩이 오래된 값이 될 수 있는가”를 묻는다면, Day 8은 한 걸음 더 들어갑니다. **그 오래된 callback이 정확히 언제 실행되는가?** 이 질문이 이벤트 루프의 역할입니다.
 
 ## 먼저 맞혀보기
 
@@ -72,6 +85,22 @@ console.log("sync");
 // task
 ```
 
+여기서 “보통”이라고 쓴 이유도 중요합니다. 브라우저와 Node의 세부 큐는 완전히 같지 않고, `requestAnimationFrame`, I/O, rendering step, Node의 `process.nextTick` 같은 세부 규칙까지 들어가면 표 하나로 끝나지 않습니다. 하지만 프론트엔드 코드 리뷰에서 먼저 필요한 것은 전체 스펙 암기가 아니라 **현재 코드가 어느 경계로 실행을 미뤘는지**를 설명하는 힘입니다.
+
+```js
+function handleClick() {
+  console.log("handler start");
+
+  Promise.resolve().then(() => {
+    console.log("microtask inside handler");
+  });
+
+  console.log("handler end");
+}
+```
+
+이 핸들러가 한 번 실행되면 `handler start`, `handler end`가 먼저 찍히고, 그 뒤 microtask가 이어집니다. 핸들러 중간에 Promise callback이 갑자기 끼어드는 것이 아닙니다. 이 구분을 놓치면 “Promise를 썼으니 이 줄이 먼저 끝났을 것” 같은 애매한 리뷰가 됩니다.
+
 ## async/await도 Promise 타이밍이다
 
 `await`가 있으면 함수가 잠깐 멈추는 것처럼 보입니다. 하지만 “스레드가 멈춘다”보다 “나머지 부분이 Promise continuation으로 예약된다”에 가깝게 보는 편이 안전합니다.
@@ -93,6 +122,38 @@ console.log("3");
 
 `await null`은 즉시 끝나는 값처럼 보여도, `console.log("2")`는 현재 동기 흐름 뒤로 밀립니다. UI 코드에서 `await` 뒤에 상태를 쓰는 부분은 “이미 다른 이벤트나 렌더가 끼어들 수 있었나?”까지 같이 봐야 합니다.
 
+```js
+let selectedId = "a";
+
+async function loadDetail() {
+  const id = selectedId;
+  const detail = await fetchDetail(id);
+
+  renderDetail(detail);
+}
+
+selectedId = "b";
+```
+
+이 코드는 타입만 보면 평범합니다. 하지만 리뷰에서는 두 가지 의도를 나눠야 합니다.
+
+1. 요청을 시작한 시점의 `id`에 대한 결과를 보여주는가?
+2. 화면의 최신 `selectedId`와 맞는 결과만 보여줘야 하는가?
+
+두 번째라면 `await` 뒤에 최신성 검사를 해야 합니다.
+
+```js
+async function loadDetail() {
+  const id = selectedId;
+  const detail = await fetchDetail(id);
+
+  if (selectedId !== id) return;
+  renderDetail(detail);
+}
+```
+
+실제 앱에서는 `AbortController`, request id, query library의 stale result 처리 같은 도구를 씁니다. 핵심은 도구 이름이 아니라, `await`가 **값의 최신성을 보장하지 않는다**는 점입니다.
+
 ## 프론트엔드 리뷰에서 자주 보는 위험
 
 | 코드 냄새                                | 왜 위험한가                                        | 리뷰 질문                                  |
@@ -105,6 +166,32 @@ console.log("3");
 이벤트 루프는 “외울 순서”가 아니라 리뷰할 때 버그의 시간 축을 그리는 도구입니다. 출력 순서 문제, 로딩 상태 깜빡임, 클릭 직후 DOM 측정, 오래된 async 결과 덮어쓰기 모두 같은 질문으로 시작할 수 있습니다.
 
 > 이 콜백은 어느 큐에 들어가고, 그 전에 어떤 큐가 먼저 비워질까?
+
+## “렌더 후”가 필요한 코드와 “나중”이 필요한 코드는 다르다
+
+`setTimeout(fn, 0)`을 붙이는 코드는 대개 둘 중 하나입니다.
+
+첫째, 지금 call stack이 끝난 뒤 실행하고 싶다. 둘째, 브라우저가 실제로 화면을 그린 뒤 실행하고 싶다. 둘은 같지 않습니다.
+
+```js
+setOpen(true);
+
+setTimeout(() => {
+  measurePanel();
+}, 0);
+```
+
+이 코드는 “다음 task에서 측정한다”는 뜻에 가깝습니다. 하지만 프레임워크의 commit, 브라우저 렌더, layout 계산이 정확히 어느 시점에 끝나는지는 별도의 문제입니다. 어떤 경우에는 `requestAnimationFrame`이 더 의도를 잘 드러냅니다.
+
+```js
+setOpen(true);
+
+requestAnimationFrame(() => {
+  measurePanel();
+});
+```
+
+그렇다고 `requestAnimationFrame`이 항상 정답이라는 뜻도 아닙니다. 필요한 것이 “현재 동기 처리 이후”인지, “렌더 직전/직후”인지, “다음 사용자 입력 전에”인지, “네트워크 요청 완료 후”인지 먼저 말해야 합니다. 이벤트 루프 리뷰는 API 이름 맞히기가 아니라 **필요한 시간 경계를 정확히 고르는 일**입니다.
 
 ## microtask가 길면 렌더도 밀린다
 
@@ -158,6 +245,14 @@ async function save() {
 
 리뷰에서는 async 함수를 호출하는 쪽이 반환된 Promise를 기다리는지, 의도적으로 fire-and-forget인지 구분해야 합니다. 의도적으로 기다리지 않는다면 에러 처리와 취소 경계가 따로 있어야 합니다.
 
+```js
+void startSave().catch((error) => {
+  reportError(error);
+});
+```
+
+이런 코드는 적어도 “기다리지 않겠다”와 “그래도 에러는 처리하겠다”를 드러냅니다. 반대로 아무 표시 없이 `startSave();`만 남으면 리뷰어는 실수인지 의도인지 알기 어렵습니다.
+
 ## DOM 측정과 렌더 타이밍
 
 프론트엔드에서 이벤트 루프는 DOM 측정 버그와도 연결됩니다.
@@ -184,11 +279,38 @@ showDone();
 
 `showDone()`은 저장이 끝나기 전에 실행됩니다. 순차 처리가 필요하면 `for...of`와 `await`, 병렬 처리가 필요하면 `Promise.all`을 의도적으로 써야 합니다.
 
+```js
+for (const item of items) {
+  await save(item);
+}
+
+showDone();
+```
+
+```js
+await Promise.all(items.map((item) => save(item)));
+showDone();
+```
+
+두 코드는 실행 시간이 다르고 실패 방식도 다릅니다. 순차 저장은 앞 항목 실패 시 뒤 항목을 시작하지 않을 수 있고, 병렬 저장은 이미 여러 요청이 동시에 나갑니다. “비동기를 기다렸다”에서 끝내지 말고, 순차성·병렬성·취소·부분 실패 정책까지 같이 봐야 합니다.
+
+## 프론트엔드 코드 리뷰 체크리스트
+
+- Promise callback이 task보다 먼저 도는 사실에 기대고 있는가?
+- microtask 안의 작업이 너무 길어 렌더와 다음 입력을 밀지 않는가?
+- `await` 뒤에 쓰는 값이 요청 시작 시점의 값인지, 화면의 최신 값인지 분명한가?
+- `setTimeout(fn, 0)`이 필요한 시간 경계를 설명하지 못한 채 붙어 있지 않은가?
+- async 함수를 호출한 쪽이 Promise를 기다리거나, 의도적으로 기다리지 않는다는 표시와 에러 처리를 갖고 있는가?
+- `forEach(async ...)`가 완료 순서와 실패 정책을 숨기고 있지 않은가?
+
+Day 8의 결론은 “Promise가 timer보다 먼저다”가 아닙니다. 그건 시작점일 뿐입니다. 실제 리뷰에서는 callback이 만들어진 위치(Day 6), 오래될 수 있는 값(Day 7), 그리고 실행될 큐와 시간 경계(Day 8)를 한 번에 봐야 합니다.
+
 ## 연결해서 읽기
 
 - Day 7 closure 글과 이어집니다. 콜백이 오래된 값을 읽는 문제는 “어디서 만들어졌는가”와 “언제 실행되는가”가 함께 만든 결과입니다.
 - Day 13 module 글과도 이어집니다. dynamic import는 Promise 타이밍을 만들고, lazy boundary에서 로딩 UI와 에러 흐름을 다시 봐야 합니다.
 - Effective TypeScript Day 13의 테스트/런타임 경계와도 연결됩니다. 타입은 async 순서와 렌더 타이밍을 대신 검증하지 않습니다.
+- Effective TypeScript Day 5의 narrowing도 같이 읽을 만합니다. 타입이 좁혀진 값이 `await` 뒤에도 런타임에서 같은 의미를 갖는지는 별도 질문입니다.
 
 ## Day 8 복습 퀴즈
 
@@ -226,5 +348,11 @@ showDone();
     question="`setTimeout(fn, 0)`으로 UI 순서를 맞추는 코드를 봤을 때, 코드 리뷰에서 어떤 점을 물어보면 좋을까요?"
     answer="단순히 다음 task로 미루는 것이 문제의 원인을 해결하는지, 렌더/상태 갱신/DOM 측정 타이밍을 명시적으로 보장하는 더 안정적인 방법이 있는지 물어봐야 합니다."
     explanation="0ms timer는 실행 순서를 한 턴 뒤로 보낼 뿐입니다. 동작이 우연히 맞는지, 런타임 큐 모델에 기대어 의도를 숨기는지 확인해야 합니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="`forEach(async item => await save(item)); showDone();` 형태의 코드를 리뷰할 때 어떤 정책을 확인해야 할까요?"
+    answer="showDone이 저장 완료 전에 실행될 수 있으므로 순차 저장이 필요한지, Promise.all 병렬 저장이 필요한지, 실패·취소·부분 성공 정책이 무엇인지 확인해야 합니다."
+    explanation="비동기 코드는 기다렸는지만 보면 부족합니다. 어느 작업을 동시에 시작해도 되는지, 실패하면 나머지를 어떻게 할지까지 실행 순서의 일부입니다."
   />
 </ArticleQuiz>
