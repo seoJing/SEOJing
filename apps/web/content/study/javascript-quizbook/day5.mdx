@@ -9,6 +9,8 @@ tags:
   - Map
   - Set
 description: 객체 참조와 얕은 복사, Object와 Map/Set의 차이, WeakMap/WeakSet이 필요한 메모리 상황을 프론트엔드 코드 리뷰 관점에서 정리합니다.
+category: study
+series: javascript-quizbook
 cover:
   src: /images/content/study/javascript-quizbook/day5/reference-collection-map.svg
   alt: JavaScript 객체 참조와 Map, Set, WeakMap의 참조 구조를 비교한 다이어그램
@@ -36,6 +38,17 @@ console.log(cache.get(copied));
 
 오늘은 “객체를 복사했다”를 더 잘게 읽습니다. 새 껍데기만 만든 것인지, 내부 객체까지 새로 만든 것인지, 컬렉션이 어떤 참조를 붙잡고 있는지까지 봐야 프론트엔드 버그가 보입니다.
 
+## 이 글의 원천 앵커
+
+자바스크립트 퀴즈북의 객체·컬렉션 문제를 그대로 요약하면 “참조 타입은 조심하자” 정도로 끝나기 쉽습니다. 실제 코드 리뷰에서는 그 말이 너무 넓습니다. 이번 글은 아래 네 질문으로 좁혀 읽습니다.
+
+- 대입과 spread가 새 값을 만든 것인지, 새 참조 이름만 만든 것인지?
+- 얕은 복사 때문에 어느 내부 객체가 공유되는지?
+- `Object`, `Map`, `Set`이 key를 어떤 기준으로 구분하는지?
+- `Map`/`Set` 캐시가 객체 수명을 불필요하게 늘리고 있지 않은지?
+
+Day 4가 “객체 안의 프로퍼티가 어떤 규칙으로 붙어 있는가”를 봤다면, Day 5는 “그 객체를 누가 같이 보고 있는가”를 봅니다. Day 6 이후의 스코프·클로저 글과도 연결됩니다. 클로저가 객체 참조를 닫아두면, 얕은 복사 버그는 시간차를 두고 더 늦게 터집니다.
+
 ## 참조와 컬렉션을 한 장으로 보기
 
 ![객체 참조와 Map, Set, WeakMap의 참조 구조](/images/content/study/javascript-quizbook/day5/reference-collection-map.svg)
@@ -59,6 +72,16 @@ next.settings.theme = "light";
 
 console.log(original.settings.theme); // "light"
 ```
+
+여기서 `next`는 새 객체가 맞습니다. 하지만 `settings`는 새 객체가 아닙니다. 프론트엔드 상태 업데이트에서 이 차이를 놓치면 “렌더는 됐는데 이전 스냅샷도 같이 바뀐 것처럼 보이는” 버그가 납니다. 특히 undo stack, optimistic update, query cache, form draft처럼 과거 상태를 따로 보관하는 코드에서 흔합니다.
+
+깊은 복사를 무조건 답으로 외우는 것도 위험합니다.
+
+```js
+const copied = structuredClone(original);
+```
+
+`structuredClone`은 많은 경우 유용하지만 함수, DOM node, class instance, library object 같은 값을 앱 의도대로 복원해주지는 않습니다. 리뷰 질문은 “깊게 복사했나?”가 아니라 “어느 경로가 바뀌며, 그 경로를 새 객체로 만들어야 하는가?”입니다. 상태 업데이트라면 바뀌는 경로만 새로 만들고, 나머지는 공유해도 되는 경우가 많습니다.
 
 리뷰 질문은 이렇습니다.
 
@@ -99,6 +122,25 @@ new Set([{ id: 1 }, { id: 1 }]).size; // 2
 
 id 기준 중복 제거가 목적이면 객체를 그대로 `Set`에 넣는 게 아니라 id를 key로 삼아야 합니다.
 
+`Map`/`Set`의 비교는 Day 2의 equality 글과도 이어집니다. `Set`은 `NaN`을 하나로 보고, `0`과 `-0`도 같은 값으로 봅니다. 객체는 내용이 아니라 참조로 봅니다. 이 규칙을 섞어서 생각하면 중복 제거 코드가 애매해집니다.
+
+```js
+const ids = new Set([NaN, NaN, 0, -0]);
+console.log(ids.size); // 2
+
+const users = new Set([{ id: 1 }, { id: 1 }]);
+console.log(users.size); // 2
+```
+
+첫 줄의 `NaN` 두 개는 같은 값처럼 정리됩니다. 마지막 줄의 객체 두 개는 모양이 같아도 서로 다른 참조입니다. 그래서 `Set`을 볼 때는 “중복이 없다”보다 “무엇을 같은 것으로 볼 것인가”를 먼저 물어야 합니다.
+
+```js
+const usersById = new Map(usersFromApi.map((user) => [user.id, user]));
+const uniqueUsers = [...usersById.values()];
+```
+
+이 코드는 id를 중복 기준으로 삼겠다는 의도를 드러냅니다. 순서 정책도 함께 드러납니다. 같은 id가 여러 번 나오면 뒤에 온 user가 앞의 값을 덮습니다. 이게 맞는지, 첫 값을 유지해야 하는지까지 리뷰해야 합니다.
+
 ## WeakMap은 캐시의 수명 문제를 드러낸다
 
 `Map`과 `Set`은 객체를 강하게 참조합니다. 로컬 변수에서 놓아도 컬렉션이 key나 value로 붙잡고 있으면 객체가 바로 사라졌다고 말할 수 없습니다.
@@ -113,11 +155,36 @@ function attachMetadata(element, data) {
 
 DOM element나 임시 객체별 metadata처럼 “객체가 사라지면 부가 정보도 사라져야 하는” 경우에는 `WeakMap`이 후보입니다. 대신 key를 순회할 수 없습니다. 순회가 필요하면 WeakMap이 아니라 명시적인 cleanup 설계를 먼저 봐야 합니다.
 
+`WeakSet`도 같은 방향의 도구입니다. “이 객체를 이미 처리했는가” 같은 표시를 붙이되, 객체가 사라질 때 표시도 같이 사라져도 되는 경우에 어울립니다.
+
+```js
+const visited = new WeakSet();
+
+function hydrateNode(node) {
+  if (visited.has(node)) return;
+  visited.add(node);
+  attachListeners(node);
+}
+```
+
+다만 Weak 계열은 디버깅을 어렵게 만들 수 있습니다. 전체 목록을 뽑을 수 없고, 언제 GC가 일어나는지도 코드가 결정하지 않습니다. 그래서 “메모리 누수가 걱정되니 WeakMap을 쓰자”에서 멈추지 말고, 관찰 가능성이 필요한 캐시인지부터 나눠야 합니다.
+
+| 필요한 것                          | 더 자연스러운 선택                        |
+| ---------------------------------- | ----------------------------------------- |
+| 객체별 부가 정보, 전체 순회 불필요 | `WeakMap`                                 |
+| 이미 처리한 객체 표시              | `WeakSet`                                 |
+| 전체 key 목록, 수동 무효화 필요    | `Map` + cleanup                           |
+| id 기준 중복 제거                  | `Map`/plain object에 명시적인 id key 사용 |
+
+이 표는 API 선택표라기보다 수명 선택표입니다. 프론트엔드에서는 “데이터 구조가 편한가”보다 “이 구조가 객체를 얼마나 오래 붙잡는가”가 더 중요한 순간이 있습니다.
+
 ## 코드 리뷰 체크포인트
 
 - 상태 업데이트가 얕은 복사에 기대고 있지 않은가?
+- 바뀐 경로만 새 객체로 만들었는가, 아니면 필요 이상으로 전체를 깊은 복사하고 있지 않은가?
 - Object를 임의 key 컬렉션처럼 쓰고 있지 않은가?
 - Set으로 객체 구조 중복 제거를 기대하고 있지 않은가?
+- id 기준 dedupe라면 “첫 값 유지”와 “마지막 값 덮어쓰기” 정책이 코드에 보이는가?
 - 캐시가 객체나 DOM node를 계속 붙잡고 있지 않은가?
 - WeakMap을 쓰면서 key 목록 순회를 요구하고 있지 않은가?
 
@@ -161,10 +228,66 @@ const uniqueUsers = [...new Map(users.map((user) => [user.id, user])).values()];
 
 세 번째 실수는 `Map` 캐시의 수명을 닫지 않는 겁니다. 컴포넌트, DOM node, request object를 key로 캐싱하면서 cleanup이 없다면 캐시가 오래 살아남습니다. `WeakMap`은 “key가 사라지면 metadata도 같이 사라져도 되는” 상황에 맞고, 순회·디버깅·명시적 무효화가 필요하면 `Map`과 cleanup 정책을 같이 설계해야 합니다.
 
+네 번째 실수는 성능을 이유로 참조 공유를 너무 빨리 정당화하는 겁니다. “복사하면 느리다”는 말은 맞을 때도 있지만, 바뀌는 경로가 작다면 구조적 공유가 더 읽기 쉽습니다. 반대로 매번 전체 객체를 `JSON.parse(JSON.stringify(...))`로 복사하면 Date, undefined, 함수, class instance 같은 값이 깨질 수 있습니다. AI가 이런 코드를 내놓으면 성능보다 먼저 의미 손상을 봐야 합니다.
+
+```js
+const copied = JSON.parse(JSON.stringify(state));
+```
+
+이 한 줄은 편해 보이지만, 앱 상태가 순수 JSON이라고 보장될 때만 안전합니다. 프론트엔드 상태에는 Date, File, URLSearchParams, Map 같은 값이 섞이기 쉽습니다. 복사 전략은 데이터 모양을 따라가야 합니다.
+
+## 한 단계 더 보는 리팩터링 예시
+
+아래 코드는 API 응답을 화면용 모델로 정리하면서 원본 객체를 그대로 캐시에 넣습니다.
+
+```js
+const responseCache = new Map();
+
+function normalizeUser(apiUser) {
+  responseCache.set(apiUser, Date.now());
+
+  return {
+    id: apiUser.id,
+    name: apiUser.name,
+    profile: apiUser.profile,
+  };
+}
+```
+
+겉보기에는 필요한 필드만 뽑은 것 같습니다. 하지만 `profile`은 여전히 원본 응답 객체 안의 내부 참조입니다. 나중에 화면에서 `profile.avatarUrl`을 고치면 원본 응답을 재사용하는 다른 코드까지 같이 영향을 받을 수 있습니다. 게다가 `responseCache`가 `apiUser`를 key로 잡고 있어 응답 객체 수명도 늘어납니다.
+
+리팩터링 방향은 두 갈래입니다.
+
+```js
+function normalizeUser(apiUser) {
+  return {
+    id: apiUser.id,
+    name: apiUser.name,
+    profile: {
+      avatarUrl: apiUser.profile.avatarUrl,
+      level: apiUser.profile.level,
+    },
+  };
+}
+```
+
+화면 모델이 원본 응답과 분리돼야 한다면 필요한 경로를 명시적으로 새로 만듭니다. 반대로 원본 객체별 metadata가 꼭 필요하고, 원본 객체가 사라지면 metadata도 사라져도 된다면 `WeakMap`을 씁니다.
+
+```js
+const responseMeta = new WeakMap();
+
+function markFetched(apiUser) {
+  responseMeta.set(apiUser, { fetchedAt: Date.now() });
+}
+```
+
+이렇게 나누면 “복사”와 “캐시”가 한 덩어리로 뭉개지지 않습니다. 복사는 데이터 소유권 문제이고, 캐시는 수명 문제입니다.
+
 ## 연결해서 읽기
 
 - Day 2 equality 글과 이어집니다. `Map`/`Set`의 객체 key 비교는 내용 비교가 아니라 참조 동일성 쪽에 가깝습니다.
 - Day 4 property descriptor 글과 이어집니다. `freeze`를 써도 얕은 freeze인지 깊은 freeze인지 구분해야 합니다.
+- Day 6 scope/hoisting 글과 이어집니다. 함수가 객체 참조를 닫아두면, 복사 버그는 콜백 실행 시점에 드러납니다.
 - Effective TypeScript Day 6과도 연결됩니다. API response와 앱 내부 model을 같은 객체로 계속 넘기면 참조 공유 범위가 커집니다.
 
 ## 참고문헌
@@ -208,5 +331,11 @@ const uniqueUsers = [...new Map(users.map((user) => [user.id, user])).values()];
     question="DOM element별 metadata 캐시를 리뷰할 때 Map과 WeakMap 중 무엇을 먼저 의심해야 하는지 설명해보세요."
     answer="DOM element가 화면에서 사라진 뒤에도 캐시가 key로 계속 붙잡으면 메모리 누수가 될 수 있으므로 WeakMap을 먼저 검토합니다. 다만 전체 key 순회가 필요하면 명시적인 cleanup 설계가 필요합니다."
     explanation="WeakMap은 객체 key를 약하게 잡는 대신 순회를 포기합니다. 메모리 안전성과 관찰 가능성 중 무엇이 필요한지 리뷰해야 합니다."
+  />
+  <ArticleQuizItem
+    mode="essay"
+    question="API 응답 객체를 화면 모델로 바꿀 때 얕은 복사와 캐시 수명을 함께 리뷰해야 하는 이유를 설명해보세요."
+    answer="얕은 복사는 원본 응답의 내부 객체를 계속 공유할 수 있고, Map 캐시는 응답 객체를 오래 붙잡을 수 있습니다. 화면 모델을 원본과 분리해야 하는지, 객체별 metadata가 원본 수명을 따라 사라져도 되는지를 나눠서 봐야 합니다."
+    explanation="복사는 소유권 문제이고 캐시는 수명 문제입니다. 둘을 구분해야 참조 공유 버그와 메모리 누수를 따로 줄일 수 있습니다."
   />
 </ArticleQuiz>
