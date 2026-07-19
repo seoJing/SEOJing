@@ -106,22 +106,132 @@ type Selection = { kind: "none" } | { kind: "selected"; id: UserId };
 type PageState = { kind: "pending" } | { kind: "ready"; page: number };
 ```
 
-이렇게 하면 `""`, `-1`, `null`의 의미를 코드 밖 문서나 관습에 맡기지 않아도 됩니다.
+이렇게 하면 `""`, `-1`, `null`의 의미를 코드 밖 문서나 관습에 맡기지 않아도 됩니다. Day 6에서 봤던 “유효한 상태만 표현하기”가 여기서 다시 등장합니다. 값 하나가 여러 의미를 겸하면 타입은 짧아지지만, 렌더링 branch와 리뷰 질문은 늘어납니다.
 
-## 코드 리뷰 체크리스트
+## optional은 정말 선택인가, 아직 모르는 값인가
+
+`optional`은 “없어도 되는 필드”를 표현할 때 좋습니다. 문제는 실제로는 **아직 로드되지 않음**, **서버가 보내지 않음**, **사용자가 일부러 비움**, **권한 때문에 숨김**이 모두 `?` 하나로 합쳐질 때입니다.
+
+```ts
+type Profile = {
+  nickname?: string;
+  avatarUrl?: string;
+};
+```
+
+이 타입만 보면 `nickname`이 빠진 이유를 알 수 없습니다. 사용자가 닉네임을 비운 것인지, API 응답이 아직 오지 않은 것인지, 예전 서버가 필드를 보내지 않는 것인지 컴포넌트마다 다시 해석해야 합니다.
+
+도메인 의미가 렌더링을 바꾼다면 상태를 분리하는 편이 낫습니다.
+
+```ts
+type Nickname =
+  | { kind: "not-loaded" }
+  | { kind: "empty" }
+  | { kind: "hidden"; reason: "privacy" | "blocked" }
+  | { kind: "present"; value: string };
+```
+
+물론 모든 optional 필드를 union으로 바꾸라는 뜻은 아닙니다. `middleName?: string`처럼 정말 없어도 되는 값은 optional이 자연스럽습니다. 리뷰 기준은 “이 값이 없을 때 UI branch, 저장 로직, 추적 이벤트, 접근성 문구가 달라지는가?”입니다. 달라진다면 `?`보다 이름 있는 상태가 낫습니다.
+
+## 타입 별칭과 brand는 목적이 다르다
+
+`type UserId = string`은 런타임 안전을 만들지 않습니다. 구조적으로는 여전히 `string`입니다.
+
+```ts
+type UserId = string;
+type PostSlug = string;
+
+function openUser(id: UserId) {}
+
+const slug: PostSlug = "study/effective-typescript/day7";
+openUser(slug); // 구조적으로는 통과할 수 있다
+```
+
+그래도 단순 별칭은 쓸모가 있습니다. 함수 시그니처에서 값의 역할을 읽히게 하고, 리뷰 대화를 “문자열 하나”에서 “사용자 식별자”로 끌어올립니다. 하지만 서로 섞이면 실제 장애가 되는 식별자라면 brand나 경계 검증을 고려해야 합니다.
+
+```ts
+type UserId = string & { readonly __brand: "UserId" };
+
+function parseUserId(value: unknown): UserId | null {
+  return typeof value === "string" && /^user_[a-z0-9]+$/.test(value)
+    ? (value as UserId)
+    : null;
+}
+```
+
+brand는 남용하면 코드가 무거워집니다. 외부 입력, 결제/권한/라우팅처럼 잘못 섞이면 비용이 큰 값에 제한적으로 쓰는 편이 좋습니다. 단순 화면 문구나 CSS class 이름까지 brand로 막으려 하면 타입 설계가 오히려 읽기 어려워집니다.
+
+## 외부 입력은 좁히는 게 아니라 확인한다
+
+도메인 타입을 좁히는 일과 외부 값을 믿는 일은 다릅니다. 아래 코드는 컴파일러를 설득하지만, 서버 응답을 검증하지는 않습니다.
+
+```ts
+const response = (await fetch("/api/toast").then((r) => r.json())) as Toast;
+showToast(response);
+```
+
+`as Toast`는 “내가 이미 확인했다”고 말하는 문법에 가깝습니다. 실제 확인은 별도로 해야 합니다.
+
+```ts
+function isToast(value: unknown): value is Toast {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+
+  if (record.kind === "loading") return true;
+  if (record.kind === "success") return typeof record.message === "string";
+  if (record.kind === "error") {
+    return (
+      typeof record.message === "string" &&
+      typeof record.retryable === "boolean"
+    );
+  }
+  return false;
+}
+```
+
+이 정도 검증 함수를 매번 손으로 쓰라는 뜻은 아닙니다. 중요한 건 경계의 위치입니다. API wrapper, loader, form parser처럼 외부 값이 앱 내부로 들어오는 지점에서 한 번 정리하고, 컴포넌트 내부에서는 이미 좁혀진 도메인 타입을 다루는 구조가 읽기 쉽습니다.
+
+## 타입 이름은 문서가 아니라 설계다
+
+Item 35–41 구간은 기술적으로 어려운 타입 트릭보다 이름 짓기에 가깝습니다. `string`, `number`, `boolean`만 보이면 값의 의미가 호출자 머릿속에 있습니다. `ToastKind`, `UserId`, `Selection`, `Nickname`, `RequestStatus`처럼 이름을 붙이면 그 의미가 코드 안으로 내려옵니다.
+
+나쁜 이름도 있습니다.
+
+```ts
+type Data = string;
+type Info = { value?: string };
+type Flag = boolean;
+```
+
+이런 이름은 원시 타입보다 거의 낫지 않습니다. 좋은 이름은 가능한 값, 소유한 경계, 실패했을 때의 영향 중 하나를 드러냅니다.
+
+| 값의 모양                  | 약한 이름    | 더 나은 이름                         |
+| -------------------------- | ------------ | ------------------------------------ |
+| success/error 같은 상태 값 | `Status`     | `ToastStatus`, `RequestStatus`       |
+| 식별자 문자열              | `Id`         | `UserId`, `ArticleSlug`, `SessionId` |
+| 없을 수 있는 이름 값       | `Name`       | `NicknameState` 또는 `OptionalName`  |
+| 참/거짓 값                 | `flag`       | `isRetryable`, `isOwnerVisible`      |
+| `""`로 선택 없음 표현      | `selectedId` | `Selection` union                    |
+
+코드 리뷰에서 이름이 애매하면 타입이 맞아도 멈춰야 합니다. “이 값은 어느 도메인의 어떤 약속인가?”가 설명되지 않으면 다음 변경에서 범위가 쉽게 넓어집니다.
+
+## 프론트엔드 코드 리뷰 체크리스트
 
 - `string`이 도메인 값의 전체 범위를 너무 넓게 열어두고 있지 않은가?
 - optional 필드 여러 개가 사실은 서로 배타적인 상태를 나타내고 있지 않은가?
 - `""`, `-1`, `null` 같은 sentinel 값의 의미가 타입 이름 없이 숨어 있지 않은가?
 - 사용자 ID, 게시글 slug, 라우트 이름처럼 역할이 다른 문자열을 같은 `string`으로 섞고 있지 않은가?
+- 외부 입력을 `as`로 믿고 앱 내부 도메인 타입으로 바로 들여오지 않았는가?
+- 단순 별칭으로 충분한 값과 brand/검증이 필요한 값을 구분했는가?
 - 상태 태그와 필드가 함께 움직이도록 discriminated union을 쓸 수 있는가?
 
 ## 짧은 복습
 
 1. `string`은 원시 타입일 뿐, 도메인 약속을 설명하지 않는다.
-2. optional 필드는 편하지만 불가능한 조합을 허용하기 쉽다.
+2. optional 필드는 편하지만 불가능한 조합이나 서로 다른 “없음”의 의미를 합치기 쉽다.
 3. sentinel 값은 이름 있는 union으로 바꾸면 리뷰 비용이 줄어든다.
-4. 타입 별칭은 런타임 안전을 만들지는 않지만, 코드의 의도를 읽히게 한다.
+4. 타입 별칭은 의도를 읽히게 하지만 강한 구분이 필요하면 brand나 경계 검증이 필요하다.
+5. 외부 입력은 좁혀진 타입으로 “주장”하기보다, 경계에서 확인한 뒤 앱 내부 모델로 들여와야 한다.
 
 타입을 좁힌다는 건 멋진 제네릭을 쓰는 일이 아닙니다. 리뷰해야 할 상태 공간을 줄이고, 값의 역할을 코드 안에 남기는 일에 더 가깝습니다.
 
