@@ -251,6 +251,88 @@ async function saveProfile() {
 
 이 코드는 “저장 시작 시점의 user로 처리한다”는 의도를 드러냅니다. 반대로 항상 최신 user가 필요하다면 `await` 뒤에 다시 읽고 다시 확인해야 합니다.
 
+## Item 22–27을 코드 리뷰 언어로 다시 묶기
+
+이번 범위는 각각 따로 보면 작은 팁처럼 보입니다. 그런데 리뷰에서는 하나의 질문으로 합쳐집니다.
+
+> 이 타입은 어디서 좁혀졌고, 그 좁혀진 사실은 어디까지 믿을 수 있는가?
+
+책의 Item 흐름을 프론트엔드 코드 리뷰 언어로 바꾸면 이렇게 볼 수 있습니다.
+
+| Item 범위 | 책에서 보는 축          | 리뷰에서 던질 질문                                                    |
+| --------- | ----------------------- | --------------------------------------------------------------------- |
+| Item 22   | narrowing               | 이 분기가 실제 도메인 상태를 정확히 나누는가?                         |
+| Item 23   | alias와 제어 흐름       | 좁힌 값과 원본 객체가 뒤섞여 있지 않은가?                             |
+| Item 24   | 문맥 타입               | 타입 annotation을 줄인 게 추론 덕분인가, 아니면 계약이 사라진 것인가? |
+| Item 25   | evolving type           | 값이 누적되는 동안 배열/객체의 최종 모양이 너무 늦게 드러나지 않는가? |
+| Item 26   | async와 callback 경계   | `await`나 callback 뒤에도 같은 값을 기대하는 근거가 있는가?           |
+| Item 27   | 함수형 구성과 타입 흐름 | helper로 뺀 코드가 narrowing 정보를 보존하는가, 지워버리는가?         |
+
+예를 들어 이런 helper는 보기에는 깔끔하지만, 타입 정보를 충분히 되돌려주지 않습니다.
+
+```ts
+type Admin = { role: "admin"; permissions: string[] };
+type Member = { role: "member"; teamId: string };
+type Account = Admin | Member;
+
+function isAdminLike(account: Account) {
+  return account.role === "admin";
+}
+
+function render(account: Account) {
+  if (isAdminLike(account)) {
+    return account.permissions.join(", ");
+  }
+}
+```
+
+사람은 `isAdminLike`라는 이름을 보고 admin으로 좁혀졌다고 느낍니다. 하지만 TypeScript 입장에서는 `boolean`을 돌려주는 함수일 뿐입니다. 이 helper가 타입 흐름의 일부라면 type predicate가 필요합니다.
+
+```ts
+function isAdmin(account: Account): account is Admin {
+  return account.role === "admin";
+}
+
+function render(account: Account) {
+  if (isAdmin(account)) {
+    return account.permissions.join(", ");
+  }
+}
+```
+
+여기서 중요한 건 “타입 가드를 쓰자”라는 암기가 아닙니다. helper를 만들 때 런타임 판정만 숨길지, 타입 정보까지 호출자에게 돌려줄지 결정해야 한다는 점입니다.
+
+## 나쁜 narrowing보다 위험한 건 애매한 상태 모델이다
+
+Day 5는 다음 Day 6의 유효 상태 모델링으로 이어집니다. narrowing을 아무리 잘해도 상태 자체가 애매하면 리뷰는 계속 어려워집니다.
+
+```ts
+type FormState = {
+  loading: boolean;
+  error?: string;
+  data?: User;
+};
+
+function renderForm(state: FormState) {
+  if (state.loading) return "불러오는 중";
+  if (state.error) return state.error;
+  if (state.data) return state.data.profile?.name ?? "이름 없음";
+  return "대기";
+}
+```
+
+이 코드는 narrowing을 쓰지만, 동시에 `loading: false`, `error: "..."`, `data: {...}`가 함께 존재할 수도 있습니다. TypeScript가 각 branch에서 타입을 좁혀도 “이 상태 조합이 가능한가?”라는 질문은 남습니다.
+
+```ts
+type FormState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "success"; data: User };
+```
+
+이렇게 바꾸면 narrowing이 단순한 방어 코드가 아니라 상태 모델의 결과가 됩니다. Day 5에서 배울 점은 “확인하고 쓰기”이고, Day 6에서 이어질 점은 “확인이 덜 필요한 상태로 설계하기”입니다.
+
 ## 프론트엔드 코드 리뷰 체크리스트
 
 | 변화                  | 확인할 질문                                                   |
