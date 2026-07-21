@@ -70,6 +70,20 @@ type RequestState =
 
 ![API 경계에서 유효한 상태 유니온으로 좁히는 흐름](/images/content/study/effective-typescript/day6/state-union-api-boundary.svg)
 
+## Item 28–34를 한 줄로 묶으면
+
+이 범위는 문법 팁 모음처럼 보이지만, 실제로는 하나의 흐름입니다.
+
+| 범위 축     | 코드 리뷰 질문                                      | 나쁜 냄새                                       |
+| ----------- | --------------------------------------------------- | ----------------------------------------------- |
+| 추론 위치   | 타입을 어디서 좁히거나 넓히고 있나?                 | 외부 데이터를 `as const`나 단언으로 믿는다      |
+| 유효 상태   | 이 타입이 말이 안 되는 조합을 허용하나?             | `loading`, `error`, `data`가 동시에 존재한다    |
+| API 입출력  | request/response/internal model이 같은 보장을 갖나? | `User` 하나로 form, API, UI를 모두 처리한다     |
+| 없음의 의미 | `null`, `undefined`, 빈 값이 같은 뜻인가?           | 로딩 전/빈 결과/삭제됨을 한 값으로 합친다       |
+| union 설계  | 판별 필드가 branch를 안전하게 좁히나?               | `type: string` + optional 필드 여러 개로 버틴다 |
+
+즉 Day 6의 중심은 “타입을 더 화려하게 쓰기”가 아닙니다. **경계에서 불확실성을 정리하고, UI 내부에서는 가능한 상태만 다루게 만들기**입니다.
+
 ## 추론 위치를 먼저 정한다
 
 TypeScript는 선언 위치의 단서를 보고 타입을 추론합니다.
@@ -102,6 +116,17 @@ function isTab(value: unknown): value is Tab {
 리뷰 질문은 “타입이 좁은가?”가 아닙니다.
 
 > 이 값은 코드가 만든 고정 목록인가, 외부에서 들어온 불확실한 값인가?
+
+리더가 헷갈리는 지점은 여기입니다. `as const`는 값이 좁아지는 도구지만, 항상 안전을 높이는 도구는 아닙니다. 코드 안에서 직접 만든 목록에는 좋습니다. API에서 받은 값을 검증 없이 좁힐 때는 오히려 거짓 확신을 만듭니다.
+
+```ts
+const serverTab = await fetchCurrentTab();
+
+// 위험: 외부 값을 "home" | "settings"라고 믿게 만들 뿐이다.
+const tab = serverTab as Tab;
+```
+
+이 코드는 TypeScript에게만 안심하라고 말합니다. 런타임 값이 `"billing"`이면 여전히 들어옵니다. Item 28–34를 리뷰할 때는 “컴파일러가 조용한가?”보다 “그 조용함이 검증에서 온 건가, 단언에서 온 건가?”를 먼저 봐야 합니다.
 
 ## 유효한 상태만 표현하기
 
@@ -179,6 +204,58 @@ function toUser(response: UserResponse): User {
 
 리뷰에서는 “타입이 중복된다”보다 “경계가 다르다”를 먼저 봐야 합니다. 중복 제거를 서두르다가 input/output/internal model을 한 타입으로 합치면 나중에 더 큰 비용을 냅니다.
 
+## 유니온은 “interface 안의 union”보다 “union of interfaces”가 낫다
+
+상태 모델링에서 자주 보이는 중간 형태가 있습니다.
+
+```ts
+type SaveState = {
+  status: "idle" | "saving" | "saved" | "failed";
+  savedAt?: Date;
+  errorMessage?: string;
+};
+```
+
+처음에는 좋아 보입니다. `status`도 있고 optional 필드도 있습니다. 하지만 이 타입은 아래 값을 막지 못합니다.
+
+```ts
+const state: SaveState = {
+  status: "saved",
+  errorMessage: "네트워크 오류",
+};
+```
+
+`saved`인데 에러 메시지가 있습니다. 반대로 `failed`인데 `errorMessage`가 빠져도 타입상 가능할 수 있습니다. 판별 필드를 넣었는데도 나머지 필드가 status와 연결되지 않았기 때문입니다.
+
+더 안전한 형태는 상태별 interface를 union으로 묶는 것입니다.
+
+```ts
+type SaveState =
+  | { status: "idle" }
+  | { status: "saving" }
+  | { status: "saved"; savedAt: Date }
+  | { status: "failed"; errorMessage: string };
+```
+
+이제 `status === "saved"` branch에서 `savedAt`은 필수이고, `failed` branch에서 `errorMessage`도 필수입니다. 이 차이는 작은 문법 차이처럼 보이지만 리뷰 비용을 크게 줄입니다.
+
+```tsx
+function SaveBanner({ state }: { state: SaveState }) {
+  switch (state.status) {
+    case "idle":
+      return null;
+    case "saving":
+      return <span>저장 중...</span>;
+    case "saved":
+      return <span>{state.savedAt.toLocaleTimeString()}에 저장됨</span>;
+    case "failed":
+      return <span role="alert">{state.errorMessage}</span>;
+  }
+}
+```
+
+이런 코드에서는 branch마다 접근 가능한 필드가 자연스럽게 정해집니다. UI 리뷰어는 “saved인데 error도 있나?” 같은 조합을 따로 머릿속에서 추적하지 않아도 됩니다.
+
 ## null과 undefined는 의미가 다르다
 
 `null`, `undefined`, 빈 문자열, 빈 배열은 모두 “없음”처럼 보일 수 있지만 의미가 다릅니다.
@@ -212,6 +289,48 @@ function normalizeUsers(users: User[] | null | undefined): User[] {
 
 하지만 로딩 중과 빈 결과는 합치면 안 됩니다. 로딩 중은 아직 모르는 상태이고, 빈 결과는 이미 확인한 상태입니다.
 
+## 경계에서 좁히고, 내부에서 단순하게 쓴다
+
+좋은 타입 설계는 컴포넌트 안 조건문을 늘리는 방향이 아닙니다. 오히려 경계에서 한 번 정리해서 내부를 단순하게 만듭니다.
+
+```ts
+type UserApiResponse = {
+  status: "ok" | "error";
+  user?: {
+    id?: string;
+    name?: string | null;
+  };
+  message?: string;
+};
+
+type UserViewState =
+  | { status: "ready"; user: { id: string; name: string } }
+  | { status: "empty" }
+  | { status: "failed"; message: string };
+
+function toUserViewState(response: UserApiResponse): UserViewState {
+  if (response.status === "error") {
+    return {
+      status: "failed",
+      message: response.message ?? "사용자를 불러오지 못했습니다",
+    };
+  }
+
+  if (!response.user?.id || !response.user.name) {
+    return { status: "empty" };
+  }
+
+  return {
+    status: "ready",
+    user: { id: response.user.id, name: response.user.name },
+  };
+}
+```
+
+`UserApiResponse`는 지저분합니다. 외부 경계이기 때문입니다. 대신 `UserViewState`는 단순합니다. 앱 내부 컴포넌트는 이미 검증된 상태만 받습니다. 이 분리를 하지 않으면 모든 컴포넌트가 `user?.id`, `name ?? ""`, `message ?? ...` 같은 방어 코드를 반복하게 됩니다.
+
+AI가 만든 프론트엔드 코드에서도 이 문제가 자주 보입니다. API wrapper 없이 컴포넌트 안에서 응답을 바로 렌더링하고, optional chaining으로 모든 오류를 눌러버립니다. 조용해 보이지만 실제로는 “어디에서 보장되는 값인지”가 사라진 코드입니다.
+
 ## union 설계는 리뷰할 상태 공간을 줄인다
 
 좋은 union은 단순히 TypeScript다운 코드가 아닙니다. 리뷰어가 확인해야 할 조합을 줄입니다.
@@ -225,6 +344,37 @@ function normalizeUsers(users: User[] | null | undefined): User[] {
 
 이런 설계는 코드량을 조금 늘릴 수 있습니다. 하지만 렌더링 branch, 테스트 케이스, 에러 처리, AI 코드 리뷰 기준을 훨씬 선명하게 만듭니다.
 
+테스트 관점에서도 차이가 납니다. 약한 모델은 조합 수가 너무 많아서 테스트가 항상 빠집니다.
+
+```ts
+type WeakState = {
+  loading: boolean;
+  data?: User[];
+  error?: string;
+};
+```
+
+이 타입은 최소한 아래 조합을 모두 생각해야 합니다.
+
+- `loading: true`, `data` 있음, `error` 없음
+- `loading: true`, `data` 없음, `error` 있음
+- `loading: false`, `data` 있음, `error` 있음
+- `loading: false`, `data` 없음, `error` 없음
+
+반면 판별 유니온은 테스트 케이스가 도메인 상태와 거의 1:1로 맞습니다. `loading`, `empty`, `success`, `error`를 각각 테스트하면 됩니다. 타입 설계가 테스트 설계까지 밀어주는 셈입니다.
+
+## AI 코드 리뷰에서 보는 신호
+
+AI가 생성한 TypeScript 코드는 대체로 컴파일을 맞추는 데 능합니다. 하지만 Item 28–34 관점으로 보면 아래 패턴을 자주 놓칩니다.
+
+1. `as SomeType`으로 API 응답을 바로 믿는다.
+2. `type: string`을 두고 실제로는 몇 가지 값만 쓰는 상태를 만든다.
+3. `loading`, `isError`, `isSuccess` boolean을 여러 개 둔다.
+4. form input, request body, response body, UI model을 한 `User` 타입으로 합친다.
+5. `null`과 `undefined`를 전부 `?? ""`로 없애서 도메인 의미를 지운다.
+
+이런 코드는 “타입스크립트가 붙어 있다”는 이유만으로 안전해 보입니다. 리뷰에서는 컴파일 통과보다 상태 모델을 먼저 봐야 합니다. 불가능한 상태를 허용하는 타입은 런타임 조건문과 테스트에 빚을 넘깁니다.
+
 ## 프론트엔드 코드 리뷰 체크리스트
 
 - 상태 타입이 불가능한 조합을 허용하지 않는가?
@@ -233,8 +383,10 @@ function normalizeUsers(users: User[] | null | undefined): User[] {
 - `null`/`undefined`/empty value의 의미가 UI branch에 영향을 주는가?
 - discriminated union이 Day 5의 narrowing과 자연스럽게 이어지는가?
 - 변환 함수가 경계에 있는가, 컴포넌트 여기저기에 흩어져 있는가?
+- 상태별 필수 필드가 판별 필드와 연결되어 있는가, 아니면 optional 필드로 떠 있는가?
+- 단언(`as`)이 실제 검증을 대신하고 있지 않은가?
 
-Day 6의 결론은 간단합니다. 타입 설계는 필드를 많이 적는 일이 아니라, 리뷰해야 할 상태 공간을 줄이는 일입니다. 좋은 타입은 이상한 조합을 막고, 경계에서 불확실성을 정리하고, UI 내부가 다룰 값을 작게 만듭니다.
+Day 6의 결론은 간단합니다. 타입 설계는 필드를 많이 적는 일이 아니라, 리뷰해야 할 상태 공간을 줄이는 일입니다. 좋은 타입은 이상한 조합을 막고, 경계에서 불확실성을 정리하고, UI 내부가 다룰 값을 작게 만듭니다. “타입이 맞다”에서 멈추지 말고 “이 타입이 도메인에서 가능한 상태만 표현하나?”까지 봐야 합니다.
 
 ## Day 6 타입 리뷰 퀴즈
 
@@ -268,6 +420,14 @@ Day 6의 결론은 간단합니다. 타입 설계는 필드를 많이 적는 일
     question="로딩 중과 빈 결과를 `[]` 하나로 합치면 안 되는 이유를 한 문장으로 적어보세요."
     answer="로딩 중은 아직 결과를 모르는 상태이고 빈 결과는 요청이 끝난 뒤 데이터가 없다는 확인된 상태라서 UI 의미가 다르기 때문이다."
     explanation="정규화는 좋지만 도메인 의미를 지우면 안 됩니다. 의미가 다른 없음은 상태로 분리해야 합니다."
+  />
+  <ArticleQuizItem
+    mode="description"
+    question={
+      '`status: "saved" | "failed"`와 `errorMessage?: string`을 같은 객체에 두는 모델보다 상태별 union이 나은 이유를 짧게 적어보세요.'
+    }
+    answer="상태별 union은 saved일 때 필요한 필드와 failed일 때 필요한 필드를 status와 직접 연결하므로 모순 조합을 타입에서 막을 수 있기 때문이다."
+    explanation="판별 필드만 있어도 나머지 필드가 optional로 떠 있으면 상태와 필드의 관계가 느슨합니다. union of interfaces는 그 관계를 타입으로 묶습니다."
   />
   <ArticleQuizItem
     mode="essay"
