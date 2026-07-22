@@ -202,6 +202,82 @@ export async function getCheckoutSession(): Promise<any> {
 
 리뷰 기준은 “몇 개인가?”보다 “어디까지 퍼지는가?”에 가깝습니다.
 
+## soundness 함정은 “TS가 틀렸다”가 아니라 계약이 새는 지점이다
+
+Item 42–48을 읽을 때 `any`만 보이면 범위가 좁아집니다. 이 구간의 더 큰 질문은 타입스크립트가 일부러 완전한 증명을 포기한 지점입니다. 구조적 타입, 배열, 콜백, DOM, 외부 라이브러리는 모두 런타임 현실과 타입 선언 사이에 틈을 만들 수 있습니다.
+
+```ts
+type MenuItem = { id: string; label: string };
+
+function renderMenu(items: MenuItem[]) {
+  items.push({ id: "debug", label: "Debug" });
+}
+
+const readonlyItems: readonly MenuItem[] = [
+  { id: "home", label: "Home" },
+  { id: "settings", label: "Settings" },
+];
+
+// renderMenu(readonlyItems); // readonly라서 막힌다
+```
+
+이 예제의 포인트는 `readonly`를 외우는 것이 아닙니다. 함수가 배열을 읽기만 하는지, 내부에서 바꿀 수 있는지 계약으로 드러내야 한다는 점입니다. 매개변수를 `readonly MenuItem[]`로 받으면 호출자는 “이 함수가 내 배열을 바꾸지 않겠구나”라고 더 안전하게 믿을 수 있습니다.
+
+```ts
+function renderMenu(items: readonly MenuItem[]) {
+  return items.map((item) => item.label).join(" / ");
+}
+```
+
+비슷하게 콜백 타입도 너무 넓게 받으면 안전하지 않습니다.
+
+```ts
+type Article = { id: string; title: string };
+type DraftArticle = Article & { status: "draft" };
+
+function publishAll(articles: Article[], publish: (article: Article) => void) {
+  for (const article of articles) publish(article);
+}
+
+const publishDraft = (draft: DraftArticle) => {
+  console.log(draft.status.toUpperCase());
+};
+```
+
+`publishAll`은 모든 `Article`을 넘길 수 있는데, `publishDraft`는 `DraftArticle`만 안전하게 처리합니다. 실제 코드에서는 strict function type 설정, 라이브러리 타입 선언, 콜백 위치에 따라 이런 틈이 다르게 보일 수 있습니다. 코드 리뷰에서는 “타입스크립트가 통과시켰다”에서 끝내지 말고, **함수가 실제로 어떤 값을 받을 수 있는지**를 다시 봐야 합니다.
+
+## 검증 라이브러리는 타입의 대체가 아니라 경계의 기록이다
+
+직접 type guard를 매번 쓰면 지저분해질 수 있습니다. 프로젝트에서는 Zod, Valibot, ArkType 같은 스키마 라이브러리를 쓰거나 서버 DTO에서 타입을 생성하기도 합니다. 도구 선택보다 중요한 것은 검증 결과가 내부 타입으로 연결되는 구조입니다.
+
+```ts
+const UserSchema = z.object({
+  id: z.string(),
+  profile: z.object({ displayName: z.string() }),
+});
+
+type UserPayload = z.infer<typeof UserSchema>;
+
+async function loadUserSafe(id: string): Promise<UserPayload> {
+  const data: unknown = await fetchJson(`/api/users/${id}`);
+  return UserSchema.parse(data);
+}
+```
+
+이 방식은 “런타임 검증”과 “타입 추론”을 한 위치에 묶습니다. 단, 스키마 라이브러리를 쓴다고 자동으로 안전해지는 것은 아닙니다. `parse` 실패를 어디서 사용자 메시지로 바꾸는지, `safeParse` 결과를 무시하지 않는지, 서버와 클라이언트가 같은 필드 의미를 공유하는지까지 봐야 합니다.
+
+```ts
+const parsed = UserSchema.safeParse(data);
+
+if (!parsed.success) {
+  return { ok: false, reason: "invalid_payload" } as const;
+}
+
+return { ok: true, user: parsed.data } as const;
+```
+
+이렇게 실패 경로가 값으로 남으면 UI는 “타입이 맞지 않는 데이터”를 예외로만 다루지 않아도 됩니다. Day 6의 유효 상태 모델링과 Day 8의 `unknown` 경계가 만나는 지점입니다.
+
 ## monkey patching은 타입과 런타임을 같이 바꾼다
 
 브라우저 전역 객체나 라이브러리 객체에 필드를 붙이는 코드는 타입스크립트에서 두 겹의 위험을 만듭니다.
@@ -245,6 +321,8 @@ export function createAnalyticsEvents(client: AnalyticsClient) {
 - `as SomeType`이 런타임 검증처럼 쓰이고 있지 않은가?
 - 단언이 반복된다면, 공용 변환 함수나 type guard로 모을 수 있는가?
 - `any`가 사용자 데이터, 인증, 결제, 공개 API 타입에 가까운가?
+- 배열/콜백/라이브러리 타입에서 “TS가 통과했으니 안전하다”라고 넘기지 않았는가?
+- 스키마 검증을 쓴다면 실패 경로가 UI와 API 계약에 값으로 남는가?
 - monkey patching이 전역 상태와 타입 선언을 동시에 바꾸는지, 초기화 순서가 안전한가?
 - 타입스크립트가 일부러 막아준 오류를 `any`/단언으로 침묵시키고 있지 않은가?
 
@@ -289,6 +367,18 @@ export function createAnalyticsEvents(client: AnalyticsClient) {
     ]}
     answer={2}
     explanation="개수보다 위치가 중요합니다. 결제/API 경계의 any는 여러 호출부로 퍼지고 실제 사용자 상태와 가까워서 우선순위가 높습니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="다음 중 soundness 함정을 코드 리뷰 관점에서 가장 잘 다룬 말은 무엇일까요?"
+    choices={[
+      "타입스크립트가 통과시킨 코드는 런타임에서도 항상 안전하다",
+      "any만 없으면 soundness 문제도 모두 사라진다",
+      "배열 변경 가능성, 콜백 입력 범위, 외부 타입 선언의 틈을 계약으로 다시 확인해야 한다",
+      "타입 단언을 더 많이 쓰면 soundness가 높아진다",
+    ]}
+    answer={2}
+    explanation="Item 42–48의 핵심은 any 하나가 아니라 타입 시스템이 완전한 런타임 증명을 하지 못하는 경계를 리뷰 가능한 계약으로 좁히는 일입니다."
   />
   <ArticleQuizItem
     mode="description"
