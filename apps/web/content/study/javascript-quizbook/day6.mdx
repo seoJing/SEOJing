@@ -20,7 +20,7 @@ cover:
   kind: "diagram"
 ---
 
-> 예상 읽기 시간: 15분<br />
+> 예상 읽기 시간: 18분<br />
 > 오늘의 질문: “콜백 안에서 읽는 값은 함수가 만들어진 곳을 볼까, 호출된 곳을 볼까?”
 
 ## 이 글의 원천 앵커
@@ -107,6 +107,64 @@ console.log(format(100));
 
 마지막 질문이 중요합니다. 클로저는 보통 값을 복사해 두는 스냅샷이 아니라 바인딩을 따라갑니다. 바인딩이 바뀌면 나중 실행에서 보이는 값도 달라질 수 있습니다.
 
+## 스냅샷이 아니라 “살아 있는 바인딩”이다
+
+스코프 체인을 설명할 때 가장 위험한 말은 “함수가 값을 기억한다”입니다. 편하게 말하면 맞는 것 같지만, 실제 버그를 읽을 때는 조금 더 정확해야 합니다. 함수는 보통 **값 복사본**이 아니라 **바인딩에 닿는 길**을 가지고 있습니다.
+
+```js
+function makeCounter() {
+  let count = 0;
+
+  return {
+    inc() {
+      count += 1;
+    },
+    read() {
+      return count;
+    },
+  };
+}
+
+const counter = makeCounter();
+counter.inc();
+console.log(counter.read()); // 1
+```
+
+`inc`와 `read`가 각각 `0`이라는 값을 복사해 둔 게 아닙니다. 두 함수가 같은 `count` 바인딩을 보고 있습니다. 그래서 한쪽이 바꾸면 다른 쪽이 나중에 읽는 값도 바뀝니다. 이 감각은 Day 7의 stale closure와도 연결됩니다. “값이 살아 있다”는 말은 항상 최신 앱 상태를 본다는 뜻이 아니라, **그 렌더나 함수 호출이 만든 바인딩이 살아 있다**는 뜻입니다.
+
+React 코드에서 이 차이가 자주 헷갈립니다.
+
+```js
+function makeHandler(user) {
+  return () => user.id;
+}
+
+const handler = makeHandler({ id: "a" });
+```
+
+여기서 handler는 `user` 바인딩을 기억합니다. 하지만 그 바인딩 자체가 나중에 다른 객체로 재할당되지 않는다면 화면의 최신 user를 자동으로 따라가지 않습니다. 반대로 바인딩이 mutable이라면 나중 실행에서 바뀐 값을 볼 수 있습니다. 리뷰에서는 “클로저가 값을 기억했다”로 뭉개지 말고, 닫힌 것이 immutable 값인지, mutable object인지, 재할당 가능한 바인딩인지까지 봐야 합니다.
+
+## 모듈 스코프와 전역 스코프도 분리해서 본다
+
+브라우저에서 파일 하나가 전역처럼 보여도, ESM 모듈 안의 top-level 선언은 옛날 script 전역과 다르게 동작합니다.
+
+```js
+// analytics.js
+const queue = [];
+
+export function track(event) {
+  queue.push(event);
+}
+```
+
+`queue`는 모듈 내부에서 오래 살아남는 바인딩입니다. 컴포넌트가 unmount되어도 모듈이 로드된 동안 유지됩니다. 이게 의도한 이벤트 큐라면 괜찮지만, 테스트 사이에 상태가 새거나 사용자 전환 후 이전 데이터가 남는다면 모듈 스코프 mutable state가 원인일 수 있습니다.
+
+반면 오래된 script 코드에서 `var` top-level 선언은 `window` 프로퍼티처럼 보이는 경우가 있습니다. ESM으로 옮길 때 “파일 위에 있으니 전역”이라고 단순하게 생각하면 디버깅이 꼬입니다. Day 13의 module 글에서 더 다루지만, Day 6 단계에서도 최소한 이 질문은 남겨야 합니다.
+
+> 이 바인딩은 함수 호출마다 새로 생기나, 모듈이 로드된 뒤 계속 살아 있나?
+
+프론트엔드 테스트에서 flaky한 상태 공유를 잡을 때 이 질문이 꽤 자주 먹힙니다.
+
 ## `var`와 `let/const`의 차이
 
 `var`, `let`, `const` 모두 선언 처리 단계와 관련이 있습니다. 차이는 “어느 스코프에 바인딩이 생기고, 초기화 전 읽을 수 있는가”입니다.
@@ -146,6 +204,39 @@ function renderTheme() {
 ```
 
 리뷰에서는 “에러가 안 났다”보다 “선언 순서와 초기화 시점이 독자에게 보이는가”를 봐야 합니다.
+
+함수 선언과 class 선언도 같은 단어로 “호이스팅된다”고만 말하면 오해가 생깁니다.
+
+```js
+sayHi(); // 가능
+function sayHi() {
+  console.log("hi");
+}
+
+new User(); // ReferenceError
+class User {}
+```
+
+함수 선언은 선언 전에 호출 가능한 형태로 준비되는 반면, class 선언은 이름이 스코프에 잡혀도 초기화 전 접근은 TDZ에 걸립니다. AI가 “선언은 위로 끌어올려진다”는 말 하나로 function/class/var/let/const를 같은 규칙처럼 설명하면 리뷰에서 바로 멈춰야 합니다. 실제 확인해야 할 것은 세 가지입니다.
+
+| 선언 형태     | 선언 전 접근 감각          | 리뷰에서 볼 것                              |
+| ------------- | -------------------------- | ------------------------------------------- |
+| function 선언 | 호출 가능                  | 의도적으로 아래에 둔 API인지, 순환 의존인지 |
+| class 선언    | TDZ 에러                   | 생성 시점이 선언보다 앞서지 않는지          |
+| var           | `undefined`로 읽힐 수 있음 | 조용한 fallback/분기 오염이 없는지          |
+| let/const     | TDZ 에러                   | 선언 순서가 데이터 흐름을 설명하는지        |
+
+프론트엔드 코드에서는 function 선언이 나쁜 게 아닙니다. 컴포넌트 파일 안에서 작은 helper를 아래에 두고 위에서 읽는 스타일은 흔합니다. 다만 class나 `const` 함수식을 같은 식으로 다루면 깨집니다.
+
+```js
+render(); // ReferenceError
+
+const render = () => {
+  console.log("render");
+};
+```
+
+이런 차이를 알고 있으면 “왜 이 함수만 위로 올려야 하지?” 같은 리뷰 코멘트가 더 정확해집니다.
 
 ## 루프 콜백은 바인딩 공유를 의심한다
 
@@ -243,8 +334,11 @@ renderProfile(selectedUser);
 ## 프론트엔드 리뷰 체크리스트
 
 - 콜백이 만들어지는 위치와 실행되는 위치가 떨어져 있는가?
+- 닫힌 값이 스냅샷처럼 안전한 값인지, 나중에 바뀔 수 있는 바인딩/객체인지 구분했는가?
+- 모듈 스코프 mutable state가 테스트·사용자 전환·재방문 사이에 남지 않는가?
 - 루프 안 콜백이 같은 `var` 바인딩을 공유하고 있지 않은가?
 - `let`/`const` 선언 전 접근이 TDZ 에러로 드러나는가, 아니면 `var`의 `undefined`가 조용히 흐르는가?
+- function/class/const 함수식을 모두 같은 “호이스팅” 규칙으로 설명하고 있지 않은가?
 - `const` 객체를 내부에서 바꾸면서 불변처럼 말하고 있지 않은가?
 - 함수 밖 mutable binding을 여러 이벤트/요청이 공유하고 있지 않은가?
 - AI 리팩터링이 문법만 바꾸고 바인딩 공유 의미를 확인하지 않았는가?
@@ -278,6 +372,16 @@ renderProfile(selectedUser);
     question="클로저를 한 문장으로 설명해보세요."
     answer="함수가 만들어진 위치의 바깥 변수 바인딩을 기억하고 나중에 실행될 때도 그 환경을 참조하는 구조입니다."
     explanation="값을 복사해 둔 상자가 아니라 렉시컬 환경 참조를 따라 이름을 찾는다는 점이 중요합니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="다음 코드의 read() 결과로 맞는 것은 무엇일까요?"
+    code={
+      "function makeBox() {\n  let value = 1;\n  return { inc() { value += 1; }, read() { return value; } };\n}\nconst box = makeBox();\nbox.inc();\nbox.read();"
+    }
+    choices={["1", "2", "undefined", "ReferenceError"]}
+    answer={1}
+    explanation="inc와 read는 각각 값을 복사해 둔 것이 아니라 같은 value 바인딩을 봅니다. inc가 바인딩을 바꾸면 read가 나중에 바뀐 값을 읽습니다."
   />
   <ArticleQuizItem
     mode="essay"
