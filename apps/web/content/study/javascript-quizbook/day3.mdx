@@ -8,6 +8,8 @@ tags:
   - Type Conversion
   - Symbol.toPrimitive
 description: 객체가 원시값으로 바뀌는 ToPrimitive 흐름, + 연산자의 문자열 연결과 숫자 덧셈 분기, Symbol.toPrimitive가 코드 리뷰에서 왜 중요한지 정리합니다.
+category: study
+series: javascript-quizbook
 cover:
   src: /images/content/study/javascript-quizbook/day3/coercion-flow.svg
   alt: 객체가 ToPrimitive를 거쳐 + 연산자의 문자열 연결 또는 숫자 덧셈으로 갈라지는 흐름 다이어그램
@@ -236,6 +238,48 @@ if (input.value == 0) {
 ```
 
 비교 전에 어떤 변환이 일어나는지 설명할 수 없다면, 비교식을 더 명시적으로 바꾸는 편이 좋습니다.
+
+## equality와 coercion을 한 번에 리뷰하기
+
+Day 2에서 본 equality 알고리즘은 “어떤 규칙으로 같은가?”를 묻습니다. Day 3의 coercion은 그보다 한 단계 앞에서 “비교하거나 더하기 전에 값이 무엇으로 바뀌었는가?”를 묻습니다. 실무 버그는 둘이 붙어서 옵니다.
+
+```js
+function isSelected(option, selected) {
+  return option.value == selected;
+}
+```
+
+이 함수는 범용 비교 도우미처럼 보이지만, 실제로는 너무 많은 결정을 숨깁니다. `option.value`가 문자열인지 숫자인지, `selected`가 URL query에서 온 문자열인지, 빈 문자열을 0처럼 볼 것인지, `NaN`을 어떻게 다룰 것인지가 모두 `==` 안으로 들어갑니다.
+
+리뷰에서는 먼저 도메인 값을 정해야 합니다.
+
+```js
+function normalizeSelectedId(value) {
+  const raw = String(value).trim();
+  if (raw === "") return null;
+
+  const id = Number(raw);
+  return Number.isSafeInteger(id) ? id : null;
+}
+
+function isSelected(option, selected) {
+  const selectedId = normalizeSelectedId(selected);
+  return selectedId !== null && option.id === selectedId;
+}
+```
+
+이 예제의 목적은 유틸 함수를 늘리는 것이 아닙니다. 비교 전에 “이 앱에서 selected id는 안전한 정수인가, 비어 있으면 null인가”를 선언하는 쪽이 더 리뷰 가능합니다. equality 알고리즘을 외우는 이유도 결국 여기에 있습니다. 값의 출처와 변환 경계가 보이면 `===`, `Object.is`, `includes`, `Map` 중 어떤 비교가 맞는지도 자연스럽게 고를 수 있습니다.
+
+AI가 만든 코드에서는 이 경계가 자주 사라집니다.
+
+```js
+const total = price + fee;
+const matched = items.find((item) => item.id == route.params.id);
+```
+
+두 줄 모두 짧고 그럴듯하지만, `price`와 `fee`가 숫자인지 문자열인지, `route.params.id`를 숫자로 바꿔도 되는지, 큰 ID를 Number로 바꾸면 안전한지 설명하지 않습니다. Day 1의 safe integer, Day 2의 equality, Day 3의 ToPrimitive를 따로 외우지 말고 하나의 리뷰 질문으로 묶는 편이 낫습니다.
+
+> 이 값은 어디서 왔고, 비교·연산 전에 어떤 타입/도메인으로 정규화되었나?
 
 ---
 
