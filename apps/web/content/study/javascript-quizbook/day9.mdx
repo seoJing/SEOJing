@@ -130,15 +130,152 @@ const user = {
 - 콜백으로 넘겨도 인스턴스/상위 스코프를 보존해야 하면 arrow나 `bind`를 고려한다.
 - `this`를 쓰지 않아도 되면 아예 인자를 명시적으로 받는 함수가 더 읽기 쉽다.
 
+## bind는 this만 고정하지 않는다
+
+`bind`를 보면 “this를 맞췄으니 해결”이라고 넘기기 쉽습니다. 하지만 `bind`는 새 함수 값을 만듭니다. 그래서 이벤트 등록/해제 코드에서는 함수 identity까지 같이 봐야 합니다.
+
+```js
+button.addEventListener("click", user.print.bind(user));
+
+// 나중에 제거하려고 해도 다른 함수 값이다.
+button.removeEventListener("click", user.print.bind(user));
+```
+
+위 코드는 `removeEventListener`가 기대한 대로 동작하지 않습니다. 두 번의 `bind`가 서로 다른 함수 객체를 만들었기 때문입니다. 고정된 콜백을 변수나 필드에 보관해야 제거할 수 있습니다.
+
+```js
+const handleClick = user.print.bind(user);
+
+button.addEventListener("click", handleClick);
+button.removeEventListener("click", handleClick);
+```
+
+클래스에서도 같은 문제가 생깁니다.
+
+```js
+class Counter {
+  count = 0;
+
+  constructor(button) {
+    this.handleClick = this.increment.bind(this);
+    button.addEventListener("click", this.handleClick);
+  }
+
+  increment() {
+    this.count += 1;
+  }
+
+  destroy(button) {
+    button.removeEventListener("click", this.handleClick);
+  }
+}
+```
+
+리뷰 포인트는 두 겹입니다. 첫째, 호출될 때 `this`가 의도한 객체인가? 둘째, 그 함수 값이 등록·해제·memoization 경계에서 같은 identity로 유지되는가? 프론트엔드에서는 두 번째 질문이 빠지면 메모리 누수나 중복 이벤트 핸들러가 남습니다.
+
+## this와 closure는 서로 다른 해결책이다
+
+Day 7에서 본 클로저는 함수가 만들어진 렉시컬 환경의 바인딩을 따라갑니다. `this`는 그와 다릅니다. 일반 함수의 `this`는 보통 호출 형태로 정해지고, arrow function은 아예 자기 `this`를 만들지 않고 바깥 `this`를 캡처합니다.
+
+```js
+const panel = {
+  id: "settings",
+
+  openLater() {
+    setTimeout(function () {
+      console.log(this.id);
+    }, 0);
+  },
+};
+```
+
+이 코드에서 timer 콜백의 `this`는 `panel`이 아닙니다. 바깥 메서드가 `panel.openLater()`로 호출됐다는 사실이 안쪽 일반 함수 호출까지 자동으로 전달되지 않기 때문입니다.
+
+```js
+const panel = {
+  id: "settings",
+
+  openLater() {
+    setTimeout(() => {
+      console.log(this.id);
+    }, 0);
+  },
+};
+```
+
+arrow callback을 쓰면 안쪽 함수는 바깥 `openLater` 실행의 `this`를 캡처합니다. 이 경우에는 자연스럽습니다. 하지만 객체 리터럴의 메서드 자체를 arrow로 만들면 이야기가 달라집니다. 객체 리터럴은 새 `this`를 만들지 않으므로, arrow가 캡처할 “객체 자신”이 없습니다.
+
+그래서 리뷰할 때는 “arrow가 더 최신 문법인가?”가 아니라 “이 함수는 호출자가 정하는 `this`를 받아야 하는가, 생성 위치의 `this`를 붙잡아야 하는가?”로 물어야 합니다.
+
+## React 함수 컴포넌트에서는 this를 줄이는 쪽이 기본값이다
+
+React 함수 컴포넌트에서는 대개 `this`를 직접 다루지 않습니다. 상태와 props는 렉시컬 바인딩으로 읽고, 이벤트 핸들러는 closure로 만들어집니다.
+
+```jsx
+function SaveButton({ articleId, onSave }) {
+  const handleClick = () => {
+    onSave(articleId);
+  };
+
+  return <button onClick={handleClick}>저장</button>;
+}
+```
+
+이 코드는 `this`를 고정할 필요가 없습니다. 필요한 값인 `articleId`와 `onSave`가 명시적으로 함수 안에 들어옵니다. 그래서 새 코드에서는 메서드의 `this`를 살리는 것보다 인자와 closure로 의도를 드러내는 편이 더 단순할 때가 많습니다.
+
+하지만 라이브러리 어댑터나 DOM API를 감싸는 코드는 다릅니다.
+
+```ts
+type ResizeCallback = (this: HTMLElement, rect: DOMRect) => void;
+
+function onResize(element: HTMLElement, callback: ResizeCallback) {
+  const observer = new ResizeObserver(() => {
+    callback.call(element, element.getBoundingClientRect());
+  });
+
+  observer.observe(element);
+  return () => observer.disconnect();
+}
+```
+
+이런 API는 `this`를 계약으로 제공할 수도 있습니다. 이 지점은 Effective TypeScript Day 12의 public API 타입과 연결됩니다. 콜백이 `this`를 받는 API라면 문서와 타입, 실제 호출 방식이 모두 맞아야 합니다. 반대로 React props로 공개하는 callback이라면 `this` 없는 함수 타입이 더 안전합니다.
+
+## AI가 만든 코드에서 자주 보이는 실수
+
+AI는 `this` 에러를 만나면 세 가지 방향으로 과하게 고치는 편입니다.
+
+1. 모든 메서드에 `.bind(this)`를 붙인다.
+2. 모든 메서드를 class field arrow로 바꾼다.
+3. 객체 리터럴의 메서드까지 arrow function으로 바꾼다.
+
+셋 다 정답일 때가 있지만, 무조건 적용하면 다른 문제가 생깁니다. `.bind`는 함수 identity를 바꾸고, class field arrow는 인스턴스마다 함수를 만들며, 객체 리터럴 arrow는 객체 자신을 `this`로 받지 않습니다. 리뷰에서는 먼저 실패한 호출 형태를 찾고, 그 호출 형태를 유지할지 바꿀지 정해야 합니다.
+
+작은 규칙으로 정리하면 이렇습니다.
+
+| 상황                                     | 우선 검토할 선택                        | 이유                                             |
+| ---------------------------------------- | --------------------------------------- | ------------------------------------------------ |
+| 객체의 동작을 메서드로 호출              | 일반 메서드                             | `obj.method()` 호출 형태가 의도를 잘 드러냄      |
+| 메서드를 이벤트/타이머로 전달            | 저장된 bound 함수 또는 wrapper          | `this`와 함수 identity를 함께 관리               |
+| class callback이 인스턴스를 계속 봐야 함 | class field arrow 또는 constructor bind | 생성 시점의 인스턴스 `this`를 고정               |
+| React 함수 컴포넌트                      | 명시적 인자와 closure                   | `this` 없이 props/state 의존성을 읽음            |
+| public callback API                      | `this` 타입 또는 `this: void` 명시      | 사용자가 어떤 호출 방식을 기대해야 하는지 드러냄 |
+
 ## 프론트엔드 코드 리뷰 체크리스트
 
 - 메서드를 변수에 담거나 props/callback으로 넘기면서 `this` 연결이 끊기지 않았는가?
 - 이벤트 핸들러, timer, Promise callback 안에서 `this`가 실제 호출자를 기준으로 안전한가?
 - `bind`가 렌더마다 새 함수를 만들며 불필요한 리렌더나 removeEventListener 실패를 만들지 않는가?
 - arrow function을 객체 메서드처럼 쓰면서 `this`가 객체라고 착각하지 않았는가?
-- `this` 대신 명시적 인자나 closure가 더 단순한 설계는 아닌가?
+- React 함수 컴포넌트라면 `this` 대신 명시적 인자와 closure로 더 단순하게 표현할 수 없는가?
+- 공개 callback API라면 `this`를 제공하는 계약인지, `this`를 쓰면 안 되는 계약인지 타입과 문서가 일치하는가?
 
 `this`는 특별한 마법이라기보다 호출 규칙입니다. 코드 리뷰에서는 “이 함수가 정의된 자리”보다 “나중에 누가 어떤 모양으로 부르는지”를 따라가면 훨씬 덜 헷갈립니다.
+
+## 연결해서 읽기
+
+- Day 7 closure 글과 같이 읽으면 좋습니다. closure는 생성 위치의 렉시컬 바인딩을 보고, 일반 함수의 `this`는 호출 형태를 봅니다.
+- Day 8 event loop 글과도 이어집니다. timer나 Promise callback으로 넘겨진 함수는 나중에 다른 호출 형태로 실행될 수 있습니다.
+- Effective TypeScript Day 12는 callback `this`를 public API 타입으로 어떻게 드러낼지 다룹니다.
 
 ## Day 9 복습 퀴즈
 
@@ -173,6 +310,18 @@ const user = {
     question="메서드를 콜백으로 넘기는 코드를 리뷰할 때 먼저 확인할 질문을 한 문장으로 적어보세요."
     answer="그 함수가 실제로 호출될 때 원래 객체가 왼쪽에 남아 있는가, 아니면 함수 값만 분리되어 호출되는가?"
     explanation="this 버그는 대부분 함수 값이 이동하면서 호출 형태가 바뀐 지점에서 생깁니다."
+  />
+  <ArticleQuizItem
+    mode="multiple"
+    question="addEventListener와 removeEventListener에 각각 `user.print.bind(user)`를 직접 넣는 코드가 위험한 이유는 무엇일까요?"
+    choices={[
+      "bind는 this를 고정하지 못하기 때문에",
+      "bind를 호출할 때마다 서로 다른 함수 객체가 만들어질 수 있기 때문에",
+      "removeEventListener는 click 이벤트를 제거할 수 없기 때문에",
+      "객체 메서드는 이벤트 핸들러로 쓸 수 없기 때문에",
+    ]}
+    answer={1}
+    explanation="this는 고정될 수 있지만 함수 identity가 달라집니다. 등록한 함수와 제거하려는 함수가 같아야 이벤트 핸들러가 제대로 해제됩니다."
   />
   <ArticleQuizItem
     mode="essay"
