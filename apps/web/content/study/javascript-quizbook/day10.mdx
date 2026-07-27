@@ -129,11 +129,145 @@ function renderProfile(id) {
 
 핵심은 “부수 효과를 없애자”가 아닙니다. **부수 효과가 시작되는 위치를 코드에서 알아볼 수 있게 하자**입니다.
 
+## 함수를 값으로 넘긴다는 것은 실행 시점도 넘기는 일이다
+
+퀴즈북의 함수 단원은 “함수도 값이다”에서 시작하지만, 프론트엔드 리뷰에서는 여기서 한 걸음 더 가야 합니다. 함수를 값으로 넘기면 코드 조각만 넘기는 게 아니라 **나중에 실행될 수 있는 권한**도 넘깁니다.
+
+```js
+function once(fn) {
+  let called = false;
+
+  return (...args) => {
+    if (called) return;
+    called = true;
+    return fn(...args);
+  };
+}
+
+const submitOnce = once(() => submitForm(formState));
+```
+
+이 코드는 “한 번만 실행”이라는 규칙을 잘 드러냅니다. 하지만 `submitForm(formState)`가 읽는 `formState`가 언제의 값인지도 같이 봐야 합니다. Day 7의 클로저 관점과 연결하면 질문이 더 선명해집니다.
+
+- `fn`은 만들어진 시점의 값을 닫아두는가?
+- 실행 시점의 최신 값을 인자로 받아야 하는가?
+- 한 번만 실행하는 규칙이 실패/재시도와 충돌하지 않는가?
+
+예를 들어 최신 form 값을 써야 한다면 아래처럼 실행 시점에 인자로 넘기는 편이 더 드러날 수 있습니다.
+
+```js
+const submitOnce = once((state) => submitForm(state));
+
+submitOnce(getCurrentFormState());
+```
+
+작은 차이처럼 보이지만, 함수형 추상화와 stale closure 버그는 자주 붙어 다닙니다. 함수를 값으로 다루는 코드는 “무엇을 넘겼는가”뿐 아니라 “언제 읽는가”를 함께 리뷰해야 합니다.
+
+## 실패 경로를 숨기는 wrapper를 조심하기
+
+고차 함수 wrapper는 중복을 줄이는 데 좋지만, 실패를 뭉개면 위험합니다.
+
+```js
+function safely(run) {
+  try {
+    return run();
+  } catch (error) {
+    reportError(error);
+    return null;
+  }
+}
+```
+
+동기 함수만 받는다면 의도가 분명할 수 있습니다. 그런데 호출자가 async 함수를 넘기면 얘기가 달라집니다.
+
+```js
+safely(async () => {
+  await saveProfile();
+  throw new Error("save failed");
+});
+```
+
+`try/catch`는 async 함수가 반환한 Promise의 나중 rejection을 잡지 못합니다. wrapper 이름은 `safely`인데 실제로는 비동기 실패가 바깥으로 흘러갈 수 있습니다. 이 경우에는 Promise를 인식하는 wrapper여야 합니다.
+
+```js
+async function safelyAsync(run) {
+  try {
+    return await run();
+  } catch (error) {
+    reportError(error);
+    return null;
+  }
+}
+```
+
+리뷰에서는 wrapper가 받는 함수의 계약을 확인해야 합니다. 동기 callback인지, Promise-returning callback인지, 실패를 호출자에게 던지는지, 내부에서 보고하고 삼키는지까지 이름과 타입/문서에 드러나야 합니다.
+
+## `bind`, constructor, method extraction도 함수 경계 문제다
+
+함수 단원에서 `this`, constructor, bound function은 문법 암기처럼 보이지만 실제 리뷰에서는 경계 문제로 나타납니다.
+
+```js
+const user = {
+  name: "Jingyu",
+  greet() {
+    return `안녕, ${this.name}`;
+  },
+};
+
+const greet = user.greet;
+greet();
+```
+
+메서드를 값으로 빼는 순간 call-site가 바뀌고 `this`도 달라집니다. Day 9의 `this` 규칙과 이어지는 지점입니다. 해결은 상황에 따라 다릅니다.
+
+```js
+const greet = user.greet.bind(user);
+```
+
+또는 애초에 `this`에 의존하지 않는 함수로 바꿀 수도 있습니다.
+
+```js
+function greetUser(user) {
+  return `안녕, ${user.name}`;
+}
+```
+
+둘 중 무엇이 낫다는 규칙은 없습니다. 다만 함수가 값으로 이동할 때 **숨은 입력이 있는가**를 봐야 합니다. `this`, 전역 상태, module-level cache, closure는 모두 함수 시그니처 밖에 있는 입력입니다. 함수가 경계라면, 좋은 경계는 숨은 입력을 줄이거나 의도적으로 이름 붙입니다.
+
+## AI가 만든 함수형 코드에서 자주 보이는 실수
+
+AI가 리팩터링한 코드에는 “함수로 쪼개서 좋아 보이지만 계약은 흐려진” 경우가 많습니다.
+
+```js
+const pipe =
+  (...fns) =>
+  (value) =>
+    fns.reduce((current, fn) => fn(current), value);
+
+const run = pipe(validate, save, notify);
+```
+
+`validate`, `save`, `notify`가 모두 동기 pure function이면 읽기 쉽습니다. 하지만 `save`가 Promise를 반환하고 `notify`가 그 결과를 기다려야 한다면 이 `pipe`는 틀립니다. async-aware pipe가 필요하거나, 그냥 명시적인 `async` 함수가 더 낫습니다.
+
+```js
+async function run(value) {
+  const valid = validate(value);
+  const saved = await save(valid);
+  notify(saved);
+  return saved;
+}
+```
+
+추상화가 적어 보이지만 실패 지점, await 경계, 반환값이 더 선명합니다. 함수형 도구를 쓰는 목적은 코드를 짧게 만드는 것이 아니라 반복되는 관계를 안전하게 표현하는 것입니다. AI 코드 리뷰에서는 “멋진 helper가 생겼다”보다 “이 helper가 동기/비동기, 성공/실패, 입력/출력 계약을 보존하는가”를 먼저 봐야 합니다.
+
 ## 프론트엔드 코드 리뷰 체크리스트
 
 - 함수 이름이 반환값과 부수 효과를 솔직하게 드러내는가?
 - 값 계산 함수 안에 fetch, DOM, storage, analytics, timer가 섞이지 않았는가?
 - 고차 함수가 반복 규칙을 줄였는가, 아니면 호출 흐름만 숨겼는가?
+- 함수를 값으로 넘길 때 실행 시점의 값과 생성 시점의 값을 구분했는가?
+- wrapper가 동기 callback과 Promise-returning callback을 혼동하지 않는가?
+- `this`, closure, module cache 같은 숨은 입력이 함수 시그니처 밖에 남아 있지 않은가?
 - async 함수 반환값을 동기 값처럼 사용하지 않았는가?
 - Promise 실패 경로가 호출자에게 전달되는가, 내부에서 조용히 삼켜지는가?
 - 테스트가 순수 계산만 보는지, 부수 효과 shell까지 필요한 만큼 검증하는지 분리되어 있는가?
