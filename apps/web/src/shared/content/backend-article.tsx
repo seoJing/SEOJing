@@ -377,7 +377,7 @@ interface MarkdownTableData {
 
 function MarkdownTable({ table }: { table: MarkdownTableData }) {
   return (
-    <div className="my-8 overflow-x-auto">
+    <div className="article-table-scroll my-8 overflow-x-auto">
       <table>
         <thead>
           <tr>

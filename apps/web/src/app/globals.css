@@ -482,6 +482,50 @@ mark.search-highlight {
     list-style: decimal;
   }
 
+  .article-prose :where(.article-table-scroll) {
+    margin-block: 2rem;
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--article-rule-color);
+    border-radius: 1rem;
+    background: rgb(255 255 255 / 0.72);
+    box-shadow: 0 16px 40px rgb(15 23 42 / 0.08);
+  }
+
+  .article-prose :where(table) {
+    width: 100%;
+    min-width: 42rem;
+    border-collapse: collapse;
+    table-layout: auto;
+    font-size: var(--text-sm);
+    line-height: 1.75;
+    color: var(--article-body-color);
+  }
+
+  .article-prose :where(th),
+  .article-prose :where(td) {
+    border-bottom: 1px solid var(--article-rule-color);
+    padding: 0.875rem 1rem;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .article-prose :where(th) {
+    background: rgb(248 250 252 / 0.9);
+    color: var(--article-subheading-color);
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .article-prose :where(tbody tr:last-child td) {
+    border-bottom: 0;
+  }
+
+  .article-prose :where(td code),
+  .article-prose :where(th code) {
+    white-space: nowrap;
+  }
+
   .article-prose :where(.backend-article-html pre) {
     margin-block: 1.5rem;
     overflow-x: auto;
@@ -552,6 +596,15 @@ mark.search-highlight {
     --article-code-bg: rgb(3 7 18);
     --article-code-border: rgb(31 41 55);
     --article-code-color: rgb(243 244 246);
+  }
+
+  .dark .article-prose :where(.article-table-scroll) {
+    background: rgb(15 23 42 / 0.58);
+    box-shadow: 0 16px 40px rgb(0 0 0 / 0.22);
+  }
+
+  .dark .article-prose :where(th) {
+    background: rgb(30 41 59 / 0.8);
   }
 }
 
