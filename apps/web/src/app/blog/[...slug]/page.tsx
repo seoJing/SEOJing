@@ -11,7 +11,6 @@ import { PostGrid } from "@/widgets/post-grid";
 import { ArticleToolbar } from "@/widgets/article-toolbar/ArticleToolbar";
 import { ArticleAnalytics } from "@/widgets/article-analytics";
 import { PostQaPanel, SectionQaPrompts } from "@/widgets/post-qa";
-import { BlogAudioPlayer } from "@/widgets/blog-audio-player/BlogAudioPlayer";
 import { SummaryVideo } from "@/widgets/summary-video";
 import type { Metadata } from "vinext/shims/metadata";
 import {
@@ -101,7 +100,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             video={content.frontmatter.summaryVideo}
             title={content.frontmatter.title}
           />
-          <BlogAudioPlayer slug={slug.join("/")} />
+          {/* TTS is intentionally paused while backend-backed text rendering is stabilized. */}
           <div className="article-prose" data-article-content>
             <MDXContent components={mdxComponents as MDXComponents} />
           </div>

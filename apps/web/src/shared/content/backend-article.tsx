@@ -215,6 +215,17 @@ function renderParagraphBlock(
     return <MarkdownTable key={key} table={table} />;
   }
 
+  const listItems = readStringArray(content.items);
+  if (listItems?.length) {
+    return (
+      <MarkdownList
+        key={key}
+        items={listItems}
+        ordered={readStringField(content.listType) === "ordered"}
+      />
+    );
+  }
+
   const html = readStringField(content.html);
   if (html) {
     return <p key={key} dangerouslySetInnerHTML={{ __html: html }} />;
@@ -393,6 +404,25 @@ function MarkdownTable({ table }: { table: MarkdownTableData }) {
   );
 }
 
+function MarkdownList({
+  items,
+  ordered,
+}: {
+  items: string[];
+  ordered: boolean;
+}) {
+  const tag = ordered ? "ol" : "ul";
+  return React.createElement(
+    tag,
+    null,
+    items.map((item, index) => (
+      <li key={`${item}-${index}`}>
+        <InlineMarkdownText text={item} />
+      </li>
+    )),
+  );
+}
+
 function readMarkdownTable(value: unknown): MarkdownTableData | null {
   const table = readBlockContent(value);
   const headers = readStringArray(table.headers);
@@ -419,7 +449,8 @@ function InlineMarkdownText({ text }: { text: string }) {
 
 function parseInlineMarkdown(text: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
-  const pattern = /(<br\s*\/?>(?:\s*)|`([^`]+)`|\*\*([^*]+)\*\*)/g;
+  const pattern =
+    /(\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)|<br\s*\/?>(?:\s*)|`([^`]+)`|\*\*([^*]+)\*\*)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
@@ -428,12 +459,18 @@ function parseInlineMarkdown(text: string): React.ReactNode[] {
       nodes.push(text.slice(lastIndex, match.index));
     }
 
-    if (match[0].startsWith("<br")) {
+    if (match[2] && match[3]) {
+      nodes.push(
+        <a key={`link-${match.index}`} href={normalizeInlineHref(match[3])}>
+          <InlineMarkdownText text={match[2]} />
+        </a>,
+      );
+    } else if (match[0].startsWith("<br")) {
       nodes.push(<br key={`br-${match.index}`} />);
-    } else if (match[2]) {
-      nodes.push(<code key={`code-${match.index}`}>{match[2]}</code>);
-    } else if (match[3]) {
-      nodes.push(<strong key={`strong-${match.index}`}>{match[3]}</strong>);
+    } else if (match[4]) {
+      nodes.push(<code key={`code-${match.index}`}>{match[4]}</code>);
+    } else if (match[5]) {
+      nodes.push(<strong key={`strong-${match.index}`}>{match[5]}</strong>);
     }
 
     lastIndex = pattern.lastIndex;
@@ -444,6 +481,14 @@ function parseInlineMarkdown(text: string): React.ReactNode[] {
   }
 
   return nodes;
+}
+
+function normalizeInlineHref(href: string): string {
+  const trimmed = href.trim();
+  if (/^(https?:|mailto:|\/|#)/.test(trimmed)) {
+    return trimmed;
+  }
+  return "#";
 }
 
 function readStringField(value: unknown): string | undefined {

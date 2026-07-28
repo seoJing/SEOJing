@@ -186,9 +186,22 @@ describe("backend article content adapter", () => {
             plainText: null,
           },
           {
-            id: "table",
+            id: "list",
             type: "PARAGRAPH",
             sortOrder: 2,
+            content: {
+              listType: "unordered",
+              items: [
+                "[Day 1: 숫자 모델과 NaN](/blog/study/javascript-quizbook/day1)",
+                "[Effective TS Day 1](https://seojing.com/blog/study/effective-typescript/day1)",
+              ],
+            },
+            plainText: null,
+          },
+          {
+            id: "table",
+            type: "PARAGRAPH",
+            sortOrder: 3,
             content: {
               table: {
                 headers: ["선언", "선언 전 읽기"],
@@ -209,6 +222,13 @@ describe("backend article content adapter", () => {
     expect(markup).toContain("예상 읽기 시간: 12분<br/>");
     expect(markup).toContain("출력은 <code>local</code>이고 ");
     expect(markup).toContain("<strong>생성 위치</strong>");
+    expect(markup).toContain("<ul>");
+    expect(markup).toContain(
+      '<a href="/blog/study/javascript-quizbook/day1">Day 1: 숫자 모델과 NaN</a>',
+    );
+    expect(markup).toContain(
+      '<a href="https://seojing.com/blog/study/effective-typescript/day1">Effective TS Day 1</a>',
+    );
     expect(markup).toContain("<table>");
     expect(markup).toContain("<th>선언</th>");
     expect(markup).toContain("<td><code>var</code></td>");
