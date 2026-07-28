@@ -230,11 +230,15 @@ function renderParagraphBlock(
   if (html) {
     return <p key={key} dangerouslySetInnerHTML={{ __html: html }} />;
   }
+
+  const text = readStringField(content.text) ?? plainText ?? "";
+  if (text === "---") {
+    return <hr key={key} />;
+  }
+
   return (
     <p key={key}>
-      <InlineMarkdownText
-        text={readStringField(content.text) ?? plainText ?? ""}
-      />
+      <InlineMarkdownText text={text} />
     </p>
   );
 }
@@ -342,9 +346,42 @@ function renderUnsupportedBlock(
   key: string,
 ) {
   const componentName = readStringField(content.componentName) ?? block.type;
+  const rawMdx = readStringField(content.rawMdx);
+  const props = readBlockContent(content.props);
+
+  if (componentName === "Subtitle") {
+    const level = clampHeadingLevel(readStringField(props.level) ?? 2);
+    const tag = `h${level}`;
+    return React.createElement(
+      tag,
+      { key },
+      <InlineMarkdownText text={extractMdxComponentText(rawMdx) ?? ""} />,
+    );
+  }
+
+  if (componentName === "Paragraph") {
+    return (
+      <p key={key}>
+        <InlineMarkdownText text={extractMdxComponentText(rawMdx) ?? ""} />
+      </p>
+    );
+  }
+
+  if (componentName === "Anchor") {
+    const href =
+      readStringField(props.href) ?? readStringField(props.external) ?? "#";
+    return (
+      <p key={key}>
+        <a href={normalizeInlineHref(href)}>
+          <InlineMarkdownText text={extractMdxComponentText(rawMdx) ?? href} />
+        </a>
+      </p>
+    );
+  }
+
   const fallback =
     block.plainText ??
-    readStringField(content.rawMdx) ??
+    rawMdx ??
     `${componentName} block is not supported by the frontend renderer yet.`;
 
   return (
@@ -447,10 +484,32 @@ function InlineMarkdownText({ text }: { text: string }) {
   return <>{parseInlineMarkdown(text)}</>;
 }
 
+function extractMdxComponentText(
+  rawMdx: string | undefined,
+): string | undefined {
+  if (!rawMdx) {
+    return undefined;
+  }
+  const blockMatch = rawMdx.match(
+    /^\s*<([A-Z][\w.]*)\b[^>]*>([\s\S]*)<\/\1>\s*$/,
+  );
+  const inner = blockMatch?.[2] ?? rawMdx;
+  return normalizeMdxInlineText(inner);
+}
+
+function normalizeMdxInlineText(text: string): string {
+  return text
+    .replace(/\{\s*["']\s+["']\s*\}/g, " ")
+    .replace(/\{\s*`\s+`\s*\}/g, " ")
+    .replace(/\s*\n\s*/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function parseInlineMarkdown(text: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   const pattern =
-    /(\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)|<br\s*\/?>(?:\s*)|`([^`]+)`|\*\*([^*]+)\*\*)/g;
+    /(<strong>([\s\S]*?)<\/strong>|\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)|<br\s*\/?>(?:\s*)|`([^`]+)`|\*\*([^*]+)\*\*)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
@@ -459,18 +518,24 @@ function parseInlineMarkdown(text: string): React.ReactNode[] {
       nodes.push(text.slice(lastIndex, match.index));
     }
 
-    if (match[2] && match[3]) {
+    if (match[2]) {
       nodes.push(
-        <a key={`link-${match.index}`} href={normalizeInlineHref(match[3])}>
+        <strong key={`strong-html-${match.index}`}>
           <InlineMarkdownText text={match[2]} />
+        </strong>,
+      );
+    } else if (match[3] && match[4]) {
+      nodes.push(
+        <a key={`link-${match.index}`} href={normalizeInlineHref(match[4])}>
+          <InlineMarkdownText text={match[3]} />
         </a>,
       );
     } else if (match[0].startsWith("<br")) {
       nodes.push(<br key={`br-${match.index}`} />);
-    } else if (match[4]) {
-      nodes.push(<code key={`code-${match.index}`}>{match[4]}</code>);
     } else if (match[5]) {
-      nodes.push(<strong key={`strong-${match.index}`}>{match[5]}</strong>);
+      nodes.push(<code key={`code-${match.index}`}>{match[5]}</code>);
+    } else if (match[6]) {
+      nodes.push(<strong key={`strong-${match.index}`}>{match[6]}</strong>);
     }
 
     lastIndex = pattern.lastIndex;

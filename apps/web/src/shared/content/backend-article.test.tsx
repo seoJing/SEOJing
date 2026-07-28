@@ -237,6 +237,119 @@ describe("backend article content adapter", () => {
     expect(markup).not.toContain("**생성 위치**");
   });
 
+  it("renders backend RAW_MDX wrappers used by legacy study posts", () => {
+    const content = toBackendArticleContentData({
+      ...article,
+      body: {
+        html: "<p>fallback should not duplicate structured blocks</p>",
+        blocks: [
+          {
+            id: "subtitle",
+            type: "RAW_MDX",
+            sortOrder: 0,
+            content: {
+              componentName: "Subtitle",
+              props: { level: "2" },
+              rawMdx: "<Subtitle level={2}>10주차 학습 자료</Subtitle>",
+            },
+            plainText: "Subtitle component omitted",
+          },
+          {
+            id: "html-strong-list",
+            type: "PARAGRAPH",
+            sortOrder: 1,
+            content: {
+              items: [
+                "<strong>학습 챕터:</strong> 한 입 크기로 잘라먹는 리액트",
+              ],
+            },
+            plainText: null,
+          },
+          {
+            id: "anchor",
+            type: "RAW_MDX",
+            sortOrder: 2,
+            content: {
+              componentName: "Anchor",
+              props: {
+                external:
+                  "https://reactjs.winterlood.com/8c7c4423-01d2-4abc-9616-e95298522778",
+              },
+              rawMdx:
+                '<Anchor external="https://reactjs.winterlood.com/8c7c4423-01d2-4abc-9616-e95298522778">\n  1. 컴포넌트\n</Anchor>',
+            },
+            plainText: "Anchor component omitted",
+          },
+          {
+            id: "paragraph",
+            type: "RAW_MDX",
+            sortOrder: 3,
+            content: {
+              componentName: "Paragraph",
+              rawMdx:
+                '<Paragraph>드디어 <strong>React</strong>를 시작합니다.{" "}컴포넌트를 다룹니다.</Paragraph>',
+            },
+            plainText: "Paragraph component omitted",
+          },
+          {
+            id: "anchor-href",
+            type: "RAW_MDX",
+            sortOrder: 4,
+            content: {
+              componentName: "Anchor",
+              props: { href: "/blog/study/clab-26-1/week11" },
+              rawMdx:
+                '<Anchor href="/blog/study/clab-26-1/week11">다음 주차</Anchor>',
+            },
+            plainText: "Anchor component omitted",
+          },
+          {
+            id: "unsafe-link",
+            type: "PARAGRAPH",
+            sortOrder: 5,
+            content: { text: "[나쁜 링크](javascript:alert(1))" },
+            plainText: null,
+          },
+          {
+            id: "empty-subtitle",
+            type: "RAW_MDX",
+            sortOrder: 6,
+            content: { componentName: "Subtitle" },
+            plainText: "Subtitle component omitted",
+          },
+          {
+            id: "separator",
+            type: "PARAGRAPH",
+            sortOrder: 7,
+            content: { text: "---" },
+            plainText: "---",
+          },
+        ],
+      },
+    });
+
+    const Component = content.compiled.default;
+    const markup = renderToStaticMarkup(<Component />);
+
+    expect(markup).toContain("<h2>10주차 학습 자료</h2>");
+    expect(markup).toContain("<strong>학습 챕터:</strong>");
+    expect(markup).toContain(
+      '<a href="https://reactjs.winterlood.com/8c7c4423-01d2-4abc-9616-e95298522778">1. 컴포넌트</a>',
+    );
+    expect(markup).toContain(
+      '<a href="/blog/study/clab-26-1/week11">다음 주차</a>',
+    );
+    expect(markup).toContain('<a href="#">나쁜 링크</a>');
+    expect(markup).toContain(
+      "드디어 <strong>React</strong>를 시작합니다. 컴포넌트를 다룹니다.",
+    );
+    expect(markup).toContain("<hr/>");
+    expect(markup).not.toContain("Subtitle fallback");
+    expect(markup).not.toContain("Anchor component omitted");
+    expect(markup).not.toContain("Paragraph component omitted");
+    expect(markup).not.toContain("&lt;strong&gt;");
+  });
+
   it("keeps sanitized HTML fallback when no structured blocks are provided", () => {
     const content = toBackendArticleContentData({
       ...article,
