@@ -468,6 +468,28 @@ mark.search-highlight {
     color: var(--article-subheading-color);
   }
 
+  .article-prose :where(a) {
+    color: rgb(37 99 235);
+    font-weight: 650;
+    text-decoration-line: underline;
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.18em;
+    transition:
+      color 0.16s ease,
+      text-decoration-color 0.16s ease;
+  }
+
+  .article-prose :where(a:hover) {
+    color: rgb(30 64 175);
+    text-decoration-thickness: 0.12em;
+  }
+
+  .article-prose :where(a:focus-visible) {
+    border-radius: 0.25rem;
+    outline: 2px solid rgb(37 99 235 / 0.7);
+    outline-offset: 0.18rem;
+  }
+
   .article-prose :where(ul),
   .article-prose :where(ol) {
     margin-block: 1.5rem;
@@ -601,6 +623,18 @@ mark.search-highlight {
   .dark .article-prose :where(.article-table-scroll) {
     background: rgb(15 23 42 / 0.58);
     box-shadow: 0 16px 40px rgb(0 0 0 / 0.22);
+  }
+
+  .dark .article-prose :where(a) {
+    color: rgb(147 197 253);
+  }
+
+  .dark .article-prose :where(a:hover) {
+    color: rgb(191 219 254);
+  }
+
+  .dark .article-prose :where(a:focus-visible) {
+    outline-color: rgb(147 197 253 / 0.75);
   }
 
   .dark .article-prose :where(th) {
