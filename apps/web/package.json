@@ -22,6 +22,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "worker:size:check": "node scripts/check-worker-bundle-size.mjs",
+    "public:readback": "node scripts/check-public-blog-readback.mjs",
     "export:presentation": "tsx scripts/export-presentation-pptx.ts"
   },
   "dependencies": {
