@@ -36,22 +36,27 @@ export default async function OpsArticlesPage({
           SEOJing 글 운영
         </h1>
         <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-600 dark:text-zinc-300">
-          `/ops/articles`는 공개 블로그가 아니라 진규 전용 운영면입니다. 글은
-          MDX source를 계속 authoring format으로 쓰되, 저장 시 backend article
-          revision으로 들어가고 발행 시 public DB body가 갱신됩니다.
+          `/ops/articles`는 공개 블로그가 아니라 진규 전용 운영면입니다. 새 글은
+          CMS block revision으로 작성하고, 기존 MDX 글은 호환 모드로 함께
+          운영합니다. 발행 시 public DB body가 갱신됩니다.
         </p>
       </section>
 
-      <section className="mt-6 grid gap-6 lg:grid-cols-[22rem_1fr]">
-        <aside className="space-y-4">
-          <div className="rounded-3xl border border-zinc-200 bg-white/80 p-5 dark:border-zinc-800 dark:bg-zinc-950/70">
-            <h2 className="text-lg font-semibold">글 선택</h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
-              현재 목록은 repo content inventory 기준입니다. 검색/페이지네이션은
-              다음 단계에서 backend article list와 합치면 됩니다.
-            </p>
-            <form className="mt-4" action="/ops/articles">
-              <label className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+      <section className="mt-6 space-y-6">
+        <aside className="rounded-3xl border border-zinc-200 bg-white/80 p-5 dark:border-zinc-800 dark:bg-zinc-950/70">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold">글 선택</h2>
+              <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+                새 CMS 글은 아래 전체 폭 작성부에서 만듭니다. 기존 MDX 글은 Git
+                기반 legacy 경로로 유지합니다.
+              </p>
+            </div>
+            <form
+              className="flex w-full max-w-xl flex-wrap items-end gap-2"
+              action="/ops/articles"
+            >
+              <label className="min-w-60 flex-1 text-sm font-medium text-zinc-600 dark:text-zinc-300">
                 slug 직접 입력
                 <input
                   name="slug"
@@ -60,18 +65,25 @@ export default async function OpsArticlesPage({
                   className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
                 />
               </label>
-              <button className="mt-3 w-full rounded-full bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-white dark:bg-zinc-50 dark:text-zinc-950">
+              <button className="rounded-full bg-zinc-950 px-5 py-3 text-sm font-semibold text-white dark:bg-zinc-50 dark:text-zinc-950">
                 열기
               </button>
             </form>
           </div>
+        </aside>
 
-          <div className="max-h-[52rem] overflow-y-auto rounded-3xl border border-zinc-200 bg-white/80 p-3 dark:border-zinc-800 dark:bg-zinc-950/70">
+        <OpsArticleEditor selectedSlug={selectedSlug} />
+
+        <details className="rounded-3xl border border-zinc-200 bg-white/80 p-5 dark:border-zinc-800 dark:bg-zinc-950/70">
+          <summary className="cursor-pointer text-sm font-semibold">
+            기존 글 목록 열기 ({displayItems.length})
+          </summary>
+          <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
             {displayItems.map((item) => (
               <a
                 key={item.slug}
                 href={`/ops/articles?slug=${encodeURIComponent(item.slug)}`}
-                className={`block rounded-2xl px-3 py-3 text-sm transition hover:bg-zinc-100 dark:hover:bg-zinc-900 ${
+                className={`rounded-2xl px-3 py-3 text-sm transition hover:bg-zinc-100 dark:hover:bg-zinc-900 ${
                   item.slug === selectedSlug
                     ? "bg-zinc-100 dark:bg-zinc-900"
                     : ""
@@ -86,9 +98,7 @@ export default async function OpsArticlesPage({
               </a>
             ))}
           </div>
-        </aside>
-
-        <OpsArticleEditor selectedSlug={selectedSlug} />
+        </details>
       </section>
     </main>
   );

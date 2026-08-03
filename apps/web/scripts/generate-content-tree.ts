@@ -152,6 +152,7 @@ async function main() {
 
   const slugs = collectSlugs(CONTENT_DIR);
   const backendArticleSlugs = readBackendArticleSlugs(slugs);
+  const loaderSlugs = [...new Set([...slugs, ...backendArticleSlugs])].sort();
 
   fs.rmSync(CONTENT_OUTPUT_DIR, { recursive: true, force: true });
 
@@ -183,7 +184,7 @@ async function main() {
   );
   console.log(`mdx-search-index.json 생성 완료: ${searchIndex.length}개 chunk`);
 
-  const backendArticleSlugList = slugs.filter((slug) =>
+  const backendArticleSlugList = loaderSlugs.filter((slug) =>
     backendArticleSlugs.has(slug),
   );
   if (backendArticleSlugList.length > 0) {
@@ -217,7 +218,7 @@ async function main() {
     ``,
     `const contentLoaders: Record<string, ContentLoaderEntry> = {`,
   ];
-  for (const slug of slugs) {
+  for (const slug of loaderSlugs) {
     loaderLines.push(`  "${slug}": {`);
     if (backendArticleSlugs.has(slug)) {
       loaderLines.push(`    kind: "backend",`);
@@ -239,7 +240,12 @@ async function main() {
   );
   loaderLines.push(`  const key = slug.join("/");`);
   loaderLines.push(`  const entry = contentLoaders[key];`);
-  loaderLines.push(`  if (!entry) return null;`);
+  loaderLines.push(`  if (!entry) {`);
+  loaderLines.push(
+    `    // CMS-native DB 글은 MDX 트리에 없으므로 published API를 fallback으로 조회한다.`,
+  );
+  loaderLines.push(`    return loadBackendArticleContent(key);`);
+  loaderLines.push(`  }`);
   loaderLines.push(`  if (entry.kind === "backend") {`);
   loaderLines.push(`    return loadBackendArticleContent(key);`);
   loaderLines.push(`  }`);
