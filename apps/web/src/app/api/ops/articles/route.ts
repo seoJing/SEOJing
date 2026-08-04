@@ -1,5 +1,13 @@
 const MAX_SOURCE_BYTES = 512 * 1024;
 const OPS_PROXY_TIMEOUT_MS = 8_000;
+const ALLOWED_BLOCK_TYPES = new Set([
+  "PARAGRAPH",
+  "HEADING",
+  "CODE",
+  "IMAGE",
+  "CALLOUT",
+  "QUIZ",
+]);
 
 type RuntimeEnv = {
   NODE_ENV?: string;
@@ -11,6 +19,15 @@ type RuntimeEnv = {
   VITE_SEOJING_BACKEND_API_ORIGIN?: string;
 };
 
+type AdminArticleBlock = {
+  id?: string;
+  type?: string;
+  sortOrder?: number;
+  content?: Record<string, unknown>;
+  plainText?: string | null;
+  metadata?: Record<string, unknown> | null;
+};
+
 type AdminArticlePayload = {
   article?: {
     slug?: string;
@@ -20,6 +37,7 @@ type AdminArticlePayload = {
     sourceFormat?: string;
     sourceText?: string;
     renderedHtml?: string | null;
+    blocks?: AdminArticleBlock[];
     currentRevisionNumber?: number | null;
     publishedAt?: string | null;
     updatedAt?: string;
@@ -109,6 +127,81 @@ export async function POST(request: Request): Promise<Response> {
 
   const config = readBackendConfig();
   if (!config.ok) return jsonResponse(config.status, config.body);
+
+  if (action === "createBlocks") {
+    const title = readString(body, "title");
+    const blocks = readBlocks(body);
+    if (!title || blocks.length === 0) {
+      return jsonResponse(400, {
+        ok: false,
+        error: "title_and_blocks_required",
+      });
+    }
+    if (!hasAllowedBlockTypes(blocks)) {
+      return jsonResponse(400, { ok: false, error: "invalid_block_type" });
+    }
+    const created = await fetchBackendJson<AdminArticlePayload>(
+      config.origin,
+      "/admin/articles/blocks",
+      {
+        method: "POST",
+        adminToken: config.adminToken,
+        body: JSON.stringify({
+          slug,
+          title,
+          description: readString(body, "description") || undefined,
+          blocks,
+          changeSummary: "SEOJing CMS native draft",
+          authorName: "SEOJing Ops",
+        }),
+      },
+    );
+    if (!created.ok) {
+      return jsonResponse(created.status, {
+        ok: false,
+        error: "backend_block_draft_create_failed",
+        status: created.status,
+      });
+    }
+    return jsonResponse(201, {
+      ok: true,
+      action,
+      article: created.data.article,
+    });
+  }
+
+  if (action === "saveBlocks") {
+    const blocks = readBlocks(body);
+    if (blocks.length === 0) {
+      return jsonResponse(400, { ok: false, error: "blocks_required" });
+    }
+    if (!hasAllowedBlockTypes(blocks)) {
+      return jsonResponse(400, { ok: false, error: "invalid_block_type" });
+    }
+    const saved = await fetchBackendJson<AdminArticlePayload>(
+      config.origin,
+      `/admin/articles/${encodeURIComponent(slug)}/blocks`,
+      {
+        method: "PUT",
+        adminToken: config.adminToken,
+        body: JSON.stringify({
+          title: readString(body, "title") || undefined,
+          description: readString(body, "description") || undefined,
+          blocks,
+          changeSummary: "SEOJing CMS block revision",
+          authorName: "SEOJing Ops",
+        }),
+      },
+    );
+    if (!saved.ok) {
+      return jsonResponse(saved.status, {
+        ok: false,
+        error: "backend_block_revision_save_failed",
+        status: saved.status,
+      });
+    }
+    return jsonResponse(200, { ok: true, action, article: saved.data.article });
+  }
 
   if (action === "saveRevision") {
     const sourceText = readString(body, "sourceText");
@@ -320,6 +413,23 @@ function readString(body: unknown, key: string): string {
   if (!body || typeof body !== "object" || Array.isArray(body)) return "";
   const value = (body as Record<string, unknown>)[key];
   return typeof value === "string" ? value.trim() : "";
+}
+
+function readBlocks(body: unknown): AdminArticleBlock[] {
+  if (!body || typeof body !== "object" || Array.isArray(body)) return [];
+  const value = (body as Record<string, unknown>).blocks;
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (block): block is AdminArticleBlock =>
+      Boolean(block) && typeof block === "object" && !Array.isArray(block),
+  );
+}
+
+function hasAllowedBlockTypes(blocks: AdminArticleBlock[]): boolean {
+  return blocks.every(
+    (block) =>
+      typeof block.type === "string" && ALLOWED_BLOCK_TYPES.has(block.type),
+  );
 }
 
 function jsonResponse(status: number, body: unknown): Response {
