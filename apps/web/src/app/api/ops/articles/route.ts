@@ -1,5 +1,13 @@
 const MAX_SOURCE_BYTES = 512 * 1024;
 const OPS_PROXY_TIMEOUT_MS = 8_000;
+const ALLOWED_BLOCK_TYPES = new Set([
+  "PARAGRAPH",
+  "HEADING",
+  "CODE",
+  "IMAGE",
+  "CALLOUT",
+  "QUIZ",
+]);
 
 type RuntimeEnv = {
   NODE_ENV?: string;
@@ -129,6 +137,9 @@ export async function POST(request: Request): Promise<Response> {
         error: "title_and_blocks_required",
       });
     }
+    if (!hasAllowedBlockTypes(blocks)) {
+      return jsonResponse(400, { ok: false, error: "invalid_block_type" });
+    }
     const created = await fetchBackendJson<AdminArticlePayload>(
       config.origin,
       "/admin/articles/blocks",
@@ -163,6 +174,9 @@ export async function POST(request: Request): Promise<Response> {
     const blocks = readBlocks(body);
     if (blocks.length === 0) {
       return jsonResponse(400, { ok: false, error: "blocks_required" });
+    }
+    if (!hasAllowedBlockTypes(blocks)) {
+      return jsonResponse(400, { ok: false, error: "invalid_block_type" });
     }
     const saved = await fetchBackendJson<AdminArticlePayload>(
       config.origin,
@@ -408,6 +422,13 @@ function readBlocks(body: unknown): AdminArticleBlock[] {
   return value.filter(
     (block): block is AdminArticleBlock =>
       Boolean(block) && typeof block === "object" && !Array.isArray(block),
+  );
+}
+
+function hasAllowedBlockTypes(blocks: AdminArticleBlock[]): boolean {
+  return blocks.every(
+    (block) =>
+      typeof block.type === "string" && ALLOWED_BLOCK_TYPES.has(block.type),
   );
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { toBackendBlocks } from "./ops-article-editor.utils";
+import { normalizeBlocks, toBackendBlocks } from "./ops-article-editor.utils";
 
 describe("toBackendBlocks", () => {
   it("converts the editor IMAGE src field to the backend url field", () => {
@@ -84,6 +84,60 @@ describe("toBackendBlocks", () => {
       choices: ["CMS", "MDX"],
       answer: "MDX",
       explanation: "Legacy MDX remains authoritative during migration.",
+    });
+  });
+
+  it("preserves direct quiz edits when stale items are also present", () => {
+    const [block] = toBackendBlocks([
+      {
+        type: "QUIZ",
+        content: {
+          question: "Edited question",
+          choices: ["Edited choice"],
+          answer: "Edited answer",
+          items: [
+            {
+              question: "Stale question",
+              choices: ["Stale choice"],
+              answer: "Stale answer",
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(block?.content).toEqual({
+      question: "Edited question",
+      choices: ["Edited choice"],
+      answer: "Edited answer",
+    });
+  });
+
+  it("keeps untouched legacy quiz fields when one direct field is edited", () => {
+    const [block] = normalizeBlocks([
+      {
+        type: "QUIZ",
+        content: {
+          question: "Edited question",
+          items: [
+            {
+              props: {
+                question: "Stale question",
+                choices: ["Persisted choice"],
+                answer: "Persisted answer",
+                explanation: "Persisted explanation",
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(block?.content).toEqual({
+      question: "Edited question",
+      choices: ["Persisted choice"],
+      answer: "Persisted answer",
+      explanation: "Persisted explanation",
     });
   });
 });

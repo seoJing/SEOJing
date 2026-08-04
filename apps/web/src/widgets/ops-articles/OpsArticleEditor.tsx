@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArticleImage, ArticleQuiz, ArticleQuizItem, CodeBlock } from "@app/ui";
 
 import {
+  normalizeBlocks,
   toBackendBlocks,
   type ArticleBlock,
   type BlockType,
@@ -57,7 +58,6 @@ const blockTypes: Array<{ type: BlockType; label: string }> = [
 
 export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
   const [payload, setPayload] = useState<EditorPayload | null>(null);
-  const [sourceText, setSourceText] = useState("");
   const [blocks, setBlocks] = useState<ArticleBlock[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -85,7 +85,6 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
           throw new Error(body.error ?? `read failed: ${response.status}`);
         }
         setPayload(body);
-        setSourceText(body.article?.sourceText ?? "");
         setBlocks(normalizeBlocks(body.article?.blocks));
         setTitle(body.article?.title ?? "");
         setDescription(body.article?.description ?? "");
@@ -104,22 +103,16 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
   }, [hasSelection, selectedSlug]);
 
   const dirty = useMemo(() => {
-    if (isBlockArticle) {
-      return (
-        JSON.stringify(blocks) !==
-          JSON.stringify(normalizeBlocks(article?.blocks)) ||
-        title !== (article?.title ?? "") ||
-        description !== (article?.description ?? "")
-      );
-    }
     return (
-      sourceText !== (article?.sourceText ?? "") ||
-      title !== (article?.title ?? "") ||
-      description !== (article?.description ?? "")
+      isBlockArticle &&
+      (JSON.stringify(blocks) !==
+        JSON.stringify(normalizeBlocks(article?.blocks)) ||
+        title !== (article?.title ?? "") ||
+        description !== (article?.description ?? ""))
     );
-  }, [article, blocks, description, isBlockArticle, sourceText, title]);
+  }, [article, blocks, description, isBlockArticle, title]);
 
-  async function mutate(action: "saveRevision" | "saveBlocks" | "publish") {
+  async function mutate(action: "saveBlocks" | "publish") {
     setStatus(action === "publish" ? "publishing" : "saving");
     setMessage("");
     try {
@@ -131,7 +124,6 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
           slug: selectedSlug,
           title,
           description,
-          sourceText,
           blocks: toBackendBlocks(blocks),
         }),
       });
@@ -163,7 +155,6 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
       throw new Error(body.error ?? `reload failed: ${response.status}`);
     }
     setPayload(body);
-    setSourceText(body.article?.sourceText ?? "");
     setBlocks(normalizeBlocks(body.article?.blocks));
     setTitle(body.article?.title ?? "");
     setDescription(body.article?.description ?? "");
@@ -464,7 +455,7 @@ function BlockCard({
   const set = (key: string, value: string | number | string[]) =>
     onChange({ ...block, content: { ...content, [key]: value } });
   const switchType = (type: BlockType) =>
-    onChange({ ...defaultBlock(type), id: block.id });
+    onChange({ ...block, ...defaultBlock(type) });
   return (
     <article className="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
       <div className="flex items-center justify-between gap-3">
@@ -770,16 +761,6 @@ function defaultBlock(type: BlockType): ArticleBlock {
     QUIZ: { question: "", choices: [], answer: "", explanation: "" },
   };
   return { type, content: content[type] };
-}
-function normalizeBlocks(blocks: ArticleBlock[] | undefined): ArticleBlock[] {
-  return (blocks ?? [])
-    .filter(
-      (block): block is ArticleBlock =>
-        Boolean(block) &&
-        blockTypes.some(({ type }) => type === block.type) &&
-        Boolean(block.content),
-    )
-    .map((block) => ({ ...block, content: { ...block.content } }));
 }
 function stringValue(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value : fallback;

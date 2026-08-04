@@ -236,6 +236,10 @@ async function main() {
   loaderLines.push(`};`);
   loaderLines.push(``);
   loaderLines.push(
+    `const isValidBackendArticleSlug = (slug: string) => /^[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?(?:\\/[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)*$/.test(slug);`,
+  );
+  loaderLines.push(``);
+  loaderLines.push(
     `export async function loadContent(slug: string[]): Promise<ContentData | null> {`,
   );
   loaderLines.push(`  const key = slug.join("/");`);
@@ -244,6 +248,7 @@ async function main() {
   loaderLines.push(
     `    // CMS-native DB 글은 MDX 트리에 없으므로 published API를 fallback으로 조회한다.`,
   );
+  loaderLines.push(`    if (!isValidBackendArticleSlug(key)) return null;`);
   loaderLines.push(`    return loadBackendArticleContent(key);`);
   loaderLines.push(`  }`);
   loaderLines.push(`  if (entry.kind === "backend") {`);
