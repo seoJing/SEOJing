@@ -15,6 +15,7 @@ type EditorArticle = {
   slug?: string;
   title?: string;
   description?: string | null;
+  category?: string;
   status?: string;
   sourceFormat?: string;
   sourceText?: string;
@@ -61,6 +62,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
   const [blocks, setBlocks] = useState<ArticleBlock[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("SEOJing");
   const [status, setStatus] = useState<
     "idle" | "loading" | "saving" | "publishing"
   >("idle");
@@ -88,6 +90,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
         setBlocks(normalizeBlocks(body.article?.blocks));
         setTitle(body.article?.title ?? "");
         setDescription(body.article?.description ?? "");
+        setCategory(body.article?.category ?? "SEOJing");
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
@@ -108,11 +111,14 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
       (JSON.stringify(blocks) !==
         JSON.stringify(normalizeBlocks(article?.blocks)) ||
         title !== (article?.title ?? "") ||
-        description !== (article?.description ?? ""))
+        description !== (article?.description ?? "") ||
+        category !== (article?.category ?? "SEOJing"))
     );
-  }, [article, blocks, description, isBlockArticle, title]);
+  }, [article, blocks, category, description, isBlockArticle, title]);
 
-  async function mutate(action: "saveBlocks" | "publish") {
+  async function mutate(
+    action: "saveBlocks" | "publish" | "unpublish" | "archive" | "delete",
+  ) {
     setStatus(action === "publish" ? "publishing" : "saving");
     setMessage("");
     try {
@@ -124,6 +130,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
           slug: selectedSlug,
           title,
           description,
+          category,
           blocks: toBackendBlocks(blocks),
         }),
       });
@@ -131,10 +138,18 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
       if (!response.ok || !body.ok) {
         throw new Error(body.error ?? `request failed: ${response.status}`);
       }
+      if (action === "delete") {
+        window.location.assign("/ops/articles");
+        return;
+      }
       setMessage(
         action === "publish"
           ? "발행 완료. public API/body readback을 다시 불러옵니다."
-          : "revision 저장 완료. 공개 본문은 발행 전까지 유지됩니다.",
+          : action === "unpublish"
+            ? "비공개 초안으로 전환했습니다."
+            : action === "archive"
+              ? "글을 보관하고 공개 목록에서 내렸습니다."
+              : "revision 저장 완료. 공개 본문은 발행 전까지 유지됩니다.",
       );
       await reload();
     } catch (error) {
@@ -158,6 +173,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
     setBlocks(normalizeBlocks(body.article?.blocks));
     setTitle(body.article?.title ?? "");
     setDescription(body.article?.description ?? "");
+    setCategory(body.article?.category ?? "SEOJing");
   }
 
   if (!hasSelection) {
@@ -182,6 +198,24 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
             onTitleChange={setTitle}
             title={title}
           />
+          <label className="mt-4 block text-sm font-medium text-zinc-600 dark:text-zinc-300">
+            category
+            <input
+              list="cms-article-categories"
+              className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+              disabled={isBusy}
+              placeholder="Study 또는 새 카테고리 입력"
+            />
+            <datalist id="cms-article-categories">
+              <option value="SEOJing" />
+              <option value="Study" />
+              <option value="okayJing" />
+              <option value="CLAB" />
+              <option value="KD Team" />
+            </datalist>
+          </label>
           <BlockEditor blocks={blocks} disabled={isBusy} onChange={setBlocks} />
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <button
@@ -204,6 +238,41 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
               disabled={isBusy}
             >
               다시 불러오기
+            </button>
+            {article?.status === "PUBLISHED" ? (
+              <button
+                className="rounded-full border border-amber-400 px-5 py-2.5 text-sm font-semibold text-amber-800 disabled:opacity-45"
+                onClick={() =>
+                  window.confirm("공개 글을 비공개 초안으로 전환할까요?") &&
+                  void mutate("unpublish")
+                }
+                disabled={isBusy}
+              >
+                비공개
+              </button>
+            ) : null}
+            {article?.status !== "ARCHIVED" ? (
+              <button
+                className="rounded-full border border-zinc-400 px-5 py-2.5 text-sm font-semibold disabled:opacity-45"
+                onClick={() =>
+                  window.confirm("이 글을 보관하고 공개 목록에서 내릴까요?") &&
+                  void mutate("archive")
+                }
+                disabled={isBusy}
+              >
+                보관
+              </button>
+            ) : null}
+            <button
+              className="rounded-full border border-rose-400 px-5 py-2.5 text-sm font-semibold text-rose-700 disabled:opacity-45"
+              onClick={() =>
+                window.confirm(
+                  "영구 삭제합니다. 모든 revision과 block을 되돌릴 수 없습니다. 계속할까요?",
+                ) && void mutate("delete")
+              }
+              disabled={isBusy}
+            >
+              영구 삭제
             </button>
           </div>
           <p className="mt-3 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
@@ -240,6 +309,7 @@ function NewCmsArticleForm() {
   const [slug, setSlug] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("SEOJing");
   const [blocks, setBlocks] = useState<ArticleBlock[]>([
     defaultBlock("HEADING"),
     defaultBlock("PARAGRAPH"),
@@ -259,6 +329,7 @@ function NewCmsArticleForm() {
           slug,
           title,
           description,
+          category,
           blocks: toBackendBlocks(blocks),
         }),
       });
@@ -309,6 +380,24 @@ function NewCmsArticleForm() {
         onTitleChange={setTitle}
         title={title}
       />
+      <label className="mt-4 block text-sm font-medium text-zinc-600 dark:text-zinc-300">
+        category
+        <input
+          list="cms-article-categories"
+          className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
+          value={category}
+          onChange={(event) => setCategory(event.target.value)}
+          disabled={saving}
+          placeholder="Study 또는 새 카테고리 입력"
+        />
+        <datalist id="cms-article-categories">
+          <option value="SEOJing" />
+          <option value="Study" />
+          <option value="okayJing" />
+          <option value="CLAB" />
+          <option value="KD Team" />
+        </datalist>
+      </label>
       <BlockEditor blocks={blocks} disabled={saving} onChange={setBlocks} />
       {message ? (
         <p className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:bg-rose-950/30 dark:text-rose-200">
