@@ -33,6 +33,7 @@ type AdminArticlePayload = {
     slug?: string;
     title?: string;
     description?: string | null;
+    category?: string;
     status?: string;
     sourceFormat?: string;
     sourceText?: string;
@@ -150,6 +151,7 @@ export async function POST(request: Request): Promise<Response> {
           slug,
           title,
           description: readString(body, "description") || undefined,
+          category: readString(body, "category") || undefined,
           blocks,
           changeSummary: "SEOJing CMS native draft",
           authorName: "SEOJing Ops",
@@ -187,6 +189,7 @@ export async function POST(request: Request): Promise<Response> {
         body: JSON.stringify({
           title: readString(body, "title") || undefined,
           description: readString(body, "description") || undefined,
+          category: readString(body, "category") || undefined,
           blocks,
           changeSummary: "SEOJing CMS block revision",
           authorName: "SEOJing Ops",
@@ -217,6 +220,7 @@ export async function POST(request: Request): Promise<Response> {
         body: JSON.stringify({
           title: readString(body, "title") || undefined,
           description: readString(body, "description") || undefined,
+          category: readString(body, "category") || undefined,
           sourceText,
           changeSummary:
             readString(body, "changeSummary") || "SEOJing /ops article edit",
@@ -255,6 +259,44 @@ export async function POST(request: Request): Promise<Response> {
       action,
       article: published.data.article,
     });
+  }
+
+  const visibilityAction =
+    action === "unpublish" || action === "archive" ? action : null;
+  if (visibilityAction) {
+    const updated = await fetchBackendJson<AdminArticlePayload>(
+      config.origin,
+      `/admin/articles/${encodeURIComponent(slug)}/${visibilityAction}`,
+      { method: "POST", adminToken: config.adminToken },
+    );
+    if (!updated.ok) {
+      return jsonResponse(updated.status, {
+        ok: false,
+        error: `backend_${visibilityAction}_failed`,
+        status: updated.status,
+      });
+    }
+    return jsonResponse(200, {
+      ok: true,
+      action,
+      article: updated.data.article,
+    });
+  }
+
+  if (action === "delete") {
+    const deleted = await fetchBackendJson<Record<string, never>>(
+      config.origin,
+      `/admin/articles/${encodeURIComponent(slug)}`,
+      { method: "DELETE", adminToken: config.adminToken },
+    );
+    if (!deleted.ok) {
+      return jsonResponse(deleted.status, {
+        ok: false,
+        error: "backend_delete_failed",
+        status: deleted.status,
+      });
+    }
+    return jsonResponse(200, { ok: true, action });
   }
 
   return jsonResponse(400, { ok: false, error: "unsupported_action" });
@@ -351,7 +393,7 @@ function readRuntimeEnv(): Partial<RuntimeEnv> {
 }
 
 type BackendFetchOptions = {
-  method: "GET" | "POST" | "PUT";
+  method: "GET" | "POST" | "PUT" | "DELETE";
   adminToken?: string;
   body?: string;
 };
@@ -381,6 +423,9 @@ async function fetchBackendJson<T>(
       },
       body: options.body,
     });
+    if (response.status === 204) {
+      return { ok: true, status: response.status, data: {} as T };
+    }
     if (!response.ok) return { ok: false, status: response.status };
     return {
       ok: true,
