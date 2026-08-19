@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /* global console, fetch, setTimeout, AbortSignal */
 import process from "node:process";
+import { pathToFileURL } from "node:url";
 import {
   ARTICLE_MIGRATION_REGISTRY,
   publicArticleApiPath,
@@ -436,7 +437,10 @@ async function main() {
   process.exitCode = 1;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
   main().catch((error) => {
     console.error(error.stack ?? error.message);
     process.exitCode = 1;
