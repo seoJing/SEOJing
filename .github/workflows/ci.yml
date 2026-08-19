@@ -91,4 +91,6 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Verify public blog readback
-        run: pnpm --filter @app/web run public:readback
+        run: |
+          pnpm --filter @app/web run public:readback:test
+          pnpm --filter @app/web run public:readback
