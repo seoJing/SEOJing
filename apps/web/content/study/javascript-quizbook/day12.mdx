@@ -154,6 +154,26 @@ function Card({ onOpen }: { onOpen: () => void }) {
 
 이벤트 코드는 “핸들러가 어디 붙었는가”만 보면 부족합니다. 실제 클릭된 노드, 현재 핸들러 위치, 전파 단계, 기본 동작, 프레임워크의 이벤트 레이어까지 이어서 읽어야 합니다.
 
+## 연결해서 읽기: DOM 이벤트의 타입 경계
+
+이벤트 코드를 TypeScript로 옮기면 `event.target`이 `EventTarget`으로 보입니다. 버튼의 `dataset`을 바로 읽고 싶어도 컴파일러가 막는 이유는 간단합니다. 실제 클릭 지점은 button일 수도 있고, 그 안의 span일 수도 있으며, 테스트 환경에서는 기대한 DOM API가 없을 수도 있습니다.
+
+```ts
+list.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+
+  const button = target.closest<HTMLButtonElement>("button[data-delete]");
+  if (!button || !list.contains(button)) return;
+
+  deleteTodo(button.dataset.id);
+});
+```
+
+여기서 타입 단언으로 `event.target as HTMLButtonElement`라고 적는 것보다 `Element`인지 확인한 뒤 `closest` 결과를 확인하는 쪽이 DOM 구조 변경에도 맞습니다. 이벤트 전파를 이해하는 일과 타입을 좁히는 일은 따로가 아닙니다. 둘 다 실제 런타임 노드가 무엇인지 확인하는 과정입니다.
+
+이 연결은 [이펙티브 타입스크립트 Day 13](/blog/study/effective-typescript/day13)의 DOM 환경 이야기로 이어집니다. 타입 선언은 `HTMLDialogElement`나 `EventTarget`의 모양을 알려주지만, selector 결과·브라우저·jsdom이 같은 동작을 보장하지는 않습니다. 이벤트 PR에서는 전파 경로와 함께 이 런타임 경계까지 확인하면, `as` 한 줄로 잠재운 오류를 줄일 수 있습니다.
+
 ## Day 12 복습 퀴즈
 
 <ArticleQuiz>
