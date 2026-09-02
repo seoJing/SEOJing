@@ -69,6 +69,11 @@ export const ARTICLE_MIGRATION_REGISTRY = Object.freeze([
       ],
       requiredHtmlPatterns: [
         {
+          label: "backend article renderer marker",
+          scope: "article-content",
+          pattern: "<[^>]+data-backend-article-(?:blocks|html)(?:=|\\s|>)",
+        },
+        {
           label: "rendered code block",
           scope: "article-content",
           pattern: "<[^>]+data-code-block(?:=|\\s|>)",
