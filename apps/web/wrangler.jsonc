@@ -21,6 +21,7 @@
   },
   "vars": {
     "SEOJING_BACKEND_ARTICLE_API_ORIGIN": "https://api.seojing.com",
+    "SEOJING_BACKEND_ARTICLE_SLUGS": "study/effective-typescript/day5",
   },
   "images": {
     "binding": "IMAGES",
