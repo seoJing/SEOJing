@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import rehypePrismPlus from "rehype-prism-plus";
 import { buildMdxSearchIndex } from "@app/utils";
 import { scanContentDir, getContentBySlug } from "@app/utils/content";
+import { ARTICLE_MIGRATION_REGISTRY } from "./public-article-migration-registry.mjs";
 
 const CONTENT_DIR = path.resolve(import.meta.dirname, "../content");
 const GENERATED_DIR = path.resolve(import.meta.dirname, "../src/generated");
@@ -152,15 +153,25 @@ async function main() {
 
   const slugs = collectSlugs(CONTENT_DIR);
   const backendArticleSlugs = readBackendArticleSlugs(slugs);
+  const fallbackSlugs = new Set(
+    ARTICLE_MIGRATION_REGISTRY.filter(
+      (article) => article.fallback === "bundled-mdx",
+    ).map((article) => article.slug),
+  );
+  for (const slug of fallbackSlugs) {
+    if (!slugs.includes(slug)) {
+      throw new Error(`Bundled fallback source is missing: ${slug}`);
+    }
+  }
+  const backendOnlySlugs = new Set(
+    [...backendArticleSlugs].filter((slug) => !fallbackSlugs.has(slug)),
+  );
   const loaderSlugs = [...new Set([...slugs, ...backendArticleSlugs])].sort();
 
   fs.rmSync(CONTENT_OUTPUT_DIR, { recursive: true, force: true });
 
   // 개별 content 파일 생성 (JSON + compiled JSX)
-  const jsonCount = await generateContentFiles(
-    CONTENT_DIR,
-    backendArticleSlugs,
-  );
+  const jsonCount = await generateContentFiles(CONTENT_DIR, backendOnlySlugs);
   console.log(`content 파일 생성 완료: ${jsonCount}개`);
 
   // content-loader.ts 생성
@@ -194,7 +205,7 @@ async function main() {
   }
 
   const loaderLines = [
-    `import { loadBackendArticleContent } from "@/shared/content/backend-article";`,
+    `import { loadBackendArticleContent, loadBackendArticleContentResult } from "@/shared/content/backend-article";`,
     `import type { ContentFrontmatter } from "@app/utils";`,
     `import type { MDXModule } from "mdx/types";`,
     ``,
@@ -212,6 +223,7 @@ async function main() {
     ``,
     `interface BackendArticleLoaderEntry {`,
     `  kind: "backend";`,
+    `  fallback?: BundledContentLoaderEntry;`,
     `}`,
     ``,
     `type ContentLoaderEntry = BundledContentLoaderEntry | BackendArticleLoaderEntry;`,
@@ -222,6 +234,17 @@ async function main() {
     loaderLines.push(`  "${slug}": {`);
     if (backendArticleSlugs.has(slug)) {
       loaderLines.push(`    kind: "backend",`);
+      if (fallbackSlugs.has(slug)) {
+        loaderLines.push(`    fallback: {`);
+        loaderLines.push(`      kind: "bundled",`);
+        loaderLines.push(
+          `      json: () => import("@/generated/content/${slug}.json"),`,
+        );
+        loaderLines.push(
+          `      compiled: () => import("@/generated/content/${slug}.compiled.jsx"),`,
+        );
+        loaderLines.push(`    },`);
+      }
     } else {
       loaderLines.push(`    kind: "bundled",`);
       loaderLines.push(
@@ -243,7 +266,7 @@ async function main() {
     `export async function loadContent(slug: string[]): Promise<ContentData | null> {`,
   );
   loaderLines.push(`  const key = slug.join("/");`);
-  loaderLines.push(`  const entry = contentLoaders[key];`);
+  loaderLines.push(`  let entry = contentLoaders[key];`);
   loaderLines.push(`  if (!entry) {`);
   loaderLines.push(
     `    // CMS-native DB 글은 MDX 트리에 없으므로 published API를 fallback으로 조회한다.`,
@@ -252,7 +275,17 @@ async function main() {
   loaderLines.push(`    return loadBackendArticleContent(key);`);
   loaderLines.push(`  }`);
   loaderLines.push(`  if (entry.kind === "backend") {`);
-  loaderLines.push(`    return loadBackendArticleContent(key);`);
+  loaderLines.push(`    const result = await loadBackendArticleContentResult(`);
+  loaderLines.push(`      key,`);
+  loaderLines.push(
+    `      entry.fallback ? AbortSignal.timeout(3000) : undefined,`,
+  );
+  loaderLines.push(`    );`);
+  loaderLines.push(`    if (result.status === "found") return result.data;`);
+  loaderLines.push(
+    `    if (result.status !== "unavailable" || !entry.fallback) return null;`,
+  );
+  loaderLines.push(`    entry = entry.fallback;`);
   loaderLines.push(`  }`);
   loaderLines.push(`  try {`);
   loaderLines.push(`    const [jsonMod, compiledMod] = await Promise.all([`);
