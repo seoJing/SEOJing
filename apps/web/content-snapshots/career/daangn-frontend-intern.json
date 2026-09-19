@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "generatedAt": "2026-09-20T01:50:40+09:00",
+  "opportunity": {
+    "slug": "daangn-frontend-intern",
+    "title": "Software Engineer, Frontend Internship",
+    "role": "FRONTEND",
+    "category": "INTERNSHIP",
+    "recruitmentStatus": "OPEN",
+    "company": {
+      "slug": "daangn",
+      "name": "당근",
+      "englishName": "Daangn",
+      "careersUrl": "https://careers.daangn.com/jobs/"
+    },
+    "forecast": null,
+    "recruitments": [
+      {
+        "id": "9cc765a8-6de3-4059-b7df-d2a5886c9a49",
+        "year": 2026,
+        "title": "Software Engineer, Frontend (인턴) - 로컬 비즈니스 (로컬 콘텐츠)",
+        "openDate": null,
+        "closeDate": "2026-09-27",
+        "employmentType": "INTERNSHIP",
+        "eligibility": [
+          "React와 TypeScript로 만든 제품을 실제 사용자에게 배포하고 운영한 경험",
+          "화면·네트워크·서버 중 문제 원인을 끝까지 구분해 해결한 경험",
+          "변경되는 요구사항에서 우선순위를 직접 판단한 경험",
+          "다른 직군과 요구사항이나 인터페이스를 조율한 경험",
+          "코딩 에이전트 결과를 직접 검증하고 위임 범위를 판단하는 역량"
+        ],
+        "process": [
+          { "order": 1, "type": "DOCUMENT", "label": "서류 전형" },
+          { "order": 2, "type": "INTERVIEW", "label": "직무 인터뷰" },
+          { "order": 3, "type": "FINAL", "label": "최종 합격 및 입사" }
+        ],
+        "sources": [
+          {
+            "id": "8d4402b0-949e-4b19-8b8a-7b247dc052d4",
+            "type": "OFFICIAL",
+            "title": "Software Engineer, Frontend (인턴) - 로컬 비즈니스 (로컬 콘텐츠)",
+            "url": "https://careers.daangn.com/jobs/role/7993811003/",
+            "publisher": "당근",
+            "publishedAt": null,
+            "accessedAt": "2026-09-20T01:50:40+09:00"
+          }
+        ]
+      }
+    ],
+    "preparationNotes": [
+      "React와 TypeScript 프로젝트는 구현 결과뿐 아니라 실제 사용자에게 배포한 뒤 운영·개선한 근거까지 정리합니다.",
+      "한 가지 문제를 화면, 네트워크, 서버 경계까지 추적해 원인을 좁힌 사례를 준비합니다.",
+      "요구사항 변경 속에서 무엇을 먼저 만들고 무엇을 미뤘는지 판단 근거를 설명할 수 있게 정리합니다.",
+      "PM·디자이너·서버·모바일 엔지니어와 인터페이스를 조율한 경험을 구체적으로 기록합니다.",
+      "AI 코딩 도구에 맡긴 범위와 결과를 어떤 기준으로 검증했는지 설명할 수 있게 준비합니다."
+    ],
+    "updatedAt": "2026-09-20T01:50:40+09:00"
+  }
+}
