@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { env as cloudflareEnv } from "cloudflare:workers";
 import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type MockArticleImageProps = { src: string; alt: string; caption?: string };
 type MockChildrenProps = { children: ReactNode };
@@ -52,6 +52,7 @@ vi.mock("@app/ui", async () => {
 import {
   fetchBackendArticle,
   loadBackendArticleContent,
+  loadBackendArticleContentResult,
   toBackendArticleContentData,
   type BackendArticleApiResponse,
 } from "./backend-article";
@@ -607,4 +608,158 @@ describe("backend article content adapter", () => {
     delete runtimeEnv.SEOJING_BACKEND_ARTICLE_API_ORIGIN;
     vi.unstubAllGlobals();
   });
+});
+
+describe("backend article load outcomes", () => {
+  const origin = "http://127.0.0.1:4000";
+
+  beforeEach(() => {
+    vi.stubEnv("SEOJING_BACKEND_ARTICLE_API_ORIGIN", origin);
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it("distinguishes an authoritative 404 without trying to parse its body", async () => {
+    const response = new Response("Not found", { status: 404 });
+    const json = vi.spyOn(response, "json");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => response),
+    );
+
+    await expect(
+      loadBackendArticleContentResult(article.slug),
+    ).resolves.toEqual({
+      status: "not-found",
+    });
+    await expect(loadBackendArticleContent(article.slug)).resolves.toBeNull();
+    await expect(fetchBackendArticle(origin, article.slug)).resolves.toBeNull();
+    expect(json).not.toHaveBeenCalled();
+  });
+
+  it("returns adapted data on success", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json(article)),
+    );
+    const result = await loadBackendArticleContentResult(article.slug);
+    expect(result.status).toBe("found");
+    if (result.status === "found") {
+      expect(result.data.frontmatter.title).toBe(article.title);
+    }
+  });
+
+  it.each([500, 503, 530])(
+    "classifies HTTP %s as unavailable",
+    async (status) => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => new Response("upstream down", { status })),
+      );
+      await expect(
+        loadBackendArticleContentResult(article.slug),
+      ).resolves.toEqual({
+        status: "unavailable",
+      });
+      await expect(loadBackendArticleContent(article.slug)).resolves.toBeNull();
+    },
+  );
+
+  it.each([401, 403, 429])(
+    "keeps HTTP %s distinct from an outage",
+    async (httpStatus) => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => new Response(null, { status: httpStatus })),
+      );
+      await expect(
+        loadBackendArticleContentResult(article.slug),
+      ).resolves.toEqual({
+        status: "rejected",
+        httpStatus,
+      });
+      await expect(loadBackendArticleContent(article.slug)).resolves.toBeNull();
+    },
+  );
+
+  it("classifies transport rejection as unavailable", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new TypeError("fetch failed")),
+    );
+    await expect(
+      loadBackendArticleContentResult(article.slug),
+    ).resolves.toEqual({
+      status: "unavailable",
+    });
+  });
+
+  it("classifies a missing origin as unavailable without fetching", async () => {
+    vi.stubEnv("SEOJING_BACKEND_ARTICLE_API_ORIGIN", "");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(
+      loadBackendArticleContentResult(article.slug),
+    ).resolves.toEqual({
+      status: "unavailable",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("catches malformed JSON after a successful HTTP response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("invalid JSON")),
+    );
+    await expect(
+      loadBackendArticleContentResult(article.slug),
+    ).resolves.toEqual({
+      status: "unavailable",
+    });
+    await expect(loadBackendArticleContent(article.slug)).resolves.toBeNull();
+    await expect(fetchBackendArticle(origin, article.slug)).resolves.toBeNull();
+  });
+
+  it.each(["result", "content", "fetch"] as const)(
+    "catches a streamed JSON body abort after headers in the %s adapter",
+    async (adapter) => {
+      const abort = new AbortController();
+      const response = new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode('{"slug":'));
+            abort.signal.addEventListener(
+              "abort",
+              () => controller.error(abort.signal.reason),
+              { once: true },
+            );
+          },
+        }),
+      );
+      const fetchMock = vi.fn(async () => response);
+      vi.stubGlobal("fetch", fetchMock);
+      const pending =
+        adapter === "result"
+          ? loadBackendArticleContentResult(article.slug, abort.signal)
+          : adapter === "content"
+            ? loadBackendArticleContent(article.slug, abort.signal)
+            : fetchBackendArticle(origin, article.slug, abort.signal);
+
+      // Ensure fetch already resolved and json() is consuming the partial body.
+      await vi.waitFor(() => expect(response.bodyUsed).toBe(true));
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.any(URL),
+        expect.objectContaining({ signal: abort.signal }),
+      );
+      abort.abort(new DOMException("body read timed out", "TimeoutError"));
+      await expect(pending).resolves.toEqual(
+        adapter === "result" ? { status: "unavailable" } : null,
+      );
+    },
+  );
 });

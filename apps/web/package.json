@@ -20,6 +20,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "test:content-fallback": "SEOJING_BACKEND_ARTICLE_SLUGS=study/effective-typescript/day5 SEOJING_BACKEND_ARTICLE_PREFIXES= pnpm run generate:content && vitest run --config vitest.content-fallback.config.ts",
     "test:coverage": "vitest run --coverage",
     "worker:size:check": "node scripts/check-worker-bundle-size.mjs",
     "public:readback": "node scripts/check-public-blog-readback.mjs",

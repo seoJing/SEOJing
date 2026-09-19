@@ -70,6 +70,8 @@ jobs:
         run: pnpm --filter @app/web run public:readback:test
       - name: Check Cloudflare Worker bundle size
         run: pnpm --filter @app/web run worker:size:check
+      - name: Verify bundled article outage fallback
+        run: pnpm --filter @app/web run test:content-fallback
 
   deploy:
     name: Deploy
@@ -89,7 +91,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
         env:
-          # The generator must omit this MDX asset before the Worker is deployed.
+          # Keep backend-first rendering and the registry's explicit MDX fallback.
           SEOJING_BACKEND_ARTICLE_SLUGS: study/effective-typescript/day5
 
       - name: Deploy to Cloudflare Workers

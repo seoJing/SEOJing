@@ -217,6 +217,7 @@ test("registers the Day 5 backend renderer marker as a public readback requireme
   );
 
   assert.equal(day5?.mode, "backend-migrated");
+  assert.equal(day5?.fallback, "bundled-mdx");
   assert.equal(
     day5?.public.requiredHtmlPatterns.some(
       (signal) => signal.label === "backend article renderer marker",

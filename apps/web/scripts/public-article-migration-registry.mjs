@@ -3,8 +3,10 @@
  *
  * Keep an article in `bundled-mdx` until its DB projection and public renderer
  * meet the backend-backed readback contract. This registry intentionally does
- * not enable a prefix or ingest content; it only defines what production
- * verification is allowed to expect for each listed slug.
+ * not enable a prefix or ingest content. It defines the healthy-backend readback
+ * contract and any explicitly retained, public bundled outage fallback.
+ * Transport/body-read failures and 5xx responses may use that fallback.
+ * An authoritative API 404 preserves backend unpublish/not-found semantics.
  */
 export const ARTICLE_MIGRATION_REGISTRY = Object.freeze([
   {
@@ -55,6 +57,7 @@ export const ARTICLE_MIGRATION_REGISTRY = Object.freeze([
   {
     slug: "study/effective-typescript/day5",
     mode: "backend-migrated",
+    fallback: "bundled-mdx",
     label: "Effective TypeScript Day 5 backend projection sentinel",
     api: {
       requiredStatus: "PUBLISHED",
