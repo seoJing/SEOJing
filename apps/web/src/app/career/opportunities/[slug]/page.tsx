@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "vinext/shims/metadata";
 
+import careerBlogEvidence from "@/generated/career-blog-evidence.json";
+import type { BlogEvidenceChecklistItem } from "@/shared/career/blog-evidence";
 import { absoluteUrl } from "@/shared/config/site";
 import { getCareerOpportunity } from "@/shared/career/data";
 import type {
@@ -8,6 +10,7 @@ import type {
   CareerRecruitment,
 } from "@/shared/career/types";
 import { JsonLd } from "@/shared/seo/json-ld";
+import { BlogEvidenceChecklist } from "@/widgets/career/BlogEvidenceChecklist";
 import { CareerStatusBadge } from "@/widgets/career/CareerStatusBadge";
 
 interface CareerOpportunityPageProps {
@@ -50,6 +53,10 @@ export default async function CareerOpportunityPage({
     .flatMap((recruitment) => recruitment.sources)
     .find((source) => source.type === "OFFICIAL")?.url;
   const applicationUrl = officialListingUrl ?? opportunity.company.careersUrl;
+  const blogEvidenceItems =
+    (careerBlogEvidence as Record<string, BlogEvidenceChecklistItem[]>)[
+      opportunity.slug
+    ] ?? [];
 
   return (
     <div className="min-w-0 overflow-x-hidden pb-16">
@@ -183,6 +190,8 @@ export default async function CareerOpportunityPage({
               ))}
             </ul>
           </Section>
+
+          <BlogEvidenceChecklist items={blogEvidenceItems} />
         </main>
 
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
