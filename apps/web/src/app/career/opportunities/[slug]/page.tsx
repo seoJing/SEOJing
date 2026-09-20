@@ -7,6 +7,7 @@ import { absoluteUrl } from "@/shared/config/site";
 import { getCareerOpportunity } from "@/shared/career/data";
 import type {
   CareerForecastConfidence,
+  CareerOpportunityCategory,
   CareerRecruitment,
 } from "@/shared/career/types";
 import { JsonLd } from "@/shared/seo/json-ld";
@@ -29,7 +30,7 @@ export async function generateMetadata({
     };
   }
 
-  const title = `${opportunity.company.name} 프론트엔드 인턴 모집 정보`;
+  const title = `${opportunity.company.name} 프론트엔드 ${categoryLabel(opportunity.category)} 모집 정보`;
   const description = `${opportunity.company.name} ${opportunity.title}의 공식 모집 상태, 전형, 지원 요건과 준비 포인트를 출처와 함께 확인합니다.`;
   const url = absoluteUrl(`/career/opportunities/${opportunity.slug}`);
 
@@ -93,7 +94,7 @@ export default async function CareerOpportunityPage({
               {
                 "@type": "ListItem",
                 position: 3,
-                name: `${opportunity.company.name} Frontend Internship`,
+                name: `${opportunity.company.name} ${opportunity.title}`,
                 item: pageUrl,
               },
             ],
@@ -113,7 +114,7 @@ export default async function CareerOpportunityPage({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-              {opportunity.company.name} · {opportunity.category}
+              {opportunity.company.name} · {categoryLabel(opportunity.category)}
             </p>
             <h1 className="mt-3 max-w-3xl break-words text-3xl font-bold tracking-tight text-zinc-950 md:text-5xl dark:text-zinc-50">
               {opportunity.title}
@@ -209,7 +210,7 @@ export default async function CareerOpportunityPage({
                 rel="noopener noreferrer"
                 className="mt-4 inline-flex rounded-full bg-zinc-950 px-4 py-2 text-sm font-semibold text-white dark:bg-zinc-50 dark:text-zinc-950"
               >
-                당근 채용 열기
+                {opportunity.company.name} 채용 열기
               </a>
             ) : null}
           </div>
@@ -347,6 +348,14 @@ function formatDateRange(
   if (!from) return `${formatKoreanDate(to!)} 이전`;
   if (!to) return `${formatKoreanDate(from)} 이후`;
   return `${formatKoreanDate(from)} ~ ${formatKoreanDate(to)}`;
+}
+
+function categoryLabel(value: CareerOpportunityCategory): string {
+  return {
+    INTERNSHIP: "인턴",
+    NEW_GRAD: "신입",
+    PROGRAM: "프로그램",
+  }[value];
 }
 
 function forecastLabel(value: CareerForecastConfidence) {

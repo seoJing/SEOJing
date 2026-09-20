@@ -30,12 +30,23 @@ function opportunityWith(
 function chunk(
   overrides: Partial<BlogSearchChunk> & Pick<BlogSearchChunk, "slug" | "title">,
 ): BlogSearchChunk {
-  return {
+  const result = {
     id: `${overrides.slug}#section`,
     href: `/blog/${overrides.slug}`,
     heading: "Section",
-    searchText: "",
     ...overrides,
+  };
+  return {
+    ...result,
+    searchText: [
+      result.title,
+      result.description ?? "",
+      (result.tags ?? []).join(" "),
+      result.heading,
+      overrides.searchText ?? "",
+    ]
+      .join(" ")
+      .toLocaleLowerCase("ko-KR"),
   };
 }
 
@@ -76,6 +87,14 @@ describe("extractPreparationTopics", () => {
       ),
     ).toEqual([]);
   });
+
+  it("does not combine aliases from separate requirements into one topic", () => {
+    expect(
+      extractPreparationTopics(
+        opportunityWith(["화면 디자인 감각", "일반적인 문제 해결 능력"]),
+      ).map((topic) => topic.id),
+    ).not.toContain("cross-layer-debugging");
+  });
 });
 
 describe("rankBlogEvidence", () => {
@@ -93,13 +112,13 @@ describe("rankBlogEvidence", () => {
         title: "React TypeScript 운영과 배포",
         description: "실제 사용자 개선",
         tags: ["React", "TypeScript"],
-        heading: "첫 번째 섹션",
+        heading: "React 운영 섹션",
         searchText: "react typescript 운영 배포 사용자",
       }),
       chunk({
         slug: "react-operations",
         title: "React TypeScript 운영과 배포",
-        heading: "더 약한 중복 섹션",
+        heading: "팀 회고",
         searchText: "react",
       }),
       chunk({
@@ -121,7 +140,7 @@ describe("rankBlogEvidence", () => {
     expect(results).toHaveLength(3);
     expect(results[0]).toMatchObject({
       slug: "react-operations",
-      heading: "첫 번째 섹션",
+      heading: "React 운영 섹션",
       evidenceKind: "PROJECT_RECORD",
     });
     expect(
@@ -131,6 +150,57 @@ describe("rankBlogEvidence", () => {
     expect(results.map((result) => result.slug)).not.toContain(
       "unrelated-operations",
     );
+  });
+
+  it("uses Latin token boundaries and rejects body-only topic matches", () => {
+    const [topic] = extractPreparationTopics(
+      opportunityWith([
+        "React와 TypeScript로 만든 제품을 실제 사용자에게 배포하고 운영한 경험",
+      ]),
+    );
+    expect(topic).toBeDefined();
+
+    expect(
+      rankBlogEvidence(topic!, [
+        chunk({
+          slug: "reaction-ops",
+          title: "운영 결정과 reaction 기록",
+          description: "사용자에게 배포한 운영 기록",
+          searchText: "reaction 사용자 배포 운영",
+        }),
+        chunk({
+          slug: "body-only",
+          title: "개발 기록",
+          searchText: "react typescript 프론트엔드 사용자 배포 운영",
+        }),
+        chunk({
+          slug: "generic-deployment",
+          title: "Docker 배포와 운영 기록",
+          description: "실제 사용자 운영 환경을 개선한 기록",
+          searchText: "React 앱을 빌드한 한 문장",
+        }),
+      ]),
+    ).toEqual([]);
+  });
+
+  it("omits an unrelated section label when only post-level fields match", () => {
+    const [topic] = extractPreparationTopics(
+      opportunityWith([
+        "React와 TypeScript로 만든 제품을 실제 사용자에게 배포하고 운영한 경험",
+      ]),
+    );
+    expect(topic).toBeDefined();
+
+    expect(
+      rankBlogEvidence(topic!, [
+        chunk({
+          slug: "react-operations",
+          title: "React TypeScript 배포와 운영",
+          description: "실제 사용자 운영 기록",
+          heading: "팀 회고",
+        }),
+      ])[0],
+    ).toMatchObject({ heading: "" });
   });
 });
 

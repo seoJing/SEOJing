@@ -2,6 +2,16 @@
 
 import { useState } from "react";
 
+function isCareerDocument(value: unknown): value is Record<string, unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    typeof (value as Record<string, unknown>).aggregate === "object" &&
+    (value as Record<string, unknown>).aggregate !== null
+  );
+}
+
 export function OpsCareerEditor({
   selectedSlug,
   initialDocument,
@@ -50,7 +60,9 @@ export function OpsCareerEditor({
       });
       const body = (await response.json()) as unknown;
       if (!response.ok) throw new Error(`저장 실패 (${response.status})`);
-      setPayload(JSON.stringify(body, null, 2));
+      if (isCareerDocument(body)) {
+        setPayload(JSON.stringify(body, null, 2));
+      }
       setStatus("초안을 저장했습니다. 공개 전 snapshot 갱신이 필요합니다.");
     } catch (error) {
       setStatus(
@@ -78,7 +90,9 @@ export function OpsCareerEditor({
       });
       const body = (await response.json()) as unknown;
       if (!response.ok) throw new Error(`생성 실패 (${response.status})`);
-      setPayload(JSON.stringify(body, null, 2));
+      if (isCareerDocument(body)) {
+        setPayload(JSON.stringify(body, null, 2));
+      }
       setStatus("초안을 만들었습니다. 검토 후 별도로 공개하세요.");
     } catch (error) {
       setStatus(

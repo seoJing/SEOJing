@@ -200,19 +200,17 @@ const MIN_EVIDENCE_SCORE = 12;
 export function extractPreparationTopics(
   opportunity: Pick<CareerOpportunity, "recruitments" | "preparationNotes">,
 ): PreparationTopic[] {
-  const verifiedPreparationText = [
+  const verifiedPreparationTexts = [
     ...opportunity.recruitments.flatMap(
       (recruitment) => recruitment.eligibility,
     ),
     ...opportunity.preparationNotes,
-  ]
-    .map(normalize)
-    .join(" ");
+  ].map(normalize);
 
   return TOPIC_PROFILES.filter((profile) =>
-    profile.aliasGroups.every((aliases) =>
-      aliases.some((alias) =>
-        verifiedPreparationText.includes(normalize(alias)),
+    verifiedPreparationTexts.some((text) =>
+      profile.aliasGroups.every((aliases) =>
+        aliases.some((alias) => matchesTerm(text, alias)),
       ),
     ),
   ).map(({ aliasGroups: _aliasGroups, ...topic }) => topic);
@@ -223,7 +221,10 @@ export function rankBlogEvidence(
   chunks: BlogSearchChunk[],
   limit = 3,
 ): BlogEvidenceLink[] {
-  const bestBySlug = new Map<string, BlogEvidenceLink>();
+  const bestBySlug = new Map<
+    string,
+    BlogEvidenceLink & { headingScore: number }
+  >();
 
   for (const chunk of chunks) {
     if (chunk.slug === "resume") continue;
@@ -235,25 +236,28 @@ export function rankBlogEvidence(
     );
     if (score < MIN_EVIDENCE_SCORE) continue;
 
-    const candidate: BlogEvidenceLink = {
+    const headingScore = countMatches(chunk.heading, topic.searchTerms);
+    const candidate: BlogEvidenceLink & { headingScore: number } = {
       slug: chunk.slug,
       href: chunk.href,
       title: chunk.title,
-      heading: chunk.heading,
+      heading: headingScore > 0 ? chunk.heading : "",
       score,
+      headingScore,
       evidenceKind: chunk.slug.startsWith("study/")
         ? "LEARNING_RECORD"
         : "PROJECT_RECORD",
     };
     const current = bestBySlug.get(chunk.slug);
-    if (!current || compareEvidence(candidate, current) < 0) {
+    if (!current || compareRankedEvidence(candidate, current) < 0) {
       bestBySlug.set(chunk.slug, candidate);
     }
   }
 
   return [...bestBySlug.values()]
     .sort(compareEvidence)
-    .slice(0, Math.max(0, Math.min(limit, 3)));
+    .slice(0, Math.max(0, Math.min(limit, 3)))
+    .map(({ headingScore: _headingScore, ...link }) => link);
 }
 
 export function buildBlogEvidenceChecklist(
@@ -291,24 +295,39 @@ function scoreChunk(
     searchText: normalize(chunk.searchText),
   };
 
+  const highSignalText = [
+    fields.title,
+    fields.description,
+    fields.tags,
+    fields.heading,
+  ].join(" ");
   const combinedText = Object.values(fields).join(" ");
   const meetsRequiredGroups = requiredSearchGroups.every((group) =>
-    group.some((term) => combinedText.includes(normalize(term))),
+    group.some((term) => matchesTerm(combinedText, term)),
   );
-  if (!meetsRequiredGroups) return 0;
+  const everyGroupHasHighSignalAnchor = requiredSearchGroups.every((group) =>
+    group.some((term) => matchesTerm(highSignalText, term)),
+  );
+  if (!meetsRequiredGroups || !everyGroupHasHighSignalAnchor) return 0;
 
-  return terms.reduce((score, term) => {
-    const normalizedTerm = normalize(term);
-    return (
+  return terms.reduce(
+    (score, term) =>
       score +
       (Object.keys(FIELD_WEIGHTS) as (keyof typeof FIELD_WEIGHTS)[]).reduce(
         (fieldScore, field) =>
           fieldScore +
-          (fields[field].includes(normalizedTerm) ? FIELD_WEIGHTS[field] : 0),
+          (matchesTerm(fields[field], term) ? FIELD_WEIGHTS[field] : 0),
         0,
-      )
-    );
-  }, 0);
+      ),
+    0,
+  );
+}
+
+function compareRankedEvidence(
+  a: BlogEvidenceLink & { headingScore: number },
+  b: BlogEvidenceLink & { headingScore: number },
+): number {
+  return b.headingScore - a.headingScore || compareEvidence(a, b);
 }
 
 function compareEvidence(a: BlogEvidenceLink, b: BlogEvidenceLink): number {
@@ -320,6 +339,26 @@ function compareEvidence(a: BlogEvidenceLink, b: BlogEvidenceLink): number {
   );
 }
 
+function countMatches(value: string, terms: string[]): number {
+  return terms.filter((term) => matchesTerm(value, term)).length;
+}
+
+function matchesTerm(value: string, term: string): boolean {
+  const haystack = normalize(value);
+  const needle = normalize(term);
+  if (!needle) return false;
+  if (!/^[a-z0-9][a-z0-9 ._+#-]*$/.test(needle)) {
+    return haystack.includes(needle);
+  }
+
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`).test(haystack);
+}
+
 function normalize(value: string): string {
-  return value.normalize("NFC").toLocaleLowerCase("ko-KR").replace(/\s+/g, " ");
+  return value
+    .normalize("NFC")
+    .toLocaleLowerCase("ko-KR")
+    .replace(/\s+/g, " ")
+    .trim();
 }
