@@ -168,6 +168,34 @@ Hello content`,
     });
   });
 
+  it("uses a non-empty updated date and ignores a blank one", () => {
+    const filePath = path.join(tmpDir, "hello.mdx");
+    const original = fs.readFileSync(filePath, "utf8");
+    fs.writeFileSync(
+      filePath,
+      original.replace(
+        'date: "2024-02-01"',
+        'date: "2024-02-01"\nupdated: " 2024-03-01 "',
+      ),
+    );
+    expect(
+      scanContentDir(tmpDir).find((node) => node.name === "hello.mdx")
+        ?.frontmatter?.updated,
+    ).toBe("2024-03-01");
+
+    fs.writeFileSync(
+      filePath,
+      original.replace(
+        'date: "2024-02-01"',
+        'date: "2024-02-01"\nupdated: "  "',
+      ),
+    );
+    expect(
+      scanContentDir(tmpDir).find((node) => node.name === "hello.mdx")
+        ?.frontmatter?.updated,
+    ).toBeUndefined();
+  });
+
   it("does not add frontmatter for non-mdx files", () => {
     const tree = scanContentDir(tmpDir);
     const txtFile = tree.find((n) => n.name === "readme.txt");
