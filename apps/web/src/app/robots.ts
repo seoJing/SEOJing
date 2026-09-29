@@ -2,10 +2,11 @@ import { absoluteUrl, siteConfig } from "@/shared/config/site";
 
 export default function robots() {
   return {
-    rules: {
-      userAgent: "*",
-      allow: "/",
-    },
+    rules: [
+      { userAgent: "GPTBot", allow: "/" },
+      { userAgent: "OAI-SearchBot", allow: "/" },
+      { userAgent: "*", allow: "/" },
+    ],
     sitemap: absoluteUrl(siteConfig.sitemapPath),
     host: siteConfig.origin,
   };

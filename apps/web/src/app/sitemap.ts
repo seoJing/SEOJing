@@ -6,7 +6,9 @@ export default function sitemap() {
   const entries = flattenContentTree();
   const posts = entries.map((entry) => ({
     url: entry.url,
-    lastModified: normalizeDate(entry.frontmatter.date),
+    lastModified: normalizeDate(
+      entry.frontmatter.updated ?? entry.frontmatter.date,
+    ),
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));

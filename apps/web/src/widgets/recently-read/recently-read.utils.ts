@@ -9,12 +9,13 @@ export interface ReadRecord {
   progress?: number;
 }
 
-let _readPostsCache: ReadRecord[] = [];
+const EMPTY_READ_POSTS: ReadRecord[] = [];
+let _readPostsCache: ReadRecord[] = EMPTY_READ_POSTS;
 let _readPostsRaw: string | null = null;
 
 /** localStorage에서 읽은 글 목록을 가져온다. */
 export function getReadPosts(): ReadRecord[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined") return EMPTY_READ_POSTS;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw !== _readPostsRaw) {
@@ -23,7 +24,7 @@ export function getReadPosts(): ReadRecord[] {
     }
     return _readPostsCache;
   } catch {
-    return [];
+    return EMPTY_READ_POSTS;
   }
 }
 
@@ -51,8 +52,12 @@ export function updateReadProgress(href: string, progress: number) {
     const posts = getReadPosts();
     const target = posts.find((p) => p.href === href);
     if (!target) return;
-    target.progress = Math.max(target.progress ?? 0, progress);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+    const updated = posts.map((post) =>
+      post.href === href
+        ? { ...post, progress: Math.max(post.progress ?? 0, progress) }
+        : post,
+    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch {
     // localStorage 사용 불가 시 무시
   }

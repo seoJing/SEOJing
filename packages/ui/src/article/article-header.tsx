@@ -13,6 +13,7 @@ function formatDate(date: Date | string): string {
 export function ArticleHeader({
   title,
   date,
+  updated,
   tags,
   author,
   readingTime,
@@ -59,6 +60,21 @@ export function ArticleHeader({
         <time dateTime={typeof date === "string" ? date : date.toISOString()}>
           {formatDate(date)}
         </time>
+        {updated && (
+          <>
+            <span aria-hidden="true">&middot;</span>
+            <span>
+              수정{" "}
+              <time
+                dateTime={
+                  typeof updated === "string" ? updated : updated.toISOString()
+                }
+              >
+                {formatDate(updated)}
+              </time>
+            </span>
+          </>
+        )}
         {readingTime != null && (
           <>
             <span aria-hidden="true">&middot;</span>

@@ -93,6 +93,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <ArticleHeader
             title={content.frontmatter.title}
             date={content.frontmatter.date}
+            updated={content.frontmatter.updated}
             tags={content.frontmatter.tags}
             readingTime={calculateReadingTime(content.source)}
           />
