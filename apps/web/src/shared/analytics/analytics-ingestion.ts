@@ -116,7 +116,18 @@ const EVENT_PAYLOAD_KEYS: Record<AnalyticsEventTypeV1, Set<string>> = {
   section_engagement: new Set(["action", "visible_ms", "max_visible_percent"]),
   code_copy: new Set(["block_id", "language", "copied_chars_bucket"]),
   toc_interaction: new Set(["action", "target_section_id"]),
-  tts_interaction: new Set(["action", "artifact_kind", "speed"]),
+  tts_interaction: new Set([
+    "action",
+    "artifact_id",
+    "artifact_kind",
+    "playback_rate",
+    "audio_status",
+    "available_artifact_kinds",
+    "section_artifact_count",
+    "duration_seconds_bucket",
+    "position_seconds_bucket",
+    "progress_percent_bucket",
+  ]),
   presentation_interaction: new Set(["action", "slide_index"]),
   qa_interaction: new Set([
     "action",
@@ -169,6 +180,40 @@ function normalizeEventPayload(
   for (const [key, value] of Object.entries(payload)) {
     if (!allowedKeys.has(key)) return null;
     normalized[key] = value;
+  }
+
+  if (eventType === "tts_interaction") {
+    if (
+      ![
+        "manifest_loaded",
+        "artifact_select",
+        "play",
+        "pause",
+        "ended",
+        "speed_change",
+      ].includes(String(payload.action))
+    )
+      return null;
+    if (
+      payload.artifact_kind !== undefined &&
+      !["summary-2m", "core-5m", "section"].includes(
+        String(payload.artifact_kind),
+      )
+    )
+      return null;
+    const rate = payload.playback_rate;
+    return {
+      action: payload.action,
+      ...(payload.artifact_kind
+        ? { artifact_kind: payload.artifact_kind }
+        : {}),
+      ...(typeof rate === "number" &&
+      Number.isFinite(rate) &&
+      rate >= 0.5 &&
+      rate <= 3
+        ? { playback_rate: rate }
+        : {}),
+    };
   }
 
   return normalized;

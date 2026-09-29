@@ -4,6 +4,10 @@ import {
   type AnalyticsEventTypeV1,
   type StoredAnalyticsEvent,
 } from "./analytics-ingestion";
+import {
+  buildReadingMetrics,
+  type ReadingMetrics,
+} from "./analytics-reading-metrics";
 
 export type AnalyticsContentInventoryItem = {
   slug: string;
@@ -49,6 +53,7 @@ export type AnalyticsPublicSummary = {
 export type AnalyticsOpsSummary = {
   schema_version: typeof ANALYTICS_SCHEMA_VERSION;
   generated_at: string;
+  reading_metrics?: ReadingMetrics;
   public_summary: AnalyticsPublicSummary;
   ingestion_health: {
     status: "ready" | "no_events";
@@ -240,6 +245,7 @@ export function buildOpsAnalyticsSummary({
   return {
     schema_version: ANALYTICS_SCHEMA_VERSION,
     generated_at: generatedAt,
+    reading_metrics: buildReadingMetrics(rows, generatedAt, windowDays),
     public_summary: publicSummary,
     ingestion_health: {
       status: rows.length > 0 ? "ready" : "no_events",

@@ -103,6 +103,11 @@ describe("analytics summary", () => {
       status: "ready",
       total_events: 1,
     });
+    expect(summary.reading_metrics?.total).toMatchObject({
+      view_sessions: 1,
+      deep_read_sessions: 0,
+      engaged_sessions: 0,
+    });
     expect(summary.rejected_reasons).toEqual({ forbidden_field: 2 });
     expect(summary.recent_events[0]).toEqual({
       received_at: "2026-06-10T00:00:00.000Z",

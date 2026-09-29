@@ -8,6 +8,8 @@ import {
   replayAnalyticsBackup,
   type AnalyticsEventV1,
 } from "./analytics-ingestion";
+import { buildReadingMetrics } from "./analytics-reading-metrics";
+import type { StoredAnalyticsEvent } from "./analytics-ingestion";
 
 const tempDirs: string[] = [];
 
@@ -81,6 +83,53 @@ describe("analytics ingestion MVP", () => {
     expect(JSON.stringify(row)).not.toMatch(
       /raw_ip|user_agent|Mozilla|127\.0\.0\.1/,
     );
+  });
+
+  it("accepts player payloads and counts TTS play in reading engagement", async () => {
+    const { jsonlPath, storage } = await makeStorage();
+    const result = await ingestAnalyticsEvents({
+      body: {
+        events: [
+          validPostView({ event_id: "evt_view" }),
+          validPostView({
+            event_id: "evt_tts_play",
+            event_type: "tts_interaction",
+            event: {
+              action: "play",
+              artifact_id: "study__backend__day1__section-001",
+              artifact_kind: "section",
+              playback_rate: 1.5,
+              audio_status: "ready",
+              available_artifact_kinds: ["section"],
+              section_artifact_count: 1,
+              duration_seconds_bucket: "60-179",
+              position_seconds_bucket: "0-29",
+              progress_percent_bucket: "0-24",
+            },
+          }),
+        ],
+      },
+      requestId: "req_player",
+      receivedAt: "2026-06-08T04:00:01.000Z",
+      storage,
+    });
+    expect(result.body).toMatchObject({ accepted: 2, rejected: 0 });
+    const rows = (await readFile(jsonlPath, "utf8"))
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line) as StoredAnalyticsEvent);
+    expect(rows[1]?.event.event).toEqual({
+      action: "play",
+      artifact_kind: "section",
+      playback_rate: 1.5,
+    });
+    expect(
+      buildReadingMetrics(rows, "2026-06-08T05:00:00.000Z").total,
+    ).toMatchObject({
+      view_sessions: 1,
+      engaged_sessions: 1,
+      engagement_rate: 100,
+    });
   });
 
   it("partially rejects invalid and privacy-forbidden events without persisting rejected payloads", async () => {
