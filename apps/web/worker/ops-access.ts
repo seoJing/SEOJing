@@ -17,10 +17,15 @@ export async function isOpsAuthorized(
   env: OpsAccessEnv,
 ): Promise<boolean> {
   const token = request.headers.get("cf-access-jwt-assertion");
-  const email = env.SEOJING_OPS_ACCESS_EMAIL?.trim().toLowerCase();
+  const allowedEmails = new Set(
+    (env.SEOJING_OPS_ACCESS_EMAIL ?? "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  );
   if (
     !token ||
-    !email ||
+    allowedEmails.size === 0 ||
     !env.SEOJING_OPS_ACCESS_ISSUER ||
     !env.SEOJING_OPS_ACCESS_AUD
   )
@@ -53,7 +58,7 @@ export async function isOpsAuthorized(
       !header.kid ||
       payload.iss?.replace(/\/+$/, "") !== issuer ||
       !audience.includes(env.SEOJING_OPS_ACCESS_AUD) ||
-      payload.email?.trim().toLowerCase() !== email ||
+      !allowedEmails.has(payload.email?.trim().toLowerCase() ?? "") ||
       !payload.exp ||
       payload.exp <= now ||
       (payload.nbf && payload.nbf > now)

@@ -69,6 +69,26 @@ describe("signed ops access", () => {
     expect(await isOpsAuthorized(await fixture(), env)).toBe(true);
   });
 
+  it("accepts either explicitly configured owner email", async () => {
+    const owners = {
+      ...env,
+      SEOJING_OPS_ACCESS_EMAIL: "owner@example.com, alternate@example.com",
+    };
+    expect(await isOpsAuthorized(await fixture(), owners)).toBe(true);
+    expect(
+      await isOpsAuthorized(
+        await fixture({ email: "ALTERNATE@example.com" }),
+        owners,
+      ),
+    ).toBe(true);
+    expect(
+      await isOpsAuthorized(
+        await fixture({ email: "visitor@example.com" }),
+        owners,
+      ),
+    ).toBe(false);
+  });
+
   it("rejects another audience or email", async () => {
     expect(
       await isOpsAuthorized(await fixture({ aud: ["another-app"] }), env),
