@@ -1,6 +1,7 @@
 const STORAGE_KEY = "seojing-commented-posts";
 
-let _commentedCache: Set<string> = new Set();
+const EMPTY_COMMENTED_POSTS = new Set<string>();
+let _commentedCache: Set<string> = EMPTY_COMMENTED_POSTS;
 let _commentedRaw: string | null = null;
 
 /**
@@ -13,7 +14,7 @@ let _commentedRaw: string | null = null;
  * ```
  */
 export function getCommentedPosts(): Set<string> {
-  if (typeof window === "undefined") return new Set();
+  if (typeof window === "undefined") return EMPTY_COMMENTED_POSTS;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw !== _commentedRaw) {
@@ -22,7 +23,7 @@ export function getCommentedPosts(): Set<string> {
     }
     return _commentedCache;
   } catch {
-    return new Set();
+    return EMPTY_COMMENTED_POSTS;
   }
 }
 
@@ -36,7 +37,7 @@ export function getCommentedPosts(): Set<string> {
  */
 export function markAsCommented(href: string) {
   try {
-    const posts = getCommentedPosts();
+    const posts = new Set(getCommentedPosts());
     posts.add(href);
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...posts]));
   } catch {

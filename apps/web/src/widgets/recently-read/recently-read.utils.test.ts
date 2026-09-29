@@ -39,7 +39,9 @@ describe("getReadPosts", () => {
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
       throw new Error("fail");
     });
-    expect(getReadPosts()).toEqual([]);
+    const snapshot = getReadPosts();
+    expect(snapshot).toEqual([]);
+    expect(getReadPosts()).toBe(snapshot);
   });
 });
 
@@ -109,9 +111,12 @@ describe("updateReadProgress", () => {
         { href: "/blog/a", title: "A", readAt: 1, progress: 10 },
       ]),
     );
+    const previousSnapshot = getReadPosts();
     updateReadProgress("/blog/a", 75);
     const posts = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
     expect(posts[0].progress).toBe(75);
+    expect(previousSnapshot[0].progress).toBe(10);
+    expect(getReadPosts()).not.toBe(previousSnapshot);
   });
 
   it("keeps higher progress (never decreases)", () => {

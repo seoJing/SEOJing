@@ -42,6 +42,7 @@ describe("comment-tracker", () => {
       });
       const posts = getCommentedPosts();
       expect(posts.size).toBe(0);
+      expect(getCommentedPosts()).toBe(posts);
     });
   });
 
@@ -72,6 +73,7 @@ describe("comment-tracker", () => {
         throw new Error("QuotaExceeded");
       });
       expect(() => markAsCommented("/blog/react")).not.toThrow();
+      expect(getCommentedPosts().has("/blog/react")).toBe(false);
     });
   });
 });
