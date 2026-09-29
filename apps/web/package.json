@@ -47,6 +47,7 @@
     "@app/eslint-config": "workspace:*",
     "@app/typescript-config": "workspace:*",
     "@cloudflare/vite-plugin": "^1.28.0",
+    "@cloudflare/workers-types": "^5.20260929.1",
     "@mdx-js/mdx": "^3.1.1",
     "@tailwindcss/postcss": "^4.2.1",
     "@tailwindcss/vite": "^4.2.1",

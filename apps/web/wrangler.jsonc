@@ -22,8 +22,26 @@
   "vars": {
     "SEOJING_BACKEND_ARTICLE_API_ORIGIN": "https://api.seojing.com",
     "SEOJING_BACKEND_ARTICLE_SLUGS": "study/effective-typescript/day5",
+    "SEOJING_OPS_ACCESS_ISSUER": "https://black-flower-54e3.cloudflareaccess.com",
+    "SEOJING_OPS_ACCESS_AUD": "cc9c0008c5374255745bff7e21e3ba75e0cd67e87d732e76eed1d88452def1cd",
+    "SEOJING_CF_RUM_SITE_TAG": "2e22d864bfba4ea282d33749b30d517f",
   },
   "images": {
     "binding": "IMAGES",
   },
+  "d1_databases": [
+    {
+      "binding": "ANALYTICS_DB",
+      "database_name": "seojing-analytics",
+      "database_id": "f6bc6c96-9438-48f9-b8b6-5e1cd79fc2a4",
+    },
+  ],
+  "ratelimits": [
+    {
+      "name": "ANALYTICS_LIMITER",
+      "namespace_id": "29092026",
+      "simple": { "limit": 120, "period": 60 },
+    },
+  ],
+  "triggers": { "crons": ["17 3 * * *"] },
 }

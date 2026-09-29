@@ -1,5 +1,7 @@
 # SEOJing analytics ingestion/storage API MVP
 
+> 이 문서의 JSONL/Mac mini 경로는 초기 설계와 로컬 호환 구현을 기록한다. 2026-09-29 운영 수집 경로는 [Cloudflare D1 연결 문서](./seojing-analytics-production.md)를 따른다.
+
 작성일: 2026-06-08
 관련 티켓: local #55 / kanban t_5dc3cd6d
 선행 산출물: `docs/seojing-analytics-event-taxonomy-privacy.md`

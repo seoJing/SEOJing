@@ -1,10 +1,7 @@
-import type { Metadata } from "vinext/shims/metadata";
-import { loadOpsAnalyticsSummary } from "@/shared/analytics/analytics-dashboard-data";
+"use client";
 
-export const metadata: Metadata = {
-  title: "SEOJing Ops Analytics",
-  robots: { index: false, follow: false },
-};
+import { useEffect, useState } from "react";
+import type { AnalyticsOpsSummary } from "@/shared/analytics/analytics-summary";
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat("ko-KR").format(value);
@@ -14,8 +11,38 @@ function authLabel() {
   return "Cloudflare Access 보호 권장 · GitHub OAuth 직접 구현은 후순위";
 }
 
-export default async function OpsAnalyticsPage() {
-  const summary = await loadOpsAnalyticsSummary();
+export default function OpsAnalyticsPage() {
+  const [summary, setSummary] = useState<AnalyticsOpsSummary | null>(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let active = true;
+    fetch("/api/ops/analytics/summary", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`요약 API 응답 ${response.status}`);
+        return response.json() as Promise<AnalyticsOpsSummary>;
+      })
+      .then((value) => {
+        if (active) setSummary(value);
+      })
+      .catch((reason) => {
+        if (active) setError(String(reason));
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  if (!summary) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-16 text-zinc-950 dark:text-zinc-50">
+        <h1 className="text-3xl font-bold">SEOJing 분석</h1>
+        <p className="mt-5 rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800">
+          {error
+            ? `운영 지표를 가져오지 못했습니다: ${error}`
+            : "운영 지표를 불러오는 중입니다."}
+        </p>
+      </main>
+    );
+  }
   const reading = summary.reading_metrics;
   const rejectedTotal = Object.values(summary.rejected_reasons).reduce(
     (sum, count) => sum + count,

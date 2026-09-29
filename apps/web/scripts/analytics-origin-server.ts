@@ -2,10 +2,8 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import http from "node:http";
 import { pathToFileURL } from "node:url";
-import {
-  createJsonlAnalyticsStorage,
-  type StoredAnalyticsEvent,
-} from "../src/shared/analytics/analytics-ingestion";
+import type { StoredAnalyticsEvent } from "../src/shared/analytics/analytics-ingestion";
+import { createJsonlAnalyticsStorage } from "../src/shared/analytics/analytics-jsonl-storage";
 import { handleAnalyticsCollectRequest } from "../src/shared/analytics/analytics-collect-api";
 import {
   buildOpsAnalyticsSummary,

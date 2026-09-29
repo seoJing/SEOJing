@@ -31,7 +31,7 @@ export type AnalyticsPublicSummary = {
   schema_version: typeof ANALYTICS_SCHEMA_VERSION;
   generated_at: string;
   window_days: number;
-  source: "live-jsonl" | "content-inventory" | "external-summary";
+  source: "live-jsonl" | "live-d1" | "content-inventory" | "external-summary";
   total_events: number;
   total_post_views: number;
   event_counts: Partial<Record<AnalyticsEventTypeV1, number>>;
@@ -223,19 +223,21 @@ export function buildOpsAnalyticsSummary({
   generatedAt,
   rejectedReasons = {},
   windowDays = DEFAULT_WINDOW_DAYS,
+  source = rows.length > 0 ? "live-jsonl" : "content-inventory",
 }: {
   rows: StoredAnalyticsEvent[];
   inventory: AnalyticsContentInventoryItem[];
   generatedAt: string;
   rejectedReasons?: Record<string, number>;
   windowDays?: number;
+  source?: AnalyticsPublicSummary["source"];
 }): AnalyticsOpsSummary {
   const publicSummary = buildPublicAnalyticsSummary({
     rows,
     inventory,
     generatedAt,
     windowDays,
-    source: rows.length > 0 ? "live-jsonl" : "content-inventory",
+    source,
   });
   const sortedRows = [...rows].sort((a, b) =>
     b.received_at.localeCompare(a.received_at),

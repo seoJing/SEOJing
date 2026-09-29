@@ -11,25 +11,8 @@ import {
   DEFAULT_IMAGE_SIZES,
 } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
-
-interface Env {
-  ASSETS: Fetcher;
-  IMAGES: {
-    input(stream: ReadableStream): {
-      transform(options: Record<string, unknown>): {
-        output(options: {
-          format: string;
-          quality: number;
-        }): Promise<{ response(): Response }>;
-      };
-    };
-  };
-}
-
-interface ExecutionContext {
-  waitUntil(promise: Promise<unknown>): void;
-  passThroughOnException(): void;
-}
+import { handleAnalyticsRequest, purgeExpiredAnalytics } from "./analytics";
+import { handleDiscoveryRequest } from "./discovery";
 
 // Image security config. SVG sources with .svg extension auto-skip the
 // optimization endpoint on the client side (served directly, no proxy).
@@ -45,6 +28,15 @@ export default {
   ): Promise<Response> {
     const url = new URL(request.url);
 
+    if (
+      url.pathname === "/api/analytics/events" ||
+      url.pathname === "/api/ops/analytics/summary"
+    ) {
+      return handleAnalyticsRequest(request, env);
+    }
+    if (url.pathname === "/api/ops/discovery")
+      return handleDiscoveryRequest(request, env);
+
     // Image optimization via Cloudflare Images binding.
     // The parseImageParams validation inside handleImageOptimization
     // normalizes backslashes and validates the origin hasn't changed.
@@ -58,7 +50,10 @@ export default {
           transformImage: async (body, { width, format, quality }) => {
             const result = await env.IMAGES.input(body)
               .transform(width > 0 ? { width } : {})
-              .output({ format, quality });
+              .output({
+                format: format as ImageOutputOptions["format"],
+                quality,
+              });
             return result.response();
           },
         },
@@ -70,5 +65,8 @@ export default {
     // ctx.waitUntil() is available to background cache writes and
     // other deferred work via getRequestExecutionContext().
     return handler.fetch(request, env, ctx);
+  },
+  async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
+    await purgeExpiredAnalytics(env);
   },
 };

@@ -3,11 +3,13 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
-  createJsonlAnalyticsStorage,
   ingestAnalyticsEvents,
-  replayAnalyticsBackup,
   type AnalyticsEventV1,
 } from "./analytics-ingestion";
+import {
+  createJsonlAnalyticsStorage,
+  replayAnalyticsBackup,
+} from "./analytics-jsonl-storage";
 import { buildReadingMetrics } from "./analytics-reading-metrics";
 import type { StoredAnalyticsEvent } from "./analytics-ingestion";
 
