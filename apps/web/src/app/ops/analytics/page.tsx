@@ -1,10 +1,7 @@
-import type { Metadata } from "vinext/shims/metadata";
-import { loadOpsAnalyticsSummary } from "@/shared/analytics/analytics-dashboard-data";
+"use client";
 
-export const metadata: Metadata = {
-  title: "SEOJing Ops Analytics",
-  robots: { index: false, follow: false },
-};
+import { useEffect, useState } from "react";
+import type { AnalyticsOpsSummary } from "@/shared/analytics/analytics-summary";
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat("ko-KR").format(value);
@@ -14,8 +11,39 @@ function authLabel() {
   return "Cloudflare Access 보호 권장 · GitHub OAuth 직접 구현은 후순위";
 }
 
-export default async function OpsAnalyticsPage() {
-  const summary = await loadOpsAnalyticsSummary();
+export default function OpsAnalyticsPage() {
+  const [summary, setSummary] = useState<AnalyticsOpsSummary | null>(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let active = true;
+    fetch("/api/ops/analytics/summary", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`요약 API 응답 ${response.status}`);
+        return response.json() as Promise<AnalyticsOpsSummary>;
+      })
+      .then((value) => {
+        if (active) setSummary(value);
+      })
+      .catch((reason) => {
+        if (active) setError(String(reason));
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  if (!summary) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-16 text-zinc-950 dark:text-zinc-50">
+        <h1 className="text-3xl font-bold">SEOJing 분석</h1>
+        <p className="mt-5 rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800">
+          {error
+            ? `운영 지표를 가져오지 못했습니다: ${error}`
+            : "운영 지표를 불러오는 중입니다."}
+        </p>
+      </main>
+    );
+  }
+  const reading = summary.reading_metrics;
   const rejectedTotal = Object.values(summary.rejected_reasons).reduce(
     (sum, count) => sum + count,
     0,
@@ -36,6 +64,85 @@ export default async function OpsAnalyticsPage() {
           세션으로 공유되지 않으므로, 내부 접근 제어는 Access 또는 서버 사이드
           토큰으로 분리합니다.
         </p>
+      </section>
+
+      <section className="mt-6 rounded-3xl border border-zinc-200 bg-white/80 p-6 dark:border-zinc-800 dark:bg-zinc-950/70 md:p-8">
+        <h2 className="text-2xl font-semibold">글 읽기 성과</h2>
+        <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+          최근 30일 · 조회 세션은 같은 UTC 날짜·글·브라우저 세션의 글 조회를 한
+          번만 셉니다. 깊이 읽기는 스크롤 75% 이상, 능동 상호작용은 목차·코드
+          복사·답변 확인·TTS 재생입니다. 비율의 분모는 해당 글의 조회 세션이며
+          고유 사용자 수가 아닙니다.
+        </p>
+        <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+          오늘은 미완성 날짜입니다. 조회 세션이 적은 글의 비율은 변동이 커서
+          단독으로 판단하지 않습니다.
+        </p>
+        {reading && reading.total.view_sessions > 0 ? (
+          <>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <MetricCard
+                label="조회 세션"
+                value={reading.total.view_sessions}
+              />
+              <MetricCard
+                label="깊이 읽기 비율"
+                value={`${reading.total.deep_read_rate}%`}
+                numeric={false}
+              />
+              <MetricCard
+                label="능동 상호작용 비율"
+                value={`${reading.total.engagement_rate}%`}
+                numeric={false}
+              />
+            </div>
+            <div className="mt-6 overflow-x-auto">
+              <table className="w-full min-w-[38rem] text-left text-sm">
+                <thead className="text-zinc-500 dark:text-zinc-400">
+                  <tr>
+                    <th className="py-2">글</th>
+                    <th>조회 세션</th>
+                    <th>깊이 읽기</th>
+                    <th>상호작용</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  {reading.posts.slice(0, 20).map((post) => (
+                    <tr key={post.slug}>
+                      <td className="py-3 pr-4">{post.slug}</td>
+                      <td>{formatNumber(post.view_sessions)}</td>
+                      <td>
+                        {post.deep_read_rate}% ({post.deep_read_sessions})
+                      </td>
+                      <td>
+                        {post.engagement_rate}% ({post.engaged_sessions})
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <h3 className="mt-7 font-semibold">일별 조회 세션 · 최근 14일</h3>
+            <div className="mt-3 grid grid-cols-7 gap-2 sm:grid-cols-14">
+              {reading.daily.slice(-14).map((day) => (
+                <div
+                  key={day.date}
+                  className="rounded-xl bg-zinc-100 p-2 text-center text-xs dark:bg-zinc-900"
+                  title={`${day.date}: 조회 ${day.view_sessions}, 깊이 읽기 ${day.deep_read_sessions}`}
+                >
+                  <div className="font-semibold">{day.view_sessions}</div>
+                  <div className="mt-1 text-zinc-500">{day.date.slice(5)}</div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="mt-5 rounded-2xl border border-dashed border-zinc-300 p-5 text-sm dark:border-zinc-700">
+            {reading
+              ? "저장된 조회 이벤트가 없어 읽기 성과를 계산할 수 없습니다. 운영 수집 경로를 연결한 뒤 데이터가 쌓이면 표시됩니다."
+              : "연결된 요약 API가 읽기 성과 지표를 아직 제공하지 않습니다."}
+          </p>
+        )}
       </section>
 
       <section className="mt-6 grid gap-4 md:grid-cols-4">

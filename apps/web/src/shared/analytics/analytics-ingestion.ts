@@ -1,6 +1,3 @@
-import { appendFile, mkdir, readFile } from "node:fs/promises";
-import path from "node:path";
-
 export const ANALYTICS_SCHEMA_VERSION = "seojing.analytics.v1" as const;
 export const MAX_ANALYTICS_BATCH_EVENTS = 20;
 
@@ -116,7 +113,18 @@ const EVENT_PAYLOAD_KEYS: Record<AnalyticsEventTypeV1, Set<string>> = {
   section_engagement: new Set(["action", "visible_ms", "max_visible_percent"]),
   code_copy: new Set(["block_id", "language", "copied_chars_bucket"]),
   toc_interaction: new Set(["action", "target_section_id"]),
-  tts_interaction: new Set(["action", "artifact_kind", "speed"]),
+  tts_interaction: new Set([
+    "action",
+    "artifact_id",
+    "artifact_kind",
+    "playback_rate",
+    "audio_status",
+    "available_artifact_kinds",
+    "section_artifact_count",
+    "duration_seconds_bucket",
+    "position_seconds_bucket",
+    "progress_percent_bucket",
+  ]),
   presentation_interaction: new Set(["action", "slide_index"]),
   qa_interaction: new Set([
     "action",
@@ -169,6 +177,40 @@ function normalizeEventPayload(
   for (const [key, value] of Object.entries(payload)) {
     if (!allowedKeys.has(key)) return null;
     normalized[key] = value;
+  }
+
+  if (eventType === "tts_interaction") {
+    if (
+      ![
+        "manifest_loaded",
+        "artifact_select",
+        "play",
+        "pause",
+        "ended",
+        "speed_change",
+      ].includes(String(payload.action))
+    )
+      return null;
+    if (
+      payload.artifact_kind !== undefined &&
+      !["summary-2m", "core-5m", "section"].includes(
+        String(payload.artifact_kind),
+      )
+    )
+      return null;
+    const rate = payload.playback_rate;
+    return {
+      action: payload.action,
+      ...(payload.artifact_kind
+        ? { artifact_kind: payload.artifact_kind }
+        : {}),
+      ...(typeof rate === "number" &&
+      Number.isFinite(rate) &&
+      rate >= 0.5 &&
+      rate <= 3
+        ? { playback_rate: rate }
+        : {}),
+    };
   }
 
   return normalized;
@@ -369,50 +411,4 @@ export async function ingestAnalyticsEvents({
       rejected_reasons: rejectedReasons,
     },
   };
-}
-
-export function createJsonlAnalyticsStorage(
-  jsonlPath: string,
-): AnalyticsEventStorage {
-  return {
-    async append(events: StoredAnalyticsEvent[]) {
-      await mkdir(path.dirname(jsonlPath), { recursive: true });
-      const payload =
-        events.map((event) => JSON.stringify(event)).join("\n") + "\n";
-      await appendFile(jsonlPath, payload, "utf8");
-    },
-  };
-}
-
-export async function replayAnalyticsBackup(
-  jsonlPath: string,
-): Promise<AnalyticsReplayResult> {
-  let raw = "";
-  try {
-    raw = await readFile(jsonlPath, "utf8");
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return { rows: 0, daily_event_counts: {} };
-    }
-    throw error;
-  }
-
-  const dailyEventCounts: Record<string, number> = {};
-  let rows = 0;
-
-  for (const line of raw.split("\n")) {
-    if (!line.trim()) continue;
-    let row: StoredAnalyticsEvent;
-    try {
-      row = JSON.parse(line) as StoredAnalyticsEvent;
-    } catch {
-      continue;
-    }
-    rows += 1;
-    const date = row.received_at.slice(0, 10);
-    const key = `${date}|${row.event.content.content_slug}|${row.event.event_type}`;
-    dailyEventCounts[key] = (dailyEventCounts[key] ?? 0) + 1;
-  }
-
-  return { rows, daily_event_counts: dailyEventCounts };
 }
