@@ -44,7 +44,7 @@ export function articleJsonLd(
       "@id": url,
     },
     datePublished: frontmatter.date,
-    dateModified: frontmatter.date,
+    dateModified: frontmatter.updated ?? frontmatter.date,
     author: {
       "@type": "Person",
       name: siteConfig.author.name,

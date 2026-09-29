@@ -17,6 +17,7 @@ export interface ContentSummaryVideo {
 export interface ContentFrontmatter {
   title: string;
   date: string;
+  updated?: string;
   tags: string[];
   description: string;
   cover?: ContentCover;

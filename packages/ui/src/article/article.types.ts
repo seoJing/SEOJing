@@ -13,6 +13,8 @@ export interface ArticleHeaderProps extends HTMLAttributes<HTMLElement> {
   title: string;
   /** 작성 일자 (Date 또는 문자열) */
   date: Date | string;
+  /** 마지막으로 본문을 수정한 일자 */
+  updated?: Date | string;
   /** 포스트 타입/카테고리 태그 */
   tags?: ArticleTag[];
   /** 작성자 이름 */

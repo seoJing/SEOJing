@@ -50,6 +50,7 @@ function buildFrontmatter(
   const frontmatter: ContentFrontmatter = {
     title: typeof data.title === "string" ? data.title : fallbackTitle,
     date: typeof data.date === "string" ? data.date : "",
+    updated: typeof data.updated === "string" ? data.updated : undefined,
     tags: Array.isArray(data.tags) ? data.tags : [],
     description: typeof data.description === "string" ? data.description : "",
   };
