@@ -50,6 +50,7 @@ async function googleSearch(
   try {
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
+      signal: AbortSignal.timeout(8_000),
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         grant_type: "refresh_token",
@@ -72,6 +73,7 @@ async function googleSearch(
     ) => {
       const response = await fetch(endpoint, {
         method: "POST",
+        signal: AbortSignal.timeout(8_000),
         headers: {
           authorization: `Bearer ${token.access_token}`,
           "content-type": "application/json",
@@ -129,6 +131,7 @@ async function aiVisits(
       "https://api.cloudflare.com/client/v4/graphql",
       {
         method: "POST",
+        signal: AbortSignal.timeout(8_000),
         headers: {
           authorization: `Bearer ${env.SEOJING_CF_ANALYTICS_TOKEN}`,
           "content-type": "application/json",
@@ -166,6 +169,8 @@ async function aiVisits(
     };
     if (body.errors?.length)
       throw new Error(body.errors[0]?.message ?? "GraphQL 오류");
+    if (!Array.isArray(body.data?.viewer?.accounts))
+      throw new Error("Cloudflare 분석 계정 응답이 없습니다.");
     const groups =
       body.data?.viewer?.accounts?.[0]?.rumPageloadEventsAdaptiveGroups ?? [];
     if (groups.length >= 5000)
@@ -173,6 +178,7 @@ async function aiVisits(
     const aiHosts = new Set([
       "chatgpt.com",
       "www.chatgpt.com",
+      "chat.openai.com",
       "perplexity.ai",
       "www.perplexity.ai",
       "claude.ai",
