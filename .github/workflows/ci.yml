@@ -39,6 +39,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:coverage
+      - run: pnpm --filter @app/web run test:smoke
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
