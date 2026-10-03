@@ -102,9 +102,14 @@ export async function POST(request: Request) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
   try {
+    const upstreamHeaders = new Headers({ "content-type": "application/json" });
+    // Cloudflare same-zone subrequests derive CF-Connecting-IP from x-real-ip.
+    // Use only Cloudflare's incoming client-IP header, never a caller's x-real-ip.
+    const visitorIp = request.headers.get("cf-connecting-ip");
+    if (visitorIp) upstreamHeaders.set("x-real-ip", visitorIp);
     const upstream = await fetch(`${readmeBackendOrigin()}/readme/analyze`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: upstreamHeaders,
       body: JSON.stringify({
         job_text,
         resume_filename,

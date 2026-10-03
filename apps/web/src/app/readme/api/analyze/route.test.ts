@@ -9,10 +9,10 @@ const payload = {
   resume_base64: "7J207L2Y", // arbitrary bytes; backend decides if they are readable
 };
 
-const request = (body: unknown) =>
+const request = (body: unknown, extraHeaders: Record<string, string> = {}) =>
   new Request("https://seojing.com/readme/api/analyze", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...extraHeaders },
     body: JSON.stringify(body),
   });
 
@@ -44,6 +44,30 @@ describe("README user-document proxy", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(await response.json()).toEqual(userPreview);
+  });
+
+  it("sets same-zone x-real-ip only from Cloudflare's visitor header", async () => {
+    const userPreview = { ...syntheticPreview, case_id: USER_CASE_ID };
+    const fetchMock = vi.fn(async (_url: string, _init: RequestInit) =>
+      Promise.resolve(
+        new Response(JSON.stringify(userPreview), { status: 200 }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await POST(
+      request(payload, {
+        "cf-connecting-ip": "198.51.100.14",
+        "x-real-ip": "203.0.113.66",
+      }),
+    );
+    expect(
+      new Headers(fetchMock.mock.calls[0]?.[1].headers).get("x-real-ip"),
+    ).toBe("198.51.100.14");
+
+    await POST(request(payload, { "x-real-ip": "203.0.113.66" }));
+    expect(
+      new Headers(fetchMock.mock.calls[1]?.[1].headers).has("x-real-ip"),
+    ).toBe(false);
   });
 
   it("does not replace a failed personal analysis with a synthetic report", async () => {
