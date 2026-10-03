@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { POST } from "./route";
+import { GET, POST } from "./route";
 
 describe("/api/ops/articles", () => {
   afterEach(() => {
@@ -12,6 +12,27 @@ describe("/api/ops/articles", () => {
     vi.stubEnv("SEOJING_BACKEND_API_ORIGIN", "http://127.0.0.1:4027/");
     vi.stubEnv("SEOJING_BACKEND_ADMIN_API_TOKEN", "test-admin-token");
   }
+
+  it("rejects spoofed email headers without a signed Access assertion", async () => {
+    configureBackend();
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("SEOJING_OPS_ACCESS_EMAIL", "owner@example.com");
+    vi.stubEnv("SEOJING_OPS_ACCESS_ISSUER", "https://access.example.com");
+    vi.stubEnv("SEOJING_OPS_ACCESS_AUD", "test-audience");
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const response = await GET(
+      new Request("https://seojing.com/api/ops/articles?slug=cms%2Fpost", {
+        headers: {
+          "cf-access-authenticated-user-email": "owner@example.com",
+          "x-authenticated-user-email": "owner@example.com",
+        },
+      }),
+    );
+    expect(response.status).toBe(401);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
 
   it("proxies an unpublish action to the protected backend endpoint", async () => {
     configureBackend();
@@ -106,5 +127,29 @@ describe("/api/ops/articles", () => {
       }),
     );
     expect(response.status).toBe(200);
+  });
+
+  it("restores an earlier revision for the selected article", async () => {
+    configureBackend();
+    const fetchSpy = vi.fn(async () =>
+      Response.json({ article: { slug: "study/effective-typescript/day5" } }),
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+    const response = await POST(
+      new Request("http://localhost/api/ops/articles", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "restoreRevision",
+          slug: "study/effective-typescript/day5",
+          revisionNumber: 2,
+        }),
+      }),
+    );
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "http://127.0.0.1:4027/admin/articles/study%2Feffective-typescript%2Fday5/revisions/2/restore",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(response.status).toBe(201);
   });
 });

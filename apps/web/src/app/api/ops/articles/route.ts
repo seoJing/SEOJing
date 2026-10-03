@@ -1,3 +1,5 @@
+import { isOpsAuthorized } from "../../../../../worker/ops-access";
+
 const MAX_SOURCE_BYTES = 512 * 1024;
 const OPS_PROXY_TIMEOUT_MS = 8_000;
 const ALLOWED_BLOCK_TYPES = new Set([
@@ -16,6 +18,8 @@ type RuntimeEnv = {
   SEOJING_BACKEND_ADMIN_API_TOKEN?: string;
   ADMIN_API_TOKEN?: string;
   SEOJING_OPS_ACCESS_EMAIL?: string;
+  SEOJING_OPS_ACCESS_ISSUER?: string;
+  SEOJING_OPS_ACCESS_AUD?: string;
   VITE_SEOJING_BACKEND_API_ORIGIN?: string;
 };
 
@@ -40,6 +44,14 @@ type AdminArticlePayload = {
     renderedHtml?: string | null;
     blocks?: AdminArticleBlock[];
     currentRevisionNumber?: number | null;
+    editingRevisionNumber?: number | null;
+    hasUnpublishedChanges?: boolean;
+    revisions?: Array<{
+      revisionNumber: number;
+      changeSummary?: string | null;
+      createdAt: string;
+      isPublished: boolean;
+    }>;
     publishedAt?: string | null;
     updatedAt?: string;
   };
@@ -60,7 +72,7 @@ type PublicArticlePayload = {
 };
 
 export async function GET(request: Request): Promise<Response> {
-  const access = verifyOpsAccess(request);
+  const access = await verifyOpsAccess(request);
   if (!access.ok) return jsonResponse(access.status, access.body);
 
   const slug = new URL(request.url).searchParams.get("slug")?.trim();
@@ -112,7 +124,7 @@ export async function GET(request: Request): Promise<Response> {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  const access = verifyOpsAccess(request);
+  const access = await verifyOpsAccess(request);
   if (!access.ok) return jsonResponse(access.status, access.body);
 
   let body: unknown;
@@ -238,6 +250,30 @@ export async function POST(request: Request): Promise<Response> {
     return jsonResponse(200, { ok: true, action, article: saved.data.article });
   }
 
+  if (action === "restoreRevision") {
+    const revisionNumber = readNumber(body, "revisionNumber");
+    if (!Number.isInteger(revisionNumber) || revisionNumber < 1) {
+      return jsonResponse(400, { ok: false, error: "invalid_revision_number" });
+    }
+    const restored = await fetchBackendJson<AdminArticlePayload>(
+      config.origin,
+      `/admin/articles/${encodeURIComponent(slug)}/revisions/${revisionNumber}/restore`,
+      { method: "POST", adminToken: config.adminToken },
+    );
+    if (!restored.ok) {
+      return jsonResponse(restored.status, {
+        ok: false,
+        error: "backend_revision_restore_failed",
+        status: restored.status,
+      });
+    }
+    return jsonResponse(201, {
+      ok: true,
+      action,
+      article: restored.data.article,
+    });
+  }
+
   if (action === "publish") {
     const published = await fetchBackendJson<AdminArticlePayload>(
       config.origin,
@@ -314,29 +350,34 @@ type AccessResult =
   | { ok: true }
   | { ok: false; status: number; body: Record<string, unknown> };
 
-function verifyOpsAccess(request: Request): AccessResult {
+async function verifyOpsAccess(request: Request): Promise<AccessResult> {
   const env = readRuntimeEnv();
   const allowedEmail = env.SEOJING_OPS_ACCESS_EMAIL?.trim().toLowerCase();
-  const isProduction = env.NODE_ENV === "production";
-
-  if (!allowedEmail) {
-    const hostname = new URL(request.url).hostname;
-    const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
-    if (!isProduction && isLocalhost) return { ok: true };
+  const hostname = new URL(request.url).hostname;
+  const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
+  if (env.NODE_ENV !== "production" && isLocalhost && !allowedEmail) {
+    return { ok: true };
+  }
+  if (
+    !allowedEmail ||
+    !env.SEOJING_OPS_ACCESS_ISSUER ||
+    !env.SEOJING_OPS_ACCESS_AUD
+  ) {
     return {
       ok: false,
       status: 403,
-      body: { ok: false, error: "ops_access_email_not_configured" },
+      body: { ok: false, error: "ops_access_not_configured" },
     };
   }
-
-  const requestEmail =
-    request.headers.get("cf-access-authenticated-user-email") ??
-    request.headers.get("x-authenticated-user-email");
-  if (requestEmail?.trim().toLowerCase() === allowedEmail) {
+  if (
+    await isOpsAuthorized(request, {
+      SEOJING_OPS_ACCESS_EMAIL: allowedEmail,
+      SEOJING_OPS_ACCESS_ISSUER: env.SEOJING_OPS_ACCESS_ISSUER,
+      SEOJING_OPS_ACCESS_AUD: env.SEOJING_OPS_ACCESS_AUD,
+    })
+  ) {
     return { ok: true };
   }
-
   return {
     ok: false,
     status: 401,
@@ -458,6 +499,12 @@ function readString(body: unknown, key: string): string {
   if (!body || typeof body !== "object" || Array.isArray(body)) return "";
   const value = (body as Record<string, unknown>)[key];
   return typeof value === "string" ? value.trim() : "";
+}
+
+function readNumber(body: unknown, key: string): number {
+  if (!body || typeof body !== "object" || Array.isArray(body)) return NaN;
+  const value = (body as Record<string, unknown>)[key];
+  return typeof value === "number" ? value : NaN;
 }
 
 function readBlocks(body: unknown): AdminArticleBlock[] {

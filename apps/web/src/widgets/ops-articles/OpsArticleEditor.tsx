@@ -19,8 +19,17 @@ type EditorArticle = {
   status?: string;
   sourceFormat?: string;
   sourceText?: string;
+  renderedHtml?: string | null;
   blocks?: ArticleBlock[];
   currentRevisionNumber?: number | null;
+  editingRevisionNumber?: number | null;
+  hasUnpublishedChanges?: boolean;
+  revisions?: Array<{
+    revisionNumber: number;
+    changeSummary?: string | null;
+    createdAt: string;
+    isPublished: boolean;
+  }>;
   publishedAt?: string | null;
   updatedAt?: string;
 };
@@ -63,6 +72,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("SEOJing");
+  const [sourceText, setSourceText] = useState("");
   const [status, setStatus] = useState<
     "idle" | "loading" | "saving" | "publishing"
   >("idle");
@@ -91,6 +101,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
         setTitle(body.article?.title ?? "");
         setDescription(body.article?.description ?? "");
         setCategory(body.article?.category ?? "SEOJing");
+        setSourceText(body.article?.sourceText ?? "");
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
@@ -107,17 +118,35 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
 
   const dirty = useMemo(() => {
     return (
-      isBlockArticle &&
-      (JSON.stringify(blocks) !==
-        JSON.stringify(normalizeBlocks(article?.blocks)) ||
-        title !== (article?.title ?? "") ||
+      Boolean(article) &&
+      (title !== (article?.title ?? "") ||
         description !== (article?.description ?? "") ||
-        category !== (article?.category ?? "SEOJing"))
+        category !== (article?.category ?? "SEOJing") ||
+        (isBlockArticle
+          ? JSON.stringify(blocks) !==
+            JSON.stringify(normalizeBlocks(article?.blocks))
+          : sourceText !== (article?.sourceText ?? "")))
     );
-  }, [article, blocks, category, description, isBlockArticle, title]);
+  }, [
+    article,
+    blocks,
+    category,
+    description,
+    isBlockArticle,
+    sourceText,
+    title,
+  ]);
 
   async function mutate(
-    action: "saveBlocks" | "publish" | "unpublish" | "archive" | "delete",
+    action:
+      | "saveBlocks"
+      | "saveRevision"
+      | "restoreRevision"
+      | "publish"
+      | "unpublish"
+      | "archive"
+      | "delete",
+    revisionNumber?: number,
   ) {
     setStatus(action === "publish" ? "publishing" : "saving");
     setMessage("");
@@ -132,6 +161,8 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
           description,
           category,
           blocks: toBackendBlocks(blocks),
+          sourceText,
+          revisionNumber,
         }),
       });
       const body = (await response.json()) as MutationPayload;
@@ -149,7 +180,9 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
             ? "비공개 초안으로 전환했습니다."
             : action === "archive"
               ? "글을 보관하고 공개 목록에서 내렸습니다."
-              : "revision 저장 완료. 공개 본문은 발행 전까지 유지됩니다.",
+              : action === "restoreRevision"
+                ? "이전 revision을 새 비공개 수정본으로 복원했습니다. 확인 후 발행하세요."
+                : "revision 저장 완료. 공개 본문은 발행 전까지 유지됩니다.",
       );
       await reload();
     } catch (error) {
@@ -174,6 +207,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
     setTitle(body.article?.title ?? "");
     setDescription(body.article?.description ?? "");
     setCategory(body.article?.category ?? "SEOJing");
+    setSourceText(body.article?.sourceText ?? "");
   }
 
   if (!hasSelection) {
@@ -189,7 +223,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
         selectedSlug={selectedSlug}
       />
 
-      {isBlockArticle ? (
+      {article ? (
         <div className="rounded-3xl border border-zinc-200 bg-white/80 p-5 dark:border-zinc-800 dark:bg-zinc-950/70">
           <ArticleMetadata
             description={description}
@@ -216,19 +250,59 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
               <option value="KD Team" />
             </datalist>
           </label>
-          <BlockEditor blocks={blocks} disabled={isBusy} onChange={setBlocks} />
+          {isBlockArticle ? (
+            <BlockEditor
+              blocks={blocks}
+              disabled={isBusy}
+              onChange={setBlocks}
+            />
+          ) : (
+            <div className="mt-6 space-y-4">
+              <TextAreaField
+                label="MDX 원문"
+                value={sourceText}
+                onChange={setSourceText}
+                disabled={isBusy}
+                mono
+                rows={24}
+              />
+              <p className="text-xs text-zinc-500">
+                MDX 원문은 저장할 때 서버에서 안전한 공개 본문으로 변환됩니다.
+                아래 미리보기는 마지막으로 저장한 revision 기준입니다.
+              </p>
+              {article.renderedHtml ? (
+                <iframe
+                  title="저장된 MDX 수정본 미리보기"
+                  sandbox=""
+                  srcDoc={article.renderedHtml}
+                  className="h-96 w-full rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800"
+                />
+              ) : null}
+            </div>
+          )}
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <button
               className="rounded-full bg-zinc-950 px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-45 dark:bg-zinc-50 dark:text-zinc-950"
-              onClick={() => void mutate("saveBlocks")}
-              disabled={isBusy || !dirty || blocks.length === 0}
+              onClick={() =>
+                void mutate(isBlockArticle ? "saveBlocks" : "saveRevision")
+              }
+              disabled={
+                isBusy ||
+                !dirty ||
+                (isBlockArticle ? blocks.length === 0 : !sourceText.trim())
+              }
             >
               {status === "saving" ? "저장 중" : "revision 저장"}
             </button>
             <button
               className="rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-semibold text-zinc-800 disabled:cursor-not-allowed disabled:opacity-45 dark:border-zinc-700 dark:text-zinc-100"
               onClick={() => void mutate("publish")}
-              disabled={isBusy}
+              disabled={
+                isBusy ||
+                dirty ||
+                (article.status === "PUBLISHED" &&
+                  !article.hasUnpublishedChanges)
+              }
             >
               {status === "publishing" ? "발행 중" : "latest revision 발행"}
             </button>
@@ -276,31 +350,52 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
             </button>
           </div>
           <p className="mt-3 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-            CMS block 저장은 새 revision만 만들고, 공개 본문은 발행 버튼을 누를
-            때 바뀝니다.
+            저장은 비공개 revision만 만듭니다. 저장된 수정본을 확인한 뒤
+            발행하세요. 저장하지 않은 변경이 있으면 발행할 수 없습니다.
           </p>
+          <details className="mt-6 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
+            <summary className="cursor-pointer text-sm font-semibold">
+              revision 기록 ({article.revisions?.length ?? 0})
+            </summary>
+            <ul className="mt-3 space-y-2">
+              {article.revisions?.map((revision) => (
+                <li
+                  key={revision.revisionNumber}
+                  className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                >
+                  <span>
+                    #{revision.revisionNumber} ·{" "}
+                    {revision.changeSummary ?? "수정"}
+                    {revision.isPublished ? " · 현재 공개본" : ""}
+                  </span>
+                  <button
+                    type="button"
+                    className="rounded-full border border-zinc-300 px-3 py-1 text-xs disabled:opacity-40 dark:border-zinc-700"
+                    disabled={
+                      isBusy ||
+                      dirty ||
+                      revision.revisionNumber === article.editingRevisionNumber
+                    }
+                    onClick={() =>
+                      window.confirm(
+                        `revision #${revision.revisionNumber}을 새 비공개 수정본으로 복원할까요?`,
+                      ) &&
+                      void mutate("restoreRevision", revision.revisionNumber)
+                    }
+                  >
+                    수정본으로 복원
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </details>
         </div>
       ) : (
-        <LegacyMdxNotice />
+        <p className="rounded-2xl border border-zinc-200 p-5 text-sm dark:border-zinc-800">
+          이 글의 서버 편집본을 찾지 못했습니다. 아직 MDX 저장소에서만 운영 중인
+          글일 수 있습니다.
+        </p>
       )}
-    </section>
-  );
-}
-
-function LegacyMdxNotice() {
-  return (
-    <section className="rounded-3xl border border-dashed border-zinc-300 bg-white/70 p-6 text-sm dark:border-zinc-700 dark:bg-zinc-950/60">
-      <p className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-500">
-        Legacy MDX article
-      </p>
-      <h3 className="mt-2 text-xl font-semibold">
-        이 글은 아직 Git 기반 MDX 글입니다.
-      </h3>
-      <p className="mt-3 max-w-2xl leading-6 text-zinc-600 dark:text-zinc-300">
-        CMS 전환기에는 기존 MDX 글을 이 화면에서 block으로 덮어쓰지 않습니다.
-        기존 저장소의 MDX 작성·검수 흐름을 유지하고, CMS-native 글의 저작·발행
-        경험이 정립된 뒤 시리즈별로 이전합니다.
-      </p>
     </section>
   );
 }
@@ -821,17 +916,20 @@ function TextAreaField({
   onChange,
   disabled,
   mono = false,
+  rows,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   disabled: boolean;
   mono?: boolean;
+  rows?: number;
 }) {
   return (
     <label className="mt-3 block text-xs font-medium text-zinc-500">
       {label}
       <textarea
+        rows={rows}
         className={`mt-1 min-h-24 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 ${mono ? "font-mono" : ""}`}
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -884,14 +982,31 @@ function ArticleStatusCard({
           <h2 className="mt-1 break-all text-2xl font-semibold">
             {selectedSlug}
           </h2>
+          <a
+            href={`/blog/${selectedSlug}`}
+            className="mt-2 inline-block text-sm underline underline-offset-4"
+          >
+            공개 글 보기
+          </a>
         </div>
         <div className="flex flex-wrap gap-2 text-xs">
           <StatusPill label="format" value={article?.sourceFormat ?? "-"} />
           <StatusPill label="status" value={article?.status ?? "-"} />
           <StatusPill
-            label="revision"
+            label={
+              article?.status === "PUBLISHED"
+                ? "공개 revision"
+                : "현재 revision"
+            }
             value={String(article?.currentRevisionNumber ?? "-")}
           />
+          <StatusPill
+            label="편집 revision"
+            value={String(article?.editingRevisionNumber ?? "-")}
+          />
+          {article?.hasUnpublishedChanges ? (
+            <StatusPill label="수정본" value="발행 대기" />
+          ) : null}
           <StatusPill
             label="public"
             value={
