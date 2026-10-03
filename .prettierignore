@@ -5,3 +5,4 @@ dist
 .turbo
 pnpm-lock.yaml
 coverage
+.agent-local
