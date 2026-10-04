@@ -6,3 +6,6 @@ dist
 pnpm-lock.yaml
 coverage
 .agent-local
+
+# README Lab page: synced copy of work24-readme docs/design/readme-lab-prototype.html (whitespace-sensitive, not hand-edited)
+apps/web/src/app/readme/lab/readme-lab.html
