@@ -1419,13 +1419,13 @@ function applyUnit(uid) {
   S.A.applied.add(uid);
   return applyEvents(S.A, S.srv.byUnit.get(uid) || [], S.ds);
 }
-const STATUS_WORD = { open: "아직 설명 없음", held: "답 후보", partial: "일부만 설명", resolved: "설명 찾음", reopened: "다시 열림", open_at_end: "끝까지 남음" };
+const STATUS_WORD = { open: "아직 설명 없음", held: "답 후보", partial: "일부만 설명", resolved: "설명 찾음", reopened: "다시 열림", open_at_end: "답 확인 못 함" };
 const qsWord = s => STATUS_WORD[s] ?? "상태 확인 필요";
 const MARK_COLOR = { q: "var(--q)", held: "var(--ink-2)", part: "var(--part)", ok: "var(--ok)", req: "var(--ink-2)", obs: "var(--ink-2)" };
 function markOf(n, A) {
   if (n.kind === "question") {
     const q = A.q.get(n.question_id), st = q ? q.status : "open";
-    return { cls: "q", q: st, word: st === "open_at_end" ? "끝까지 남음" : "질문" };
+    return { cls: "q", q: st, word: st === "open_at_end" ? "답 확인 못 함" : "질문" };
   }
   if (n.kind === "hold" || n.kind === "resolves") {
     if (n.question_id) {
@@ -2689,6 +2689,8 @@ function renderDetail(det, n) {
       ol.append(h("li", { "aria-current": cur ? "step" : null }, statusSwatch(u.previous_status == null ? "open" : u.status), h("span", { class: "w" }, w), third));
     });
     det.append(ol);
+    /* open_at_end is the reader's own outcome, not a finding about the document */
+    if (q.status === "open_at_end") det.append(h("p", { class: "state-note" }, "읽는 동안 이 질문의 답을 확인하지 못했다는 뜻입니다. 문서에 답이 없다는 판정은 아닙니다. 리포트에서 전체 문장을 다시 본 결과를 함께 확인해 주세요."));
   }
   if (n.requirement_ids?.length) {
     det.append(h("h4", null, "공고 원문"));
