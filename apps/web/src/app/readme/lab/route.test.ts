@@ -24,6 +24,14 @@ describe("README Lab page route", () => {
     );
   });
 
+  it("asks for the Jev consent version that the lab backend requires", async () => {
+    const html = await GET().text();
+
+    expect(html).toContain('"readme-jev-v1"');
+    expect(html).toContain("Typesafe Jev");
+    expect(html).toContain("OpenAI Codex");
+  });
+
   it("stays out of search, caches and other sites' frames", () => {
     const headers = GET().headers;
 
