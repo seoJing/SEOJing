@@ -13,7 +13,7 @@ function reader() {
     .replace(/\bboot\(\);\s*$/, "");
   // Execute the served page's actual state functions, without network boot.
   const api = new Function(
-    `${script}\nreturn {newA, applyEvents, markOf, computeMarks, finalizeDS, renderDetail, renderReqPanel, reqView, openInline, updateFeedRows, PAPERS, S, newPlay, newSrv};`,
+    `${script}\nreturn {newA, applyEvents, markOf, computeMarks, finalizeDS, renderDetail, renderReqPanel, reqView, openInline, updateFeedRows, PAPERS, S, newPlay, newSrv, mockLayout: () => { relayoutRead = () => {}; firstRect = () => ({top:0}); pageTurn = () => {}; }};`,
   )();
   const texts = [
     "제가 안내문을 작성했습니다.",
@@ -85,6 +85,71 @@ function reader() {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("served reader evidence history", () => {
+  it("shows prior and current understanding sources in reading order without future or unknown links", () => {
+    const r = reader();
+    const linked = {
+      ...r.old,
+      id: "linked",
+      unit_id: "u2",
+      evidence_unit_ids: ["u2", "u1", "u1", "u3", "missing"],
+    };
+    r.applyEvents(r.A, [{ type: "note", note: linked }], r.ds);
+    const detail = document.createElement("div");
+    r.renderDetail(detail, linked);
+    expect(detail.textContent).toContain("함께 읽은 원문");
+    const quotes = [...detail.querySelectorAll(".qbtn")].map(
+      (e) => e.textContent,
+    );
+    expect(quotes).toHaveLength(2);
+    expect(quotes[0]).toContain("제가 안내문을 작성");
+    expect(quotes[1]).toContain("작성자는 동료");
+    expect(detail.textContent).not.toContain("저는 질문을 분류");
+    vi.stubGlobal("requestAnimationFrame", vi.fn());
+    const block = document.createElement("div");
+    block.className = "blk";
+    const unit = document.createElement("span");
+    block.appendChild(unit);
+    document.body.appendChild(block);
+    r.PAPERS.read = { units: new Map([["u2", unit]]) };
+    r.openInline(r.A.noteById.get("linked"));
+    expect(
+      [...r.S.ui.inline.querySelectorAll(".qbtn")].map(
+        (e: Element) => e.textContent,
+      ),
+    ).toEqual(quotes);
+  });
+
+  it("moves keyboard focus to an earlier source without making unmarked text a button", () => {
+    const r = reader();
+    r.mockLayout();
+    r.S.play.finished = true;
+    vi.stubGlobal("requestAnimationFrame", (callback: () => void) =>
+      callback(),
+    );
+    vi.stubGlobal("scrollY", 0);
+    vi.stubGlobal("innerHeight", 800);
+    const prior = document.createElement("span");
+    prior.textContent = "메모가 없는 앞 원문";
+    document.body.appendChild(prior);
+    r.PAPERS.read = { units: new Map([["u1", prior]]) };
+    const linked = {
+      ...r.old,
+      id: "linked",
+      unit_id: "u2",
+      evidence_unit_ids: ["u1", "u2"],
+    };
+    r.applyEvents(r.A, [{ type: "note", note: linked }], r.ds);
+    const detail = document.createElement("div");
+    document.body.appendChild(detail);
+    r.renderDetail(detail, linked);
+    const button = detail.querySelector<HTMLButtonElement>(".qbtn")!;
+    button.focus();
+    button.click();
+    expect(document.activeElement).toBe(prior);
+    expect(prior.tabIndex).toBe(-1);
+    expect(prior.getAttribute("role")).toBeNull();
+  });
+
   it("updates an open mobile inline note in place when its evidence is withdrawn", () => {
     const r = reader();
     vi.stubGlobal("requestAnimationFrame", vi.fn());

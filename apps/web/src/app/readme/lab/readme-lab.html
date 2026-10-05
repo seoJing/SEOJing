@@ -2678,6 +2678,12 @@ function addFeedRows(notes, anim) {
 }
 function updateFeedRows() { for (const [id, li] of FEED) updateNoteRow(li, S.A.noteById.get(id)); updateInlineState(); }
 function qbtn(uid, n = 18) { return h("button", { type: "button", class: "qbtn", title: whereText(S.ds, uid), onclick: () => showUnitInDoc(uid) }, shortQuote(S.ds, uid, n)); }
+function noteSourceIds(n) {
+  const order = S.ds.order, end = order.indexOf(n.unit_id);
+  return [...new Set([...(n.evidence_unit_ids || []), n.unit_id])]
+    .filter(uid => order.indexOf(uid) >= 0 && order.indexOf(uid) <= end)
+    .sort((a, b) => order.indexOf(a) - order.indexOf(b));
+}
 function renderDetail(det, n) {
   const A = S.A, q = n.question_id && A.q.get(n.question_id);
   const sig = JSON.stringify([n.id, q ? q.hist.length : 0, q?.status || "", A.ended, A.retracted.get(n.id) || ""]);
@@ -2714,6 +2720,8 @@ function renderDetail(det, n) {
     : m.cls === "part" ? "앞 질문의 설명을 일부 찾았지만 아직 확인할 내용이 남았습니다."
     : m.noq ? (isSample() ? "이 문장에 대한 판단을 미뤘습니다." : "모델이 이 문장에 대한 판단을 미뤘습니다.") + " 문장에 문제가 있다는 뜻은 아닙니다." : null;
   if (note) det.append(h("p", { class: "state-note" }, note));
+  const sources = noteSourceIds(n);
+  if (!q && sources.length > 1) det.append(h("h4", null, "함께 읽은 원문"), h("div", { class: "flow" }, sources.map(uid => qbtn(uid))));
   det.append(h("div", null, h("button", { type: "button", class: "btn-text sm", onclick: () => showUnitInDoc(n.unit_id) }, "문서에서 이 문장 보기")));
 }
 function showUnitInDoc(uid) {
@@ -2724,7 +2732,9 @@ function showUnitInDoc(uid) {
     const sp = PAPERS.read.units.get(uid); const r = sp && firstRect(sp); if (!r) return;
     pageTurn(scrollY + r.top - innerHeight * .36);
     sp.classList.add("hover"); setTimeout(() => sp.classList.remove("hover"), 1400);
-    if (sp.getAttribute("role") === "button") { S.ui.rove = uid; fixRove(); sp.focus({ preventScroll: true }); }
+    if (sp.getAttribute("role") === "button") { S.ui.rove = uid; fixRove(); }
+    else sp.tabIndex = -1;
+    sp.focus({ preventScroll: true });
   });
 }
 function renderReqPanel() {
@@ -2826,10 +2836,12 @@ function openInline(n) {
   closeInline(); if (!n) return;
   const blk = PAPERS.read.units.get(n.unit_id)?.closest(".blk"); if (!blk) return;
   const m = markOf(n, S.A);
+  const sources = noteSourceIds(n);
   const a = h("aside", { class: "inline-note", "data-note-id": n.id, style: `--mk:${MARK_COLOR[m.cls]}` },
     h("p", { class: "meta" }, h("b", { class: "num" }, String(n.num)), h("span", { class: "inline-state" }, m.word), h("span", null, whereText(S.ds, n.unit_id))),
     h("p", null, noteText(n.text)),
     h("p", { class: "state-note inline-history", hidden: true }),
+    !n.question_id && sources.length > 1 ? h("div", { class: "flow", "aria-label": "함께 읽은 원문" }, sources.map(uid => qbtn(uid))) : null,
     h("div", null, btnText("읽기 메모 탭에서 보기", () => {
       closeInline(); S.ui.mtab = "notes"; renderTabsAndPanels();
       const row = FEED.get(n.id); row?.scrollIntoView({ block: "center" }); row?.querySelector(".note-head")?.focus({ preventScroll: true });
