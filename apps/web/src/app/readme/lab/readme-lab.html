@@ -1341,8 +1341,8 @@ const isJev = () => engineKind() === "jev";
 const isLaya = () => engineKind() === "laya";
 const JEV_NAME = "Typesafe Jev(원격 모델)";
 /* what live Jev reading looks at; everything else is the report's final source review */
-const SCOPE_LINE = "읽는 동안에는 두 가지만 봅니다. 본인이 맡은 일이 적혀 있는지, 개선했다는 결과에 전후 측정값과 비교 조건이 있는지입니다. 다른 내용은 리포트에서 살피며, 메모가 없다고 다 갖춘 문서라는 뜻은 아닙니다.";
-const SCOPE_SHORT = "읽는 동안에는 본인이 맡은 일과 개선 결과의 전후 측정 근거만 확인합니다.";
+const SCOPE_LINE = "공고에서 만든 기준으로 읽으며 연결되는 설명, 남은 질문, 뒤에서 달라진 근거를 기록합니다. 역할·수행 방식·결과·비교 근거는 해당 공고와 주장에 필요할 때만 확인합니다. 실제 채용 담당자의 생각이나 요건 충족 판정은 아닙니다.";
+const SCOPE_SHORT = "공고에 필요한 설명과 근거를 연결하며 읽습니다. 메모가 없다고 모든 요건이 설명됐다는 뜻은 아닙니다.";
 
 /* Refresh resume: only the bearer token and ids live in sessionStorage. Never document text or file names. */
 const REC_KEY = "readme-lab-run";
@@ -1380,7 +1380,7 @@ const S = {
 };
 function newSrv() { return { started: new Set(), done: new Set(), byUnit: new Map(), end: [], open: null, windowSeen: {}, readingCompleted: false, reportCompleted: false, failed: null, cancelled: false, qv: new Map() }; }
 function newPlay() { return { shown: 0, paused: false, follow: true, unseen: 0, mode: "reading", finished: false, terminal: false, replay: false, waiting: null, unit: null, instant: null, stopAt: null, resume: false }; }
-function newA() { return { notes: [], noteById: new Map(), updates: [], q: new Map(), ended: false, applied: new Set() }; }
+function newA() { return { notes: [], noteById: new Map(), updates: [], q: new Map(), ended: false, applied: new Set(), retracted: new Map() }; }
 
 /* applied state: only what the replay has reached (never ahead of the server, never ahead of the screen) */
 function applyEvents(A, evs, ds) {
@@ -1399,6 +1399,10 @@ function applyEvents(A, evs, ds) {
       n++;
       const note = { ...e.note, num: A.notes.length + 1 };
       A.notes.push(note); A.noteById.set(note.id, note); fresh.push(note);
+      if (note.kind === "observation" && note.retracted_note_id) {
+        const prior = A.noteById.get(note.retracted_note_id);
+        if (prior && prior.id !== note.id && prior.kind === "evidence" && !prior.question_id && !A.retracted.has(prior.id)) A.retracted.set(prior.id, note.id);
+      }
       if (v1 && note.question_id) {
         let q = A.q.get(note.question_id);
         if (note.kind === "question" && !q) {
@@ -1443,7 +1447,7 @@ function markOf(n, A) {
     }
     return n.kind === "resolves" ? { cls: "ok", word: "설명 찾음" } : { cls: "held", word: "판단 보류", noq: true };
   }
-  if (n.kind === "evidence") return { cls: "req", word: "요건", reqs: n.requirement_ids || [] };
+  if (n.kind === "evidence") { const was = A.retracted.has(n.id); return { cls: "req", was, word: was ? "요건 연결 · 이전" : "요건 연결", reqs: n.requirement_ids || [] }; }
   return { cls: "obs", word: "참고" };
 }
 /* evidence that a later reopen withdrew stays "· 이전", whatever the question did afterwards */
@@ -1613,7 +1617,7 @@ function layoutMargin(P, A, o = {}) {
     btn.style.setProperty("--mk", MARK_COLOR[mg.m.cls]);
     btn.textContent = "";
     btn.append(h("b", { class: "num" }, String(n.num)));
-    if (mg.m.cls === "req") btn.append(h("span", { class: "w2" }, "요건 ", h("span", { class: "rq" }, mg.m.reqs.map(r => circ(P.ds.reqIndex[r] ?? 0)).join(""))));
+    if (mg.m.cls === "req") btn.append(h("span", { class: "w2" }, mg.m.was ? "이전 요건 " : "요건 ", h("span", { class: "rq" }, mg.m.reqs.map(r => circ(P.ds.reqIndex[r] ?? 0)).join(""))));
     else btn.append(h("span", { class: "w2" }, mg.m.word));
     btn.title = `메모 ${n.num} · ${mg.m.word === "요건" ? "요건 연결" : mg.m.word}`;
     const sp = P.units.get(mg.uid), r = sp && firstRect(sp);
@@ -2655,7 +2659,7 @@ function updateNoteRow(li, n) {
   li.style.setProperty("--mk", MARK_COLOR[m.cls]);
   const swc = li.querySelector(".swc"), sk = m.cls + (m.q || "") + (m.was ? "w" : "");
   if (swc.dataset.k !== sk) { swc.dataset.k = sk; swc.textContent = ""; swc.append(swatch(m)); }
-  li.querySelector(".state").textContent = m.cls === "req" ? "요건 연결" : m.word;
+  li.querySelector(".state").textContent = m.word;
   const sel = S.ui.sel === n.id; li.classList.toggle("sel", sel);
   li.querySelector(".note-head").setAttribute("aria-expanded", String(sel));
   const det = li.querySelector(".detail");
@@ -2672,11 +2676,11 @@ function addFeedRows(notes, anim) {
   updateFeedRows(); renderFeedState();
   if (added && S.play.follow && !mq820.matches) { const p = $("#tp-notes"); p.scrollTo({ top: p.scrollHeight, behavior: RM() || !anim ? "auto" : "smooth" }); }
 }
-function updateFeedRows() { for (const [id, li] of FEED) updateNoteRow(li, S.A.noteById.get(id)); }
+function updateFeedRows() { for (const [id, li] of FEED) updateNoteRow(li, S.A.noteById.get(id)); updateInlineState(); }
 function qbtn(uid, n = 18) { return h("button", { type: "button", class: "qbtn", title: whereText(S.ds, uid), onclick: () => showUnitInDoc(uid) }, shortQuote(S.ds, uid, n)); }
 function renderDetail(det, n) {
   const A = S.A, q = n.question_id && A.q.get(n.question_id);
-  const sig = JSON.stringify([n.id, q ? q.hist.length : 0, q?.status || "", A.ended]);
+  const sig = JSON.stringify([n.id, q ? q.hist.length : 0, q?.status || "", A.ended, A.retracted.get(n.id) || ""]);
   if (det._sig === sig && !det.hidden) return;
   det._sig = sig; det.textContent = ""; det.hidden = false;
   if (q) {
@@ -2691,6 +2695,11 @@ function renderDetail(det, n) {
     det.append(ol);
     /* open_at_end is the reader's own outcome, not a finding about the document */
     if (q.status === "open_at_end") det.append(h("p", { class: "state-note" }, "읽는 동안 이 질문의 답을 확인하지 못했다는 뜻입니다. 문서에 답이 없다는 판정은 아닙니다. 리포트에서 전체 문장을 다시 본 결과를 함께 확인해 주세요."));
+  }
+  if (A.retracted.has(n.id)) {
+    const correction = A.noteById.get(A.retracted.get(n.id));
+    det.append(h("p", { class: "state-note" }, "뒤의 설명에서 정정된 이전 근거입니다. 현재 요건 연결에서는 제외했습니다."));
+    if (correction) det.append(h("div", null, "정정된 문장 · ", qbtn(correction.unit_id)));
   }
   if (n.requirement_ids?.length) {
     det.append(h("h4", null, "공고 원문"));
@@ -2724,7 +2733,7 @@ function renderReqPanel() {
   box.textContent = "";
   /* report citations cover the whole document, so they appear only after the screen has replayed every sentence (no future leaks) */
   const ds = S.ds, done = S.play.finished || S.play.terminal, links = new Map(), rep = S.play.finished && S.srv.reportCompleted && S.job?.report;
-  for (const n of S.A.notes) if (n.kind === "evidence" || n.kind === "resolves") for (const r of n.requirement_ids || []) { if (!links.has(r)) links.set(r, []); if (!links.get(r).includes(n.unit_id)) links.get(r).push(n.unit_id); }
+  for (const n of S.A.notes) if ((n.kind === "evidence" || n.kind === "resolves") && !markOf(n, S.A).was) for (const r of n.requirement_ids || []) { if (!links.has(r)) links.set(r, []); if (!links.get(r).includes(n.unit_id)) links.get(r).push(n.unit_id); }
   ds.job.requirements.forEach((r, i) => {
     const row = h("div", { class: "reqrow" }, h("p", { class: "nm" }, h("span", { class: "c" }, circ(i)), r.label, h("span", { class: "k" }, KIND_WORD[r.kind] || "기타")), h("p", { class: "quote" }, r.quote));
     if (r.kind === "other") { row.append(h("p", { class: "none" }, "공고 참고사항입니다. 이력서 역량 판단 대상이 아닙니다.")); box.append(row); return; }
@@ -2806,18 +2815,26 @@ function fixRove() {
 }
 function roveTo(uid) { if (!uid) return; S.ui.rove = uid; fixRove(); const sp = PAPERS.read.units.get(uid); sp.focus({ preventScroll: true }); ensureUnitVisible(uid); }
 function closeInline() { if (S.ui.inline) { S.ui.inline.remove(); S.ui.inline = null; requestAnimationFrame(relayoutRead); } }
+function updateInlineState() {
+  const a = S.ui.inline, n = a && S.A.noteById.get(a.dataset.noteId); if (!n) return;
+  const m = markOf(n, S.A); a.style.setProperty("--mk", MARK_COLOR[m.cls]);
+  a.querySelector(".inline-state").textContent = m.word;
+  const history = a.querySelector(".inline-history"); history.hidden = !m.was;
+  history.textContent = m.was ? "뒤의 설명에서 정정된 이전 근거입니다. 현재 근거에서는 제외했습니다." : "";
+}
 function openInline(n) {
   closeInline(); if (!n) return;
   const blk = PAPERS.read.units.get(n.unit_id)?.closest(".blk"); if (!blk) return;
   const m = markOf(n, S.A);
-  const a = h("aside", { class: "inline-note", style: `--mk:${MARK_COLOR[m.cls]}` },
-    h("p", { class: "meta" }, h("b", { class: "num" }, String(n.num)), h("span", null, m.cls === "req" ? "요건 연결" : m.word), h("span", null, whereText(S.ds, n.unit_id))),
+  const a = h("aside", { class: "inline-note", "data-note-id": n.id, style: `--mk:${MARK_COLOR[m.cls]}` },
+    h("p", { class: "meta" }, h("b", { class: "num" }, String(n.num)), h("span", { class: "inline-state" }, m.word), h("span", null, whereText(S.ds, n.unit_id))),
     h("p", null, noteText(n.text)),
+    h("p", { class: "state-note inline-history", hidden: true }),
     h("div", null, btnText("읽기 메모 탭에서 보기", () => {
       closeInline(); S.ui.mtab = "notes"; renderTabsAndPanels();
       const row = FEED.get(n.id); row?.scrollIntoView({ block: "center" }); row?.querySelector(".note-head")?.focus({ preventScroll: true });
     }, "sm")));
-  blk.after(a); S.ui.inline = a; requestAnimationFrame(relayoutRead);
+  blk.after(a); S.ui.inline = a; updateInlineState(); requestAnimationFrame(relayoutRead);
 }
 function openInlineEmpty(uid) {
   closeInline();
@@ -2892,7 +2909,7 @@ function flushAnn() {
   if (!list.length || S.screen !== "s03" || !S.play) return;
   ANN.last = performance.now();
   if (!S.play.follow) { announce(`새 메모 ${S.play.unseen}개`); return; }
-  const by = new Map(); for (const n of list) { const m = markOf(n, S.A), w = m.cls === "req" ? "요건 연결" : m.word; by.set(w, (by.get(w) || 0) + 1); }
+  const by = new Map(); for (const n of list) { const m = markOf(n, S.A), w = m.word; by.set(w, (by.get(w) || 0) + 1); }
   announce(`메모 ${list.length}개 추가 · ${[...by].map(([w, k]) => `${w} ${k}`).join(", ")}`);
 }
 function announce(msg) { const r = $("#live"); r.textContent = ""; setTimeout(() => { r.textContent = msg; }, 40); }
@@ -3548,7 +3565,7 @@ function reqView(rep, A) {
   ds.job.requirements.forEach((r, i) => {
     const linked = []; const seen = new Set();
     for (const it of rep.items) if ((it.requirement_ids || []).includes(r.id)) for (const c of it.citations) { const ci = citeInfo(ds, c); if (ci && !seen.has(ci.uid)) { seen.add(ci.uid); linked.push({ uid: ci.uid, tag: "리포트 인용", item: it.id }); } }
-    for (const n of A.notes) if (n.kind === "evidence" && (n.requirement_ids || []).includes(r.id) && !seen.has(n.unit_id)) { seen.add(n.unit_id); linked.push({ uid: n.unit_id, tag: "읽기 메모" }); }
+    for (const n of A.notes) if (n.kind === "evidence" && !markOf(n, A).was && (n.requirement_ids || []).includes(r.id) && !seen.has(n.unit_id)) { seen.add(n.unit_id); linked.push({ uid: n.unit_id, tag: "읽기 메모" }); }
     linked.sort((a, b) => ds.order.indexOf(a.uid) - ds.order.indexOf(b.uid));
     const lst = h("div", { class: "lst" });
     if (r.kind === "other") lst.append(h("p", { class: "r-empty", style: "border:0;padding:0" }, "공고 참고사항입니다. 실제 서류 제출 여부나 고용조건 수용 여부는 이 이력서만으로 판단하지 않습니다."));
@@ -3591,7 +3608,7 @@ function limitsBlock(rep, qs) {
       h("dt", null, "읽기 메모"), h("dd", null, isJev() ? `${JEV_NAME} · 이력서용 보정 전` : isLaya() ? "Laya 기본 모델 · 이력서용 학습·보정 전" : "문장 판단 모델 · 이력서용 보정 전"),
       h("dt", null, "요건 정리·리포트"), h("dd", null, !g.codex_model || g.codex_model === "cli_default" ? "OpenAI Codex · 기본 설정" : "OpenAI Codex"));
     if (g.policy_version === "readme-prefix-v2") gen.append(h("dt", null, "읽기 방식"), h("dd", null, "질문이 생기고 설명이 이어지는 과정을 기록"));
-    if (isJev()) gen.append(h("dt", null, "읽는 동안 본 것"), h("dd", null, "본인 역할 · 개선 결과의 전후 측정 근거"));
+    if (isJev()) gen.append(h("dt", null, "읽는 동안 본 것"), h("dd", null, "공고에 따른 역할·수행 방식·결과·비교 근거"));
     box.append(gen);
   }
   return box;
@@ -3733,7 +3750,7 @@ function renderEvSide(A, ev, entry) {
   const inline = mq1024.matches, box = inline ? h("aside", { class: "ev-inline", "aria-label": "리포트 항목" }) : side;
   const H = inline ? "h3" : "h2";
   const goUnit = uid => { const sp = PAPERS.ev.units.get(uid), r = sp && firstRect(sp); if (r) pageTurn(scrollY + r.top - innerHeight * .38); };
-  const noteLi = n => { const m = markOf(n, A); return h("li", { style: `--mk:${MARK_COLOR[m.cls]}` }, h("span", { class: "meta" }, swatch(m), h("b", { class: "num" }, String(n.num)), m.cls === "req" ? "요건 연결" : m.word), h("span", null, noteText(n.text))); };
+  const noteLi = n => { const m = markOf(n, A); return h("li", { style: `--mk:${MARK_COLOR[m.cls]}` }, h("span", { class: "meta" }, swatch(m), h("b", { class: "num" }, String(n.num)), m.word), h("span", null, noteText(n.text))); };
   const reqQuotes = ids => { const reqs = [...new Set(ids)].map(r => ds.reqById[r]).filter(Boolean); if (!reqs.length) return; box.append(h("h3", null, "공고 원문")); for (const r of reqs) box.append(h("div", { class: "req-quote" }, h("span", { class: "nm" }, h("span", { class: "c" }, circ(ds.reqIndex[r.id])), r.label), h("p", { class: "quote" }, r.quote))); };
   if (ev.mode === "item" && entry) {
     const it = entry.it;
