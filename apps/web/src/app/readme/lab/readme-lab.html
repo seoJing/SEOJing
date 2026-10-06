@@ -1204,15 +1204,16 @@ const FACET_WORD = { role: "역할", method: "방법", result: "결과", basis: 
    Nothing here calls a model: speech is a fixed phrase per verified code, chosen by the screen. */
 const FOCUS_POLICY = "readme-focus-v1";
 const isFocus = ds => (ds || S.ds)?.generation?.policy_version === FOCUS_POLICY;
-const FOCUS_TYPES = new Set(["context", "inquiry", "parked", "revisit", "updated", "observation", "speech"]);
+const FOCUS_TYPES = new Set(["context", "inquiry", "parked", "revisit", "updated", "observation", "retracted", "speech"]);
 const SPEECH_TEXT = {
   ask_role: "직접 맡은 부분은 무엇일까?", ask_method: "어떤 방식으로 풀었을까?", ask_result: "그 뒤의 결과도 나올까?",
   ask_basis: "무엇을 기준으로 비교했을까?", ask_reason: "왜 그 방향을 택했을까?",
   partial: "조금 더 알겠다. 더 읽어 보자.", resolved: "아, 여기서 설명되는구나.", revisit: "앞 문장과 다시 이어 보자.",
-  reopened: "앞의 설명을 다시 봐야겠다.", parked: "일단 기억해 두고 넘어가자.", understood: "어떤 일을 했는지 조금 더 보인다."
+  reopened: "앞의 설명을 다시 봐야겠다.", parked: "일단 기억해 두고 넘어가자.", understood: "어떤 일을 했는지 조금 더 보인다.",
+  revised: "앞에 적은 것을 고쳐야겠다."
 };
 const FOCUS_UPDATE_TEXT = { partial: "앞 질문의 설명이 일부 이어집니다.", resolved: "앞 질문이 여기서 설명됩니다.", reopened: "앞의 설명과 맞지 않아 질문을 다시 엽니다." };
-const OBS_TEXT = { activity: "한 일이 구체적으로 적혀 있습니다.", method: "어떻게 했는지가 적혀 있습니다.", result: "결과가 적혀 있습니다.", reason: "그렇게 한 이유가 적혀 있습니다.", role_scope: "맡은 범위가 적혀 있습니다.", plan: "실제 경험이 아니라 계획으로 적혀 있습니다." };
+const OBS_TEXT = { action: "한 일이 구체적으로 적혀 있습니다.", method: "어떻게 했는지가 적혀 있습니다.", outcome: "결과가 적혀 있습니다.", reason: "그렇게 한 이유가 적혀 있습니다.", boundary: "맡은 범위의 경계가 적혀 있습니다.", plan: "실제 경험이 아니라 계획으로 적혀 있습니다." };
 function unitQuote(ds, uid, max = 64) {
   const u = ds.unitById[uid]; if (!u) return "";
   const cut = Array.from(ds.blockById[u.block_id].text.slice(u.start, u.end).trim());
@@ -1415,27 +1416,34 @@ const SAMPLE_FOCUS = (() => { try { return document.querySelector('meta[name="re
 const SCRIPT_FOCUS = [
   [1, ["ask", "q1", "role", "이 경험에서 본인이 직접 맡은 일은 무엇인가요?"], ["say", "ask_role", "q1"]],
   [2, ["to", "q1", "resolved"], ["say", "resolved", "q1"]],
-  [3, ["obs", "activity"]],
+  [3, ["obs", "action", "o1"]],
   [4, ["ask", "q2", "basis", "만족도가 높아졌다는 것을 어떤 자료로 확인했나요?"], ["say", "ask_basis", "q2"]],
   [5, ["park", "q2"], ["say", "parked", "q2"], ["ask", "q3", "role", "학습 지원에서 본인이 맡은 범위는 무엇인가요?"], ["say", "ask_role", "q3"]],
   [6, ["to", "q3", "partial"], ["say", "partial", "q3"]],
   [7, ["park", "q3"], ["ask", "q4", "role", "체험 부스에서 본인이 맡은 일은 무엇인가요?"], ["say", "ask_role", "q4"]],
   [8, ["to", "q4", "resolved"], ["say", "resolved", "q4"]],
-  [9, ["revisit", "q2", 4, "answer", "none"], ["say", "revisit", "q2"], ["obs", "result"]]
+  [9, ["obs", "outcome", "o2"], ["say", "understood"]]
 ];
+/* events in the shape backend focus-contract.ts validates: a proof is {unit_id, quote, start, end} inside the unit text,
+   an inquiry opens with no adopted evidence, every updated follows a revisit to the question's origin in the same
+   window, a resolved question is parked, speech names its unit. */
 function compileFocus(ds, script) {
   const byUnit = new Map(), qs = new Map(); let ctx = 0;
-  const snap = q => ({ ...q, evidence: q.evidence.map(e => ({ ...e })), unit_id: q.origin_unit_id, evidence_unit_ids: q.evidence.map(e => e.unit_id), candidate_unit_ids: [] });
-  const quote = uid => ({ unit_id: uid, quote: unitQuote(ds, uid, 80) });
+  const snap = q => ({ ...q, evidence: q.evidence.map(e => ({ ...e })), withdrawn_evidence: [...q.withdrawn_evidence], correction_evidence: [...q.correction_evidence], unit_id: q.origin_unit_id, evidence_unit_ids: q.evidence.map(e => e.unit_id), candidate_unit_ids: q.correction_evidence.map(e => e.unit_id) });
+  const proof = uid => { const t = ds.unitById[uid].text, q = t.trim(), start = Math.max(0, t.indexOf(q)); return { unit_id: uid, quote: q, start, end: start + q.length }; };
   for (const [si, ...ops] of script) {
     const uid = ds.sent[si - 1], list = [], cid = "c" + (++ctx);
     for (const op of ops) {
-      if (op[0] === "ask") { const q = { id: op[1], origin_unit_id: uid, context_id: cid, facet: op[2], text: op[3], status: "open", evidence: [quote(uid)], focus: "active", state_version: 1 }; qs.set(q.id, q); list.push({ type: "inquiry", at_unit_id: uid, context_id: cid, question: snap(q) }); }
-      else if (op[0] === "to") { const q = qs.get(op[1]), prev = q.status; q.status = op[2]; q.state_version++; q.evidence = [...q.evidence, quote(uid)]; q.focus = "active"; list.push({ type: "updated", at_unit_id: uid, context_id: cid, previous_status: prev, question: snap(q) }); }
+      if (op[0] === "ask") { const q = { id: op[1], origin_unit_id: uid, context_id: cid, facet: op[2], text: op[3], status: "open", evidence: [], focus: "active", state_version: 1, withdrawn_evidence: [], correction_evidence: [] }; qs.set(q.id, q); list.push({ type: "inquiry", at_unit_id: uid, context_id: cid, question: snap(q), state_version: 1 }); }
+      else if (op[0] === "to") {
+        const q = qs.get(op[1]), prev = q.status, targets = [q.origin_unit_id];
+        list.push({ type: "revisit", at_unit_id: uid, context_id: cid, question_id: q.id, target_unit_ids: targets, reason: "answer" });
+        q.status = op[2]; q.state_version++; q.evidence = [...q.evidence, proof(uid)]; if (op[2] === "resolved") q.focus = "parked";
+        list.push({ type: "updated", at_unit_id: uid, context_id: cid, previous_status: prev, question: snap(q), state_version: q.state_version, target_unit_ids: targets });
+      }
       else if (op[0] === "park") { const q = qs.get(op[1]); q.focus = "parked"; list.push({ type: "parked", at_unit_id: uid, context_id: cid, question_id: q.id }); }
-      else if (op[0] === "revisit") list.push({ type: "revisit", at_unit_id: uid, context_id: cid, question_id: op[1], target_unit_ids: [ds.sent[op[2] - 1]], reason: op[3], outcome: op[4] });
-      else if (op[0] === "obs") list.push({ type: "observation", at_unit_id: uid, context_id: cid, kind: op[1], evidence: [quote(uid)] });
-      else if (op[0] === "say") list.push({ type: "speech", at_unit_id: uid, context_id: cid, code: op[1], question_id: op[2] || null, target_unit_ids: [] });
+      else if (op[0] === "obs") list.push({ type: "observation", at_unit_id: uid, context_id: cid, note_id: op[2], kind: op[1], evidence: [proof(uid)] });
+      else if (op[0] === "say") list.push({ type: "speech", at_unit_id: uid, context_id: cid, code: op[1], ...(op[2] ? { question_id: op[2] } : {}), target_unit_ids: [uid] });
     }
     if (list.length) byUnit.set(uid, list);
   }
@@ -1711,7 +1719,7 @@ function applyEvents(A, evs, ds) {
 /* focus events become the same accumulator the screen already draws: a question with its history, memos on the
    sheet, plus revisits and speech kept beside the question. Returns true when something new was applied. */
 const evUnits = (ev, ds) => (ev || []).map(x => x.unit_id).filter((x, i, a) => ds.unitById[x] && a.indexOf(x) === i);
-function focusSnap(qs, ds) { return { ...qs, unit_id: qs.origin_unit_id, evidence_unit_ids: evUnits(qs.evidence, ds), candidate_unit_ids: qs.candidate_unit_ids || [], label: qs.label || null }; }
+function focusSnap(qs, ds) { return { ...qs, unit_id: qs.origin_unit_id, evidence_unit_ids: evUnits(qs.evidence, ds), candidate_unit_ids: evUnits(qs.correction_evidence, ds), label: qs.label || null }; }
 function focusNote(A, fresh, note) { note.num = A.notes.length + 1; note.review_required = true; A.notes.push(note); A.noteById.set(note.id, note); fresh.push(note); }
 function applyFocusEvent(A, e, ds, fresh, trans) {
   const uid = e.at_unit_id; if (!ds.unitById[uid]) return false;
@@ -1738,13 +1746,22 @@ function applyFocusEvent(A, e, ds, fresh, trans) {
   }
   if (e.type === "parked") { const q = A.q.get(e.question_id); if (!q || q.focus === "parked") return false; q.focus = "parked"; q.parkedAt = uid; return true; }
   if (e.type === "revisit") {
-    const q = A.q.get(e.question_id); if (!q) return false;
+    const q = A.q.get(e.question_id); if (!q || q.revisits.some(r => r.at_unit_id === uid)) return false; /* one revisit per question per window */
     const r = { question_id: q.id, targets: (e.target_unit_ids || []).filter(t => ds.unitById[t]), reason: e.reason === "correction" ? "correction" : "answer", at_unit_id: uid, outcome: e.outcome || null };
     q.revisits.push(r); A.revisits.push(r); return true;
   }
   if (e.type === "observation") {
-    const ev = evUnits(e.evidence, ds), at = ev[0] || uid;
-    focusNote(A, fresh, { id: `fo:${uid}:${A.obs++}`, unit_id: at, kind: "observation", text: `“${unitQuote(ds, at)}” — ${OBS_TEXT[e.kind] || "원문에서 읽은 내용입니다."}`, evidence_unit_ids: ev.length ? ev : [at] });
+    const ev = evUnits(e.evidence, ds), at = ev.includes(uid) ? uid : ev[0] || uid, id = e.note_id ? `fo:${e.note_id}` : `fo:${uid}:${A.obs++}`;
+    if (A.noteById.has(id)) return false;
+    focusNote(A, fresh, { id, unit_id: at, kind: "observation", text: `“${unitQuote(ds, at)}” — ${OBS_TEXT[e.kind] || "원문에서 읽은 내용입니다."}`, evidence_unit_ids: ev.length ? ev : [at] });
+    return true;
+  }
+  if (e.type === "retracted") {
+    const prior = e.note_id && A.noteById.get(`fo:${e.note_id}`), id = `fr:${e.note_id}`;
+    if (!prior || A.retracted.has(prior.id) || A.noteById.has(id)) return false;
+    const ev = evUnits(e.evidence, ds), at = ev.includes(uid) ? uid : ev[0] || uid;
+    focusNote(A, fresh, { id, unit_id: at, kind: "observation", text: `“${unitQuote(ds, at)}” — 앞의 참고(메모 ${prior.num})와 맞지 않아 그 메모를 거둡니다.`, evidence_unit_ids: ev.length ? ev : [at], retracted_note_id: prior.id });
+    A.retracted.set(prior.id, id);
     return true;
   }
   if (e.type === "speech") {
@@ -1795,7 +1812,7 @@ function markOf(n, A) {
     return n.kind === "resolves" ? { cls: "ok", word: "설명 찾음" } : { cls: "held", word: "판단 보류", noq: true };
   }
   if (n.kind === "evidence") { const was = A.retracted.has(n.id); return { cls: "req", was, word: was ? "요건 연결 · 이전" : "요건 연결", reqs: n.requirement_ids || [] }; }
-  return { cls: "obs", word: "참고" };
+  { const was = A.retracted.has(n.id); return { cls: "obs", was, word: was ? "참고 · 이전" : "참고" }; }
 }
 /* evidence that a later reopen withdrew stays "· 이전", whatever the question did afterwards */
 function laterReopen(q, sv) { return !!q && q.hist.some(x => x.status === "reopened" && (x.state_version || 0) > sv); }
@@ -2696,7 +2713,7 @@ function ingest(e) {
     case "window_started": for (const u of e.unit_ids) { R.started.add(u); R.windowSeen[u] = nowMs(); } R.open = e.unit_ids[0]; break;
     case "window_completed": for (const u of e.unit_ids) R.done.add(u); R.open = null; break;
     case "note": case "question_updated":
-    case "context": case "inquiry": case "parked": case "revisit": case "updated": case "observation": case "speech":
+    case "context": case "inquiry": case "parked": case "revisit": case "updated": case "observation": case "retracted": case "speech":
       if (R.open) { if (!R.byUnit.has(R.open)) R.byUnit.set(R.open, []); R.byUnit.get(R.open).push(e); } else R.end.push(e);
       break;
     case "reading_completed": R.readingCompleted = true; break;
@@ -3142,7 +3159,7 @@ function renderDetail(det, n) {
     det.append(h("h4", null, `질문 기록 · ${qTitle(q.snap, n.text)}${facetExtra(q.snap) ? " · " + facetExtra(q.snap) : ""}`));
     const ol = h("ol", { class: "timeline" }), pos = uid => S.ds.order.indexOf(uid);
     const rows = q.hist.map((u, i) => ({ k: pos(u.previous_status == null ? q.origin : u.at_unit_id), o: i, u }));
-    for (const r of q.revisits || []) rows.push({ k: pos(r.at_unit_id), o: rows.length, r });
+    for (const r of q.revisits || []) rows.push({ k: pos(r.at_unit_id), o: -1, r }); /* the look back comes before the change it led to */
     rows.sort((a, b) => a.k - b.k || a.o - b.o);
     rows.forEach((row, i) => {
       const cur = i === rows.length - 1;
@@ -3160,7 +3177,7 @@ function renderDetail(det, n) {
   }
   if (A.retracted.has(n.id)) {
     const correction = A.noteById.get(A.retracted.get(n.id));
-    det.append(h("p", { class: "state-note" }, "뒤의 설명에서 정정된 이전 근거입니다. 현재 요건 연결에서는 제외했습니다."));
+    det.append(h("p", { class: "state-note" }, n.kind === "evidence" ? "뒤의 설명에서 정정된 이전 근거입니다. 현재 요건 연결에서는 제외했습니다." : "뒤 문장에서 거둔 이전 참고입니다. 현재 설명에서는 제외했습니다."));
     if (correction) det.append(h("div", null, "정정된 문장 · ", qbtn(correction.unit_id)));
   }
   if (n.requirement_ids?.length) {
