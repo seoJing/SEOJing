@@ -230,7 +230,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
       />
 
       {article ? (
-        <div className="rounded-3xl border border-zinc-200 bg-white/80 p-5 dark:border-zinc-800 dark:bg-zinc-950/70">
+        <div className="sm:rounded-3xl sm:border sm:border-zinc-200 sm:bg-white/80 sm:p-5 sm:dark:border-zinc-800 sm:dark:bg-zinc-950/70">
           <ArticleMetadata
             description={description}
             disabled={isBusy}
@@ -242,7 +242,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
             category
             <input
               list="cms-article-categories"
-              className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
+              className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50 sm:rounded-2xl sm:px-4 sm:py-3"
               value={category}
               onChange={(event) => setCategory(event.target.value)}
               disabled={isBusy}
@@ -294,13 +294,14 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                   }}
                   disabled={isBusy}
                   mono
+                  minimalMobile
                   rows={24}
                 />
               ) : (
                 <div className="space-y-3">
                   {mdxSections.map((section, index) => (
                     <div
-                      className="min-w-0 rounded-2xl border border-zinc-200 bg-zinc-50/70 p-3 dark:border-zinc-800 dark:bg-zinc-900/40 sm:p-4"
+                      className="min-w-0 sm:rounded-2xl sm:border sm:border-zinc-200 sm:bg-zinc-50/70 sm:p-4 sm:dark:border-zinc-800 sm:dark:bg-zinc-900/40"
                       key={index}
                     >
                       <TextAreaField
@@ -319,6 +320,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                         }}
                         disabled={isBusy}
                         mono
+                        minimalMobile
                         rows={Math.min(
                           18,
                           Math.max(5, section.source.split("\n").length + 1),
@@ -333,7 +335,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                 아래 미리보기는 마지막으로 저장한 revision 기준입니다.
               </p>
               {article.renderedHtml ? (
-                <section className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950 sm:p-6">
+                <section className="min-w-0 max-w-full overflow-hidden sm:rounded-2xl sm:border sm:border-zinc-200 sm:bg-white sm:p-6 sm:dark:border-zinc-800 sm:dark:bg-zinc-950">
                   <h3 className="text-sm font-semibold">
                     저장된 수정본 미리보기
                   </h3>
@@ -341,7 +343,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                     title="저장된 MDX 수정본 미리보기"
                     sandbox=""
                     srcDoc={mdxPreviewDocument(article.renderedHtml)}
-                    className="mt-5 h-[32rem] w-full min-w-0 max-w-full rounded-xl border border-zinc-200 bg-white sm:h-[40rem]"
+                    className="mt-5 h-[32rem] w-full min-w-0 max-w-full bg-white sm:h-[40rem] sm:rounded-xl sm:border sm:border-zinc-200"
                   />
                 </section>
               ) : null}
@@ -546,7 +548,7 @@ function NewCmsArticleForm() {
         category
         <input
           list="cms-article-categories"
-          className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
+          className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50 sm:rounded-2xl sm:px-4 sm:py-3"
           value={category}
           onChange={(event) => setCategory(event.target.value)}
           disabled={saving}
@@ -597,7 +599,7 @@ function ArticleMetadata({
       <label className="mt-4 block text-sm font-medium text-zinc-600 dark:text-zinc-300">
         title
         <input
-          className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
+          className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50 sm:rounded-2xl sm:px-4 sm:py-3"
           value={title}
           onChange={(event) => onTitleChange(event.target.value)}
           disabled={disabled}
@@ -983,6 +985,7 @@ function TextAreaField({
   onChange,
   disabled,
   mono = false,
+  minimalMobile = false,
   rows,
 }: {
   label: string;
@@ -990,6 +993,7 @@ function TextAreaField({
   onChange: (value: string) => void;
   disabled: boolean;
   mono?: boolean;
+  minimalMobile?: boolean;
   rows?: number;
 }) {
   return (
@@ -997,7 +1001,7 @@ function TextAreaField({
       {label}
       <textarea
         rows={rows}
-        className={`mt-1 min-h-24 w-full min-w-0 max-w-full resize-y rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 ${mono ? "font-mono" : ""}`}
+        className={`mt-1 min-h-24 w-full min-w-0 max-w-full resize-y text-sm text-zinc-950 dark:text-zinc-50 ${minimalMobile ? "border-0 border-b border-zinc-200 bg-transparent px-0 py-1 focus:border-zinc-500 focus:outline-none sm:rounded-lg sm:border sm:bg-white sm:px-3 sm:py-2 sm:dark:border-zinc-700 sm:dark:bg-zinc-950" : "rounded-lg border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"} ${mono ? "font-mono" : ""}`}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
@@ -1047,6 +1051,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; } pre code {
 img, figure, svg { max-width: 100%; height: auto; } figure { margin: 2rem 0; }
 table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; } th, td { border-bottom: 1px solid #d1d5db; padding: .75rem; text-align: left; }
 @media (min-width: 640px) { p, li { font-size: 1.125rem; } }
+@media (max-width: 639px) { body { padding: .25rem; } }
 </style></head><body>${html}</body></html>`;
 }
 
@@ -1062,7 +1067,7 @@ function ArticleStatusCard({
   selectedSlug: string;
 }) {
   return (
-    <div className="rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950/70">
+    <div className="sm:rounded-3xl sm:border sm:border-zinc-200 sm:bg-white/80 sm:p-5 sm:shadow-sm sm:dark:border-zinc-800 sm:dark:bg-zinc-950/70">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
@@ -1116,7 +1121,7 @@ function ArticleStatusCard({
 }
 function StatusPill({ label, value }: { label: string; value: string }) {
   return (
-    <span className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+    <span className="text-zinc-600 dark:text-zinc-300 sm:rounded-full sm:border sm:border-zinc-200 sm:bg-zinc-50 sm:px-3 sm:py-1 sm:dark:border-zinc-800 sm:dark:bg-zinc-900">
       {label}:{" "}
       <strong className="text-zinc-950 dark:text-zinc-50">{value}</strong>
     </span>
