@@ -6,7 +6,6 @@ import { IconButton } from "@app/ui";
 import {
   IoArrowBack,
   IoChatbubbleOutline,
-  IoCreateOutline,
   IoEaselOutline,
 } from "react-icons/io5";
 import { CommentModal } from "@/widgets/comment";
@@ -96,14 +95,6 @@ export function ArticleToolbar({ slug, title }: ArticleToolbarProps) {
         className="sticky bottom-6 z-20 flex justify-center"
       >
         <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-background/80 px-3 py-2 shadow-lg backdrop-blur-sm dark:border-gray-700 dark:bg-[#0a0a0a]/80">
-          <a
-            href={`/ops/articles?slug=${encodeURIComponent(slug)}`}
-            aria-label="이 글 편집"
-            title="이 글 편집 (관리자 전용)"
-            className="inline-flex size-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
-          >
-            <IoCreateOutline className="size-5" aria-hidden="true" />
-          </a>
           <IconButton
             variant="ghost"
             size="sm"

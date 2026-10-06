@@ -26,6 +26,21 @@ export type ArticleBlock = {
 
 export type MdxSection = { label: string; source: string };
 
+/** Frontmatter is managed separately from the visual body; never serialize it through the editor. */
+export function splitMdxFrontmatter(source: string): {
+  prefix: string;
+  body: string;
+} {
+  const opening = /^(?:\uFEFF)?---(?:\r\n|\n|\r)/.exec(source);
+  if (!opening) return { prefix: "", body: source };
+  const closing = /^---[ \t]*(?:\r\n|\n|\r|$)/gm;
+  closing.lastIndex = opening[0].length;
+  const match = closing.exec(source);
+  if (!match) return { prefix: "", body: source };
+  const end = match.index + match[0].length;
+  return { prefix: source.slice(0, end), body: source.slice(end) };
+}
+
 /** Textareas use LF internally; restore the source's line endings on edit. */
 export function preserveMdxLineEndings(
   edited: string,
