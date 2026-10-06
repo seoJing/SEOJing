@@ -1,0 +1,1220 @@
+[
+  {
+    "sourcePath": "SEOJing/cloudflare-workers-fs-issue.mdx",
+    "slug": "SEOJing/cloudflare-workers-fs-issue",
+    "sourceSha256": "a270b141b34287f7b4401f6c8aca2319d9cc46e641abe3a70d6f8f9b067ac8bf",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/cover-automation-codex-test.mdx",
+    "slug": "SEOJing/cover-automation-codex-test",
+    "sourceSha256": "2ccedb09ac015336637f36a66c426b5fbae3b606fe3c4a0da8f44819e638a937",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/day1.mdx",
+    "slug": "SEOJing/devLog/day1",
+    "sourceSha256": "dded83549e748f3bb6464668ff84c8c422b26ddd147ed3eaeee156f97b52ee7c",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/day10.mdx",
+    "slug": "SEOJing/devLog/day10",
+    "sourceSha256": "026264ea3725a39563790a9e18608c03fa5ab9808d33c067675dbd7fd7e584b5",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/day11.mdx",
+    "slug": "SEOJing/devLog/day11",
+    "sourceSha256": "a5f2f7c3cb78865e04bcb6ea4a227c0721c82eb1e37901126842b176859f5055",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/day12.mdx",
+    "slug": "SEOJing/devLog/day12",
+    "sourceSha256": "1ac104c6825547e436b46eaae421040244050f2047e4a43c3bf92b67b8225e01",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/day2.mdx",
+    "slug": "SEOJing/devLog/day2",
+    "sourceSha256": "d3c8954c72d2a31495472e668d72bef0d04cad1b7922829856253dd7c38c5d15",
+    "components": ["Subtitle", "Paragraph", "Anchor"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/day3.mdx",
+    "slug": "SEOJing/devLog/day3",
+    "sourceSha256": "ce80cc0961484893c1cc3fb1ee297075ea5bd4ff24619715e2ecf57c8afdfe18",
+    "components": ["Subtitle", "Paragraph", "Anchor"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/day4.mdx",
+    "slug": "SEOJing/devLog/day4",
+    "sourceSha256": "a9ba715d26fe54823c7b6fa0210fa0b2fe80e480c39bd5b4a3298cf6cf2e52da",
+    "components": ["Subtitle", "Paragraph", "Anchor"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/day5.mdx",
+    "slug": "SEOJing/devLog/day5",
+    "sourceSha256": "0b59fc7ae96097f005330a5b81f2abd6f382605a55339f73168b0fc504ef6803",
+    "components": ["Subtitle", "Paragraph", "Anchor"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/day6.mdx",
+    "slug": "SEOJing/devLog/day6",
+    "sourceSha256": "65e34249c8a72e7220a3a03606ca9881fba43d3cbdc9c274a4cdbbf80a6a1f66",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/day7.mdx",
+    "slug": "SEOJing/devLog/day7",
+    "sourceSha256": "ba7055bb73b7def6b0b19ad795aea79b7c6e27187f07eaf627c9425d8a510379",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/day8.mdx",
+    "slug": "SEOJing/devLog/day8",
+    "sourceSha256": "49785098c74c6e36eddbb33219b1de1ac0147665c3aab74a516a50248a87f94e",
+    "components": ["Subtitle", "Paragraph", "Anchor"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/day9.mdx",
+    "slug": "SEOJing/devLog/day9",
+    "sourceSha256": "3f84182ce89ffee9473234270f22326f4eba9c0b165323652227c5a5d83c8f78",
+    "components": ["Subtitle", "Paragraph", "Anchor"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/insight/code-review-feedback.mdx",
+    "slug": "SEOJing/devLog/insight/code-review-feedback",
+    "sourceSha256": "f67cc58f5a8ef5a083f0614a44c20389799da6f8bbc451b3d0eb64c4e693b7ad",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/insight/comment-read-tracking.mdx",
+    "slug": "SEOJing/devLog/insight/comment-read-tracking",
+    "sourceSha256": "549c08bccb5a9cdb2847c34f453ab8289fcabf0998b2719e1c6ff81140784723",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/insight/design-system-tips.mdx",
+    "slug": "SEOJing/devLog/insight/design-system-tips",
+    "sourceSha256": "aa8d3f31dc9cfe2efbdf4a10d3d535e09db0c05c69cbe62235c8322f215b2a72",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/insight/font-issue.mdx",
+    "slug": "SEOJing/devLog/insight/font-issue",
+    "sourceSha256": "83c385e96056cf6c535fbfd7924f360633648ef8856eb0fc126234860898da80",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/insight/mdx-dom-tree-parsing.mdx",
+    "slug": "SEOJing/devLog/insight/mdx-dom-tree-parsing",
+    "sourceSha256": "ba99724974eeb515f87b528d4ec3bec366cf8f33526fb90a92bb5107390c4176",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/insight/mdx-library-issue.mdx",
+    "slug": "SEOJing/devLog/insight/mdx-library-issue",
+    "sourceSha256": "04250dd69021bfb14a25e5fca608e2bfbd8d3d3803c47320927d887041c8fce2",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/insight/nodejs-basics.mdx",
+    "slug": "SEOJing/devLog/insight/nodejs-basics",
+    "sourceSha256": "a71d0361d49fa1b3409400ac87d76feebc74692157d2e089accf6242a9438478",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/insight/overall-flow.mdx",
+    "slug": "SEOJing/devLog/insight/overall-flow",
+    "sourceSha256": "f633dfadad1aadbed733ea2d0acb1ba5f0ae026d1cc252addee6fa735d056bda",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/insight/storybook-design-system.mdx",
+    "slug": "SEOJing/devLog/insight/storybook-design-system",
+    "sourceSha256": "6b9f604d1f916ad14eb9ed38291fa10d0c9f7b6acb96d60fb23c93516ed9f917",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/insight/what-is-mdx.mdx",
+    "slug": "SEOJing/devLog/insight/what-is-mdx",
+    "sourceSha256": "c8b9a89a85040ee677d137f341f4bc27bd9b4195c1be589afd8c0f4ee65ab9ba",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/reason.mdx",
+    "slug": "SEOJing/devLog/reason",
+    "sourceSha256": "824b3ce226aa206ac599b03d5ae242043dbbae66f4726e088a354a51562ae292",
+    "components": ["Subtitle", "Paragraph", "Anchor"]
+  },
+  {
+    "sourcePath": "SEOJing/devLog/why-projects-stop.mdx",
+    "slug": "SEOJing/devLog/why-projects-stop",
+    "sourceSha256": "de584f08021ba85e8126a3f3abf6ea31e17268bc171c6f35eb17cbe47f82f4b8",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/inline-visual-pipeline.mdx",
+    "slug": "SEOJing/inline-visual-pipeline",
+    "sourceSha256": "0ad7d2ebfaa9490de92f71e2884dd65f4a2637692f39afcac5266dd93cb31705",
+    "components": ["ArticleImage"]
+  },
+  {
+    "sourcePath": "SEOJing/mobile-landscape-code-viewer.mdx",
+    "slug": "SEOJing/mobile-landscape-code-viewer",
+    "sourceSha256": "2ac2a7166490c98ccb287b16d697fe1765678c365afaabf80fc9b48de4220ef1",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/mobile-presentation-mode.mdx",
+    "slug": "SEOJing/mobile-presentation-mode",
+    "sourceSha256": "7bf5a5a55f36974caea48cdcda96fcf626598505ffafa9b4d7b8ccd674aa26b7",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/presentation-scale-stabilization.mdx",
+    "slug": "SEOJing/presentation-scale-stabilization",
+    "sourceSha256": "0662009a62b4a7c5f712a908e490c5ed6ea732f6d2362ee1641be9ef521e311e",
+    "components": ["Subtitle", "Paragraph", "ArticleImage"]
+  },
+  {
+    "sourcePath": "SEOJing/react-children-api.mdx",
+    "slug": "SEOJing/react-children-api",
+    "sourceSha256": "9ef2386baba8575c144bc8e7f15969d72f7f694a5bcc74b00795ba1829cc7471",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/riso-cover-pipeline.mdx",
+    "slug": "SEOJing/riso-cover-pipeline",
+    "sourceSha256": "998178479642daa8e4e8860f283510f00997724343cbd2fc665ecb58ef5207dc",
+    "components": []
+  },
+  {
+    "sourcePath": "SEOJing/summary-video-pipeline.mdx",
+    "slug": "SEOJing/summary-video-pipeline",
+    "sourceSha256": "30f73a25ab726c75d21ace0b500e72edbc0b8a94281c7ff3798b56d92122a986",
+    "components": ["ArticleImage"]
+  },
+  {
+    "sourcePath": "SEOJing/use-sync-external-store-hydration.mdx",
+    "slug": "SEOJing/use-sync-external-store-hydration",
+    "sourceSha256": "c05a0e61f5cc022d3ce0e62c413c37ffe984e41abf45dacd63ab78cbe36e090a",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/useeffect-cleanup-dependency-bug.mdx",
+    "slug": "SEOJing/useeffect-cleanup-dependency-bug",
+    "sourceSha256": "c7aa592704008006609b94b62c5b5e525975dc80024943e2767cc0c09bb2b04e",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/vinext-github-actions-deploy.mdx",
+    "slug": "SEOJing/vinext-github-actions-deploy",
+    "sourceSha256": "6919958f62c6613d3a4271483ea0f032bd3899ea597150afa90e8c8459b268e1",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/vinext-non-ascii-bug-contribution.mdx",
+    "slug": "SEOJing/vinext-non-ascii-bug-contribution",
+    "sourceSha256": "cb98b8d7d75d3db63cc11c9c039469435399ebdcdec4cb153415bdc16441047c",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/wasm-shiki-rsc-issue.mdx",
+    "slug": "SEOJing/wasm-shiki-rsc-issue",
+    "sourceSha256": "eaea0d747c257ce4cef3ead275f2543ea57b5630025bc7fd90dbdf3b791a2646",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "SEOJing/web-rendering-performance-fundamentals.mdx",
+    "slug": "SEOJing/web-rendering-performance-fundamentals",
+    "sourceSha256": "ba36b23dfe637f365e261497eeca75665056e682c86562feee3f52759475b57b",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "clab/agent-coaching-harness.mdx",
+    "slug": "clab/agent-coaching-harness",
+    "sourceSha256": "9e0706805011984d51c801044f2e0c844099fb7e62ba4af784ebf89a6124f676",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "clab/insight-analysis/ai-code-review-adoption.mdx",
+    "slug": "clab/insight-analysis/ai-code-review-adoption",
+    "sourceSha256": "1d6c06848fc4c0c0d6cae6599e59fb7e8118ffb9fdc4a09dfb6d4d2b3efd06d0",
+    "components": []
+  },
+  {
+    "sourcePath": "clab/insight-analysis/playwright-e2e-harness.mdx",
+    "slug": "clab/insight-analysis/playwright-e2e-harness",
+    "sourceSha256": "1f0b2080442e6b070cf943e6c8da2682883cf2b338d8e7b70381b1f45883d8c3",
+    "components": []
+  },
+  {
+    "sourcePath": "clab/insight-analysis/project-automation-with-ai.mdx",
+    "slug": "clab/insight-analysis/project-automation-with-ai",
+    "sourceSha256": "a28599fec32908688eaa7fb90800474742626a3eb1e5e158c4df2f0333ae0814",
+    "components": []
+  },
+  {
+    "sourcePath": "clab/insight-analysis/skill-quality-rubric.mdx",
+    "slug": "clab/insight-analysis/skill-quality-rubric",
+    "sourceSha256": "1d7c11136b5c959fe7ebf754fb848dad9391dd17b58cdbe7be1c04933ac66fda",
+    "components": []
+  },
+  {
+    "sourcePath": "clab/repo-local-skill-pack-harness.mdx",
+    "slug": "clab/repo-local-skill-pack-harness",
+    "sourceSha256": "f51996c660cd643974371e69b519a61158eda92c03360437632409536f672ce0",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "kd-team/graduate/docker-compose-evolution.mdx",
+    "slug": "kd-team/graduate/docker-compose-evolution",
+    "sourceSha256": "56d19dd818ec716f77fbb6fa6f340b182f4cf342cbf59d1bafeeb84c1618300d",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "kd-team/graduate/docker-deep-dive.mdx",
+    "slug": "kd-team/graduate/docker-deep-dive",
+    "sourceSha256": "35631f9ef05eb21488260366db5c4259e3086802d7d947bb59885585790a56f0",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "kd-team/graduate/overview.mdx",
+    "slug": "kd-team/graduate/overview",
+    "sourceSha256": "1d8a7b312e41fa6c8e1f2d5a262552a9c4c36129b8aee61910106554bfbae174",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "kd-team/reason.mdx",
+    "slug": "kd-team/reason",
+    "sourceSha256": "15e8765265d587705eba1913e91590b50fad48838a5daebfdad7c81848d5a1b1",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "kd-team/toy-project/hlmn-refactor.mdx",
+    "slug": "kd-team/toy-project/hlmn-refactor",
+    "sourceSha256": "ee581caee04a7a56e24003792e0141725dcc79c88f7f5354578c64cebbecb90e",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "kd-team/toy-project/pre-toy.mdx",
+    "slug": "kd-team/toy-project/pre-toy",
+    "sourceSha256": "5ca3fa55b4ba20cca265c89e1478fb13689bdfb79d4802df48e700c67ec67bfa",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/architecture/agent-framework-standards-intake.mdx",
+    "slug": "okayJing/architecture/agent-framework-standards-intake",
+    "sourceSha256": "9dc696fa32921083873d79fccbdeb680b538bd914544fa310e7d8d0b41533abd",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/architecture/capability-handoff-contracts.mdx",
+    "slug": "okayJing/architecture/capability-handoff-contracts",
+    "sourceSha256": "ed2b0e275a3ffe291121958fae168f651dfcfabc9165c13a672469c1eff1c07d",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/architecture/extension-boundaries.mdx",
+    "slug": "okayJing/architecture/extension-boundaries",
+    "sourceSha256": "9ee50971a0683c102ad62b4b92b737b05c988bf1fc0dc041726edf0d082b2d98",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/architecture/hermes-only-hub-spoke.mdx",
+    "slug": "okayJing/architecture/hermes-only-hub-spoke",
+    "sourceSha256": "a62482355067411ef3d0533fab83fa0ba801878914645fe0d43df7ccaa9f0225",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/architecture/jing-factory-hermes-redesign.mdx",
+    "slug": "okayJing/architecture/jing-factory-hermes-redesign",
+    "sourceSha256": "e47c5c65fa8fcf055869d57b0fe5d4a9ad21932522c1507ab5b347ccfcf7b7b2",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/architecture/jing-studio-contract-pipeline.mdx",
+    "slug": "okayJing/architecture/jing-studio-contract-pipeline",
+    "sourceSha256": "e9283a95f9d8bc65ac12738f6e6b29449c8db325e370c2d9a2b28fe329bbacd8",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/architecture/local-evidence-router-boundary.mdx",
+    "slug": "okayJing/architecture/local-evidence-router-boundary",
+    "sourceSha256": "ee45c27693cfc1ce3a11aeb51a10f2e80c97a555bb4b7f775ef316bc7ed24158",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/architecture/okayjing-local-discord-replacement-criteria.mdx",
+    "slug": "okayJing/architecture/okayjing-local-discord-replacement-criteria",
+    "sourceSha256": "8705fd2e29b4ac273b6cf747b5f0cc76077bc6f6cda6bd927809b1a0a098a70f",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/architecture/pixel-office-worker-space.mdx",
+    "slug": "okayJing/architecture/pixel-office-worker-space",
+    "sourceSha256": "ed5f7a16d7ffb830b56a71fc73b5c2ddff9692232e4b2d1441d02967cff9efc9",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/architecture/source-resource-api-boundary.mdx",
+    "slug": "okayJing/architecture/source-resource-api-boundary",
+    "sourceSha256": "2fc03407e855eac81d56141737937ce99dd02ebddc6359c7e088035ed870af81",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/automation/briefing-automation-report-skill.mdx",
+    "slug": "okayJing/automation/briefing-automation-report-skill",
+    "sourceSha256": "6a0981e28fa28feed34714a6695bbe3e534b9e059efe7993fb3a88fdd83ff015",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/automation/cron-prompt-self-contained.mdx",
+    "slug": "okayJing/automation/cron-prompt-self-contained",
+    "sourceSha256": "bd1c263bc311c946d28dd9d87775c069a1f0e795ec6164a0376c7d9186b7c914",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/automation/okejing-dreaming-loop.mdx",
+    "slug": "okayJing/automation/okejing-dreaming-loop",
+    "sourceSha256": "521a8262386fedd6f09b4058cff25e72bbedace85eda65141809f4846684cab1",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/discord/discord-free-response-channel-prompt.mdx",
+    "slug": "okayJing/discord/discord-free-response-channel-prompt",
+    "sourceSha256": "31c9424d9d6e4930443063e157fd0bea7f6ab7159ae7b3f2246a15a8a5976736",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/discord/discord-migration-and-hermes-identity.mdx",
+    "slug": "okayJing/discord/discord-migration-and-hermes-identity",
+    "sourceSha256": "92631561c34f0b91306de5e1ccddd5f9e2b2c08b495a3d0473743819cdfd6268",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/discord/discord-startup-auto-resume.mdx",
+    "slug": "okayJing/discord/discord-startup-auto-resume",
+    "sourceSha256": "af44cac76a445a4ebbaf367991519230fd5a253ee0edcfb794999b8ac8e7a37e",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/evolution/logic-evolution-map.mdx",
+    "slug": "okayJing/evolution/logic-evolution-map",
+    "sourceSha256": "82696a43f55218b8ae7e326408b12263f3f40c453074419b2d74d85f98bc88ca",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/evolution/okejing-vnext.mdx",
+    "slug": "okayJing/evolution/okejing-vnext",
+    "sourceSha256": "c8c8e5852c7890aea9b6031209367b97dda721d2969ed220f49fcced2dab3d30",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/evolution/openclaw-big-picture.mdx",
+    "slug": "okayJing/evolution/openclaw-big-picture",
+    "sourceSha256": "bab088de282a969658cdd868ba47cff51c3d05150aea5833795a8751e53c6479",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/evolution/openclaw-operating-series-overview.mdx",
+    "slug": "okayJing/evolution/openclaw-operating-series-overview",
+    "sourceSha256": "0932ac655742bd8607c2fc8e21ad5d5b16362080241500f0fdb05b87201c8a0e",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/evolution/openclaw-ops-decisions.mdx",
+    "slug": "okayJing/evolution/openclaw-ops-decisions",
+    "sourceSha256": "5126479914716b312a1af6c15df3a2e7075f9e7572347bc39f1d25723ad25eec",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/evolution/openclaw-runtime-core.mdx",
+    "slug": "okayJing/evolution/openclaw-runtime-core",
+    "sourceSha256": "3eae48c28f8938efb874abb2ad926e8753aa7deee0a84a7822535ce03a2bd257",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/evolution/openclaw-systemd-remnants.mdx",
+    "slug": "okayJing/evolution/openclaw-systemd-remnants",
+    "sourceSha256": "b9988bd28d382013cc44de13dae4b9184e31ada446f06bf823e55e857eb575a8",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/evolution/openclaw-to-hermes-single-system.mdx",
+    "slug": "okayJing/evolution/openclaw-to-hermes-single-system",
+    "sourceSha256": "4d4b26ddf3cee3a6953b71004d59b45657531c1c9e30ee2ef837feaf9d887c29",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/memory/gemma4-router-fixture-evaluation.mdx",
+    "slug": "okayJing/memory/gemma4-router-fixture-evaluation",
+    "sourceSha256": "f18bbcd70d8443ef7822e08a289e2143f0b68be8aa7f6dc28d90246a3f7c9b26",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/memory/graphify-derived-metadata.mdx",
+    "slug": "okayJing/memory/graphify-derived-metadata",
+    "sourceSha256": "7f2e1d89247d615896ba24efdb91e3b8f5e420656e5fbe6ee91e6958fc72dc3f",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/memory/hermes-memory-cli-start-routine.mdx",
+    "slug": "okayJing/memory/hermes-memory-cli-start-routine",
+    "sourceSha256": "7ee7115ba443b64190056c60a10a472553dac9b7e9e29c54d68ff904c991217e",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/memory/local-first-hermes-memory-architecture.mdx",
+    "slug": "okayJing/memory/local-first-hermes-memory-architecture",
+    "sourceSha256": "059262a6bef56e98aa879b078af32b9cc69d58d792786c5905cbe12d77fa93c1",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/memory/local-llm-worker-evaluation.mdx",
+    "slug": "okayJing/memory/local-llm-worker-evaluation",
+    "sourceSha256": "0d26f3806896c7b24a88fb197e041ed06ac66259cc974a0f104d16a15e82d43a",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/memory/mac-mini-storage-memory-architecture.mdx",
+    "slug": "okayJing/memory/mac-mini-storage-memory-architecture",
+    "sourceSha256": "4c0ef3dd3df24619b56021b8b98f516a39d93cfa77540237ca890dc8d1e41e29",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/memory/memory-backend-honcho-criteria.mdx",
+    "slug": "okayJing/memory/memory-backend-honcho-criteria",
+    "sourceSha256": "b852ea41eb140c5226bb558b9ad4af3a478cafeccb6517f35e143ce8c1d97df9",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/memory/memory-should-not-auto-edit-skills.mdx",
+    "slug": "okayJing/memory/memory-should-not-auto-edit-skills",
+    "sourceSha256": "59181a1dbda655a2efbca282beaa533193064b627f00e955056c292d9f7862d3",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/memory/memory-ticket-session-search.mdx",
+    "slug": "okayJing/memory/memory-ticket-session-search",
+    "sourceSha256": "d9ceb59c2e4fab51e8ae57a786f190ad994652d1837659a1145e51b436410a84",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/memory/source-linked-context-packs.mdx",
+    "slug": "okayJing/memory/source-linked-context-packs",
+    "sourceSha256": "bc5c8f8647df94f1bcdc7b6630ef499d6c38978224c1f65e1c033befcc35d58c",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/memory/stale-check-promotion-queue.mdx",
+    "slug": "okayJing/memory/stale-check-promotion-queue",
+    "sourceSha256": "4fcd98b97fb7ab7e3dbaddf1ae473882def73086f917a55c3f981dda7038b987",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/memory/vector-search-after-fts.mdx",
+    "slug": "okayJing/memory/vector-search-after-fts",
+    "sourceSha256": "e047fc6c12400365249328260d1c3dfdba83c78285068b710b6c4986b7edc0e8",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/reading-guide.mdx",
+    "slug": "okayJing/reading-guide",
+    "sourceSha256": "e1bc1a9240cf0b6a6190ece5a7a4c4142bd3b276e500669e8453d02986f1d18d",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/skills/external-agent-skills-absorption.mdx",
+    "slug": "okayJing/skills/external-agent-skills-absorption",
+    "sourceSha256": "19242089aaf2b89f6d5aadf637b29a432adebee47f797c0a7dad0d2025d1e17f",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/skills/notjing-final-gate.mdx",
+    "slug": "okayJing/skills/notjing-final-gate",
+    "sourceSha256": "40e08665716070ccd25fa9abd4003c09e0d7e1175607a23f85d4257eef32bde3",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/skills/ouroboros-planning-skill.mdx",
+    "slug": "okayJing/skills/ouroboros-planning-skill",
+    "sourceSha256": "10fbbd8075ecbd5ba009114ac38b1b105b77262fa93844e18f8d9750cff7f297",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/skills/skill-supply-chain-guardrail.mdx",
+    "slug": "okayJing/skills/skill-supply-chain-guardrail",
+    "sourceSha256": "2b8b38a2be914b5499c239de725b598183dd18ed4b91b51f2304082699e72d27",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/technical-map.mdx",
+    "slug": "okayJing/technical-map",
+    "sourceSha256": "e4edaa8c444e9a0362b41100d13897681850f0ba027000bdd1e0de204e2c8f6f",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/voice/qwen3-tts-mlx-to-supertonic3.mdx",
+    "slug": "okayJing/voice/qwen3-tts-mlx-to-supertonic3",
+    "sourceSha256": "448844d5e82177758f5060f9751b2e93b30049658760ba9ba04b37a1524467c0",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/voice/supertonic3-custom-voice-json.mdx",
+    "slug": "okayJing/voice/supertonic3-custom-voice-json",
+    "sourceSha256": "9cad8cf6739ba71ad498e6b7ce355ea777dc4d7e4439510909b35f80a4c4f55c",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/voice/text-chat-to-voice-colleague.mdx",
+    "slug": "okayJing/voice/text-chat-to-voice-colleague",
+    "sourceSha256": "4d595ae8bf8b4c5368b435c6ba1ec4733b9f70f4535e101831c54b35e0b994b7",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/voice/tts-local-api-r2-defer.mdx",
+    "slug": "okayJing/voice/tts-local-api-r2-defer",
+    "sourceSha256": "cf01418fdacfe792aecfb565b50d2d2eb3c002088e0b3e0ada07dbac78057c1b",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/voice/tts-selection-operational-criteria.mdx",
+    "slug": "okayJing/voice/tts-selection-operational-criteria",
+    "sourceSha256": "e961eda3b30cbd5eeb14f00b443e8842f1357f9d3fec20369105defc23aca182",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/voice/voice-mode-report-style-breaks.mdx",
+    "slug": "okayJing/voice/voice-mode-report-style-breaks",
+    "sourceSha256": "ed4f5d2b3750ff80bfbfa41338dcf3d514538bd3146f8a6dfd1ca3760e51c33e",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/voice/voice-request-ticket-post-routine.mdx",
+    "slug": "okayJing/voice/voice-request-ticket-post-routine",
+    "sourceSha256": "fc7e3503dbb2f766d2841ec12d888a31a3286dcff72b62805c4616213aed35a8",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/workflow/approval-fatigue-requirement-discipline.mdx",
+    "slug": "okayJing/workflow/approval-fatigue-requirement-discipline",
+    "sourceSha256": "0f58ef5e0bf641c089a59cd479e57472a41853ae2de838974c23bfaa3cbce6aa",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/workflow/forum-tickets-hermes-gateway.mdx",
+    "slug": "okayJing/workflow/forum-tickets-hermes-gateway",
+    "sourceSha256": "f4b7ba77387543275e11ade32d4445079b8b313a73df25a3f1c4c379540f7973",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/workflow/hermes-report-format.mdx",
+    "slug": "okayJing/workflow/hermes-report-format",
+    "sourceSha256": "0395bdfaf47706af947c637bc256ecd5bf1def18acd21a628cce762317616ad5",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/workflow/hermes-ticket-memory.mdx",
+    "slug": "okayJing/workflow/hermes-ticket-memory",
+    "sourceSha256": "61f55c56904999edaebec6b0d208aac25100e7247d5b0eb392d237c9a2d3391c",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/workflow/jing-bridge-pipeline.mdx",
+    "slug": "okayJing/workflow/jing-bridge-pipeline",
+    "sourceSha256": "b3d53a5f92813a5ac04f3e3150914cc580015e2e49912bfbe32837f1b04497aa",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/workflow/msw-dto-backend-handoff.mdx",
+    "slug": "okayJing/workflow/msw-dto-backend-handoff",
+    "sourceSha256": "eaa10112c9fd6cc51053ccc53e9b1ce733230068b57ed6260449dca3567f2164",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/workflow/multi-agent-ticket-structure.mdx",
+    "slug": "okayJing/workflow/multi-agent-ticket-structure",
+    "sourceSha256": "f6235b743332790b41fed101cf30afe8aafdc414869262d7b1ba2e51d64c1e5f",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/workflow/post-backlog-to-archive-routine.mdx",
+    "slug": "okayJing/workflow/post-backlog-to-archive-routine",
+    "sourceSha256": "b282978601cdbd6d7bc08ae3e03c355e53e1d7b2913266ab67395ea4920e4f5f",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/workflow/publish-readback-gate.mdx",
+    "slug": "okayJing/workflow/publish-readback-gate",
+    "sourceSha256": "a1a2f5fd19889d088489ec71980c3c388e72c57a2c86988836cb1534d8b28770",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/workflow/session-scoped-approval-cache.mdx",
+    "slug": "okayJing/workflow/session-scoped-approval-cache",
+    "sourceSha256": "a7c34c64f6315b8681d9956f1dd1a8e1aba17072d3ed2b4f1d5d02d68e34b981",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/workflow/sessions-and-tickets.mdx",
+    "slug": "okayJing/workflow/sessions-and-tickets",
+    "sourceSha256": "b39b266c7b69090eca833517b0ccf24ce9fff550d50cb816e69aef40f0a6dcaa",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/workflow/smart-reviewer-behavior.mdx",
+    "slug": "okayJing/workflow/smart-reviewer-behavior",
+    "sourceSha256": "6e4479b7c598c620aca7757346547a9ee287e02ccf1e204039ef415ed43d2b04",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/workflow/ticket-trigger-logic.mdx",
+    "slug": "okayJing/workflow/ticket-trigger-logic",
+    "sourceSha256": "738ed3c1c87e7039844bbda79600eb71db64d13b16c3f1adc859230bbd904fc3",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "okayJing/workflow/workflow-compilation-policy.mdx",
+    "slug": "okayJing/workflow/workflow-compilation-policy",
+    "sourceSha256": "a06427dc44046f77d01977f733aa506e89e63a666f4315339bef82e1532d0265",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "spot/map-centric-pivot-url-state.mdx",
+    "slug": "spot/map-centric-pivot-url-state",
+    "sourceSha256": "e38b118b231de6117fe2bd1a7a90b22589944cd1fbb57f744f7a73d096937a60",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "spot/map-judgment-log.mdx",
+    "slug": "spot/map-judgment-log",
+    "sourceSha256": "f8068a1e2cbdb2602b9284927df491bacbbeefdfed9b9540b5014ae77715f45d",
+    "components": ["Subtitle", "Paragraph", "Anchor"]
+  },
+  {
+    "sourcePath": "spot/naver-map-sync-init.mdx",
+    "slug": "spot/naver-map-sync-init",
+    "sourceSha256": "97e6a5bd7d8e837655af3e440b90e2c198cfdd28c5ca1d5fe3995bb57cb47b35",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "spot/overview.mdx",
+    "slug": "spot/overview",
+    "sourceSha256": "077085f0ea7de7ba713efe18047f3d35bb187127b3e71a3217b416cd5eecf0d5",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "spot/persona-cluster-rendering-optimization.mdx",
+    "slug": "spot/persona-cluster-rendering-optimization",
+    "sourceSha256": "8b5f69c9e0ee7a563e4f5acc4e275239d4784df348732bb49f1f4412672b1516",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "spot/sim-replay-and-locality-modes.mdx",
+    "slug": "spot/sim-replay-and-locality-modes",
+    "sourceSha256": "9f47457c8e8a518159de32f9c331d4276831b978adc20685925ef2bee3d8db2f",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "spot/spot-clustering-shape-vs-cause.mdx",
+    "slug": "spot/spot-clustering-shape-vs-cause",
+    "sourceSha256": "b1e400c9c90dfc67dc3eeba0745ac6ed0e0cec02c077b68354075b257f2b3a97",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "study/agent-framework/day1.mdx",
+    "slug": "study/agent-framework/day1",
+    "sourceSha256": "6af714a3981a819dd096e752c71f2fa506f2db6e5109fa0fdbaf1cbfe3b50ec4",
+    "components": []
+  },
+  {
+    "sourcePath": "study/agent-framework/day10.mdx",
+    "slug": "study/agent-framework/day10",
+    "sourceSha256": "722d5503622a0e52bd47cacdf50a9af6bbe914724383f58e340557b7906c3c85",
+    "components": []
+  },
+  {
+    "sourcePath": "study/agent-framework/day11.mdx",
+    "slug": "study/agent-framework/day11",
+    "sourceSha256": "91946eb941a387de6b53939bbd69975e9ff98c15dbda6ce9b7a56db723e1565f",
+    "components": []
+  },
+  {
+    "sourcePath": "study/agent-framework/day12.mdx",
+    "slug": "study/agent-framework/day12",
+    "sourceSha256": "3e139bc693b1bb1c0dd48713432f7ccbdd397c156eec1ab6b7b8135876c35ce2",
+    "components": []
+  },
+  {
+    "sourcePath": "study/agent-framework/day13.mdx",
+    "slug": "study/agent-framework/day13",
+    "sourceSha256": "b42297c61c22fe06b135437a11482da73beb4ed150320b13a7e1f0886f81e5bc",
+    "components": []
+  },
+  {
+    "sourcePath": "study/agent-framework/day2.mdx",
+    "slug": "study/agent-framework/day2",
+    "sourceSha256": "5a5ef258809c0688c59008f9f12ae69e8f4a0d68b1a7bb774b12bc5d369b90d8",
+    "components": []
+  },
+  {
+    "sourcePath": "study/agent-framework/day3.mdx",
+    "slug": "study/agent-framework/day3",
+    "sourceSha256": "babea16b2aa24b304fd26ea991ff27845ebb120982c91c5e5dfa9cba50e1ae93",
+    "components": []
+  },
+  {
+    "sourcePath": "study/agent-framework/day4.mdx",
+    "slug": "study/agent-framework/day4",
+    "sourceSha256": "658b45117c440be6625d49ba03eb636a0181f6539f5d4e2b733196224ec1ba0d",
+    "components": []
+  },
+  {
+    "sourcePath": "study/agent-framework/day5.mdx",
+    "slug": "study/agent-framework/day5",
+    "sourceSha256": "bf2ab8dbcc8293336126318b70f8e844e8e12cc9744c2463788b3685af0e5ef5",
+    "components": []
+  },
+  {
+    "sourcePath": "study/agent-framework/day6.mdx",
+    "slug": "study/agent-framework/day6",
+    "sourceSha256": "f06ad57da50da396a3616678023582c83c3583799c44a544e32b89c9cb35cca4",
+    "components": []
+  },
+  {
+    "sourcePath": "study/agent-framework/day7.mdx",
+    "slug": "study/agent-framework/day7",
+    "sourceSha256": "c95afca5f7394923cf01df587ced5e87271a3bdabb2b9ee7ae7d819382029ebb",
+    "components": []
+  },
+  {
+    "sourcePath": "study/agent-framework/day8.mdx",
+    "slug": "study/agent-framework/day8",
+    "sourceSha256": "352fedb2b690e24bfa15bb2478e5b318f72f8448ced643524dba1523dcc56450",
+    "components": []
+  },
+  {
+    "sourcePath": "study/agent-framework/day9.mdx",
+    "slug": "study/agent-framework/day9",
+    "sourceSha256": "6dc81f2d531ce85d23ecbdef049e75e23fd8be391cd0a5094c63c0d77ce4cd0c",
+    "components": []
+  },
+  {
+    "sourcePath": "study/backend/day1.mdx",
+    "slug": "study/backend/day1",
+    "sourceSha256": "10126882145737ce9ac32f8d311f53fa8637645a9faa989496f27281da00a18b",
+    "components": []
+  },
+  {
+    "sourcePath": "study/backend/day10.mdx",
+    "slug": "study/backend/day10",
+    "sourceSha256": "4183cf3f1b897f131f37cbc94566fa2792416b3ffbd10ad03515ba576950834f",
+    "components": []
+  },
+  {
+    "sourcePath": "study/backend/day11.mdx",
+    "slug": "study/backend/day11",
+    "sourceSha256": "535af39a932b5a85255af0adb7d1dfad12e4b7ed48fe95592f872e60e744ad08",
+    "components": []
+  },
+  {
+    "sourcePath": "study/backend/day12.mdx",
+    "slug": "study/backend/day12",
+    "sourceSha256": "8e76266ce030bd02c801352a420ef24de203838d0280567b1f018ed97a083703",
+    "components": []
+  },
+  {
+    "sourcePath": "study/backend/day2.mdx",
+    "slug": "study/backend/day2",
+    "sourceSha256": "05173a1648a709c8d55138e5af0c26a567bf74bc56c6b696d586646369a15bb1",
+    "components": []
+  },
+  {
+    "sourcePath": "study/backend/day3.mdx",
+    "slug": "study/backend/day3",
+    "sourceSha256": "3c3d5e3574d2354898caa0669853edcb62e120e265c3de5be6e1e41e15904c4e",
+    "components": []
+  },
+  {
+    "sourcePath": "study/backend/day4.mdx",
+    "slug": "study/backend/day4",
+    "sourceSha256": "fb6c0ec83b93df417668e5c0e2c8f00c20d9ffbaee4a4a82b9b56d1bb257dedf",
+    "components": []
+  },
+  {
+    "sourcePath": "study/backend/day5.mdx",
+    "slug": "study/backend/day5",
+    "sourceSha256": "78c1701ca76ad13acfcbfaf7172515d931e019ae25a1dfc0430d8ee804cd75bf",
+    "components": []
+  },
+  {
+    "sourcePath": "study/backend/day6.mdx",
+    "slug": "study/backend/day6",
+    "sourceSha256": "d11b66165d2b382ed9f581a38caa117e440798f6efee86b1c2ab0bc416bc4cbc",
+    "components": []
+  },
+  {
+    "sourcePath": "study/backend/day7.mdx",
+    "slug": "study/backend/day7",
+    "sourceSha256": "72336ffb5cfa55f8fa24ba836620bf22435c8c673b910de5ea3cfc8161565429",
+    "components": []
+  },
+  {
+    "sourcePath": "study/backend/day8.mdx",
+    "slug": "study/backend/day8",
+    "sourceSha256": "0cc4e830a2741c7a2225156eccf71f3bcef1c9f09d6f905b190d1a162dbf70ad",
+    "components": []
+  },
+  {
+    "sourcePath": "study/backend/day9.mdx",
+    "slug": "study/backend/day9",
+    "sourceSha256": "e7721cbeec193ade3cec4f210a89a61d53d90c4221b4bb9e500870357a2b5dce",
+    "components": []
+  },
+  {
+    "sourcePath": "study/clab-26-1/in-person/week0.mdx",
+    "slug": "study/clab-26-1/in-person/week0",
+    "sourceSha256": "ef1bbfe05c7de06d0cedae51d94e346d5aa8ed4f52cceed4a3d3115389bca3c2",
+    "components": ["Subtitle", "Paragraph", "Anchor"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/in-person/week1.mdx",
+    "slug": "study/clab-26-1/in-person/week1",
+    "sourceSha256": "a5a61bf12e2001764f3cb3b1d852245c2e2ed66f1be0147bef91d94370cd7182",
+    "components": ["Subtitle", "Paragraph", "Anchor"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/in-person/week2.mdx",
+    "slug": "study/clab-26-1/in-person/week2",
+    "sourceSha256": "c6ff292448563d0c81a325561603fc85297b2144582fb5d8d9c49268c2e41e4c",
+    "components": ["Subtitle", "Paragraph", "Anchor"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/in-person/week3.mdx",
+    "slug": "study/clab-26-1/in-person/week3",
+    "sourceSha256": "130e633383f38613fe31f07ce728c14d20bba223e18d4bf1845d169e6b11208d",
+    "components": ["Subtitle", "Paragraph", "Anchor"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/in-person/week6-1.mdx",
+    "slug": "study/clab-26-1/in-person/week6-1",
+    "sourceSha256": "c0f726e6d8fcc925c19ada4e3cb230359becaf4a6fad5ce64cd83ba8ff4a1d54",
+    "components": ["Subtitle", "Paragraph", "ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/in-person/week6-2.mdx",
+    "slug": "study/clab-26-1/in-person/week6-2",
+    "sourceSha256": "2b4d7c717c61a3ec0c74625f1db5ec421fa789d1db3f23dda4cb3afd84679245",
+    "components": ["Subtitle", "Paragraph", "ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/in-person/week7.mdx",
+    "slug": "study/clab-26-1/in-person/week7",
+    "sourceSha256": "02b6ba77e8a372ee591bcb0943e1abb5f37b6e2bf97cf8eb513a554eafb84b47",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/in-person/week8.mdx",
+    "slug": "study/clab-26-1/in-person/week8",
+    "sourceSha256": "8f7c0a59629d49f791a8e9ab60ec56452efc328df80899344c6e02b5ecf77c67",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/in-person/week9.mdx",
+    "slug": "study/clab-26-1/in-person/week9",
+    "sourceSha256": "3267818fb8d40690e06d32bb56331129c29ea755573d69ddab2c0b8a77665598",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/preclass/level1.mdx",
+    "slug": "study/clab-26-1/preclass/level1",
+    "sourceSha256": "ebdea59996051ad0d768477167c93dc3876500b341d2b2b7a5dd46b52879870d",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/preclass/level2.mdx",
+    "slug": "study/clab-26-1/preclass/level2",
+    "sourceSha256": "a4c2ea1d952a45d53856e380663c5cb106f604754159b8e1cb26dd586ada53e2",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/preclass/level3.mdx",
+    "slug": "study/clab-26-1/preclass/level3",
+    "sourceSha256": "cca6ca48a80e8de185e15555a0281895fea7df5ec12c2f40845a4aad5b571606",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/preclass/level4.mdx",
+    "slug": "study/clab-26-1/preclass/level4",
+    "sourceSha256": "fb249f2f69086355581c829805c49f98f60ab9894a4df55f185cb0d6d05dd0a2",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/preclass/level5.mdx",
+    "slug": "study/clab-26-1/preclass/level5",
+    "sourceSha256": "8d826bb6c9706fc47b5e09661db643148b259cc332bedadcef8d112ae11aaa43",
+    "components": ["Subtitle", "Paragraph"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/week1.mdx",
+    "slug": "study/clab-26-1/week1",
+    "sourceSha256": "2d043b1008bb8606295d3f9a33b5b194c456187f04b4b63dfc1d5946307281a2",
+    "components": [
+      "Subtitle",
+      "Anchor",
+      "Paragraph",
+      "ArticleQuiz",
+      "ArticleImage"
+    ]
+  },
+  {
+    "sourcePath": "study/clab-26-1/week10.mdx",
+    "slug": "study/clab-26-1/week10",
+    "sourceSha256": "8538e740a64185a9046a8c09f9a6f9bd92554674d755206e8179e7031b65e63c",
+    "components": ["Subtitle", "Anchor", "Paragraph", "ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/week11.mdx",
+    "slug": "study/clab-26-1/week11",
+    "sourceSha256": "aacab0959bad35cee9a085cf4d83ae40e501d385dcf8f033a62230bf1c2ed6c9",
+    "components": ["Subtitle", "Anchor", "Paragraph", "ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/week2.mdx",
+    "slug": "study/clab-26-1/week2",
+    "sourceSha256": "238eceb8c12f7d96bfe062ea79138ba5b447ae99a51849d7f5068a41b75a972f",
+    "components": ["Subtitle", "Anchor", "Paragraph", "ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/week3.mdx",
+    "slug": "study/clab-26-1/week3",
+    "sourceSha256": "48eb28ca36855d9b20350b1d948fa23108e6bfe9bef44c0ac8e83c2d7bf3e99e",
+    "components": ["Subtitle", "Anchor", "Paragraph", "ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/week4.mdx",
+    "slug": "study/clab-26-1/week4",
+    "sourceSha256": "7658fe0e926143b761f1a9c83e83de8d733a33231955419471947bfc93a29586",
+    "components": [
+      "Subtitle",
+      "Anchor",
+      "Paragraph",
+      "ArticleQuiz",
+      "ArticleImage"
+    ]
+  },
+  {
+    "sourcePath": "study/clab-26-1/week5.mdx",
+    "slug": "study/clab-26-1/week5",
+    "sourceSha256": "fd0018322f5011b77e1f3bd015b44e69f8039883286e1a53dd00d7e0a808f512",
+    "components": ["Subtitle", "Anchor", "Paragraph", "ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/week6.mdx",
+    "slug": "study/clab-26-1/week6",
+    "sourceSha256": "a5ac044d471d6d53cb72ae9d96cabb5955ab13f9d630474ed46c51511832dede",
+    "components": ["Subtitle", "Anchor", "Paragraph", "ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/week7.mdx",
+    "slug": "study/clab-26-1/week7",
+    "sourceSha256": "38174442dfa715feb87183d85f03dd2753bfc88519adaa0c54bfbab2e6383cfa",
+    "components": ["Subtitle", "Anchor", "Paragraph", "ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/week8.mdx",
+    "slug": "study/clab-26-1/week8",
+    "sourceSha256": "96dfd2f2e4563057b1058184b361f96d85251f4995e1992db53f6ed7e6da2936",
+    "components": ["Subtitle", "Anchor", "Paragraph", "ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/week9.mdx",
+    "slug": "study/clab-26-1/week9",
+    "sourceSha256": "f08935c5d02b904c7fbb6d817cb71886db0b9ae9c405769ba11e36dd513be40b",
+    "components": ["Subtitle", "Anchor", "Paragraph", "ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/weekHard1.mdx",
+    "slug": "study/clab-26-1/weekHard1",
+    "sourceSha256": "6191f2a8d2d73c88a2c0f43f0208a7d4330f9e503be93f95835610caf37bfd10",
+    "components": ["Subtitle", "Anchor", "Paragraph", "ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/clab-26-1/weekHard2.mdx",
+    "slug": "study/clab-26-1/weekHard2",
+    "sourceSha256": "57571f6b5adb7b40bb47c3d08ed10161afffac37e717f5f5ffb471d1d92ddeff",
+    "components": ["Subtitle", "Paragraph", "Anchor", "ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/effective-typescript/day1.mdx",
+    "slug": "study/effective-typescript/day1",
+    "sourceSha256": "5c4bbf282b57605039250cd528badb6e9255797a7be3583c6958eadc34c62aeb",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/effective-typescript/day10.mdx",
+    "slug": "study/effective-typescript/day10",
+    "sourceSha256": "6af8c455cfb40a982060fc0ad1e8b37339d37298909d2983e839bf41408d9f0a",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/effective-typescript/day11.mdx",
+    "slug": "study/effective-typescript/day11",
+    "sourceSha256": "7cc3f1e4a4a12ac4c4f9586bd3703daab65926f5a64710bba30530d667d72c8c",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/effective-typescript/day12.mdx",
+    "slug": "study/effective-typescript/day12",
+    "sourceSha256": "5a50806fa4fc2779f98b18584f785174c67dee7b9e144e1ea1362b43f6e83961",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/effective-typescript/day13.mdx",
+    "slug": "study/effective-typescript/day13",
+    "sourceSha256": "f541b9ccb37160787e2049de69f18bd4435e64966abac015423a1c1b102b54bd",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/effective-typescript/day14.mdx",
+    "slug": "study/effective-typescript/day14",
+    "sourceSha256": "cc738a1aede9347d6457c6ff324937e867463c84f0a7d99de94edf622fd00ed4",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/effective-typescript/day2.mdx",
+    "slug": "study/effective-typescript/day2",
+    "sourceSha256": "3e4bad76c50e9eec14041d694b5730d33bdec57ff47e92843db24dce99696ed5",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/effective-typescript/day3.mdx",
+    "slug": "study/effective-typescript/day3",
+    "sourceSha256": "7cea1cadd237ab85cf5e65b6850a91598723cd6e8533903c826fd6afdebbb17b",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/effective-typescript/day4.mdx",
+    "slug": "study/effective-typescript/day4",
+    "sourceSha256": "75ded85d9e656f9ee061108b05cb5ced24d1d2c61a7eae499a8d928b1f68db11",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/effective-typescript/day5.mdx",
+    "slug": "study/effective-typescript/day5",
+    "sourceSha256": "11d69c54df34e1209ea093130e1a6bb6918177ab6d02de933a8d929cfd828891",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/effective-typescript/day6.mdx",
+    "slug": "study/effective-typescript/day6",
+    "sourceSha256": "94d81fe88fe1113fad6142bc7a421a55fb35450119e7aef91e2ddcb6161ef84b",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/effective-typescript/day7.mdx",
+    "slug": "study/effective-typescript/day7",
+    "sourceSha256": "518e920c16c1a6eff0a244061bc5ad94f891b11f4e818decae66cc331e3bc7d3",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/effective-typescript/day8.mdx",
+    "slug": "study/effective-typescript/day8",
+    "sourceSha256": "74a36fad70e5738a34ee16713a5438f7db6b5a92159b26973e206dea342b78d7",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/effective-typescript/day9.mdx",
+    "slug": "study/effective-typescript/day9",
+    "sourceSha256": "dc3cf81bdfc016c7fdbbec5122b5c68fedc917e4f8822bed7bdd670c520b6b5a",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/javascript-quizbook/day1.mdx",
+    "slug": "study/javascript-quizbook/day1",
+    "sourceSha256": "8b85a9950a1bb93f08fec8284ef0fb2cd61c00c8cb554c328532e8b561dfac36",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/javascript-quizbook/day10.mdx",
+    "slug": "study/javascript-quizbook/day10",
+    "sourceSha256": "1ef342f4e72898769facb0458c7783d1bc20022a9dc208c5f35d9dc1cd0f0cdf",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/javascript-quizbook/day11.mdx",
+    "slug": "study/javascript-quizbook/day11",
+    "sourceSha256": "db9bdab841d3d59f5dcd52717a1a764a0008fb64151b53aa04a11a57aaade9cf",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/javascript-quizbook/day12.mdx",
+    "slug": "study/javascript-quizbook/day12",
+    "sourceSha256": "c175c0a4cc24928f0b52ad631ecf987f9e37f461e512221d2cc36c2948bc47be",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/javascript-quizbook/day13.mdx",
+    "slug": "study/javascript-quizbook/day13",
+    "sourceSha256": "eac509fcd3ad71d9bb7f59d703b84fc8d504e017011e46875d585f508a0c66a3",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/javascript-quizbook/day2.mdx",
+    "slug": "study/javascript-quizbook/day2",
+    "sourceSha256": "bba95534efb8726bb26463fe1d8a9b01fb4e68639b0b57618daf7e13d96c0ef5",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/javascript-quizbook/day3.mdx",
+    "slug": "study/javascript-quizbook/day3",
+    "sourceSha256": "855700389534ae887b891055f64e65faa67a7d40aef68c4b56812f3271a4c253",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/javascript-quizbook/day4.mdx",
+    "slug": "study/javascript-quizbook/day4",
+    "sourceSha256": "c2105fa565427f6e9d85dc073e6c6363148e2866eb65254383a13eacb46d99af",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/javascript-quizbook/day5.mdx",
+    "slug": "study/javascript-quizbook/day5",
+    "sourceSha256": "6466b96ff95b0147060032dfc8180c88896f335bd75a071ed4a0ac8ce2bf319b",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/javascript-quizbook/day6.mdx",
+    "slug": "study/javascript-quizbook/day6",
+    "sourceSha256": "cd87dd48dddce1f23def8da7fb6f26946040765c66ef1721069c640651b1ab77",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/javascript-quizbook/day7.mdx",
+    "slug": "study/javascript-quizbook/day7",
+    "sourceSha256": "13d9c2144eadb0cf8a012f5444af2017d5fb0745f9f544a453328ce87a1dacf3",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/javascript-quizbook/day8.mdx",
+    "slug": "study/javascript-quizbook/day8",
+    "sourceSha256": "5c37e2ccb4b8f3b103871ff2f464f498e65d167c6321e70d94811a4c45898ae7",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/javascript-quizbook/day9.mdx",
+    "slug": "study/javascript-quizbook/day9",
+    "sourceSha256": "ffc659b496a3e6acac8202812a0be5edb8e752cba89e93a2abf394f717445ef9",
+    "components": ["ArticleQuiz"]
+  },
+  {
+    "sourcePath": "study/js-ts-reading-guide.mdx",
+    "slug": "study/js-ts-reading-guide",
+    "sourceSha256": "f123f0cedf6a6df646f4857b60192fd21acfb4a65bed2c02b4103d3e839b9f8d",
+    "components": []
+  }
+]

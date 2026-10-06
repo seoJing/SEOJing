@@ -3,6 +3,31 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { GET, POST } from "./route";
 
 describe("/api/ops/articles", () => {
+  it("proxies the private review queue without a slug", async () => {
+    vi.stubEnv("SEOJING_BACKEND_API_ORIGIN", "http://127.0.0.1:4027/");
+    vi.stubEnv("SEOJING_BACKEND_ADMIN_API_TOKEN", "test-admin-token");
+    const fetchSpy = vi.fn(async () =>
+      Response.json({ articles: [{ slug: "SEOJing/devLog/day1" }] }),
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+    const response = await GET(
+      new Request("http://localhost/api/ops/articles"),
+    );
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "http://127.0.0.1:4027/admin/article-review-queue",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          authorization: "Bearer test-admin-token",
+        }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      articles: [{ slug: "SEOJing/devLog/day1" }],
+    });
+  });
+
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
@@ -29,6 +54,21 @@ describe("/api/ops/articles", () => {
           "x-authenticated-user-email": "owner@example.com",
         },
       }),
+    );
+    expect(response.status).toBe(401);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("rejects an unauthenticated production review-queue request", async () => {
+    configureBackend();
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("SEOJING_OPS_ACCESS_EMAIL", "owner@example.com");
+    vi.stubEnv("SEOJING_OPS_ACCESS_ISSUER", "https://access.example.com");
+    vi.stubEnv("SEOJING_OPS_ACCESS_AUD", "test-audience");
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    const response = await GET(
+      new Request("https://seojing.com/api/ops/articles"),
     );
     expect(response.status).toBe(401);
     expect(fetchSpy).not.toHaveBeenCalled();

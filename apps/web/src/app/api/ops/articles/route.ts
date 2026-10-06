@@ -77,7 +77,20 @@ export async function GET(request: Request): Promise<Response> {
 
   const slug = new URL(request.url).searchParams.get("slug")?.trim();
   if (!slug) {
-    return jsonResponse(400, { ok: false, error: "slug_required" });
+    const config = readBackendConfig();
+    if (!config.ok) return jsonResponse(config.status, config.body);
+    const queue = await fetchBackendJson<{ articles: unknown[] }>(
+      config.origin,
+      "/admin/article-review-queue",
+      { method: "GET", adminToken: config.adminToken },
+    );
+    if (!queue.ok) {
+      return jsonResponse(queue.status, {
+        ok: false,
+        error: "backend_review_queue_read_failed",
+      });
+    }
+    return jsonResponse(200, { ok: true, articles: queue.data.articles });
   }
 
   const config = readBackendConfig();
