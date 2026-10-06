@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "generate:content": "tsx scripts/generate-content-tree.ts",
-    "career:snapshot": "tsx scripts/sync-career-snapshot.ts",
     "generate:tts": "tsx scripts/generate-tts-artifacts.ts",
     "qa:insights": "tsx scripts/qa-log-insights.ts",
     "asset:insert": "node scripts/insert-content-image.mjs",
