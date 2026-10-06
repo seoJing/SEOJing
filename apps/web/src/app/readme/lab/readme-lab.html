@@ -1950,6 +1950,30 @@ function gzSettle(G) {
   if (G.jellyA) G.jellyA.cancel();
   G.jellyA = G.jelly.animate([{ transform: cur && cur !== "none" ? cur : "none", opacity: .78 }, { transform: "scale(.93,1.06)", opacity: 1, offset: .3 }, { transform: "scale(1.03,.98)", offset: .6 }, { transform: "none", opacity: 1 }], { duration: 480, easing: "cubic-bezier(.2,.7,.3,1)" });
 }
+/* between words on the same line the gaze flows instead of jumping: a longer eased move, a hint of stretch, no tail, no bounce */
+async function gzGlide(G, p) {
+  if (!G.el || !p) return;
+  if (!G.pos || RM()) { gzPlaceOn(G, p); return; }
+  const from = G.pos, dx = p.x - from.x, dy = p.y - from.y, d = Math.hypot(dx, dy); if (d < .5) return;
+  const dur = clamp(150 + .5 * d, 180, 380);
+  gzAim(G, Math.atan2(dy, dx));
+  if (G.jellyA) G.jellyA.cancel();
+  const sx = 1 + Math.min(d / 700, .1), sy = 1 - Math.min(d / 1600, .05);
+  G.jellyA = G.jelly.animate([{ transform: "none" }, { transform: `scale(${sx},${sy})`, offset: .5 }, { transform: "none" }], { duration: dur, easing: "cubic-bezier(.45,0,.25,1)" });
+  if (G.moveA) G.moveA.cancel();
+  gzPlaceOn(G, p);
+  G.moveA = G.el.animate([{ transform: `translate(${from.x}px, ${from.y}px)` }, { transform: `translate(${p.x}px, ${p.y}px)` }], { duration: dur, easing: "cubic-bezier(.45,0,.25,1)" });
+  try { await G.moveA.finished; } catch { /* interrupted */ }
+}
+/* during a fixation the gaze keeps creeping through the word, so the next glide continues from where it left off */
+function gzDrift(G, p, ms) {
+  if (!G.el || !p || !G.pos || RM()) return;
+  const from = G.pos; if (G.moveA) G.moveA.cancel();
+  gzPlaceOn(G, p);
+  G.moveA = G.el.animate([{ transform: `translate(${from.x}px, ${from.y}px)` }, { transform: `translate(${p.x}px, ${p.y}px)` }], { duration: Math.max(1, ms), easing: "linear" });
+}
+/* a jump (saccade) opens a sentence or changes line; everything else on the line is a glide */
+function gzJumps(G, p, first, lh) { return first || !G.pos || Math.abs(p.y - G.pos.y) > lh / 2; }
 /* the refraction map: a convex lens pulls samples toward the centre, more so near the rim */
 function lensMap() {
   try {
@@ -2190,10 +2214,13 @@ async function readUnit(uid, mode, B, tok) {
     const r = f.line ? null : firstRect(words[f.wi]);
     const p = f.line ? linePoint(P, words.map(firstRect)) : r && fixPoint(P, r);
     if (!p) break;
-    await gzSaccade(p); if (!alive(tok)) return;
+    if (gzJumps(GZ, p, f === fx[0], lineH())) await gzSaccade(p); else await gzGlide(GZ, p);
+    if (!alive(tok)) return;
     for (; inked <= f.wi && inked < words.length; inked++) words[inked].classList.add("inked");
     followTo(p); GZ.lastFix = p;
-    const dwell = f.dwell * pace; scaleTo(1.04, dwell); await sleep(dwell);
+    const dwell = f.dwell * pace; scaleTo(1.04, dwell);
+    if (r && !f.line) gzDrift(GZ, { x: p.x + r.width * .16, y: p.y }, dwell);
+    await sleep(dwell);
   }
   for (; inked < words.length; inked++) words[inked].classList.add("inked");
 }
@@ -4210,10 +4237,13 @@ async function demoRun() {
   for (let i = 0; i < DEMO_UNITS.length; i++) {
     const u = DEMO.units[i], st = DEMO_STEPS[i];
     DEMO.units.forEach((x, j) => { x.classList.toggle("unread", j > i); x.classList.toggle("current", j === i); x.classList.toggle("read", j < i); });
-    const words = $$(".w", u);
-    for (const f of demoFixations(i, words)) {
-      await demoFly(demoPoint(words[f.wi])); if (!ok()) return;
+    const words = $$(".w", u), fx = demoFixations(i, words);
+    for (const f of fx) {
+      const r = firstRect(words[f.wi]), p = demoPoint(words[f.wi]); if (!p) break;
+      if (gzJumps(G, p, f === fx[0], r.height)) await demoFly(p); else await gzGlide(G, p);
+      if (!ok()) return;
       for (let k = 0; k <= f.wi; k++) words[k].classList.add("inked");
+      gzDrift(G, { x: p.x + r.width * .16, y: p.y }, f.dwell);
       await demoNap(f.dwell); if (!ok()) return;
     }
     for (const w of words) w.classList.add("inked");
