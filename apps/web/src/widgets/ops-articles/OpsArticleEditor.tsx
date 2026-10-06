@@ -6,6 +6,7 @@ import { ArticleImage, ArticleQuiz, ArticleQuizItem, CodeBlock } from "@app/ui";
 
 import {
   normalizeBlocks,
+  preserveMdxLineEndings,
   splitMdxSections,
   toBackendBlocks,
   type ArticleBlock,
@@ -289,8 +290,13 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                   label="MDX 원문"
                   value={sourceText}
                   onChange={(next) => {
-                    setSourceText(next);
-                    setMdxSections(splitMdxSections(next));
+                    const restored = preserveMdxLineEndings(
+                      next,
+                      sourceText,
+                      sourceText,
+                    );
+                    setSourceText(restored);
+                    setMdxSections(splitMdxSections(restored));
                   }}
                   disabled={isBusy}
                   mono
@@ -310,7 +316,14 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                         onChange={(next) => {
                           const updated = mdxSections.map((item, itemIndex) =>
                             itemIndex === index
-                              ? { ...item, source: next }
+                              ? {
+                                  ...item,
+                                  source: preserveMdxLineEndings(
+                                    next,
+                                    item.source,
+                                    sourceText,
+                                  ),
+                                }
                               : item,
                           );
                           setMdxSections(updated);

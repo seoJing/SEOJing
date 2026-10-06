@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   normalizeBlocks,
+  preserveMdxLineEndings,
   splitMdxSections,
   toBackendBlocks,
 } from "./ops-article-editor.utils";
@@ -18,6 +19,34 @@ describe("splitMdxSections", () => {
       "Second",
     ]);
     expect(sections.map((section) => section.source).join("")).toBe(source);
+  });
+
+  it("does not split tab-indented headings or headings inside an unclosed fence", () => {
+    const source =
+      "Intro\n\t# code heading\n~~~ts\n~~~note\n# still code\n~~~\n## Real heading\nBody\n";
+    const sections = splitMdxSections(source);
+
+    expect(sections.map((section) => section.label)).toEqual([
+      "도입·문서 설정",
+      "Real heading",
+    ]);
+    expect(sections.map((section) => section.source).join("")).toBe(source);
+  });
+
+  it("preserves CRLF when a section is edited through an LF-normalizing textarea", () => {
+    const source = "Intro\r\n## First\r\nBefore\r\n## Second\r\nAfter\r\n";
+    const sections = splitMdxSections(source);
+    const edited = preserveMdxLineEndings(
+      sections[1]!.source.replace("Before", "Changed").replace(/\r\n/g, "\n"),
+      sections[1]!.source,
+      source,
+    );
+    const saved = [sections[0]!.source, edited, sections[2]!.source].join("");
+
+    expect(saved).toBe(
+      "Intro\r\n## First\r\nChanged\r\n## Second\r\nAfter\r\n",
+    );
+    expect(saved).not.toMatch(/(?<!\r)\n/);
   });
 });
 
