@@ -191,14 +191,10 @@ details[open]>summary::after{transform:translateY(0) rotate(-135deg)}
 .cta-end p{color:var(--ink-2);max-width:60ch}
 
 /* ---------- overview demo: a prepared reading replayed on the same sheet, with the same marks ---------- */
-.demo-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;min-height:34px}
-.demo-ctl .st{font:400 13px/20px var(--f-ui);color:var(--ink-2)}
 .demo{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:40px;align-items:start}
 .demo-main{min-width:0;display:grid;gap:8px}
 .demo .paper{--padT:36px;--padR:40px;--padB:44px;--padL:40px;--lh:30px;font-size:16px;line-height:30px;--gaze-w:2.2em;--gaze-h:1.8em}
 .demo .paper .u{transition:color var(--t-6) var(--ease-out)}
-.demo .paper .u.current{color:var(--ink)}
-.demo .gaze{transition:opacity 300ms var(--ease-out),transform var(--t-5) var(--ease-saccade)}
 .demo-side{display:grid;gap:24px;position:sticky;top:24px;min-width:0}
 .demo-side h3,.demo-rep h3,.demo-rep h4{font:600 13px/20px var(--f-ui);color:var(--ink-2)}
 .demo-side h3 .num{font-weight:400;margin-left:4px}
@@ -214,11 +210,10 @@ details[open]>summary::after{transform:translateY(0) rotate(-135deg)}
 .demo-rep-head{display:grid;gap:6px}
 .demo-rep-head h3{font:600 17px/26px var(--f-ui);color:var(--ink)}
 .demo-cap{font:400 13px/20px var(--f-ui);color:var(--ink-2);max-width:64ch}
-.demo-sec{display:grid}
-.demo .ritem{grid-template-columns:64px minmax(0,1fr);column-gap:16px;padding:16px 0}
-.demo .ritem .lbl{grid-row:1/span 4}
-.demo .ritem h5{font:600 15px/1.6 var(--f-ui);max-width:60ch}
-.demo .ritem .cites{grid-column:2;grid-row:auto;gap:8px}
+.demo-sec{display:grid;gap:4px}
+.demo-rep-list{list-style:none;margin:0;padding:0;display:grid}
+.demo-rep-list li{display:grid;grid-template-columns:72px minmax(0,1fr);gap:4px 16px;padding:10px 0;border-top:1px solid var(--rule);font:400 14px/22px var(--f-ui)}
+.demo-rep-list .lbl{font:600 12px/22px var(--f-ui);color:var(--ink-2);white-space:nowrap}
 
 /* ---------- common screen text ---------- */
 .screen{padding-block:32px 64px}
@@ -401,13 +396,26 @@ details[open]>summary::after{transform:translateY(0) rotate(-135deg)}
 .selbar{fill:var(--ink)}
 .bracket{fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:square;transform-box:fill-box;transform-origin:50% 0}
 
-/* gaze: an eye-tracker fixation, translucent and soft. Never a droplet icon, never a glow */
+/* gaze: a drop of glass resting on the line. Hue sits in the rim only; the body refracts the letters beneath
+   (a displacement map on the backdrop where the browser supports it), a highlight gives it volume, and in flight
+   the head leads while a tail thins out behind it. Never a droplet icon with a tip. */
 .gaze{position:absolute;left:0;top:0;width:var(--gaze-w);height:var(--gaze-h);margin:calc(var(--gaze-h)/-2) 0 0 calc(var(--gaze-w)/-2);
-  pointer-events:none;z-index:2;mix-blend-mode:var(--gz-blend);opacity:0;transition:opacity 300ms var(--ease-out);will-change:transform}
+  pointer-events:none;z-index:2;opacity:0;transition:opacity 300ms var(--ease-out);will-change:transform}
 .gaze-axis,.gaze-jelly,.gaze-blob{width:100%;height:100%}
-.gaze-blob{border-radius:50%;
+.gaze-axis,.gaze-jelly{position:relative}
+.gaze-lens{position:absolute;inset:0;border-radius:50%;overflow:hidden;
+  -webkit-backdrop-filter:url(#gz-lens) saturate(1.06) contrast(1.04);backdrop-filter:url(#gz-lens) saturate(1.06) contrast(1.04)}
+.gaze-lens::after{content:"";position:absolute;inset:0;border-radius:inherit;--spec:.5;
+  background:radial-gradient(ellipse 42% 28% at 34% 24%,rgb(255 255 255/var(--spec)) 0,rgb(255 255 255/0) 100%),
+    linear-gradient(165deg,rgb(255 255 255/.14) 0,rgb(255 255 255/0) 42%,rgb(var(--gaze-rgb)/.07) 100%)}
+.gaze-blob{position:relative;border-radius:50%;mix-blend-mode:var(--gz-blend);
   background:radial-gradient(closest-side,rgb(var(--gaze-rgb)/0) 0 44%,rgb(var(--gaze-rgb)/var(--gz-mid)) 68%,rgb(var(--gaze-rgb)/var(--gz-rim)) 92%,rgb(var(--gaze-rgb)/var(--gz-edge)) 100%);
-  box-shadow:inset 0 0 0 1px rgb(var(--gaze-rgb)/var(--gz-ring)),inset -1.5px -2px 0 rgb(var(--gaze-rgb)/var(--gz-lens))}
+  box-shadow:inset 0 0 0 1px rgb(var(--gaze-rgb)/var(--gz-ring)),inset -2px -3px 3px rgb(var(--gaze-rgb)/var(--gz-lens)),inset 1px 1px 1px rgb(var(--gaze-rgb)/.08)}
+.gaze-tail{position:absolute;left:50%;top:50%;height:64%;width:0;translate:-100% -50%;border-radius:50%;opacity:0;mix-blend-mode:var(--gz-blend);
+  background:radial-gradient(ellipse at 100% 50%,rgb(var(--gaze-rgb)/.26) 0,rgb(var(--gaze-rgb)/.10) 45%,rgb(var(--gaze-rgb)/0) 100%)}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .gaze-lens::after{--spec:.22} }
+:root[data-theme="dark"] .gaze-lens::after{--spec:.22}
+.gaze[data-state="stopped"] .gaze-lens{display:none}
 /* the jelly keyframes run only while the gaze is on screen: a hidden or leaving gaze costs nothing */
 .gaze:is([data-state="reading"],[data-state="skimming"],[data-state="jumping"]) .gaze-blob{animation:gz-jelly 3.2s var(--ease-in-out) infinite}
 .gaze:is([data-state="waiting"],[data-state="loading"]) .gaze-blob{animation:gz-jelly 5.2s var(--ease-in-out) infinite,gz-breathe 2.4s var(--ease-in-out) infinite alternate}
@@ -846,7 +854,6 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
       <section class="sec" aria-labelledby="ov-demo-h">
         <h2 id="ov-demo-h">README가 읽는 모습</h2>
         <p class="lede">미리 써 둔 예시 공고와 이력서로, 읽기와 리포트가 어떻게 보이는지 재생합니다. 설명을 위해 미리 써 둔 예시이며 모델이 만든 결과가 아닙니다.</p>
-        <div class="demo-ctl"><button class="btn-quiet" id="demo-play" type="button" hidden>일시정지</button><button class="btn-text" id="demo-replay" type="button" hidden>처음부터 다시 보기</button><p class="st" id="demo-st" aria-live="polite"></p></div>
         <div class="demo" id="demo"></div>
       </section>
       <section class="cta-end" aria-labelledby="ov-cta-h">
@@ -1125,6 +1132,12 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
   </footer>
 
 </div>
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <filter id="gz-lens" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">
+    <feImage id="gz-lens-map" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="m"/>
+    <feDisplacementMap in="SourceGraphic" in2="m" scale="26" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
 <div class="vh" id="live" role="status" aria-live="polite" lang="ko"></div>
 <div class="vh" id="alert" role="alert" lang="ko"></div>
 <script>
@@ -1911,14 +1924,50 @@ function drawThreads(P, A, o = {}) {
 }
 
 /* ===================== 6. gaze (fixation marker) ===================== */
-const GZ = { el: null, axis: null, jelly: null, blob: null, dots: [], pos: null, state: "hidden", trail: [], moveA: null, jellyA: null, growA: null, dotT: [], lastFix: null, gen: 0 };
+const GZ = { el: null, axis: null, tail: null, jelly: null, lens: null, blob: null, dots: [], pos: null, state: "hidden", trail: [], moveA: null, jellyA: null, tailA: null, growA: null, dotT: [], lastFix: null, gen: 0 };
+/* one gaze body for the reading sheet and the overview demo: axis (rotation) > tail + jelly (stretch) > lens (refraction) + blob (rim) */
+function gzMake() {
+  const lens = h("div", { class: "gaze-lens" }), blob = h("div", { class: "gaze-blob" }), jelly = h("div", { class: "gaze-jelly" }, lens, blob);
+  const tail = h("div", { class: "gaze-tail" }), axis = h("div", { class: "gaze-axis" }, tail, jelly);
+  return { el: h("div", { class: "gaze", "data-state": "hidden", "aria-hidden": "true" }, axis), axis, tail, jelly, lens, blob, pos: null, moveA: null, jellyA: null, tailA: null };
+}
+function gzPlaceOn(G, p) { G.pos = { x: p.x, y: p.y }; G.el.style.transform = `translate(${p.x}px, ${p.y}px)`; }
+function gzAim(G, th) { G.axis.style.transform = `rotate(${th}rad)`; G.blob.style.rotate = `${-th}rad`; G.lens.style.rotate = `${-th}rad`; }
+/* in flight the body stretches along the axis (the moving point is the head) and a tail thins out behind it */
+function gzStretch(G, d, dur) {
+  if (G.jellyA) G.jellyA.cancel();
+  const sx = 1 + Math.min(d / 400, .26), sy = 1 - Math.min(d / 900, .12);
+  G.jellyA = G.jelly.animate([{ transform: "none", opacity: 1 }, { transform: `scale(${sx},${sy})`, opacity: .78 }], { duration: dur, easing: "cubic-bezier(.3,0,.2,1)", fill: "forwards" });
+}
+function gzTail(G, d, dur) {
+  if (!G.tail || RM()) return;
+  if (G.tailA) G.tailA.cancel();
+  const len = Math.min(d * .6, 72);
+  G.tailA = G.tail.animate([{ width: "0px", opacity: 0 }, { width: `${len}px`, opacity: .9, offset: .45 }, { width: `${len * .5}px`, opacity: 0 }], { duration: dur + 260, easing: "cubic-bezier(.3,0,.2,1)" });
+}
+function gzSettle(G) {
+  const cur = getComputedStyle(G.jelly).transform;
+  if (G.jellyA) G.jellyA.cancel();
+  G.jellyA = G.jelly.animate([{ transform: cur && cur !== "none" ? cur : "none", opacity: .78 }, { transform: "scale(.93,1.06)", opacity: 1, offset: .3 }, { transform: "scale(1.03,.98)", offset: .6 }, { transform: "none", opacity: 1 }], { duration: 480, easing: "cubic-bezier(.2,.7,.3,1)" });
+}
+/* the refraction map: a convex lens pulls samples toward the centre, more so near the rim */
+function lensMap() {
+  try {
+    const n = 96, c = document.createElement("canvas"); c.width = c.height = n; const ctx = c.getContext("2d"); if (!ctx) return null;
+    const img = ctx.createImageData(n, n), d = img.data;
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      const u = (x + .5) / n - .5, v = (y + .5) / n - .5, r = Math.min(1, Math.hypot(u, v) * 2), g = r * r, i = (y * n + x) * 4;
+      d[i] = Math.round(128 - u * g * 254); d[i + 1] = Math.round(128 - v * g * 254); d[i + 2] = 128; d[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0); return c.toDataURL("image/png");
+  } catch { return null; }
+}
 const GZ_OP = { hidden: 0, loading: .5, reading: 1, skimming: 1, jumping: 1, waiting: .85, paused: .6, stopped: 1, exiting: 1 };
 function gzBuild(P) {
   GZ.dots = [0, 1, 2].map(i => h("div", { class: "gaze-dot d" + i, "aria-hidden": "true" }));
-  GZ.blob = h("div", { class: "gaze-blob" }); GZ.jelly = h("div", { class: "gaze-jelly" }, GZ.blob); GZ.axis = h("div", { class: "gaze-axis" }, GZ.jelly);
-  GZ.el = h("div", { class: "gaze", "data-state": "hidden", "aria-hidden": "true" }, GZ.axis);
+  const G = gzMake(); Object.assign(GZ, { el: G.el, axis: G.axis, tail: G.tail, jelly: G.jelly, lens: G.lens, blob: G.blob });
   P.el.append(...GZ.dots, GZ.el);
-  Object.assign(GZ, { pos: null, state: "hidden", trail: [], moveA: null, jellyA: null, growA: null, lastFix: null, gen: GZ.gen + 1 });
+  Object.assign(GZ, { pos: null, state: "hidden", trail: [], moveA: null, jellyA: null, tailA: null, growA: null, lastFix: null, gen: GZ.gen + 1 });
 }
 function gzSet(state) {
   if (!GZ.el) return;
@@ -1947,21 +1996,17 @@ async function gzSaccade(p, o = {}) {
   const from = GZ.pos, dx = p.x - from.x, dy = p.y - from.y, d = Math.hypot(dx, dy);
   if (d < 0.5) return;
   const dur = clamp(60 + 0.12 * d, 60, 160), th = Math.atan2(dy, dx);
-  GZ.axis.style.transform = `rotate(${th}rad)`; GZ.blob.style.rotate = `${-th}rad`;
+  gzAim(GZ, th);
   const lineChange = Math.abs(dy) > lineH() / 2;
   if (o.trail !== false && GZ.state === "reading" && !lineChange) gzTrailPush(from); else gzTrailClear(lineChange);
   scaleTo(.94, dur);
-  if (GZ.jellyA) GZ.jellyA.cancel();
-  const sx = 1 + Math.min(d / 500, .18), sy = 1 - Math.min(d / 900, .10);
-  GZ.jellyA = GZ.jelly.animate([{ transform: "none", opacity: 1 }, { transform: `scale(${sx},${sy})`, opacity: .7 }], { duration: dur, easing: "cubic-bezier(.3,0,.2,1)", fill: "forwards" });
+  gzStretch(GZ, d, dur); gzTail(GZ, d, dur);
   if (GZ.moveA) GZ.moveA.cancel();
   gzPlace(p);
   GZ.moveA = GZ.el.animate([{ transform: `translate(${from.x}px, ${from.y}px)` }, { transform: `translate(${p.x}px, ${p.y}px)` }], { duration: dur, easing: "cubic-bezier(.3,0,.2,1)" });
   try { await GZ.moveA.finished; } catch { /* interrupted */ }
   if (GZ.gen !== gen) return;
-  const cur = getComputedStyle(GZ.jelly).transform;
-  if (GZ.jellyA) GZ.jellyA.cancel();
-  GZ.jellyA = GZ.jelly.animate([{ transform: cur && cur !== "none" ? cur : "none", opacity: .7 }, { transform: "scale(.93,1.06)", opacity: 1, offset: .3 }, { transform: "scale(1.03,.98)", offset: .6 }, { transform: "none", opacity: 1 }], { duration: 480, easing: "cubic-bezier(.2,.7,.3,1)" });
+  gzSettle(GZ);
 }
 async function gzFlow(p, ms) {
   if (!GZ.el || !p) return;
@@ -4067,8 +4112,9 @@ function restartPrepare() {
 function applyRM() { document.documentElement.classList.toggle("rm", RM()); }
 
 /* ===================== 17. overview demo · a prepared reading, replayed ===================== */
-/* Fixed data drawn with the reading screen's own marks and words. Nothing here comes from a model;
-   the sheet, the gaze and the memo list are the same vocabulary a real run uses. */
+/* Fixed data drawn with the reading screen's own marks, words and beat: the gaze fixes word by word (§5.3 timing),
+   the pen is drawn only after the sentence has been read, and the memo follows the pen. Nothing here comes from a
+   model. The demo replays from the start whenever it scrolls into view and stops as soon as it leaves. */
 const DEMO_REQS = [
   ["r1", "duty", "SNS 채널 콘텐츠 기획·운영"], ["r2", "duty", "성과 데이터 분석 및 월간 리포트 작성"],
   ["r3", "required", "콘텐츠 기획·운영 경험 6개월 이상"], ["r4", "preferred", "성과 지표 분석 경험"], ["r5", "preferred", "디자인 툴 활용 가능자"]];
@@ -4092,16 +4138,16 @@ const DEMO_STEPS = [
   { marks: "ok", reqs: ["r2"], notes: [{ id: 7, k: "ok", w: "설명 찾음", q: "매월 성과를 정리한 리포트를 팀장님께 공유", t: "담당 업무 2 ‘월간 리포트 작성’과 맞닿는 경험입니다." }] },
   { marks: "", reqs: [], notes: [] }];
 const DEMO_OPEN_AT_END = [2, 4, 6];
+/* the report, headlines only: the real report adds a reason and source citations to every item */
 const DEMO_REPORT = [
-  { g: "수정 방향", n: 1, h: "정체 시점의 도달률을 한 줄 적어 보세요.", r: "‘약 2.3배’라는 결과는 기준값이 있어야 비교가 됩니다. 당시 평균 도달률이나 기간을 붙이면 4번째 문장의 결과가 이어집니다.", cites: [2, 4] },
-  { g: "수정 방향", n: 2, h: "‘팔로워 수 증가에도 기여’는 숫자가 없으면 빼는 쪽이 읽기 쉽습니다.", r: "늘어난 수나 비율이 있다면 적고, 없다면 도달률 결과만 남겨도 설명이 끊기지 않습니다.", cites: [4] },
-  { g: "유지할 설명", n: 1, h: "인턴 6개월과 기획·운영 역할이 자격 요건 3과 바로 맞닿습니다.", r: "기간과 역할이 한 문장에 있어 요건과 연결됩니다.", cites: [1] },
-  { g: "유지할 설명", n: 2, h: "데이터를 본 뒤 방향을 바꾼 과정과 월간 리포트 경험이 우대 사항 4, 담당 업무 2와 이어집니다.", r: "수행 방식이 보이는 문장이라 질문이 남아도 유지할 설명입니다.", cites: [3, 5] }];
+  { g: "수정 방향", n: 1, h: "정체 시점의 도달률을 한 줄 적어 보세요." },
+  { g: "수정 방향", n: 2, h: "‘팔로워 수 증가에도 기여’는 숫자가 없으면 빼는 쪽이 읽기 쉽습니다." },
+  { g: "유지할 설명", n: 1, h: "인턴 6개월과 기획·운영 역할이 자격 요건 3과 바로 맞닿습니다." },
+  { g: "유지할 설명", n: 2, h: "데이터를 본 뒤 방향을 바꾼 과정과 월간 리포트 경험이 우대 사항 4, 담당 업무 2와 이어집니다." }];
 const DEMO_MK = { q: "var(--q)", ok: "var(--ok)", part: "var(--part)", held: "var(--ink-2)" };
-const DEMO = { built: false, i: -1, marked: false, done: false, paused: false, byUser: false, inView: false, timers: new Set(), units: [], gaze: null };
-function demoClear() { for (const t of DEMO.timers) clearTimeout(t); DEMO.timers.clear(); }
-function demoAfter(ms, fn) { const t = setTimeout(() => { DEMO.timers.delete(t); fn(); }, ms); DEMO.timers.add(t); }
-function demoStatus(s) { setText($("#demo-st"), s); }
+const DEMO = { built: false, tok: 0, done: false, inView: false, timers: new Set(), units: [], gz: null, paper: null };
+function demoClear() { DEMO.tok++; for (const t of DEMO.timers) clearTimeout(t); DEMO.timers.clear(); }
+function demoNap(ms) { return new Promise(res => { const t = setTimeout(() => { DEMO.timers.delete(t); res(); }, ms); DEMO.timers.add(t); }); }
 function demoCount() { const n = $("#demo-feed").children.length; setText($("#demo-n"), n ? String(n) : ""); $("#demo-empty").hidden = n > 0; }
 function demoNote(n, ui, still) {
   return h("li", { class: "note" + (still ? "" : " enter"), id: "dn-" + n.id, style: `--mk:${DEMO_MK[n.k]}` },
@@ -4110,105 +4156,108 @@ function demoNote(n, ui, still) {
       h("p", { class: "note-text" }, h("span", { class: "nq" }, `“${n.q}”`), ` — ${n.t}`)));
 }
 function buildDemo() {
-  const root = $("#demo"); if (!root) return; root.textContent = "";
+  const root = $("#demo"); if (!root) return; demoClear(); root.textContent = "";
   const paper = h("div", { class: "paper reading demo-paper", role: "group", "aria-label": "예시 이력서 본문" });
   paper.append(h("p", { class: "blk h1" }, "자기소개서 · 마케팅 콘텐츠 운영 지원"));
   const para = h("p", { class: "blk p" });
-  DEMO.units = DEMO_UNITS.map((t, i) => { const u = h("span", { class: "u unread", "data-u": String(i + 1) }, h("span", { class: "pen" }, t)); para.append(i ? " " : "", u); return u; });
+  DEMO.units = DEMO_UNITS.map((t, i) => {
+    const pen = h("span", { class: "pen" });
+    for (const part of t.split(/(\s+)/)) { if (!part) continue; if (/^\s+$/.test(part)) pen.append(part); else pen.append(h("span", { class: "w" }, part)); }
+    const u = h("span", { class: "u unread", "data-u": String(i + 1) }, pen); para.append(i ? " " : "", u); return u;
+  });
   paper.append(para);
-  DEMO.gaze = h("div", { class: "gaze", "data-state": "waiting", "aria-hidden": "true" }, h("div", { class: "gaze-blob" }));
-  paper.append(DEMO.gaze);
+  DEMO.gz = gzMake(); paper.append(DEMO.gz.el);
   const reqs = h("ol", { class: "dreqs", id: "dreqs" });
   DEMO_REQS.forEach(([id, kind, label], i) => reqs.append(h("li", { class: "dreq", "data-r": id }, h("span", { class: "c" }, String(i + 1)), h("span", null, label, h("span", { class: "k" }, KIND_WORD[kind])))));
   const side = h("aside", { class: "demo-side", "aria-label": "예시 공고 요건과 읽기 메모" },
     h("div", null, h("h3", null, "예시 공고 요건 · 마케팅 콘텐츠 운영 담당자(신입)"), reqs),
     h("div", null, h("h3", null, "읽기 메모", h("span", { class: "num", id: "demo-n" })), h("ol", { class: "feed", id: "demo-feed", "aria-label": "읽기 메모" }), h("p", { class: "demo-empty", id: "demo-empty" }, "아직 메모가 없습니다.")));
   root.append(h("div", { class: "demo-main" }, h("p", { class: "doc-note" }, SAMPLE_NOTE), paper, h("div", { id: "demo-rep" })), side);
-  Object.assign(DEMO, { built: true, i: -1, marked: false, done: false, paused: false, byUser: false });
-  demoClear(); demoStatus("");
-  $("#demo-play").hidden = true; $("#demo-replay").hidden = true;
+  DEMO.paper = paper; Object.assign(DEMO, { built: true, done: false });
   if (RM()) demoFinal(true);
 }
-function demoPlaceGaze(u) {
-  const paper = u.closest(".paper"), pr = paper.getBoundingClientRect(), r = u.querySelector(".pen").getClientRects()[0]; if (!r || !pr.width) return;
-  DEMO.gaze.style.transform = `translate(${r.left - pr.left + Math.min(r.width, 48) / 2}px,${r.top - pr.top + r.height / 2}px)`;
+function demoPoint(el, frac = .42) { const pr = DEMO.paper.getBoundingClientRect(), r = el && firstRect(el); if (!r || !pr.width) return null; return { x: r.left - pr.left + r.width * frac, y: r.top - pr.top + r.height * .52 }; }
+/* the reading sheet's saccade on the demo's own gaze body */
+async function demoFly(p) {
+  const G = DEMO.gz; if (!p) return;
+  if (!G.pos || RM()) { gzPlaceOn(G, p); G.el.style.opacity = "1"; return; }
+  const from = G.pos, dx = p.x - from.x, dy = p.y - from.y, d = Math.hypot(dx, dy); if (d < .5) return;
+  const dur = clamp(60 + .12 * d, 60, 160);
+  gzAim(G, Math.atan2(dy, dx)); gzStretch(G, d, dur); gzTail(G, d, dur);
+  if (G.moveA) G.moveA.cancel();
+  gzPlaceOn(G, p);
+  G.moveA = G.el.animate([{ transform: `translate(${from.x}px, ${from.y}px)` }, { transform: `translate(${p.x}px, ${p.y}px)` }], { duration: dur, easing: "cubic-bezier(.3,0,.2,1)" });
+  try { await G.moveA.finished; } catch { /* interrupted */ }
+  gzSettle(G);
 }
-function demoStep() {
-  const i = DEMO.i, u = DEMO.units[i]; if (!u) return;
-  DEMO.units.forEach((x, j) => { x.classList.toggle("unread", j > i); x.classList.toggle("current", j === i); x.classList.toggle("read", j < i); });
-  DEMO.gaze.dataset.state = "reading"; DEMO.gaze.style.opacity = "1"; demoPlaceGaze(u);
-  demoStatus(`${i + 1}/${DEMO_UNITS.length} 문장 읽는 중`);
-  DEMO.marked = false; demoAfter(650, demoMark);
+/* fixations as on the sheet: seeded skips of short words, dwell by syllables, a breath at the sentence end */
+function demoFixations(i, words) {
+  const rnd = mulberry32(fnv1a("demo:" + i)), rs = words.map(firstRect), lineOf = [], out = []; let li = -1, lastTop = null;
+  rs.forEach((r, k) => { if (r && (lastTop === null || Math.abs(r.top - lastTop) > 4)) { li++; lastTop = r.top; } lineOf[k] = li; });
+  for (let k = 0; k < words.length; k++) {
+    if (!rs[k]) continue;
+    const first = k === 0 || lineOf[k - 1] !== lineOf[k], last = k === words.length - 1 || lineOf[k + 1] !== lineOf[k], syl = syllables(words[k].textContent);
+    if (syl <= 2 && !first && !last && rnd() < .45) continue;
+    out.push({ wi: k, dwell: clamp(150 + 26 * syl, 180, 420) });
+  }
+  if (out.length) out[out.length - 1].dwell += 120;
+  return out;
 }
-function demoMark() {
-  if (DEMO.marked) return; DEMO.marked = true;
-  const i = DEMO.i, st = DEMO_STEPS[i], pen = DEMO.units[i].querySelector(".pen");
-  if (st.marks) pen.className = "pen draw " + st.marks;
-  for (const r of st.reqs) $(`#dreqs [data-r="${r}"]`)?.classList.add("on");
-  for (const n of st.notes) $("#demo-feed").append(demoNote(n, i + 1));
-  demoCount(); demoAfter(st.notes.length ? 1150 : 700, demoNext);
-}
-function demoNext() { DEMO.i += 1; if (DEMO.i >= DEMO_UNITS.length) demoEnd(); else demoStep(); }
-function demoOpenAtEnd() { for (const id of DEMO_OPEN_AT_END) { const st = $(`#dn-${id} .state`); if (st) setText(st, STATUS_WORD.open_at_end); } }
-function demoEnd() {
+async function demoRun() {
+  const tok = DEMO.tok, ok = () => tok === DEMO.tok && DEMO.inView, G = DEMO.gz;
+  G.el.dataset.state = "reading";
+  await demoNap(600); if (!ok()) return;
+  for (let i = 0; i < DEMO_UNITS.length; i++) {
+    const u = DEMO.units[i], st = DEMO_STEPS[i];
+    DEMO.units.forEach((x, j) => { x.classList.toggle("unread", j > i); x.classList.toggle("current", j === i); x.classList.toggle("read", j < i); });
+    const words = $$(".w", u);
+    for (const f of demoFixations(i, words)) {
+      await demoFly(demoPoint(words[f.wi])); if (!ok()) return;
+      for (let k = 0; k <= f.wi; k++) words[k].classList.add("inked");
+      await demoNap(f.dwell); if (!ok()) return;
+    }
+    for (const w of words) w.classList.add("inked");
+    if (st.marks || st.notes.length) {
+      await demoNap(420); if (!ok()) return;
+      if (st.marks) u.querySelector(".pen").className = "pen draw " + st.marks;
+      for (const r of st.reqs) $(`#dreqs [data-r="${r}"]`)?.classList.add("on");
+      await demoNap(120); if (!ok()) return;
+      for (const n of st.notes) $("#demo-feed").append(demoNote(n, i + 1));
+      demoCount();
+      await demoNap(520); if (!ok()) return;
+    } else { await demoNap(240); if (!ok()) return; }
+  }
   for (const x of DEMO.units) { x.classList.remove("unread", "current"); x.classList.add("read"); }
-  DEMO.gaze.dataset.state = "stopped"; DEMO.gaze.style.opacity = "0"; $("#demo-play").hidden = true;
-  demoStatus("읽기 끝 · 리포트를 쓰는 중");
-  demoAfter(700, () => { demoOpenAtEnd(); demoAfter(900, () => demoFinal(false)); });
+  G.el.dataset.state = "exiting"; await demoNap(300); if (!ok()) return;
+  if (!RM()) G.blob.animate([{ scale: "1", opacity: 1 }, { scale: ".2", opacity: 0 }], { duration: 600, easing: "cubic-bezier(.4,0,1,1)", fill: "forwards" });
+  G.el.style.opacity = "0";
+  await demoNap(500); if (!ok()) return; demoOpenAtEnd();
+  await demoNap(800); if (!ok()) return; demoFinal(false);
 }
+function demoOpenAtEnd() { for (const id of DEMO_OPEN_AT_END) { const st = $(`#dn-${id} .state`); if (st) setText(st, STATUS_WORD.open_at_end); } }
 function demoFinal(instant) {
-  if (instant) { /* reduced motion: the finished reading, without the replay */
-    DEMO.i = DEMO_UNITS.length;
+  if (instant) { /* reduced motion: the finished reading, at once */
     DEMO_STEPS.forEach((st, i) => { const pen = DEMO.units[i].querySelector(".pen"); if (st.marks) pen.className = "pen " + st.marks; for (const r of st.reqs) $(`#dreqs [data-r="${r}"]`)?.classList.add("on"); for (const n of st.notes) $("#demo-feed").append(demoNote(n, i + 1, true)); });
     for (const x of DEMO.units) { x.classList.remove("unread", "current"); x.classList.add("read"); }
     demoCount(); demoOpenAtEnd();
-    demoStatus("움직임 줄이기 설정을 따라 읽기가 끝난 모습을 바로 보여 줍니다.");
-  } else demoStatus("읽기 끝 · 리포트");
-  DEMO.done = true; demoClear();
-  $("#demo-play").hidden = true; $("#demo-replay").hidden = RM();
-  demoReport();
-}
-function demoCite(c) {
-  const u = DEMO.units[c - 1]; if (!u) return;
-  u.scrollIntoView({ block: "center", behavior: RM() ? "auto" : "smooth" });
-  for (const x of DEMO.units) x.classList.remove("hover");
-  u.classList.add("hover"); demoAfter(1800, () => u.classList.remove("hover"));
+  }
+  DEMO.done = true; demoReport();
 }
 function demoReport() {
   const box = $("#demo-rep"); box.textContent = "";
-  const rep = h("div", { class: "demo-rep", role: "region", "aria-label": "예시 리포트" },
-    h("div", { class: "demo-rep-head" }, h("h3", null, "리포트"), h("p", { class: "demo-cap" }, "다 읽은 뒤 이력서 전체 문장과 읽기 메모를 바탕으로 정리한 수정 방향입니다. 인용을 누르면 해당 문장을 표시합니다.")));
+  const rep = h("div", { class: "demo-rep", role: "region", "aria-label": "예시 리포트 요약" },
+    h("div", { class: "demo-rep-head" }, h("h3", null, "리포트"), h("p", { class: "demo-cap" }, "다 읽은 뒤 이력서 전체 문장과 읽기 메모를 바탕으로 정리합니다. 실제 리포트에서는 항목마다 이유와 원문 인용이 붙습니다.")));
   for (const [title, g] of [["먼저 고칠 부분", "수정 방향"], ["고칠 때 유지할 설명", "유지할 설명"]]) {
-    const sec = h("div", { class: "demo-sec" }, h("h4", null, title));
-    for (const it of DEMO_REPORT.filter(x => x.g === g)) {
-      const cites = h("div", { class: "cites" });
-      for (const c of it.cites) cites.append(h("button", { type: "button", class: "cite", onclick: () => demoCite(c) }, h("span", { class: "loc" }, `자기소개서 · ${c}번째 문장`), h("span", { class: "cite-q" }, DEMO_UNITS[c - 1])));
-      sec.append(h("div", { class: "ritem" }, h("span", { class: "lbl" }, `${g} ${it.n}`), h("h5", null, it.h), h("p", { class: "reason" }, it.r), cites));
-    }
-    rep.append(sec);
+    const ul = h("ul", { class: "demo-rep-list" });
+    for (const it of DEMO_REPORT.filter(x => x.g === g)) ul.append(h("li", null, h("span", { class: "lbl" }, `${g} ${it.n}`), h("span", null, it.h)));
+    rep.append(h("div", { class: "demo-sec" }, h("h4", null, title), ul));
   }
-  rep.append(h("p", { class: "demo-cap" }, "우대 사항 5 ‘디자인 툴 활용 가능자’는 이력서에 언급이 없습니다. 갖추지 못했다는 뜻은 아닙니다."), h("p", { class: "demo-cap" }, SAMPLE_NOTE));
+  rep.append(h("p", { class: "demo-cap" }, SAMPLE_NOTE));
   box.append(rep);
 }
-function demoStart() {
-  if (!DEMO.built) buildDemo();
-  if (DEMO.done || RM()) return;
-  if (DEMO.i < 0) { DEMO.i = 0; $("#demo-play").hidden = false; setText($("#demo-play"), "일시정지"); $("#demo-replay").hidden = false; demoStep(); }
-  else if (DEMO.paused && !DEMO.byUser) demoResume();
-}
-function demoPause(byUser) {
-  if (DEMO.done || DEMO.i < 0 || DEMO.i >= DEMO_UNITS.length || DEMO.paused) return;
-  demoClear(); DEMO.paused = true; DEMO.byUser = !!byUser; DEMO.gaze.dataset.state = "paused";
-  setText($("#demo-play"), "계속"); demoStatus("일시정지");
-}
-function demoResume() {
-  if (!DEMO.paused) return;
-  DEMO.paused = false; DEMO.byUser = false; DEMO.gaze.dataset.state = "reading"; demoPlaceGaze(DEMO.units[DEMO.i]);
-  setText($("#demo-play"), "일시정지"); demoStatus(`${DEMO.i + 1}/${DEMO_UNITS.length} 문장 읽는 중`);
-  if (!DEMO.marked) demoAfter(400, demoMark); else demoAfter(600, demoNext);
-}
-function demoReplay() { demoClear(); buildDemo(); if (RM()) return; DEMO.i = 0; $("#demo-play").hidden = false; setText($("#demo-play"), "일시정지"); $("#demo-replay").hidden = false; demoStep(); }
-function demoRelayout() { if (DEMO.built && DEMO.i >= 0 && DEMO.i < DEMO_UNITS.length && !DEMO.done) demoPlaceGaze(DEMO.units[DEMO.i]); }
+function demoEnter() { DEMO.inView = true; buildDemo(); if (!RM()) demoRun(); }
+function demoLeave() { DEMO.inView = false; demoClear(); }
+function demoRelayout() { if (!DEMO.inView || DEMO.done || !DEMO.gz?.pos) return; const w = $$(".u.current .w.inked", DEMO.paper).pop(); const p = w && demoPoint(w); if (p) gzPlaceOn(DEMO.gz, p); }
 const CAN_PRINT = (() => { try { return window.top === window.self; } catch { return false; } })();
 /* A refreshed tab: the token and ids come back from sessionStorage, the document comes back from the server.
    The first GET has the same timeout and retries as polling. Only 401, 404/410 or a finished preparation
@@ -4268,15 +4317,13 @@ async function boot() {
   setText($("#foot-year"), String(new Date().getFullYear()));
   $("#cta-start").addEventListener("click", startFlow);
   $$("[data-start]").forEach(b => b.addEventListener("click", startFlow));
-  $("#demo-play").addEventListener("click", () => { if (DEMO.paused) demoResume(); else demoPause(true); });
-  $("#demo-replay").addEventListener("click", demoReplay);
+  const map = lensMap(); if (map) $("#gz-lens-map")?.setAttribute("href", map);
   buildDemo();
-  /* the demo plays when it scrolls into view and rests while it is off screen or on another page */
-  if ("IntersectionObserver" in window) {
-    new IntersectionObserver(es => { for (const e of es) { DEMO.inView = e.isIntersecting; if (e.isIntersecting) demoStart(); else demoPause(false); } }, { threshold: .25 }).observe($("#demo"));
-  } else demoStart();
+  /* the demo replays from the start each time it scrolls into view and stops as soon as it leaves (or the page changes) */
+  if ("IntersectionObserver" in window) new IntersectionObserver(es => { for (const e of es) { if (e.isIntersecting) demoEnter(); else demoLeave(); } }, { threshold: .3 }).observe($("#demo"));
+  else demoEnter();
   addEventListener("resize", demoRelayout);
-  mqRM.addEventListener("change", () => { if (DEMO.built) { demoClear(); buildDemo(); if (DEMO.inView) demoStart(); } });
+  mqRM.addEventListener("change", () => { if (DEMO.inView) demoEnter(); });
   buildLegend();
   wireTabs($("#side-tabs"), id => { S.ui.tab = id === "tab-reqs" ? "reqs" : "notes"; renderTabsAndPanels(); });
   wireTabs($("#mtabs"), id => { S.ui.mtab = id === "mt-doc" ? "doc" : id === "mt-reqs" ? "reqs" : "notes"; closeInline(); renderTabsAndPanels(); if (S.ui.mtab === "doc") requestAnimationFrame(() => { relayoutRead(); }); });
