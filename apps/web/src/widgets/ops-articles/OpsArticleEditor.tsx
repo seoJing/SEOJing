@@ -6,9 +6,11 @@ import { ArticleImage, ArticleQuiz, ArticleQuizItem, CodeBlock } from "@app/ui";
 
 import {
   normalizeBlocks,
+  splitMdxSections,
   toBackendBlocks,
   type ArticleBlock,
   type BlockType,
+  type MdxSection,
 } from "./ops-article-editor.utils";
 
 type EditorArticle = {
@@ -73,6 +75,8 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("SEOJing");
   const [sourceText, setSourceText] = useState("");
+  const [mdxSections, setMdxSections] = useState<MdxSection[]>([]);
+  const [showRawMdx, setShowRawMdx] = useState(false);
   const [status, setStatus] = useState<
     "idle" | "loading" | "saving" | "publishing"
   >("idle");
@@ -102,6 +106,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
         setDescription(body.article?.description ?? "");
         setCategory(body.article?.category ?? "SEOJing");
         setSourceText(body.article?.sourceText ?? "");
+        setMdxSections(splitMdxSections(body.article?.sourceText ?? ""));
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
@@ -208,6 +213,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
     setDescription(body.article?.description ?? "");
     setCategory(body.article?.category ?? "SEOJing");
     setSourceText(body.article?.sourceText ?? "");
+    setMdxSections(splitMdxSections(body.article?.sourceText ?? ""));
   }
 
   if (!hasSelection) {
@@ -257,26 +263,87 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
               onChange={setBlocks}
             />
           ) : (
-            <div className="mt-6 space-y-4">
-              <TextAreaField
-                label="MDX 원문"
-                value={sourceText}
-                onChange={setSourceText}
-                disabled={isBusy}
-                mono
-                rows={24}
-              />
+            <div className="mt-6 min-w-0 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold">MDX 섹션 편집</h3>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    기존 글은 MDX 형식입니다. 제목별로 나눠 보여주지만 저장 시
+                    원문 형식을 유지합니다.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium dark:border-zinc-700"
+                  onClick={() => {
+                    if (showRawMdx)
+                      setMdxSections(splitMdxSections(sourceText));
+                    setShowRawMdx(!showRawMdx);
+                  }}
+                >
+                  {showRawMdx ? "섹션별로 보기" : "원문 전체 보기"}
+                </button>
+              </div>
+              {showRawMdx ? (
+                <TextAreaField
+                  label="MDX 원문"
+                  value={sourceText}
+                  onChange={(next) => {
+                    setSourceText(next);
+                    setMdxSections(splitMdxSections(next));
+                  }}
+                  disabled={isBusy}
+                  mono
+                  rows={24}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {mdxSections.map((section, index) => (
+                    <div
+                      className="min-w-0 rounded-2xl border border-zinc-200 bg-zinc-50/70 p-3 dark:border-zinc-800 dark:bg-zinc-900/40 sm:p-4"
+                      key={index}
+                    >
+                      <TextAreaField
+                        label={`섹션 ${index + 1} · ${section.label}`}
+                        value={section.source}
+                        onChange={(next) => {
+                          const updated = mdxSections.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, source: next }
+                              : item,
+                          );
+                          setMdxSections(updated);
+                          setSourceText(
+                            updated.map((item) => item.source).join(""),
+                          );
+                        }}
+                        disabled={isBusy}
+                        mono
+                        rows={Math.min(
+                          18,
+                          Math.max(5, section.source.split("\n").length + 1),
+                        )}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
               <p className="text-xs text-zinc-500">
                 MDX 원문은 저장할 때 서버에서 안전한 공개 본문으로 변환됩니다.
                 아래 미리보기는 마지막으로 저장한 revision 기준입니다.
               </p>
               {article.renderedHtml ? (
-                <iframe
-                  title="저장된 MDX 수정본 미리보기"
-                  sandbox=""
-                  srcDoc={article.renderedHtml}
-                  className="h-96 w-full rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800"
-                />
+                <section className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950 sm:p-6">
+                  <h3 className="text-sm font-semibold">
+                    저장된 수정본 미리보기
+                  </h3>
+                  <iframe
+                    title="저장된 MDX 수정본 미리보기"
+                    sandbox=""
+                    srcDoc={mdxPreviewDocument(article.renderedHtml)}
+                    className="mt-5 h-[32rem] w-full min-w-0 max-w-full rounded-xl border border-zinc-200 bg-white sm:h-[40rem]"
+                  />
+                </section>
               ) : null}
             </div>
           )}
@@ -930,7 +997,7 @@ function TextAreaField({
       {label}
       <textarea
         rows={rows}
-        className={`mt-1 min-h-24 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 ${mono ? "font-mono" : ""}`}
+        className={`mt-1 min-h-24 w-full min-w-0 max-w-full resize-y rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 ${mono ? "font-mono" : ""}`}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
@@ -959,6 +1026,28 @@ function arrayValue(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
     : [];
+}
+
+function mdxPreviewDocument(html: string): string {
+  return `<!doctype html><html lang="ko"><head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+@font-face { font-family: A2z; src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-4Regular.woff2") format("woff2"); font-weight: 400; }
+@font-face { font-family: A2z; src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-7Bold.woff2") format("woff2"); font-weight: 700; }
+@font-face { font-family: Paperlogy; src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2") format("woff2"); font-weight: 700; }
+*, *::before, *::after { box-sizing: border-box; }
+html { width: 100%; overflow-x: hidden; }
+body { max-width: 52rem; min-width: 0; margin: 0 auto; padding: clamp(1rem, 4vw, 2rem); color: #374151; font: 400 1rem/2 A2z, Arial, sans-serif; overflow-wrap: anywhere; }
+h1, h2, h3, h4 { color: #111827; font-family: Paperlogy, Arial, sans-serif; line-height: 1.4; overflow-wrap: anywhere; }
+h2 { margin: 3rem 0 1rem; font-size: 1.5rem; } h3 { margin: 2.25rem 0 .75rem; font-size: 1.25rem; }
+p, li { line-height: 2; } ul, ol { padding-left: 1.5rem; } ul { list-style: disc; } ol { list-style: decimal; }
+a { color: #2563eb; text-decoration: underline; } blockquote { border-left: 4px solid #d1d5db; margin: 1.5rem 0; padding-left: 1rem; }
+pre { max-width: 100%; overflow-x: auto; border-radius: 1rem; background: #030712; color: #f3f4f6; padding: 1.25rem; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; } pre code { white-space: pre; overflow-wrap: normal; }
+img, figure, svg { max-width: 100%; height: auto; } figure { margin: 2rem 0; }
+table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; } th, td { border-bottom: 1px solid #d1d5db; padding: .75rem; text-align: left; }
+@media (min-width: 640px) { p, li { font-size: 1.125rem; } }
+</style></head><body>${html}</body></html>`;
 }
 
 function ArticleStatusCard({

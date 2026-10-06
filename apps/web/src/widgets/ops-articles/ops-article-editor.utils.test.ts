@@ -1,6 +1,25 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeBlocks, toBackendBlocks } from "./ops-article-editor.utils";
+import {
+  normalizeBlocks,
+  splitMdxSections,
+  toBackendBlocks,
+} from "./ops-article-editor.utils";
+
+describe("splitMdxSections", () => {
+  it("preserves the complete source while separating headings outside frontmatter and code", () => {
+    const source =
+      '---\r\ntitle: "Test"\r\n---\r\n\r\nIntro\r\n\r\n## First\r\n```ts\r\n# not a heading\r\n```\r\n\r\n## Second\r\nBody\r\n';
+    const sections = splitMdxSections(source);
+
+    expect(sections.map((section) => section.label)).toEqual([
+      "도입·문서 설정",
+      "First",
+      "Second",
+    ]);
+    expect(sections.map((section) => section.source).join("")).toBe(source);
+  });
+});
 
 describe("toBackendBlocks", () => {
   it("converts the editor IMAGE src field to the backend url field", () => {

@@ -43,8 +43,15 @@ describe("OpsArticleEditor", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<OpsArticleEditor selectedSlug={article.slug} />);
-    const source = await screen.findByRole("textbox", { name: "MDX 원문" });
-    expect(source).toHaveValue(article.sourceText);
+    const source = await screen.findByRole("textbox", {
+      name: "섹션 1 · Draft heading",
+    });
+    expect(source).toHaveValue("# Draft heading\n\nSaved revision");
+    expect(screen.getByText("저장된 수정본 미리보기")).toBeInTheDocument();
+    const preview = screen.getByTitle("저장된 MDX 수정본 미리보기");
+    expect(preview).toHaveAttribute("sandbox", "");
+    expect(preview.getAttribute("srcdoc")).toContain('name="viewport"');
+    expect(preview.getAttribute("srcdoc")).toContain("font-family: A2z");
     expect(screen.getByText("발행 대기")).toBeInTheDocument();
     const publish = screen.getByRole("button", {
       name: "latest revision 발행",
