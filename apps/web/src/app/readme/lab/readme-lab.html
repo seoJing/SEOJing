@@ -131,14 +131,94 @@ details>summary::after{content:"";display:inline-block;flex:none;width:5px;heigh
 details[open]>summary::after{transform:translateY(0) rotate(-135deg)}
 .only-m{display:none}
 
-/* ---------- header ---------- */
-.head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px;min-height:64px;padding-block:12px;border-bottom:1px solid var(--rule)}
-.brand{font:600 15px/1 var(--f-ui);letter-spacing:.06em}
-.steps{display:flex;list-style:none;margin:0;padding:0;font:400 13px/20px var(--f-ui);color:var(--ink-2)}
-.steps li+li::before{content:"·";margin:0 8px;color:var(--ink-2);font-weight:400}
-.steps li[aria-current="step"]{color:var(--ink);font-weight:600}
-.steps-m{display:none;font:600 13px/20px var(--f-ui)}
-.engine{margin-left:auto;font:500 12px/18px var(--f-ui);color:var(--ink-2);text-align:right;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:0 16px}
+/* ---------- header: brand, two pages, one call to action. The flow's step strip lives inside the screens ---------- */
+.head{display:flex;align-items:center;gap:8px 28px;min-height:64px;padding-block:12px;border-bottom:1px solid var(--rule)}
+.brand{font:600 15px/1 var(--f-ui);letter-spacing:.06em;color:var(--ink);text-decoration:none}
+.nav{display:flex;gap:20px;font:500 14px/20px var(--f-ui)}
+.nav a{color:var(--ink-2);text-decoration:none;padding:4px 0;border-bottom:2px solid transparent;transition:color var(--t-1),border-color var(--t-1)}
+.nav a:hover{color:var(--ink)}
+.nav a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--ink)}
+.head .cta{margin-left:auto}
+.steps-line{display:flex;flex-wrap:wrap;font:400 13px/20px var(--f-ui);color:var(--ink-2)}
+.steps-line span+span::before{content:"·";margin:0 8px;color:var(--ink-2);font-weight:400}
+.steps-line span[aria-current="step"]{color:var(--ink);font-weight:600}
+
+/* ---------- footer: who runs it, which models read, where the text goes ---------- */
+.foot{margin-top:64px;padding:24px 0 8px;border-top:1px solid var(--rule);display:grid;gap:10px;font:400 13px/20px var(--f-ui);color:var(--ink-2)}
+.foot-row{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline}
+.foot-brand{font:600 13px/20px var(--f-ui);letter-spacing:.06em;color:var(--ink)}
+.engine{display:flex;flex-wrap:wrap;gap:0 16px;font:500 12px/18px var(--f-ui);color:var(--ink-2)}
+.engine:empty{display:none}
+.foot-nav{display:flex;flex-wrap:wrap;gap:4px 20px}
+.foot a{color:var(--ink-2);text-decoration:underline 1px var(--rule);text-underline-offset:3px}
+.foot a:hover{color:var(--ink)}
+.foot-copy{max-width:72ch;font-size:12px;line-height:18px}
+
+/* ---------- pages: overview and method ---------- */
+.page{max-width:960px;padding-block:48px 64px;display:grid;gap:72px}
+.hero{display:grid;gap:16px;max-width:720px}
+.hero .eyebrow{font:500 13px/20px var(--f-ui);color:var(--ink-2)}
+.hero .title{font-size:34px;line-height:44px}
+.hero .lede{font-size:17px;line-height:28px;max-width:58ch;margin-top:0}
+.hero .actions{margin-top:8px}
+.sec{display:grid;gap:16px}
+.sec>h2{font:600 22px/30px var(--f-ui);letter-spacing:-.01em}
+.sec>.lede{margin-top:-4px}
+.why{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;list-style:none;margin:8px 0 0;padding:0}
+.why li{display:grid;gap:8px;padding-top:16px;border-top:1px solid var(--rule);align-content:start}
+.why h3{font:600 16px/24px var(--f-ui)}
+.why p{font:400 14px/22px var(--f-ui);color:var(--ink-2)}
+.src{font:400 12px/18px var(--f-ui);color:var(--ink-2)}
+.src a{color:inherit;text-decoration:underline 1px var(--rule);text-underline-offset:3px}
+.src a:hover{color:var(--ink)}
+.why-foot{font:400 14px/22px var(--f-ui);color:var(--ink-2);max-width:70ch}
+.so{font:500 15px/24px var(--f-ui);padding-left:12px;border-left:2px solid var(--ink);max-width:60ch}
+.mt-steps{list-style:none;margin:0;padding:0;display:grid}
+.mt-steps li{display:grid;grid-template-columns:72px minmax(0,1fr);gap:4px 24px;padding:20px 0;border-top:1px solid var(--rule)}
+.mt-steps .n{font:600 13px/24px var(--f-ui);color:var(--ink-2)}
+.mt-steps h3{font:600 16px/24px var(--f-ui)}
+.mt-steps p{font:400 14px/22px var(--f-ui);color:var(--ink-2);max-width:64ch;margin-top:4px}
+.marks{list-style:none;margin:0;padding:0;display:grid}
+.marks li{display:grid;grid-template-columns:24px 8em minmax(0,1fr);gap:8px 12px;align-items:baseline;padding:10px 0;border-top:1px solid var(--rule);font:400 14px/22px var(--f-ui)}
+.marks .w{font-weight:600}
+.marks .d{color:var(--ink-2);max-width:64ch}
+.nots{list-style:none;margin:0;padding:0;display:grid;gap:8px;font:400 15px/24px var(--f-ui);max-width:64ch}
+.nots li{position:relative;padding-left:16px}
+.nots li::before{content:"·";position:absolute;left:4px;color:var(--ink-2)}
+.page .where-list{padding-top:0;border-top:0}
+.cta-end{display:grid;gap:12px;padding-top:32px;border-top:1px solid var(--ink);justify-items:start}
+.cta-end h2{font:600 22px/30px var(--f-ui)}
+.cta-end p{color:var(--ink-2);max-width:60ch}
+
+/* ---------- overview demo: a prepared reading replayed on the same sheet, with the same marks ---------- */
+.demo-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;min-height:34px}
+.demo-ctl .st{font:400 13px/20px var(--f-ui);color:var(--ink-2)}
+.demo{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:40px;align-items:start}
+.demo-main{min-width:0;display:grid;gap:8px}
+.demo .paper{--padT:36px;--padR:40px;--padB:44px;--padL:40px;--lh:30px;font-size:16px;line-height:30px;--gaze-w:2.2em;--gaze-h:1.8em}
+.demo .paper .u{transition:color var(--t-6) var(--ease-out)}
+.demo .paper .u.current{color:var(--ink)}
+.demo .gaze{transition:opacity 300ms var(--ease-out),transform var(--t-5) var(--ease-saccade)}
+.demo-side{display:grid;gap:24px;position:sticky;top:24px;min-width:0}
+.demo-side h3,.demo-rep h3,.demo-rep h4{font:600 13px/20px var(--f-ui);color:var(--ink-2)}
+.demo-side h3 .num{font-weight:400;margin-left:4px}
+.dreqs{list-style:none;margin:8px 0 0;padding:0;display:grid}
+.dreq{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;padding:6px 0;border-top:1px solid var(--rule);font:400 14px/22px var(--f-ui);color:var(--ink-2);border-radius:2px;transition:background-color var(--t-2),color var(--t-2)}
+.dreq .c{font:600 13px/22px var(--f-ui);color:var(--req)}
+.dreq .k{font-size:12px;color:var(--ink-2);margin-left:6px;white-space:nowrap}
+.dreq.on{color:var(--ink);background:var(--hl)}
+.demo .feed .note-head{padding:12px 0}
+.demo .feed .note-text{font-size:14px;line-height:22px}
+.demo-empty{font:400 13px/20px var(--f-ui);color:var(--ink-2);padding:12px 0}
+.demo-rep{display:grid;gap:20px;margin-top:16px;padding-top:20px;border-top:1px solid var(--ink);animation:rise var(--t-4) var(--ease-out) both}
+.demo-rep-head{display:grid;gap:6px}
+.demo-rep-head h3{font:600 17px/26px var(--f-ui);color:var(--ink)}
+.demo-cap{font:400 13px/20px var(--f-ui);color:var(--ink-2);max-width:64ch}
+.demo-sec{display:grid}
+.demo .ritem{grid-template-columns:64px minmax(0,1fr);column-gap:16px;padding:16px 0}
+.demo .ritem .lbl{grid-row:1/span 4}
+.demo .ritem h5{font:600 15px/1.6 var(--f-ui);max-width:60ch}
+.demo .ritem .cites{grid-column:2;grid-row:auto;gap:8px}
 
 /* ---------- common screen text ---------- */
 .screen{padding-block:32px 64px}
@@ -601,14 +681,25 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
   .legend-slot-notes{display:none}
 }
 @media (max-width:899px){
+  .why{grid-template-columns:minmax(0,1fr);gap:16px}
+  .demo{grid-template-columns:minmax(0,1fr);gap:24px}
+  .demo-side{position:static}
   .ledger-row{grid-template-columns:minmax(0,1fr)}
   .reqview .rv{grid-template-columns:minmax(0,1fr)}
 }
 @media (max-width:820px){
-  .head{min-height:0;padding-block:12px 10px;gap:4px 12px}
-  .steps{display:none}
-  .steps-m{display:inline}
-  .engine{flex-basis:100%;margin-left:0;justify-content:flex-start;text-align:left}
+  .head{min-height:0;padding-block:12px 10px;gap:4px 16px}
+  .nav{gap:16px}
+  .head .cta{height:36px;padding:0 14px}
+  .page{padding-block:24px 48px;gap:56px}
+  .hero .title{font-size:28px;line-height:36px}
+  .hero .lede{font-size:16px;line-height:26px}
+  .mt-steps li{grid-template-columns:minmax(0,1fr);gap:4px}
+  .marks li{grid-template-columns:24px minmax(0,1fr)}
+  .marks .d{grid-column:2}
+  .cta-end .btn-primary{width:100%;height:48px}
+  .demo .paper{--padT:24px;--padR:20px;--padB:32px;--padL:20px;font-size:15px;line-height:27px;--lh:27px}
+  .foot{margin-top:48px}
   .screen{padding-block:24px 48px}
   .s01-grid,.s02-grid{grid-template-columns:minmax(0,1fr);gap:32px}
   .jobinput{min-height:240px;padding:16px}
@@ -701,7 +792,7 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
     --wave-q-faint:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='5'%3E%3Cpath d='M0 2.5Q3 .5 6 2.5T12 2.5' fill='none' stroke='%237B3F70' stroke-opacity='.32' stroke-width='1.25' stroke-linecap='round'/%3E%3C/svg%3E");
     --wave-q-bold:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='5'%3E%3Cpath d='M0 2.5Q3 .5 6 2.5T12 2.5' fill='none' stroke='%237B3F70' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
   }
-  .head .steps,.head .steps-m,.rail,.anchors,.r-acts,.bar,.btn-text.see,.skip{display:none!important}
+  .head .nav,.head .cta,.foot,.steps-line,.rail,.anchors,.r-acts,.bar,.btn-text.see,.skip{display:none!important}
   .r-layout{grid-template-columns:minmax(0,1fr)}
   .ritem,.ledger-row{break-inside:avoid}
   .ritem,button.cite,.pen,mark.cite{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -712,15 +803,117 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
 <a class="skip" href="#main" lang="ko">본문으로 건너뛰기</a>
 <div class="wrap" id="top" lang="ko">
   <header class="head">
-    <span class="brand" lang="en">README</span>
-    <ol class="steps" id="steps" aria-label="단계">
-      <li data-step="1">1 입력</li><li data-step="2">2 확인</li><li data-step="3">3 읽기</li><li data-step="4">4 리포트</li>
-    </ol>
-    <span class="steps-m" id="steps-m"></span>
-    <p class="engine" id="engine"></p>
+    <a class="brand" href="#overview" lang="en">README</a>
+    <nav class="nav" aria-label="페이지">
+      <a href="#overview" id="nav-ov">개요</a>
+      <a href="#method" id="nav-mt">방법</a>
+    </nav>
+    <button class="btn-primary sm cta" id="cta-start" type="button">시작하기</button>
   </header>
 
   <main id="main" tabindex="-1">
+    <!-- OV · overview: why readable writing, and what a reading looks like -->
+    <section class="screen page" id="ov" aria-labelledby="ov-h" hidden>
+      <div class="hero">
+        <p class="eyebrow">README Lab · 초대 전용 베타</p>
+        <h1 class="title" id="ov-h" tabindex="-1">공고를 기준으로, 이력서를 앞에서부터 읽습니다</h1>
+        <p class="lede">읽는 동안 생긴 질문과 설명을 찾은 문장을 그대로 남기고, 다 읽은 뒤 수정 방향을 정리합니다. 점수나 합격 가능성은 내지 않습니다.</p>
+        <div class="actions"><button class="btn-primary" type="button" data-start="시작하기">시작하기</button><a class="btn-text" href="#method">읽는 방법 보기</a></div>
+      </div>
+      <section class="sec" aria-labelledby="ov-why-h">
+        <h2 id="ov-why-h">읽기 좋은 글이 먼저인 이유</h2>
+        <p class="lede">README가 점수 대신 문장을 쓰는 것은 취향이 아닙니다. 읽기 쉬운 글과 문장에 붙은 피드백이 더 잘 전해진다는 결과가 여러 연구에서 반복됩니다.</p>
+        <ul class="why">
+          <li>
+            <h3>쉽게 쓴 글이 더 믿음직하게 읽힙니다</h3>
+            <p>같은 내용을 불필요하게 어려운 어휘로 쓰면 독자는 글쓴이를 덜 똑똑하다고 판단했습니다. 원문의 질과 무관하게 반복된 결과입니다.</p>
+            <p class="src"><a href="https://onlinelibrary.wiley.com/doi/abs/10.1002/acp.1178" target="_blank" rel="noopener noreferrer">Oppenheimer, Applied Cognitive Psychology, 2006</a></p>
+          </li>
+          <li>
+            <h3>전문가도 간결한 글을 원합니다</h3>
+            <p>과학·기술·의료 분야 전문가를 대상으로 한 사용성 연구에서도, 참가자들은 훑어 읽기 쉽고 군더더기 없는 글을 선호했습니다.</p>
+            <p class="src"><a href="https://www.nngroup.com/articles/plain-language-experts/" target="_blank" rel="noopener noreferrer">Nielsen Norman Group, 2017</a></p>
+          </li>
+          <li>
+            <h3>점수보다 문장에 붙은 코멘트가 남습니다</h3>
+            <p>점수만 받은 학생보다 과제에 붙은 코멘트만 받은 학생의 흥미와 수행이 높았고, 피드백 연구를 모은 메타분석에서는 3분의 1이 넘는 개입이 오히려 수행을 떨어뜨렸습니다.</p>
+            <p class="src"><a href="https://bpspsychub.onlinelibrary.wiley.com/doi/abs/10.1111/j.2044-8279.1988.tb00874.x" target="_blank" rel="noopener noreferrer">Butler, 1988</a> · <a href="https://psycnet.apa.org/doi/10.1037/0033-2909.119.2.254" target="_blank" rel="noopener noreferrer">Kluger &amp; DeNisi, 1996</a></p>
+          </li>
+        </ul>
+        <p class="why-foot">한국의 공공 문서도 다르지 않습니다. 국립국어원의 2020년 국민 언어 의식 조사에서 공공언어의 개선 과제 1위는 ‘복잡하고 길어서 이해하기 어려운 문장’이었습니다. <span class="src"><a href="https://korean.go.kr/front/board/boardStandardView.do?b_seq=819&amp;board_id=6&amp;mn_id=184" target="_blank" rel="noopener noreferrer">국립국어원 보도자료</a></span></p>
+        <p class="so">그래서 README는 점수를 내지 않습니다. 읽는 동안 문장마다 질문과 근거를 남기고, 리포트의 모든 항목은 원문 문장으로 돌아갑니다.</p>
+      </section>
+      <section class="sec" aria-labelledby="ov-demo-h">
+        <h2 id="ov-demo-h">README가 읽는 모습</h2>
+        <p class="lede">미리 써 둔 예시 공고와 이력서로, 읽기와 리포트가 어떻게 보이는지 재생합니다. 설명을 위해 미리 써 둔 예시이며 모델이 만든 결과가 아닙니다.</p>
+        <div class="demo-ctl"><button class="btn-quiet" id="demo-play" type="button" hidden>일시정지</button><button class="btn-text" id="demo-replay" type="button" hidden>처음부터 다시 보기</button><p class="st" id="demo-st" aria-live="polite"></p></div>
+        <div class="demo" id="demo"></div>
+      </section>
+      <section class="cta-end" aria-labelledby="ov-cta-h">
+        <h2 id="ov-cta-h">내 공고와 이력서로 읽어 보기</h2>
+        <p>초대 코드가 있으면 바로 시작할 수 있습니다. 올린 파일은 글자만 꺼낸 뒤 보관하지 않습니다.</p>
+        <button class="btn-primary" type="button" data-start="분석 시작하기">분석 시작하기</button>
+      </section>
+    </section>
+
+    <!-- MT · method: the four screens, the memo states, what is not done, where the text goes -->
+    <section class="screen page" id="mt" aria-labelledby="mt-h" hidden>
+      <div class="hero">
+        <p class="eyebrow">방법</p>
+        <h1 class="title" id="mt-h" tabindex="-1">README가 읽는 방법</h1>
+        <p class="lede">공고를 기준으로 삼고, 이력서를 앞에서부터 읽으며, 다 읽은 뒤 수정 방향을 정리합니다. 실제 화면은 네 단계입니다.</p>
+      </div>
+      <section class="sec" aria-labelledby="mt-steps-h">
+        <h2 id="mt-steps-h">네 단계</h2>
+        <ol class="mt-steps">
+          <li><span class="n">1 입력</span><div><h3>공고 본문과 이력서 파일</h3><p>공고의 담당 업무와 자격·우대 사항을 그대로 붙여 넣고, 이력서 파일(PDF·DOCX·TXT·MD)을 올립니다. 파일은 서버 메모리에서 글자만 꺼내고 보관하지 않습니다.</p></div></li>
+          <li><span class="n">2 확인</span><div><h3>요건과 문장이 원문과 같은지</h3><p>Codex가 공고에서 뽑은 담당 업무·자격·우대 요건과 파일에서 꺼낸 문장을 원문과 비교해 확인합니다. 여기서 고치지는 않고, 틀렸다면 입력으로 돌아갑니다.</p></div></li>
+          <li><span class="n">3 읽기</span><div><h3>앞에서부터, 그 문장까지만 보고</h3><p>문장 판단 엔진이 그 문장까지 읽은 내용만 보고 메모를 남깁니다. 뒤 문장을 미리 보지 않습니다. 질문이 생기면 남겨 두고, 뒤에서 설명을 찾으면 그 문장과 연결합니다.</p></div></li>
+          <li><span class="n">4 리포트</span><div><h3>먼저 고칠 부분과 유지할 설명</h3><p>다 읽은 뒤 Codex가 이력서 전체 문장과 읽기 메모를 보고 ‘먼저 고칠 부분’과 ‘고칠 때 유지할 설명’을 정리합니다. 항목마다 인용을 누르면 원문 문장으로 이동합니다.</p></div></li>
+        </ol>
+      </section>
+      <section class="sec" aria-labelledby="mt-marks-h">
+        <h2 id="mt-marks-h">읽기 메모의 상태</h2>
+        <p class="lede">읽는 화면의 문장 표시와 메모는 그 시점의 질문 상태를 나타냅니다. 범례, 메모, 리포트에서 같은 말을 씁니다.</p>
+        <ul class="marks">
+          <li><span class="sw pen q" aria-hidden="true"></span><span class="w">질문</span><span class="d">읽다가 확인하고 싶은 것이 생긴 문장입니다. 뒤 문장에서 설명을 찾으면 그 문장과 연결합니다.</span></li>
+          <li><span class="sw pen ok" aria-hidden="true"></span><span class="w">설명 찾음</span><span class="d">앞 질문의 설명이 이 문장에서 드러났다는 뜻입니다. 경험이 사실인지 확인한 것은 아닙니다.</span></li>
+          <li><span class="sw pen part" aria-hidden="true"></span><span class="w">일부만 설명</span><span class="d">설명을 일부 찾았지만 아직 확인할 내용이 남았습니다.</span></li>
+          <li><span class="sw pen held" aria-hidden="true"></span><span class="w">답 후보</span><span class="d">앞 질문의 답일 수 있는 문장을 찾았지만 모델이 확정하지 않았습니다. 설명이 부족하다는 뜻은 아닙니다.</span></li>
+          <li><span class="sw" aria-hidden="true"></span><span class="w">답 확인 못 함</span><span class="d">읽는 동안 답을 확인하지 못한 질문입니다. 문서에 답이 없다는 판정은 아니며, 리포트에서 전체 문장을 다시 봅니다.</span></li>
+        </ul>
+      </section>
+      <section class="sec" aria-labelledby="mt-not-h">
+        <h2 id="mt-not-h">하지 않는 것</h2>
+        <ul class="nots">
+          <li>점수, 등급, 합격 가능성을 내지 않습니다.</li>
+          <li>실제 채용 담당자의 생각이나 요건 충족 판정을 대신하지 않습니다.</li>
+          <li>‘설명 찾음’은 문서 안에서 설명을 찾았다는 뜻이지, 경험이 사실인지 확인한 것은 아닙니다.</li>
+          <li>올린 공고와 이력서를 모델 학습·평가나 다른 목적에 쓰지 않습니다.</li>
+        </ul>
+      </section>
+      <section class="sec" aria-labelledby="mt-where-h" id="mt-where">
+        <h2 id="mt-where-h">처리되는 곳과 보관</h2>
+        <p class="lede">입력한 공고와 이력서가 어디로 가고 얼마나 머무는지입니다. 시작 화면의 동의 항목과 같은 내용입니다.</p>
+        <dl class="where-list" id="where-mt" aria-labelledby="mt-where-h"></dl>
+        <p class="meta-line">준비는 초대 코드마다 하루 3번까지이며, 실패한 시도도 1번으로 셉니다.</p>
+      </section>
+      <section class="sec" aria-labelledby="mt-lim-h">
+        <h2 id="mt-lim-h">한계</h2>
+        <ul class="nots">
+          <li>모든 메모와 리포트 항목은 사람이 다시 확인해야 하는 초안입니다.</li>
+          <li>읽기 메모를 남기는 모델은 이력서용으로 보정하지 않아 틀릴 수 있습니다. 문장을 직접 확인해 주세요.</li>
+          <li>메모가 없다는 것은 문장에 문제가 없다는 뜻도, 부족하다는 뜻도 아닙니다.</li>
+          <li>PDF는 줄 순서가 원본과 다를 수 있고, 스캔한 PDF는 읽을 수 없습니다.</li>
+        </ul>
+      </section>
+      <section class="cta-end" aria-labelledby="mt-cta-h">
+        <h2 id="mt-cta-h">내 공고와 이력서로 읽어 보기</h2>
+        <p>초대 코드가 있으면 바로 시작할 수 있습니다. 올린 파일은 글자만 꺼낸 뒤 보관하지 않습니다.</p>
+        <button class="btn-primary" type="button" data-start="분석 시작하기">분석 시작하기</button>
+      </section>
+    </section>
+
     <!-- S00 · invitation and consent -->
     <section class="screen" id="s00" aria-labelledby="s00-h" hidden>
       <div class="s00">
@@ -762,6 +955,7 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
     <!-- S01 · job posting and resume -->
     <section class="screen" id="s01" aria-labelledby="s01-h" hidden>
       <div class="s-head">
+        <p class="steps-line" data-steps aria-label="단계" hidden></p>
         <h1 class="title" id="s01-h" tabindex="-1">공고와 이력서</h1>
         <p class="lede">붙여 넣은 공고를 기준으로 이력서를 앞에서부터 읽고, 질문이 생긴 문장과 설명을 찾은 문장을 표시합니다. 점수나 합격 가능성은 내지 않습니다.</p>
         <p class="meta-line" id="s01-time"></p>
@@ -800,6 +994,7 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
     <!-- S02 · confirm before reading -->
     <section class="screen" id="s02" aria-labelledby="s02-h" hidden>
       <div class="s-head">
+        <p class="steps-line" data-steps aria-label="단계" hidden></p>
         <h1 class="title" id="s02-h" tabindex="-1">읽기 전에 확인해 주세요</h1>
         <p class="lede" id="s02-lede">Codex가 공고에서 뽑은 요건과 파일에서 꺼낸 이력서 문장이 원문과 같은지 확인해 주세요. 공고 전체의 업무·자격·우대사항을 확인하며, 고용조건과 제출 안내는 참고사항으로 구분합니다. 여기서는 고칠 수 없습니다. 틀렸다면 입력으로 돌아가 공고나 파일을 바꿔 주세요. 다시 준비하면 오늘 횟수 1번을 씁니다.</p>
       </div>
@@ -887,6 +1082,7 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
 
     <!-- S04 · report -->
     <section class="screen" id="s04" aria-labelledby="s04-h" hidden>
+      <p class="steps-line" data-steps aria-label="단계" hidden style="margin-bottom:16px"></p>
       <div id="report-root"></div>
     </section>
 
@@ -912,6 +1108,21 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
       </div>
     </section>
   </main>
+
+  <footer class="foot" id="foot" aria-label="페이지 정보">
+    <p class="engine" id="engine"></p>
+    <div class="foot-row">
+      <span class="foot-brand" lang="en">README Lab</span>
+      <span>초대 전용 베타 · 점수나 합격 가능성은 내지 않습니다</span>
+    </div>
+    <nav class="foot-nav" aria-label="안내">
+      <a href="#overview">개요</a>
+      <a href="#method">읽는 방법</a>
+      <a href="#method">처리되는 곳과 보관</a>
+      <a href="https://seojing.com/" target="_blank" rel="noopener noreferrer">SEOJing 블로그 · 문의</a>
+    </nav>
+    <p class="foot-copy"><span lang="en">© <span id="foot-year">2026</span> SEOJing.</span> README Lab의 화면과 문안의 저작권은 SEOJing에 있습니다. 올린 공고와 이력서의 권리는 올린 사람에게 있으며, README는 이를 학습·평가나 다른 목적에 쓰지 않습니다. 인용한 연구의 저작권은 각 저자와 발행처에 있습니다. 모든 메모와 리포트는 사람이 다시 확인해야 하는 초안입니다.</p>
+  </footer>
 
 </div>
 <div class="vh" id="live" role="status" aria-live="polite" lang="ko"></div>
@@ -1372,7 +1583,7 @@ function freshUi() {
     confirmCancel: false, confirmNew: false, userCancelled: false, invalidCursor: false, restored: 0, restoring: 0, failAck: false, sessionEnded: false, hoverQ: null };
 }
 const S = {
-  screen: "s00", ds: null, session: false, prepared: null, entering: false,
+  screen: "s00", flow: null, ds: null, session: false, prepared: null, entering: false,
   s01: null, prep: null, s02: { okJob: false, okDoc: false, confirmReset: false, starting: false, err: null },
   job: null, jobId: null, jobSeen: {}, cursor: 0, srv: null, play: null, A: null,
   conn: { state: "connected", attempt: 0 },
@@ -3784,16 +3995,24 @@ function evItemStep(dir) {
 }
 
 /* ===================== 16. navigation and boot ===================== */
-const STEP = { s00: 0, sr: 0, s01: 1, s02: 2, s03: 3, s04: 4, s05: 4 }, STEP_NAME = ["", "입력", "확인", "읽기", "리포트"];
+const STEP = { ov: 0, mt: 0, s00: 0, sr: 0, s01: 1, s02: 2, s03: 3, s04: 4, s05: 4 }, STEP_NAME = ["", "입력", "확인", "읽기", "리포트"];
+const SCREENS = ["ov", "mt", "s00", "sr", "s01", "s02", "s03", "s04", "s05"];
+/* the two pages live at #overview and #method. The flow screens keep an empty hash (S05 has its own #s05/… hash),
+   and S.flow remembers the last flow screen so the pages can hand back to it. */
+const PAGES = { ov: "#overview", mt: "#method" };
+function pageOf(hash) { const m = /^#(overview|method)(?:[/?]|$)/.exec(hash || ""); return m ? (m[1] === "overview" ? "ov" : "mt") : null; }
 function go(scr, o = {}) {
   /* the example has no invitation: it starts at the input screen */
   if (scr === "s00" && isSample()) { S.session = true; SRC.token = "sample"; if (!S.s01) resetS01(); scr = "s01"; }
+  const page = !!PAGES[scr];
+  if (!page) S.flow = scr;
   S.screen = scr;
-  for (const id of ["s00", "sr", "s01", "s02", "s03", "s04", "s05"]) $("#" + id).hidden = id !== scr;
-  const st = STEP[scr];
-  for (const li of $$("#steps li")) { if (+li.dataset.step === st) li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current"); }
-  $("#steps-m").textContent = st ? `${st}/4 ${STEP_NAME[st]}` : "";
-  renderEngine();
+  for (const id of SCREENS) $("#" + id).hidden = id !== scr;
+  try {
+    if (page) { if (!o.fromHash && location.hash !== PAGES[scr]) history[o.replace ? "replaceState" : "pushState"](null, "", PAGES[scr]); }
+    else if (pageOf(location.hash)) history.replaceState(null, "", location.pathname + location.search);
+  } catch { /* sandboxed frame */ }
+  renderHead(); renderSteps(); renderEngine();
   if (scr === "s00") renderS00();
   else if (scr === "s01") renderS01();
   else if (scr === "s02") renderS02();
@@ -3804,6 +4023,22 @@ function go(scr, o = {}) {
   measureBar(); renderNewbar();
   if (!o.restore && !o.keepScroll && scr !== "s05") scrollTo(0, 0);
   if (!o.noFocus) $("#" + scr + "-h")?.focus({ preventScroll: true });
+}
+/* the header: which page is open, and the one button into the flow (hidden while the flow itself is on screen) */
+function renderHead() {
+  for (const k in PAGES) { const a = $("#nav-" + k); if (S.screen === k) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); }
+  const resume = !!(S.flow && STEP[S.flow] >= 1 && (S.session || isSample()));
+  const cta = $("#cta-start"); cta.hidden = !PAGES[S.screen]; setText(cta, resume ? "이어서 하기" : "시작하기");
+  for (const b of $$("[data-start]")) setText(b, resume ? "이어서 하기" : b.dataset.start || "시작하기");
+}
+function startFlow() { go(S.flow && STEP[S.flow] >= 1 ? S.flow : "s00"); }
+/* the 1–4 strip, drawn inside the input, confirm and report screens; the reading bar carries its own state */
+function renderSteps() {
+  const st = STEP[S.screen] || 0;
+  for (const el of $$("[data-steps]")) {
+    el.textContent = ""; el.hidden = !st; if (!st) continue;
+    STEP_NAME.slice(1).forEach((n, i) => el.append(h("span", { "aria-current": i + 1 === st ? "step" : null }, `${i + 1} ${n}`)));
+  }
 }
 /* built from JobView.generation.engine (before a job: the Jev deployment; an unknown engine: neutral words). The sample names no engine, because no engine wrote it. */
 function renderEngine() {
@@ -3830,6 +4065,150 @@ function restartPrepare() {
   resetS01({ keep: true }); go("s01");
 }
 function applyRM() { document.documentElement.classList.toggle("rm", RM()); }
+
+/* ===================== 17. overview demo · a prepared reading, replayed ===================== */
+/* Fixed data drawn with the reading screen's own marks and words. Nothing here comes from a model;
+   the sheet, the gaze and the memo list are the same vocabulary a real run uses. */
+const DEMO_REQS = [
+  ["r1", "duty", "SNS 채널 콘텐츠 기획·운영"], ["r2", "duty", "성과 데이터 분석 및 월간 리포트 작성"],
+  ["r3", "required", "콘텐츠 기획·운영 경험 6개월 이상"], ["r4", "preferred", "성과 지표 분석 경험"], ["r5", "preferred", "디자인 툴 활용 가능자"]];
+const DEMO_UNITS = [
+  "대학 3학년 겨울방학부터 식품 스타트업 마케팅팀에서 6개월간 인턴으로 근무하며 SNS 콘텐츠 기획 및 운영 업무를 수행하였습니다.",
+  "초기에는 제품 소개 위주의 게시물을 주 3회 업로드하였으나 도달률이 정체되어 있었습니다.",
+  "이에 지난 6개월간의 게시물 데이터를 정리하여 20대 여성 팔로워의 반응이 높았던 콘텐츠 유형을 파악하였고, 레시피 중심 콘텐츠로 방향을 재설정하였습니다.",
+  "그 결과 인스타그램 게시물 평균 도달률이 기존 대비 약 2.3배 상승하였으며, 팔로워 수 증가에도 기여하였습니다.",
+  "또한 매월 성과를 정리한 리포트를 팀장님께 공유하며 데이터 기반 의사결정의 중요성을 깊이 체감하였습니다.",
+  "이러한 경험을 바탕으로 귀사의 콘텐츠 운영에 기여하고자 합니다."];
+/* per sentence: pen classes, posting requirements it touches, notes (kind, state word, quote, text) */
+const DEMO_STEPS = [
+  { marks: "ok", reqs: ["r3"], notes: [{ id: 1, k: "ok", w: "설명 찾음", q: "6개월간 인턴으로 근무하며 SNS 콘텐츠 기획 및 운영 업무를 수행", t: "자격 요건 3 ‘콘텐츠 기획·운영 경험 6개월 이상’과 맞닿는 기간과 역할이 보입니다." }] },
+  { marks: "q", reqs: [], notes: [{ id: 2, k: "q", w: "질문", q: "도달률이 정체되어 있었습니다", t: "정체 시점의 도달률이 얼마였는지 기준 숫자가 없습니다." }] },
+  { marks: "ok q", reqs: ["r4"], notes: [
+    { id: 3, k: "ok", w: "설명 찾음", q: "게시물 데이터를 정리하여 … 콘텐츠 유형을 파악", t: "우대 사항 4 ‘성과 지표 분석 경험’에 해당하는 수행 방식이 보입니다." },
+    { id: 4, k: "q", w: "질문", q: "게시물 데이터를 정리하여", t: "어떤 지표를 보고 유형을 골랐는지는 적혀 있지 않습니다." }] },
+  { marks: "part q", reqs: [], notes: [
+    { id: 5, k: "part", w: "일부만 설명", q: "기존 대비 약 2.3배 상승", t: "결과 숫자는 있지만 2번째 문장의 ‘정체’ 기준값이 없어, 비교 근거는 일부만 설명됩니다." },
+    { id: 6, k: "q", w: "질문", q: "팔로워 수 증가에도 기여", t: "얼마나 늘었는지 숫자가 없습니다." }] },
+  { marks: "ok", reqs: ["r2"], notes: [{ id: 7, k: "ok", w: "설명 찾음", q: "매월 성과를 정리한 리포트를 팀장님께 공유", t: "담당 업무 2 ‘월간 리포트 작성’과 맞닿는 경험입니다." }] },
+  { marks: "", reqs: [], notes: [] }];
+const DEMO_OPEN_AT_END = [2, 4, 6];
+const DEMO_REPORT = [
+  { g: "수정 방향", n: 1, h: "정체 시점의 도달률을 한 줄 적어 보세요.", r: "‘약 2.3배’라는 결과는 기준값이 있어야 비교가 됩니다. 당시 평균 도달률이나 기간을 붙이면 4번째 문장의 결과가 이어집니다.", cites: [2, 4] },
+  { g: "수정 방향", n: 2, h: "‘팔로워 수 증가에도 기여’는 숫자가 없으면 빼는 쪽이 읽기 쉽습니다.", r: "늘어난 수나 비율이 있다면 적고, 없다면 도달률 결과만 남겨도 설명이 끊기지 않습니다.", cites: [4] },
+  { g: "유지할 설명", n: 1, h: "인턴 6개월과 기획·운영 역할이 자격 요건 3과 바로 맞닿습니다.", r: "기간과 역할이 한 문장에 있어 요건과 연결됩니다.", cites: [1] },
+  { g: "유지할 설명", n: 2, h: "데이터를 본 뒤 방향을 바꾼 과정과 월간 리포트 경험이 우대 사항 4, 담당 업무 2와 이어집니다.", r: "수행 방식이 보이는 문장이라 질문이 남아도 유지할 설명입니다.", cites: [3, 5] }];
+const DEMO_MK = { q: "var(--q)", ok: "var(--ok)", part: "var(--part)", held: "var(--ink-2)" };
+const DEMO = { built: false, i: -1, marked: false, done: false, paused: false, byUser: false, inView: false, timers: new Set(), units: [], gaze: null };
+function demoClear() { for (const t of DEMO.timers) clearTimeout(t); DEMO.timers.clear(); }
+function demoAfter(ms, fn) { const t = setTimeout(() => { DEMO.timers.delete(t); fn(); }, ms); DEMO.timers.add(t); }
+function demoStatus(s) { setText($("#demo-st"), s); }
+function demoCount() { const n = $("#demo-feed").children.length; setText($("#demo-n"), n ? String(n) : ""); $("#demo-empty").hidden = n > 0; }
+function demoNote(n, ui, still) {
+  return h("li", { class: "note" + (still ? "" : " enter"), id: "dn-" + n.id, style: `--mk:${DEMO_MK[n.k]}` },
+    h("div", { class: "note-head" },
+      h("p", { class: "note-meta" }, h("span", { class: "num" }, "n" + n.id), h("span", { class: "state" }, n.w), h("span", { class: "where" }, `${ui}번째 문장`)),
+      h("p", { class: "note-text" }, h("span", { class: "nq" }, `“${n.q}”`), ` — ${n.t}`)));
+}
+function buildDemo() {
+  const root = $("#demo"); if (!root) return; root.textContent = "";
+  const paper = h("div", { class: "paper reading demo-paper", role: "group", "aria-label": "예시 이력서 본문" });
+  paper.append(h("p", { class: "blk h1" }, "자기소개서 · 마케팅 콘텐츠 운영 지원"));
+  const para = h("p", { class: "blk p" });
+  DEMO.units = DEMO_UNITS.map((t, i) => { const u = h("span", { class: "u unread", "data-u": String(i + 1) }, h("span", { class: "pen" }, t)); para.append(i ? " " : "", u); return u; });
+  paper.append(para);
+  DEMO.gaze = h("div", { class: "gaze", "data-state": "waiting", "aria-hidden": "true" }, h("div", { class: "gaze-blob" }));
+  paper.append(DEMO.gaze);
+  const reqs = h("ol", { class: "dreqs", id: "dreqs" });
+  DEMO_REQS.forEach(([id, kind, label], i) => reqs.append(h("li", { class: "dreq", "data-r": id }, h("span", { class: "c" }, String(i + 1)), h("span", null, label, h("span", { class: "k" }, KIND_WORD[kind])))));
+  const side = h("aside", { class: "demo-side", "aria-label": "예시 공고 요건과 읽기 메모" },
+    h("div", null, h("h3", null, "예시 공고 요건 · 마케팅 콘텐츠 운영 담당자(신입)"), reqs),
+    h("div", null, h("h3", null, "읽기 메모", h("span", { class: "num", id: "demo-n" })), h("ol", { class: "feed", id: "demo-feed", "aria-label": "읽기 메모" }), h("p", { class: "demo-empty", id: "demo-empty" }, "아직 메모가 없습니다.")));
+  root.append(h("div", { class: "demo-main" }, h("p", { class: "doc-note" }, SAMPLE_NOTE), paper, h("div", { id: "demo-rep" })), side);
+  Object.assign(DEMO, { built: true, i: -1, marked: false, done: false, paused: false, byUser: false });
+  demoClear(); demoStatus("");
+  $("#demo-play").hidden = true; $("#demo-replay").hidden = true;
+  if (RM()) demoFinal(true);
+}
+function demoPlaceGaze(u) {
+  const paper = u.closest(".paper"), pr = paper.getBoundingClientRect(), r = u.querySelector(".pen").getClientRects()[0]; if (!r || !pr.width) return;
+  DEMO.gaze.style.transform = `translate(${r.left - pr.left + Math.min(r.width, 48) / 2}px,${r.top - pr.top + r.height / 2}px)`;
+}
+function demoStep() {
+  const i = DEMO.i, u = DEMO.units[i]; if (!u) return;
+  DEMO.units.forEach((x, j) => { x.classList.toggle("unread", j > i); x.classList.toggle("current", j === i); x.classList.toggle("read", j < i); });
+  DEMO.gaze.dataset.state = "reading"; DEMO.gaze.style.opacity = "1"; demoPlaceGaze(u);
+  demoStatus(`${i + 1}/${DEMO_UNITS.length} 문장 읽는 중`);
+  DEMO.marked = false; demoAfter(650, demoMark);
+}
+function demoMark() {
+  if (DEMO.marked) return; DEMO.marked = true;
+  const i = DEMO.i, st = DEMO_STEPS[i], pen = DEMO.units[i].querySelector(".pen");
+  if (st.marks) pen.className = "pen draw " + st.marks;
+  for (const r of st.reqs) $(`#dreqs [data-r="${r}"]`)?.classList.add("on");
+  for (const n of st.notes) $("#demo-feed").append(demoNote(n, i + 1));
+  demoCount(); demoAfter(st.notes.length ? 1150 : 700, demoNext);
+}
+function demoNext() { DEMO.i += 1; if (DEMO.i >= DEMO_UNITS.length) demoEnd(); else demoStep(); }
+function demoOpenAtEnd() { for (const id of DEMO_OPEN_AT_END) { const st = $(`#dn-${id} .state`); if (st) setText(st, STATUS_WORD.open_at_end); } }
+function demoEnd() {
+  for (const x of DEMO.units) { x.classList.remove("unread", "current"); x.classList.add("read"); }
+  DEMO.gaze.dataset.state = "stopped"; DEMO.gaze.style.opacity = "0"; $("#demo-play").hidden = true;
+  demoStatus("읽기 끝 · 리포트를 쓰는 중");
+  demoAfter(700, () => { demoOpenAtEnd(); demoAfter(900, () => demoFinal(false)); });
+}
+function demoFinal(instant) {
+  if (instant) { /* reduced motion: the finished reading, without the replay */
+    DEMO.i = DEMO_UNITS.length;
+    DEMO_STEPS.forEach((st, i) => { const pen = DEMO.units[i].querySelector(".pen"); if (st.marks) pen.className = "pen " + st.marks; for (const r of st.reqs) $(`#dreqs [data-r="${r}"]`)?.classList.add("on"); for (const n of st.notes) $("#demo-feed").append(demoNote(n, i + 1, true)); });
+    for (const x of DEMO.units) { x.classList.remove("unread", "current"); x.classList.add("read"); }
+    demoCount(); demoOpenAtEnd();
+    demoStatus("움직임 줄이기 설정을 따라 읽기가 끝난 모습을 바로 보여 줍니다.");
+  } else demoStatus("읽기 끝 · 리포트");
+  DEMO.done = true; demoClear();
+  $("#demo-play").hidden = true; $("#demo-replay").hidden = RM();
+  demoReport();
+}
+function demoCite(c) {
+  const u = DEMO.units[c - 1]; if (!u) return;
+  u.scrollIntoView({ block: "center", behavior: RM() ? "auto" : "smooth" });
+  for (const x of DEMO.units) x.classList.remove("hover");
+  u.classList.add("hover"); demoAfter(1800, () => u.classList.remove("hover"));
+}
+function demoReport() {
+  const box = $("#demo-rep"); box.textContent = "";
+  const rep = h("div", { class: "demo-rep", role: "region", "aria-label": "예시 리포트" },
+    h("div", { class: "demo-rep-head" }, h("h3", null, "리포트"), h("p", { class: "demo-cap" }, "다 읽은 뒤 이력서 전체 문장과 읽기 메모를 바탕으로 정리한 수정 방향입니다. 인용을 누르면 해당 문장을 표시합니다.")));
+  for (const [title, g] of [["먼저 고칠 부분", "수정 방향"], ["고칠 때 유지할 설명", "유지할 설명"]]) {
+    const sec = h("div", { class: "demo-sec" }, h("h4", null, title));
+    for (const it of DEMO_REPORT.filter(x => x.g === g)) {
+      const cites = h("div", { class: "cites" });
+      for (const c of it.cites) cites.append(h("button", { type: "button", class: "cite", onclick: () => demoCite(c) }, h("span", { class: "loc" }, `자기소개서 · ${c}번째 문장`), h("span", { class: "cite-q" }, DEMO_UNITS[c - 1])));
+      sec.append(h("div", { class: "ritem" }, h("span", { class: "lbl" }, `${g} ${it.n}`), h("h5", null, it.h), h("p", { class: "reason" }, it.r), cites));
+    }
+    rep.append(sec);
+  }
+  rep.append(h("p", { class: "demo-cap" }, "우대 사항 5 ‘디자인 툴 활용 가능자’는 이력서에 언급이 없습니다. 갖추지 못했다는 뜻은 아닙니다."), h("p", { class: "demo-cap" }, SAMPLE_NOTE));
+  box.append(rep);
+}
+function demoStart() {
+  if (!DEMO.built) buildDemo();
+  if (DEMO.done || RM()) return;
+  if (DEMO.i < 0) { DEMO.i = 0; $("#demo-play").hidden = false; setText($("#demo-play"), "일시정지"); $("#demo-replay").hidden = false; demoStep(); }
+  else if (DEMO.paused && !DEMO.byUser) demoResume();
+}
+function demoPause(byUser) {
+  if (DEMO.done || DEMO.i < 0 || DEMO.i >= DEMO_UNITS.length || DEMO.paused) return;
+  demoClear(); DEMO.paused = true; DEMO.byUser = !!byUser; DEMO.gaze.dataset.state = "paused";
+  setText($("#demo-play"), "계속"); demoStatus("일시정지");
+}
+function demoResume() {
+  if (!DEMO.paused) return;
+  DEMO.paused = false; DEMO.byUser = false; DEMO.gaze.dataset.state = "reading"; demoPlaceGaze(DEMO.units[DEMO.i]);
+  setText($("#demo-play"), "일시정지"); demoStatus(`${DEMO.i + 1}/${DEMO_UNITS.length} 문장 읽는 중`);
+  if (!DEMO.marked) demoAfter(400, demoMark); else demoAfter(600, demoNext);
+}
+function demoReplay() { demoClear(); buildDemo(); if (RM()) return; DEMO.i = 0; $("#demo-play").hidden = false; setText($("#demo-play"), "일시정지"); $("#demo-replay").hidden = false; demoStep(); }
+function demoRelayout() { if (DEMO.built && DEMO.i >= 0 && DEMO.i < DEMO_UNITS.length && !DEMO.done) demoPlaceGaze(DEMO.units[DEMO.i]); }
 const CAN_PRINT = (() => { try { return window.top === window.self; } catch { return false; } })();
 /* A refreshed tab: the token and ids come back from sessionStorage, the document comes back from the server.
    The first GET has the same timeout and retries as polling. Only 401, 404/410 or a finished preparation
@@ -3885,7 +4264,19 @@ async function boot() {
   const rb = $("#report-btn"); rb.textContent = ""; rb.append(h("span", null, "리포트"), h("span", { class: "rb-x" }, " 보기"));
   const strip = h("button", { type: "button", class: "return-strip", id: "return-strip", hidden: true }, h("span"), h("span", { class: "go" }));
   strip.addEventListener("click", returnToReading); document.body.append(strip);
-  fillWhere($("#where-00")); fillWhere($("#where-01"));
+  fillWhere($("#where-00")); fillWhere($("#where-01")); fillWhere($("#where-mt"));
+  setText($("#foot-year"), String(new Date().getFullYear()));
+  $("#cta-start").addEventListener("click", startFlow);
+  $$("[data-start]").forEach(b => b.addEventListener("click", startFlow));
+  $("#demo-play").addEventListener("click", () => { if (DEMO.paused) demoResume(); else demoPause(true); });
+  $("#demo-replay").addEventListener("click", demoReplay);
+  buildDemo();
+  /* the demo plays when it scrolls into view and rests while it is off screen or on another page */
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(es => { for (const e of es) { DEMO.inView = e.isIntersecting; if (e.isIntersecting) demoStart(); else demoPause(false); } }, { threshold: .25 }).observe($("#demo"));
+  } else demoStart();
+  addEventListener("resize", demoRelayout);
+  mqRM.addEventListener("change", () => { if (DEMO.built) { demoClear(); buildDemo(); if (DEMO.inView) demoStart(); } });
   buildLegend();
   wireTabs($("#side-tabs"), id => { S.ui.tab = id === "tab-reqs" ? "reqs" : "notes"; renderTabsAndPanels(); });
   wireTabs($("#mtabs"), id => { S.ui.mtab = id === "mt-doc" ? "doc" : id === "mt-reqs" ? "reqs" : "notes"; closeInline(); renderTabsAndPanels(); if (S.ui.mtab === "doc") requestAnimationFrame(() => { relayoutRead(); }); });
@@ -3901,7 +4292,12 @@ async function boot() {
   $("#ev-prev").addEventListener("click", () => evItemStep(-1)); $("#ev-next").addEventListener("click", () => evItemStep(1));
   $$("[data-restart]").forEach(b => b.addEventListener("click", restartPrepare));
   PAPERS.ev.el.addEventListener("click", e => { const u = e.target.closest(".u"); if (u && S.ev?.mode === "item") { const list = evItems(), entry = list.find(x => x.it.id === S.ev.itemId), i = entry ? entry.cs.findIndex(c => c.uid === u.dataset.u) : -1; if (i >= 0 && i !== S.ev.ci) { S.ev.ci = i; renderEvidence({ move: true }); } } });
-  addEventListener("popstate", () => { if (S.screen === "s05") showReportAgain(); });
+  addEventListener("popstate", () => {
+    if (pageOf(location.hash)) return; /* a page hash: hashchange opens it */
+    if (!location.hash && PAGES[S.screen]) { go(S.flow || "s00", { fromHash: true }); return; } /* back from a page to the flow */
+    if (S.screen === "s05") showReportAgain();
+  });
+  addEventListener("hashchange", () => { const p = pageOf(location.hash); if (p && S.screen !== p) go(p, { fromHash: true }); });
   addEventListener("keydown", e => {
     const typing = e.target.closest("input,textarea,select,[contenteditable]");
     if (e.key === "Escape" && S.screen === "s03") { if (S.ui.inline) closeInline(); if (S.ui.sel || S.ui.pinned) { S.ui.pinned = null; selectNote(null); } }
@@ -3933,11 +4329,12 @@ async function boot() {
   /* a reload never lands on a stale in-document view: S05 is reopened from the report, not from the URL */
   if (/^#s05\b/.test(location.hash)) { try { history.replaceState(null, "", location.pathname + location.search); } catch { /* sandboxed frame */ } }
   /* a record from the other source (another context of the same origin) is left alone, never deleted */
-  const rec = Rec.get();
+  const rec = Rec.get(), page = pageOf(location.hash);
   if (rec && rec.src === SRC.kind && (rec.token || isSample())) {
     SRC.token = rec.token || SRC.token; S.session = true;
     if (rec.prepare_id) await resumeRun(rec); else { resetS01(); go("s01"); }
-  } else go("s00");
+    if (page) go(page, { fromHash: true });
+  } else go(page || "ov", { fromHash: !!page, replace: true });
 }
 function tick() {
   const t = nowMs();
