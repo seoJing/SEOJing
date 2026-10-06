@@ -1,4 +1,3 @@
-import { listCareerOpportunities } from "@/shared/career/data";
 import { absoluteUrl } from "@/shared/config/site";
 import { flattenContentTree, normalizeDate } from "@/shared/seo/content";
 
@@ -13,15 +12,6 @@ export default function sitemap() {
     priority: 0.8,
   }));
   const latestContentDate = posts[0]?.lastModified || new Date().toISOString();
-  const careerOpportunities = listCareerOpportunities();
-  const careerPages = careerOpportunities.map((opportunity) => ({
-    url: absoluteUrl(`/career/opportunities/${opportunity.slug}`),
-    lastModified: opportunity.updatedAt,
-    changeFrequency: "weekly" as const,
-    priority: 0.8,
-  }));
-  const latestCareerDate =
-    careerOpportunities[0]?.updatedAt || latestContentDate;
 
   return [
     {
@@ -37,12 +27,6 @@ export default function sitemap() {
       priority: 0.9,
     },
     {
-      url: absoluteUrl("/career"),
-      lastModified: latestCareerDate,
-      changeFrequency: "weekly" as const,
-      priority: 0.9,
-    },
-    {
       url: absoluteUrl("/readme"),
       lastModified: "2026-10-03",
       changeFrequency: "weekly" as const,
@@ -54,7 +38,6 @@ export default function sitemap() {
       changeFrequency: "weekly" as const,
       priority: 0.6,
     },
-    ...careerPages,
     ...posts,
   ];
 }

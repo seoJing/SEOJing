@@ -6,24 +6,11 @@ import rehypePrismPlus from "rehype-prism-plus";
 import { buildMdxSearchIndex } from "@app/utils";
 import { scanContentDir, getContentBySlug } from "@app/utils/content";
 import { ARTICLE_MIGRATION_REGISTRY } from "./public-article-migration-registry.mjs";
-import {
-  buildBlogEvidenceChecklist,
-  type BlogSearchChunk,
-} from "../src/shared/career/blog-evidence";
-import type { CareerOpportunitySnapshot } from "../src/shared/career/types";
 
 const CONTENT_DIR = path.resolve(import.meta.dirname, "../content");
 const GENERATED_DIR = path.resolve(import.meta.dirname, "../src/generated");
 const TREE_OUTPUT = path.join(GENERATED_DIR, "content-tree.json");
 const SEARCH_INDEX_OUTPUT = path.join(GENERATED_DIR, "mdx-search-index.json");
-const CAREER_EVIDENCE_OUTPUT = path.join(
-  GENERATED_DIR,
-  "career-blog-evidence.json",
-);
-const CAREER_SNAPSHOT_DIR = path.resolve(
-  import.meta.dirname,
-  "../content-snapshots/career",
-);
 const CONTENT_OUTPUT_DIR = path.join(GENERATED_DIR, "content");
 
 function collectSlugs(contentDir: string, basePath: string = ""): string[] {
@@ -207,32 +194,6 @@ async function main() {
     "utf-8",
   );
   console.log(`mdx-search-index.json 생성 완료: ${searchIndex.length}개 chunk`);
-
-  const careerEvidence = Object.fromEntries(
-    fs
-      .readdirSync(CAREER_SNAPSHOT_DIR)
-      .filter((fileName) => fileName.endsWith(".json"))
-      .map((fileName) => {
-        const snapshot = JSON.parse(
-          fs.readFileSync(path.join(CAREER_SNAPSHOT_DIR, fileName), "utf-8"),
-        ) as CareerOpportunitySnapshot;
-        return [
-          snapshot.opportunity.slug,
-          buildBlogEvidenceChecklist(
-            snapshot.opportunity,
-            searchIndex as BlogSearchChunk[],
-          ),
-        ];
-      }),
-  );
-  fs.writeFileSync(
-    CAREER_EVIDENCE_OUTPUT,
-    JSON.stringify(careerEvidence, null, 2),
-    "utf-8",
-  );
-  console.log(
-    `career-blog-evidence.json 생성 완료: ${Object.keys(careerEvidence).length}개 opportunity`,
-  );
 
   const backendArticleSlugList = loaderSlugs.filter((slug) =>
     backendArticleSlugs.has(slug),

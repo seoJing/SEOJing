@@ -13,7 +13,6 @@ export const blogNavItems: DropdownItem[] = [
 export const portfolioNavItems: DropdownItem[] = [
   { label: "이력서", href: "/" },
   { label: "포트폴리오", href: "/portfolio" },
-  { label: "Career Radar", href: "/career" },
   { label: "README 시연", href: "/readme" },
   { label: "스킬", href: "/skills" },
 ];
