@@ -1,11 +1,37 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import {
   normalizeBlocks,
   preserveMdxLineEndings,
+  splitMdxFrontmatter,
   splitMdxSections,
   toBackendBlocks,
 } from "./ops-article-editor.utils";
+
+describe("MDX visual editing source boundary", () => {
+  it("keeps the real fs article's frontmatter bytes out of the body editor", () => {
+    const source = readFileSync(
+      join(process.cwd(), "content/SEOJing/devLog/insight/nodejs-basics.mdx"),
+      "utf8",
+    );
+    const { prefix, body } = splitMdxFrontmatter(source);
+    expect(prefix + body).toBe(source);
+    expect(prefix).toContain('title: "결국 Node.js 까지 와버렸다"');
+    expect(body).toContain("<Subtitle level={2}>fs 모듈</Subtitle>");
+    expect(body).not.toContain('title: "결국 Node.js 까지 와버렸다"');
+  });
+
+  it("keeps CRLF frontmatter and source separate", () => {
+    const source =
+      "---\r\ntitle: Test\r\n---\r\n\r\n<Paragraph>body</Paragraph>";
+    expect(splitMdxFrontmatter(source)).toEqual({
+      prefix: "---\r\ntitle: Test\r\n---\r\n",
+      body: "\r\n<Paragraph>body</Paragraph>",
+    });
+  });
+});
 
 describe("splitMdxSections", () => {
   it("preserves the complete source while separating headings outside frontmatter and code", () => {

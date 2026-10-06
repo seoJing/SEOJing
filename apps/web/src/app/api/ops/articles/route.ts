@@ -131,6 +131,7 @@ export async function GET(request: Request): Promise<Response> {
           updatedAt: publicReadback.data.updatedAt,
           publishedAt: publicReadback.data.publishedAt,
           htmlLength: publicReadback.data.body?.html?.length ?? 0,
+          html: publicReadback.data.body?.html ?? "",
         }
       : { status: publicReadback.status, missing: true },
   });

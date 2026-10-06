@@ -32,26 +32,49 @@ describe("OpsArticleEditor", () => {
         },
       ],
     };
+    let saved = article;
     const fetchMock = vi.fn(
-      async (_input: RequestInfo | URL, init?: RequestInit) =>
-        Response.json(
-          init?.method === "POST"
-            ? { ok: true, article }
-            : { ok: true, article, publicReadback: { status: 200 } },
-        ),
+      async (_input: RequestInfo | URL, init?: RequestInit) => {
+        if (init?.method === "POST") {
+          const data = JSON.parse(String(init.body));
+          saved = {
+            ...saved,
+            sourceText: data.sourceText,
+            editingRevisionNumber: 3,
+          };
+          return Response.json({ ok: true, article: saved });
+        }
+        return Response.json({
+          ok: true,
+          article: saved,
+          publicReadback: { status: 200, html: "<h1>Published revision</h1>" },
+        });
+      },
     );
     vi.stubGlobal("fetch", fetchMock);
 
     render(<OpsArticleEditor selectedSlug={article.slug} />);
-    const source = await screen.findByRole("textbox", {
-      name: "섹션 1 · Draft heading",
-    });
+    await screen.findByText("기존 웹 글 비교 · 저장본과 별개");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("region", { name: "CMS 저장본 미리보기" }),
+      ).toHaveTextContent("Saved revision"),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "MDX 원문 보기" }));
+    const source = screen.getByRole("textbox", { name: "MDX 원문" });
     expect(source).toHaveValue("# Draft heading\n\nSaved revision");
-    expect(screen.getByText("저장된 수정본 미리보기")).toBeInTheDocument();
-    const preview = screen.getByTitle("저장된 MDX 수정본 미리보기");
-    expect(preview).toHaveAttribute("sandbox", "");
-    expect(preview.getAttribute("srcdoc")).toContain('name="viewport"');
-    expect(preview.getAttribute("srcdoc")).toContain("font-family: A2z");
+    const preview = screen.getByTitle("기존 웹 글 비교 · 저장본과 별개");
+    expect(preview).toHaveAttribute(
+      "src",
+      "/blog/study/effective-typescript/day5",
+    );
+    expect(preview).toHaveAttribute("sandbox", "allow-same-origin");
+    expect(
+      screen.getByTitle("CMS 공개 API 본문 비교").getAttribute("srcdoc"),
+    ).toContain("Published revision");
+    expect(
+      screen.getByTitle("CMS 서버 HTML 변환 결과").getAttribute("srcdoc"),
+    ).toContain("Saved revision");
     expect(screen.getByText("발행 대기")).toBeInTheDocument();
     const publish = screen.getByRole("button", {
       name: "latest revision 발행",
@@ -71,5 +94,58 @@ describe("OpsArticleEditor", () => {
       slug: article.slug,
       sourceText: "# Draft heading\n\nUnsaved change",
     });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("region", { name: "CMS 저장본 미리보기" }),
+      ).toHaveTextContent("Unsaved change"),
+    );
+    expect(
+      screen.getByRole("region", { name: "CMS 저장본 미리보기" }),
+    ).toHaveTextContent("revision 3");
+  });
+
+  it("does not show a broken public iframe for a CMS-only draft", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          ok: true,
+          article: {
+            slug: "cms-only-draft",
+            sourceFormat: "MDX",
+            sourceText: "# Saved draft",
+            status: "DRAFT",
+          },
+          publicReadback: { status: 404 },
+        }),
+      ),
+    );
+    render(<OpsArticleEditor selectedSlug="cms-only-draft" />);
+    expect(await screen.findByText("CMS 저장본 시각 점검")).toBeVisible();
+    expect(screen.queryByTitle("기존 웹 글 비교 · 저장본과 별개")).toBeNull();
+  });
+
+  it("shows backend published HTML without linking to a nonexistent static route", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          ok: true,
+          article: {
+            slug: "cms-only-published",
+            sourceFormat: "MDX",
+            sourceText: "# Saved",
+            status: "PUBLISHED",
+          },
+          publicReadback: { status: 200, html: "<h1>Public backend body</h1>" },
+        }),
+      ),
+    );
+    render(<OpsArticleEditor selectedSlug="cms-only-published" />);
+    expect(await screen.findByTitle("CMS 공개 API 본문 비교")).toHaveAttribute(
+      "srcdoc",
+      expect.stringContaining("Public backend body"),
+    );
+    expect(screen.queryByTitle("기존 웹 글 비교 · 저장본과 별개")).toBeNull();
   });
 });

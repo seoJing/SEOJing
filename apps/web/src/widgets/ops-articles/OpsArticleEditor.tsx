@@ -1,18 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 
 import { ArticleImage, ArticleQuiz, ArticleQuizItem, CodeBlock } from "@app/ui";
+import migrationManifest from "@/shared/content/mdx-migration-manifest.json";
 
 import {
   normalizeBlocks,
   preserveMdxLineEndings,
-  splitMdxSections,
+  splitMdxFrontmatter,
   toBackendBlocks,
   type ArticleBlock,
   type BlockType,
-  type MdxSection,
 } from "./ops-article-editor.utils";
+
+const MdxRichEditor = lazy(() =>
+  import("./MdxRichEditor").then((module) => ({
+    default: module.MdxRichEditor,
+  })),
+);
 
 type EditorArticle = {
   slug?: string;
@@ -43,6 +49,7 @@ type PublicReadback = {
   updatedAt?: string;
   publishedAt?: string | null;
   htmlLength?: number;
+  html?: string;
   missing?: boolean;
 };
 
@@ -69,6 +76,10 @@ const blockTypes: Array<{ type: BlockType; label: string }> = [
   { type: "QUIZ", label: "퀴즈" },
 ];
 
+function htmlPreviewDocument(html: string): string {
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline'"><style>body{font:16px/1.75 system-ui,sans-serif;max-width:760px;margin:0 auto;padding:24px;color:#202124}h1,h2,h3{line-height:1.3}pre{overflow:auto;padding:16px;background:#18181b;color:#fff}code{font-family:ui-monospace,monospace}table{border-collapse:collapse;display:block;overflow:auto}td,th{border:1px solid #ddd;padding:8px}img{max-width:100%;height:auto}</style></head><body>${html}</body></html>`;
+}
+
 export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
   const [payload, setPayload] = useState<EditorPayload | null>(null);
   const [blocks, setBlocks] = useState<ArticleBlock[]>([]);
@@ -76,8 +87,8 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("SEOJing");
   const [sourceText, setSourceText] = useState("");
-  const [mdxSections, setMdxSections] = useState<MdxSection[]>([]);
   const [showRawMdx, setShowRawMdx] = useState(false);
+  const [mdxEditorError, setMdxEditorError] = useState("");
   const [status, setStatus] = useState<
     "idle" | "loading" | "saving" | "publishing"
   >("idle");
@@ -88,6 +99,9 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
   const publicReadback = payload?.publicReadback;
   const hasSelection = selectedSlug.trim().length > 0;
   const isBlockArticle = article?.sourceFormat === "BLOCKS";
+  const hasStaticPage = migrationManifest.some(
+    (entry) => entry.slug === article?.slug,
+  );
 
   useEffect(() => {
     if (!hasSelection) return;
@@ -107,7 +121,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
         setDescription(body.article?.description ?? "");
         setCategory(body.article?.category ?? "SEOJing");
         setSourceText(body.article?.sourceText ?? "");
-        setMdxSections(splitMdxSections(body.article?.sourceText ?? ""));
+        setMdxEditorError("");
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
@@ -214,7 +228,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
     setDescription(body.article?.description ?? "");
     setCategory(body.article?.category ?? "SEOJing");
     setSourceText(body.article?.sourceText ?? "");
-    setMdxSections(splitMdxSections(body.article?.sourceText ?? ""));
+    setMdxEditorError("");
   }
 
   if (!hasSelection) {
@@ -267,22 +281,21 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
             <div className="mt-6 min-w-0 space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-semibold">MDX 섹션 편집</h3>
+                  <h3 className="text-sm font-semibold">본문 편집</h3>
                   <p className="mt-1 text-xs text-zinc-500">
-                    기존 글은 MDX 형식입니다. 제목별로 나눠 보여주지만 저장 시
-                    원문 형식을 유지합니다.
+                    글처럼 보이는 화면에서 본문을 편집할 수 있습니다. 원본 MDX와
+                    특수 컴포넌트는 원문 보기에서 확인하세요.
                   </p>
                 </div>
                 <button
                   type="button"
                   className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium dark:border-zinc-700"
                   onClick={() => {
-                    if (showRawMdx)
-                      setMdxSections(splitMdxSections(sourceText));
+                    setMdxEditorError("");
                     setShowRawMdx(!showRawMdx);
                   }}
                 >
-                  {showRawMdx ? "섹션별로 보기" : "원문 전체 보기"}
+                  {showRawMdx ? "시각 편집으로 보기" : "MDX 원문 보기"}
                 </button>
               </div>
               {showRawMdx ? (
@@ -296,7 +309,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                       sourceText,
                     );
                     setSourceText(restored);
-                    setMdxSections(splitMdxSections(restored));
+                    setMdxEditorError("");
                   }}
                   disabled={isBusy}
                   mono
@@ -304,58 +317,103 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                   rows={24}
                 />
               ) : (
-                <div className="space-y-3">
-                  {mdxSections.map((section, index) => (
-                    <div
-                      className="min-w-0 sm:rounded-2xl sm:border sm:border-zinc-200 sm:bg-zinc-50/70 sm:p-4 sm:dark:border-zinc-800 sm:dark:bg-zinc-900/40"
-                      key={index}
-                    >
-                      <TextAreaField
-                        label={`섹션 ${index + 1} · ${section.label}`}
-                        value={section.source}
-                        onChange={(next) => {
-                          const updated = mdxSections.map((item, itemIndex) =>
-                            itemIndex === index
-                              ? {
-                                  ...item,
-                                  source: preserveMdxLineEndings(
-                                    next,
-                                    item.source,
-                                    sourceText,
-                                  ),
-                                }
-                              : item,
-                          );
-                          setMdxSections(updated);
-                          setSourceText(
-                            updated.map((item) => item.source).join(""),
-                          );
-                        }}
-                        disabled={isBusy}
-                        mono
-                        minimalMobile
-                        rows={Math.min(
-                          18,
-                          Math.max(5, section.source.split("\n").length + 1),
-                        )}
-                      />
-                    </div>
-                  ))}
-                </div>
+                <Suspense fallback={<p>시각 편집기 불러오는 중…</p>}>
+                  <MdxRichEditor
+                    key={`${selectedSlug}:${article.editingRevisionNumber ?? 0}:${showRawMdx}`}
+                    markdown={splitMdxFrontmatter(sourceText).body}
+                    disabled={isBusy}
+                    onReplace={(start, end, replacement) => {
+                      const { prefix, body } = splitMdxFrontmatter(sourceText);
+                      setMdxEditorError("");
+                      setSourceText(
+                        prefix +
+                          body.slice(0, start) +
+                          preserveMdxLineEndings(
+                            replacement,
+                            body.slice(start, end),
+                            sourceText,
+                          ) +
+                          body.slice(end),
+                      );
+                    }}
+                    onError={setMdxEditorError}
+                  />
+                </Suspense>
               )}
-              <p className="text-xs text-zinc-500">
-                MDX 원문은 저장할 때 서버에서 안전한 공개 본문으로 변환됩니다.
-                아래 미리보기는 마지막으로 저장한 revision 기준입니다.
-              </p>
-              {article.renderedHtml ? (
+              {mdxEditorError ? (
+                <p role="alert" className="text-sm text-rose-700">
+                  시각 편집기가 이 MDX를 읽지 못했습니다: {mdxEditorError}. 원문
+                  보기에서 편집할 수 있습니다.
+                </p>
+              ) : null}
+              <section aria-label="CMS 저장본 미리보기" className="space-y-2">
+                <h3 className="text-sm font-semibold">CMS 저장본 시각 점검</h3>
+                <p className="text-xs text-zinc-500">
+                  서버에서 다시 읽어온 revision{" "}
+                  {article.editingRevisionNumber ?? "—"} 기준입니다. 저장 전
+                  수정 내용은 위 편집 화면에서 확인하세요. 특수 구성요소는 이
+                  화면에서 생략될 수 있습니다.
+                </p>
+                <Suspense fallback={<p>저장본 미리보기 불러오는 중…</p>}>
+                  <MdxRichEditor
+                    markdown={
+                      splitMdxFrontmatter(article.sourceText ?? "").body
+                    }
+                    disabled={false}
+                    readOnly
+                    onReplace={() => {}}
+                    onError={() => {}}
+                  />
+                </Suspense>
+                {article.renderedHtml ? (
+                  <details className="rounded-lg border border-zinc-200 p-3 text-xs dark:border-zinc-800">
+                    <summary className="cursor-pointer">
+                      CMS 서버 HTML 변환 결과 확인
+                    </summary>
+                    <p className="mt-2 text-zinc-500">
+                      저장된 revision의 서버 변환 결과입니다. MDX 특수
+                      컴포넌트는 서버 변환에서 지원되지 않을 수 있습니다.
+                    </p>
+                    <iframe
+                      title="CMS 서버 HTML 변환 결과"
+                      srcDoc={htmlPreviewDocument(article.renderedHtml)}
+                      sandbox=""
+                      className="mt-3 h-80 w-full bg-white"
+                    />
+                  </details>
+                ) : null}
+              </section>
+              {publicReadback?.status === 200 && publicReadback.html ? (
                 <section className="min-w-0 max-w-full overflow-hidden sm:rounded-2xl sm:border sm:border-zinc-200 sm:bg-white sm:p-6 sm:dark:border-zinc-800 sm:dark:bg-zinc-950">
                   <h3 className="text-sm font-semibold">
-                    저장된 수정본 미리보기
+                    CMS 공개 API 본문 비교
                   </h3>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    현재 발행된 CMS 본문입니다. 비공개 수정본은 발행 전까지
+                    반영되지 않습니다.
+                  </p>
                   <iframe
-                    title="저장된 MDX 수정본 미리보기"
+                    title="CMS 공개 API 본문 비교"
+                    srcDoc={htmlPreviewDocument(publicReadback.html)}
                     sandbox=""
-                    srcDoc={mdxPreviewDocument(article.renderedHtml)}
+                    loading="lazy"
+                    className="mt-5 h-[32rem] w-full min-w-0 max-w-full bg-white sm:h-[40rem] sm:rounded-xl sm:border sm:border-zinc-200"
+                  />
+                </section>
+              ) : null}
+              {article.slug && hasStaticPage ? (
+                <section className="min-w-0 max-w-full overflow-hidden sm:rounded-2xl sm:border sm:border-zinc-200 sm:bg-white sm:p-6 sm:dark:border-zinc-800 sm:dark:bg-zinc-950">
+                  <h3 className="text-sm font-semibold">
+                    기존 웹 글 비교 · 저장본과 별개
+                  </h3>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    발행 전 수정 내용은 이 화면에 반영되지 않습니다.
+                  </p>
+                  <iframe
+                    title="기존 웹 글 비교 · 저장본과 별개"
+                    src={`/blog/${article.slug.split("/").map(encodeURIComponent).join("/")}`}
+                    sandbox="allow-same-origin"
+                    loading="lazy"
                     className="mt-5 h-[32rem] w-full min-w-0 max-w-full bg-white sm:h-[40rem] sm:rounded-xl sm:border sm:border-zinc-200"
                   />
                 </section>
@@ -371,7 +429,9 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
               disabled={
                 isBusy ||
                 !dirty ||
-                (isBlockArticle ? blocks.length === 0 : !sourceText.trim())
+                (isBlockArticle
+                  ? blocks.length === 0
+                  : !sourceText.trim() || Boolean(mdxEditorError))
               }
             >
               {status === "saving" ? "저장 중" : "revision 저장"}
@@ -1043,29 +1103,6 @@ function arrayValue(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
     : [];
-}
-
-function mdxPreviewDocument(html: string): string {
-  return `<!doctype html><html lang="ko"><head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-@font-face { font-family: A2z; src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-4Regular.woff2") format("woff2"); font-weight: 400; }
-@font-face { font-family: A2z; src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2601-6@1.0/에이투지체-7Bold.woff2") format("woff2"); font-weight: 700; }
-@font-face { font-family: Paperlogy; src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2") format("woff2"); font-weight: 700; }
-*, *::before, *::after { box-sizing: border-box; }
-html { width: 100%; overflow-x: hidden; }
-body { max-width: 52rem; min-width: 0; margin: 0 auto; padding: clamp(1rem, 4vw, 2rem); color: #374151; font: 400 1rem/2 A2z, Arial, sans-serif; overflow-wrap: anywhere; }
-h1, h2, h3, h4 { color: #111827; font-family: Paperlogy, Arial, sans-serif; line-height: 1.4; overflow-wrap: anywhere; }
-h2 { margin: 3rem 0 1rem; font-size: 1.5rem; } h3 { margin: 2.25rem 0 .75rem; font-size: 1.25rem; }
-p, li { line-height: 2; } ul, ol { padding-left: 1.5rem; } ul { list-style: disc; } ol { list-style: decimal; }
-a { color: #2563eb; text-decoration: underline; } blockquote { border-left: 4px solid #d1d5db; margin: 1.5rem 0; padding-left: 1rem; }
-pre { max-width: 100%; overflow-x: auto; border-radius: 1rem; background: #030712; color: #f3f4f6; padding: 1.25rem; }
-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; } pre code { white-space: pre; overflow-wrap: normal; }
-img, figure, svg { max-width: 100%; height: auto; } figure { margin: 2rem 0; }
-table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; } th, td { border-bottom: 1px solid #d1d5db; padding: .75rem; text-align: left; }
-@media (min-width: 640px) { p, li { font-size: 1.125rem; } }
-@media (max-width: 639px) { body { padding: .25rem; } }
-</style></head><body>${html}</body></html>`;
 }
 
 function ArticleStatusCard({
