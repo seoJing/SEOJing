@@ -27,8 +27,8 @@ export default async function OpsArticlesPage({
       ].slice(0, 36);
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-10 text-zinc-950 dark:text-zinc-50">
-      <section className="rounded-3xl border border-zinc-200 bg-white/80 p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950/70 md:p-8">
+    <main className="mx-auto max-w-7xl px-3 py-6 text-zinc-950 dark:text-zinc-50 sm:px-4 sm:py-10">
+      <section className="sm:rounded-3xl sm:border sm:border-zinc-200 sm:bg-white/80 sm:p-6 sm:shadow-sm sm:dark:border-zinc-800 sm:dark:bg-zinc-950/70 md:p-8">
         <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
           Internal ops · Cloudflare Access 보호 전제
         </p>
@@ -43,7 +43,7 @@ export default async function OpsArticlesPage({
       </section>
 
       <section className="mt-6 space-y-6">
-        <aside className="rounded-3xl border border-zinc-200 bg-white/80 p-5 dark:border-zinc-800 dark:bg-zinc-950/70">
+        <aside className="sm:rounded-3xl sm:border sm:border-zinc-200 sm:bg-white/80 sm:p-5 sm:dark:border-zinc-800 sm:dark:bg-zinc-950/70">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h2 className="text-lg font-semibold">글 선택</h2>
@@ -62,7 +62,7 @@ export default async function OpsArticlesPage({
                   name="slug"
                   defaultValue={selectedSlug}
                   placeholder="study/javascript-quizbook/day7"
-                  className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
+                  className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50 sm:rounded-2xl sm:px-4 sm:py-3"
                 />
               </label>
               <button className="rounded-full bg-zinc-950 px-5 py-3 text-sm font-semibold text-white dark:bg-zinc-50 dark:text-zinc-950">
@@ -74,7 +74,7 @@ export default async function OpsArticlesPage({
 
         <OpsArticleEditor selectedSlug={selectedSlug} />
 
-        <details className="rounded-3xl border border-zinc-200 bg-white/80 p-5 dark:border-zinc-800 dark:bg-zinc-950/70">
+        <details className="sm:rounded-3xl sm:border sm:border-zinc-200 sm:bg-white/80 sm:p-5 sm:dark:border-zinc-800 sm:dark:bg-zinc-950/70">
           <summary className="cursor-pointer text-sm font-semibold">
             기존 글 목록 열기 ({displayItems.length})
           </summary>
