@@ -1,6 +1,6 @@
 import type { Metadata } from "vinext/shims/metadata";
 
-import { getAnalyticsContentInventory } from "@/shared/analytics/analytics-dashboard-data";
+import { MdxReviewQueue } from "@/widgets/ops-articles/MdxReviewQueue";
 import { OpsArticleEditor } from "@/widgets/ops-articles/OpsArticleEditor";
 
 export const metadata: Metadata = {
@@ -17,14 +17,6 @@ export default async function OpsArticlesPage({
 }: OpsArticlesPageProps) {
   const params = searchParams ? await searchParams : {};
   const selectedSlug = params.slug?.trim() ?? "";
-  const inventory = getAnalyticsContentInventory();
-  const studyItems = inventory.filter((item) => item.kind === "study_post");
-  const displayItems = selectedSlug
-    ? inventory
-    : [
-        ...studyItems,
-        ...inventory.filter((item) => item.kind !== "study_post"),
-      ].slice(0, 36);
 
   return (
     <main className="mx-auto max-w-7xl px-3 py-6 text-zinc-950 dark:text-zinc-50 sm:px-4 sm:py-10">
@@ -73,32 +65,7 @@ export default async function OpsArticlesPage({
         </aside>
 
         <OpsArticleEditor selectedSlug={selectedSlug} />
-
-        <details className="sm:rounded-3xl sm:border sm:border-zinc-200 sm:bg-white/80 sm:p-5 sm:dark:border-zinc-800 sm:dark:bg-zinc-950/70">
-          <summary className="cursor-pointer text-sm font-semibold">
-            기존 글 목록 열기 ({displayItems.length})
-          </summary>
-          <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-            {displayItems.map((item) => (
-              <a
-                key={item.slug}
-                href={`/ops/articles?slug=${encodeURIComponent(item.slug)}`}
-                className={`rounded-2xl px-3 py-3 text-sm transition hover:bg-zinc-100 dark:hover:bg-zinc-900 ${
-                  item.slug === selectedSlug
-                    ? "bg-zinc-100 dark:bg-zinc-900"
-                    : ""
-                }`}
-              >
-                <span className="block font-medium text-zinc-900 dark:text-zinc-100">
-                  {item.title}
-                </span>
-                <span className="mt-1 block break-all text-xs text-zinc-500 dark:text-zinc-400">
-                  {item.slug}
-                </span>
-              </a>
-            ))}
-          </div>
-        </details>
+        <MdxReviewQueue selectedSlug={selectedSlug} />
       </section>
     </main>
   );
