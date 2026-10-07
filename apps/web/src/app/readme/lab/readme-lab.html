@@ -345,7 +345,6 @@ details[open]>summary::after{transform:translateY(0) rotate(-135deg)}
   background-repeat:no-repeat,repeat-x,repeat-x,no-repeat,no-repeat,repeat-x;
   padding-bottom:3px;-webkit-box-decoration-break:slice;box-decoration-break:slice}
 .pen.draw{animation:pen-in var(--t-4) var(--ease-out) both}
-.pen.draw.quick{animation-duration:var(--t-2)}
 @keyframes pen-in{from{--reveal:0%}to{--reveal:100%}}
 .pen.q{--l-wave:var(--wave-q)}
 .pen.q[data-q="partial"]{--l-wave:var(--wave-q-mid)}
@@ -417,7 +416,7 @@ details[open]>summary::after{transform:translateY(0) rotate(-135deg)}
 :root[data-theme="dark"] .gaze-lens::after{--spec:.22}
 .gaze[data-state="stopped"] .gaze-lens{display:none}
 /* the jelly keyframes run only while the gaze is on screen: a hidden or leaving gaze costs nothing */
-.gaze:is([data-state="reading"],[data-state="skimming"],[data-state="jumping"]) .gaze-blob{animation:gz-jelly 3.2s var(--ease-in-out) infinite}
+.gaze[data-state="reading"] .gaze-blob{animation:gz-jelly 3.2s var(--ease-in-out) infinite}
 .gaze:is([data-state="waiting"],[data-state="loading"]) .gaze-blob{animation:gz-jelly 5.2s var(--ease-in-out) infinite,gz-breathe 2.4s var(--ease-in-out) infinite alternate}
 .gaze[data-state="paused"] .gaze-blob{background:none;box-shadow:inset 0 0 0 1px rgb(var(--gaze-rgb)/.45)}
 .gaze[data-state="stopped"] .gaze-blob{animation:none;background:none;box-shadow:none;outline:1px dashed var(--ink-2);outline-offset:-1px;border-radius:50%}
@@ -457,6 +456,12 @@ details[open]>summary::after{transform:translateY(0) rotate(-135deg)}
 .st-acts:empty{display:none}
 #st-sub-t:empty+.st-acts{margin-left:0}
 .bar-acts-m{display:none}
+/* the report finished before the screen did: one row inside the sticky bar, so it stays in view without covering the
+   sheet or the controls. Same ink-rule voice as .notice; it never moves focus and the playback goes on beneath it. */
+.bar-ready{display:flex;flex-wrap:wrap;align-items:center;gap:4px 16px;padding:8px 0 8px 12px;margin-bottom:6px;border-top:1px solid var(--rule);border-left:2px solid var(--ink);animation:rise var(--t-3) var(--ease-out) both}
+.bar-ready .rr-t{font:600 14px/22px var(--f-ui);color:var(--ink)}
+.bar-ready .rr-s{font:400 13px/20px var(--f-ui);color:var(--ink-2)}
+.bar-ready .btn-primary{margin-left:auto}
 .bar-ctrl{display:flex;align-items:center;gap:12px;justify-content:flex-end}
 .bar-ctrl .why{max-width:12em;text-align:right}
 .legend{display:flex;flex-wrap:nowrap;gap:0;align-items:center;min-width:0}
@@ -733,6 +738,10 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
   .bar-ctrl{gap:0}
   .bar-ctrl .why,.bar-ctrl .btn-quiet.replay,.bar-ctrl #restart-btn{display:none}
   .bar-ctrl .bar-cancel-d{margin-left:8px}
+  .bar-ready{gap:4px 12px;padding:6px 0 6px 10px;margin-bottom:4px}
+  .bar-ready .rr-t{font-size:13px;line-height:20px}
+  .bar-ready .rr-s{display:none}
+  .bar-ready .btn-primary{height:34px;padding:0 12px;font-size:13px}
   .only-m{display:inline-flex}
   .seg{border:0;height:44px}
   .seg button{width:44px}
@@ -793,7 +802,7 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
 /* ---------- reduced motion (decided in JS so the state sequence is kept) ---------- */
 .rm .gaze-blob,.rm .mini-gaze{animation:none!important}
 .rm .gaze{transition:opacity 160ms linear}
-.rm .pen.draw,.rm .sn.enter,.rm .note.enter,.rm .paper.ev,.rm .ritem.back::before{animation:none!important}
+.rm .pen.draw,.rm .sn.enter,.rm .note.enter,.rm .bar-ready,.rm .paper.ev,.rm .ritem.back::before{animation:none!important}
 .rm .u.current .w.inked,.rm .paper.reading .u.unread{transition:none}
 .rm .track .t-shw{transition:none}
 @media (prefers-reduced-motion:reduce){ .gaze-blob,.mini-gaze{animation:none} }
@@ -1050,6 +1059,11 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
           </div>
         </div>
         <div class="bar-acts-m" id="st-acts-m"></div>
+        <div class="bar-ready" id="bar-ready" hidden>
+          <p class="rr-t">리포트가 준비되었어요!</p>
+          <p class="rr-s">화면 재생은 그대로 이어집니다. 지금 열어도 읽기 기록은 남습니다.</p>
+          <button class="btn-primary sm" id="ready-btn" type="button">리포트 보기</button>
+        </div>
         <div class="mtabs" role="tablist" aria-label="문서와 읽기 메모" id="mtabs">
           <button class="tab" role="tab" id="mt-doc" type="button" aria-controls="doc-col" aria-selected="true">문서</button>
           <button class="tab" role="tab" id="mt-notes" type="button" aria-controls="tp-notes" aria-selected="false" tabindex="-1">읽기 메모 <span class="num" id="mt-notes-n"></span></button>
@@ -1978,7 +1992,7 @@ function renderUnit(P, uid, o) {
       const cls = new Set(); let q = null, was = false;
       for (const r of cov) { cls.add(r.cls); if (r.cls === "q" && !q) q = r.q; if (r.was) was = true; }
       let c = "pen " + [...cls].join(" ") + (was ? " was" : "");
-      if (o.draw && [...cls].some(x => o.draw.has(x))) c += " draw" + (o.quick ? " quick" : "");
+      if (o.draw && [...cls].some(x => o.draw.has(x))) c += " draw";
       node = h("span", { class: c, "data-q": q });
       fillText(node, text, o.words);
     }
@@ -1997,7 +2011,7 @@ function paintMarks(P, A, o = {}) {
     const ranges = M.byUnit.get(uid) || [];
     const now = new Set(ranges.map(r => r.cls)), prev = P.base.get(uid) || new Set();
     const draw = o.draw ? new Set([...now].filter(c => !prev.has(c))) : null;
-    renderUnit(P, uid, { ranges, cites: o.cites?.get(uid), words: o.wordsUnit === uid, draw: draw && draw.size ? draw : null, quick: o.quick });
+    renderUnit(P, uid, { ranges, cites: o.cites?.get(uid), words: o.wordsUnit === uid, draw: draw && draw.size ? draw : null });
     P.base.set(uid, now);
   }
   unitAttrs(P, A, M);
@@ -2192,7 +2206,7 @@ function lensMap() {
     ctx.putImageData(img, 0, 0); return c.toDataURL("image/png");
   } catch { return null; }
 }
-const GZ_OP = { hidden: 0, loading: .5, reading: 1, skimming: 1, jumping: 1, waiting: .85, paused: .6, stopped: 1, exiting: 1 };
+const GZ_OP = { hidden: 0, loading: .5, reading: 1, waiting: .85, paused: .6, stopped: 1, exiting: 1 };
 function gzBuild(P) {
   GZ.dots = [0, 1, 2].map(i => h("div", { class: "gaze-dot d" + i, "aria-hidden": "true" }));
   const G = gzMake(); Object.assign(GZ, { el: G.el, axis: G.axis, tail: G.tail, jelly: G.jelly, lens: G.lens, blob: G.blob });
@@ -2277,11 +2291,6 @@ function linePoint(P, rects, frac = .3) {
   const l = relTo(P, line[0]), r = relTo(P, line[line.length - 1]);
   return { x: l.l + (r.r - l.l) * frac, y: l.t + l.h * .52 };
 }
-function groupLines(words) {
-  const out = []; let cur = null, top = null;
-  for (const w of words) { const r = firstRect(w); if (!r) continue; if (top === null || Math.abs(r.top - top) > 4) { cur = []; out.push(cur); top = r.top; } cur.push(w); }
-  return out;
-}
 function fixations(P, uid, words) {
   const rnd = mulberry32(fnv1a(uid + ":" + P.ds.key));
   const rs = words.map(firstRect);
@@ -2302,7 +2311,10 @@ function fixations(P, uid, words) {
 /* ===================== 7. reading playback ===================== */
 /* Two cursors: the server's (window_started / window_completed) and the screen's (shown). The gaze never
    enters a unit before window_started, and a unit's notes appear only after window_completed and after the
-   gaze has read it. Nothing beyond the screen cursor is ever drawn. */
+   gaze has read it. Nothing beyond the screen cursor is ever drawn.
+   The screen keeps its own reading pace however far the server runs ahead (WEB-10 decision b4a542): no dwell
+   multiplier, no skimming, no jumping. Catching up is only ever the user's choice (읽은 곳까지 바로 보기,
+   끝까지 바로 보기, 재생 건너뛰기) or a refresh; a report that finishes first is announced, never forced open. */
 const PL = { token: 0, waiters: new Set() };
 function nap(ms) { return new Promise(res => { let t = 0; const w = () => { clearTimeout(t); PL.waiters.delete(w); res(); }; t = setTimeout(w, ms); PL.waiters.add(w); }); }
 function wakePlayer() { for (const w of [...PL.waiters]) w(); }
@@ -2366,8 +2378,8 @@ function gzReanchor() {
   if (!rc) { const rs = rangeWords(PAPERS.read, S.play.unit); rc = rs[rs.length - 1]; }
   if (rc) { if (GZ.moveA) GZ.moveA.cancel(); gzPlace(fixPoint(PAPERS.read, rc)); }
 }
-function estimateRead(uid, mode) {
-  if (mode === "jumping") return 280; if (mode === "skimming") return 520;
+/* a hidden sheet still takes the reading time: the same fixations, without motion */
+function estimateRead(uid) {
   const words = S.ds.unitById[uid].text.trim().split(/\s+/);
   return 160 + words.reduce((s, w) => s + clamp(150 + 26 * syllables(w), 180, 420) * .75 + 90, 0);
 }
@@ -2381,10 +2393,10 @@ async function pauseGate(tok) {
 }
 /* Every point is measured right before it is used: the sheet can be hidden (phone tabs) or reflowed (rotation, inline note)
    between two awaits. When it is gone the rest of the unit is inked without motion. */
-async function readUnit(uid, mode, B, tok) {
+async function readUnit(uid, mode, tok) {
   const P = PAPERS.read, ds = S.ds, sp = P.units.get(uid);
   setCurrent(uid);
-  if (!paperVisible()) { await sleep(estimateRead(uid, mode)); return; }
+  if (!paperVisible()) { await sleep(estimateRead(uid)); return; }
   if (mode === "rm") {
     const rs = rangeWords(P, uid); gzSet("reading");
     if (rs[0]) { const p = fixPoint(P, rs[0]); await gzSaccade(p); if (!alive(tok)) return; GZ.lastFix = p; followTo(p); }
@@ -2393,26 +2405,8 @@ async function readUnit(uid, mode, B, tok) {
   renderUnit(P, uid, { ranges: unitRanges(P, uid), words: true, force: true });
   const words = $$(".w", sp);
   if (!words.length) return;
-  const ink = list => list.forEach(w => w.classList.add("inked"));
   const gone = () => halted() || !paperVisible();
-  if (mode === "jumping") {
-    gzSet("jumping"); const r = firstRect(words[0]);
-    if (r) { const p = fixPoint(P, r); await gzSaccade(p, { trail: false }); if (!alive(tok)) return; followTo(p); GZ.lastFix = p; }
-    ink(words); await sleep(280); return;
-  }
-  if (mode === "skimming") {
-    gzSet("skimming");
-    for (const ln of groupLines(words)) {
-      await pauseGate(tok); if (!alive(tok)) return;
-      if (gone()) { ink(words); return; }
-      const p = linePoint(P, ln.map(firstRect));
-      if (p) { await gzSaccade(p, { trail: false }); if (!alive(tok)) return; followTo(p); GZ.lastFix = p; }
-      ink(ln); await sleep(160);
-    }
-    return;
-  }
   gzSet("reading");
-  const pace = B >= 1 && B <= 3 ? Math.max(.6, 1 - .15 * B) : 1;
   const fx = ds.isHeading(uid) ? [{ wi: words.length - 1, dwell: 260, line: true }] : fixations(P, uid, words);
   let inked = 0;
   for (const f of fx) {
@@ -2425,9 +2419,9 @@ async function readUnit(uid, mode, B, tok) {
     if (!alive(tok)) return;
     for (; inked <= f.wi && inked < words.length; inked++) words[inked].classList.add("inked");
     followTo(p); GZ.lastFix = p;
-    const dwell = f.dwell * pace; scaleTo(1.04, dwell);
-    if (r && !f.line) gzDrift(GZ, { x: p.x + r.width * .16, y: p.y }, dwell);
-    await sleep(dwell);
+    scaleTo(1.04, f.dwell);
+    if (r && !f.line) gzDrift(GZ, { x: p.x + r.width * .16, y: p.y }, f.dwell);
+    await sleep(f.dwell);
   }
   for (; inked < words.length; inked++) words[inked].classList.add("inked");
 }
@@ -2452,16 +2446,16 @@ async function beat(uid, mode, tok) {
   finishUnit(uid);
   const { fresh, trans, n } = applyUnit(uid);
   if (!n) { repaintUnit(uid, false); return; }
-  const vis = paperVisible(), instant = mode === "jumping" || !vis, quick = mode === "skimming", rm = mode === "rm";
+  /* instant: a unit finished without motion (hidden sheet, or a layout read that failed) */
+  const vis = paperVisible(), instant = mode === "instant" || !vis, rm = mode === "rm";
   if (!S.play.follow) S.play.unseen += fresh.length;
   const t0 = performance.now();
-  paintRead({ draw: !instant && !rm, quick, enter: instant || rm ? null : new Set(fresh.map(n => n.id)), threads: false });
+  paintRead({ draw: !instant && !rm, enter: instant || rm ? null : new Set(fresh.map(n => n.id)), threads: false });
   renderLegend(); renderSeg(); renderLedger(); renderReqPanel(); renderTabsAndPanels(); renderFeedState(); renderNewbar();
   announceNew(fresh);
   const says = speechFor(uid), said = says.find(s => s.code !== "revisit") || says[0];
   if (instant) { addFeedRows(fresh, false); drawReadThreads(false); return; }
   if (rm) { addFeedRows(fresh, false); drawReadThreads(false); if (said) speak(said.code, true); await sleep(200); return; }
-  if (quick) { addFeedRows(fresh, false); drawReadThreads(true); if (said) speak(said.code, true); await sleep(200); return; }
   await sleep(120); if (!alive(tok)) return;
   addFeedRows(fresh, true);
   if (said) speak(said.code, false);
@@ -2601,18 +2595,18 @@ async function playStep(tok, ds) {
     else gzIdle();
     renderBar(); await nap(R.started.size ? 60000 : 1000); return false;
   }
-  const B = P.replay ? 0 : doneSent() - shownSent();
-  const mode = RM() ? "rm" : B >= 12 ? "jumping" : B >= 4 ? "skimming" : "reading";
+  /* the pace is the sheet's own: the server lead (doneSent() − shownSent()) only shows in the bar, as a choice */
+  const mode = RM() ? "rm" : "reading";
   if (mode !== P.mode) { P.mode = mode; renderBar(); }
   const instant = P.instant === uid;
-  if (instant) setCurrent(uid); else await readUnit(uid, mode, B, tok);
+  if (instant) setCurrent(uid); else await readUnit(uid, mode, tok);
   if (!alive(tok)) return true;
   if (!R.done.has(uid) && !P.replay) {
     await waitForDone(uid, tok);
     if (!alive(tok)) return true;
     if (!R.done.has(uid)) return false;
   }
-  await beat(uid, instant ? "jumping" : mode, tok);
+  await beat(uid, instant ? "instant" : mode, tok);
   if (!alive(tok)) return true;
   P.shown++; P.instant = null;
   afterShown();
@@ -2757,6 +2751,8 @@ function handleJobView(v) {
   /* a stop on the server ends a screen pause: the paused label must not outlive the job */
   if ((S.srv.failed || S.srv.cancelled) && S.play.paused) { S.play.paused = false; BAR_KEY = ""; wakePlayer(); }
   if (v.status !== prev) onJobStatus(prev, v.status);
+  /* a cancel question outlives nothing on the server: once the job is over (the report may arrive mid-playback) it closes */
+  if (TERMINAL.has(v.status) && S.ui.confirmCancel) { S.ui.confirmCancel = false; if (S.screen === "s03") renderNotices(); }
   if ((S.srv.failed || S.srv.cancelled) && S.play.finished && !S.play.terminal) { S.play.terminal = true; onTerminal(); }
   updateTrack();
   return true;
@@ -2786,7 +2782,9 @@ function ingest(e) {
   }
 }
 function onJobStatus(prev, now) {
-  const msg = { queued: "차례를 기다리고 있습니다", reading: "읽기를 시작했습니다", reporting: isSample() ? "예시 리포트를 여는 중입니다" : "리포트를 쓰고 있습니다", completed: "리포트가 준비됐습니다" }[now];
+  /* a report that arrives while the screen is still replaying is announced once, with the way to open it; nothing moves on its own */
+  const early = now === "completed" && S.screen === "s03" && S.play && !S.play.finished && !S.play.terminal && S.srv.reportCompleted && !!S.job?.report;
+  const msg = { queued: "차례를 기다리고 있습니다", reading: "읽기를 시작했습니다", reporting: isSample() ? "예시 리포트를 여는 중입니다" : "리포트를 쓰고 있습니다", completed: early ? "리포트가 준비되었어요. 화면 재생은 이어지고, 리포트 보기 단추로 바로 열 수 있습니다" : "리포트가 준비됐습니다" }[now];
   if (msg && prev) announce(msg);
   BAR_KEY = ""; renderEngine();
   if (S.screen === "s03") renderS03();
@@ -2882,7 +2880,8 @@ const cancelledByUser = () => S.ui.userCancelled || S.job?.error === "cancelled"
 const cancelledByLease = () => !S.ui.userCancelled && S.job?.error === "expired";
 function barModel() {
   const J = S.job, R = S.srv, P = S.play, total = S.ds.sent.length;
-  const m = { label: "", sub: [], acts: [], seg: false, pause: false, cancelBar: false, cancel: false, replay: false, report: false, reportOn: false, why: false, track: true, restart: false };
+  /* ready: the report is written (report_completed and content) while the screen is still replaying; the bar row carries the only 리포트 보기 */
+  const m = { label: "", sub: [], acts: [], seg: false, pause: false, cancelBar: false, cancel: false, replay: false, report: false, reportOn: false, ready: false, why: false, track: true, restart: false };
   const fr = (a, b) => `${a}${NB}/${NB}${b}`;
   if (!J) { m.label = "읽기 준비 중"; m.track = false; return m; }
   if (S.ui.invalidCursor) { m.label = "읽기 기록 일부를 받지 못했습니다"; m.seg = hasMarks(); return m; }
@@ -2918,22 +2917,25 @@ function barModel() {
   }
   m.pause = true; m.cancel = true; m.seg = hasMarks();
   if (!R.started.size) { m.label = "읽기 준비 중"; m.sub = [isSample() ? "첫 문장을 여는 중" : isJev() ? "문장 판단 엔진(Jev)에 연결하는 중 · " : "문장 판단 모델을 불러오는 중 · ", isSample() ? null : sinceSpan(S.jobSeen.reading ?? nowMs())].filter(Boolean); m.pause = false; m.track = false; return m; }
+  /* the screen is still replaying (running or paused) but the report already exists: say so, in the bar, without moving anything */
+  m.ready = R.reportCompleted && !!J.report;
+  if (m.ready) m.cancel = false; /* nothing is left to cancel on the server */
   if (P.paused) {
     m.label = "화면 멈춤";
     if (R.readingCompleted) { m.sub = [`읽기는 끝났습니다 · ${fr(total, total)}문장`]; m.acts.push(["end", "끝까지 바로 보기", jumpToEnd]); }
     else m.sub = [isSample() ? `화면만 멈췄습니다 · 기록은 ${fr(doneSent(), total)}문장까지 나와 있습니다` : `읽기는 서버에서 계속됩니다 · ${fr(doneSent(), total)}문장까지 읽음`];
     return m;
   }
-  if (P.mode === "skimming" || P.mode === "jumping") { m.label = "화면이 따라가는 중"; m.sub = [`실제 읽기는 ${fr(doneSent(), total)}문장까지 진행됐습니다`]; m.acts.push(["jump", "읽은 곳까지 바로 보기", jumpToFrontier]); }
-  else {
-    m.label = "읽는 중"; m.sub = [`${fr(shownSent(), total)}문장`];
-    if (P.waiting) {
-      const t0 = R.windowSeen[P.waiting] ?? nowMs(), el = nowMs() - t0;
-      if (el > 60000) m.sub = ["이 문장에서 오래 걸리고 있습니다. 읽기와 리포트가 합쳐 10분을 넘으면 자동으로 멈춥니다."];
-      else if (el > 8000) m.sub = ["이 문장을 읽는 중 · ", sinceSpan(t0)];
-      else if (el > 3000) m.sub = ["이 문장을 읽는 중"];
-    }
+  m.label = "읽는 중"; m.sub = [`${fr(shownSent(), total)}문장`];
+  if (P.waiting) {
+    const t0 = R.windowSeen[P.waiting] ?? nowMs(), el = nowMs() - t0;
+    if (el > 60000) m.sub = ["이 문장에서 오래 걸리고 있습니다. 읽기와 리포트가 합쳐 10분을 넘으면 자동으로 멈춥니다."];
+    else if (el > 8000) m.sub = ["이 문장을 읽는 중 · ", sinceSpan(t0)];
+    else if (el > 3000) m.sub = ["이 문장을 읽는 중"];
   }
+  /* the server lead never changes the pace; from four sentences on it is named, with the one explicit way to skip ahead */
+  else if (R.readingCompleted) { m.sub.push(" · 읽기는 끝났습니다"); m.acts.push(["end", "끝까지 바로 보기", jumpToEnd]); }
+  else if (doneSent() - shownSent() >= 4) { m.sub.push(` · 실제 읽기는 ${fr(doneSent(), total)}문장까지`); m.acts.push(["jump", "읽은 곳까지 바로 보기", jumpToFrontier]); }
   if (!P.follow) m.acts.push(["return", `읽는 위치로 ${gazeDir()}`, returnToReading]);
   if (S.conn.state === "reconnecting") m.sub.push(` · 연결 다시 시도 중 (${S.conn.attempt}/3)`);
   return m;
@@ -2956,11 +2958,12 @@ function renderBar(force) {
   if (S.screen !== "s03" || !S.play) return;
   const m = barModel();
   const subKey = JSON.stringify(m.sub.map(x => typeof x === "string" ? x : (x.dataset?.since || x.textContent)));
-  const key = JSON.stringify([m.label, subKey, m.acts.map(a => a[0] + a[1]), m.seg, m.pause, S.play.paused, m.cancel, m.cancelBar, m.replay, m.report, m.reportOn, m.why, m.track, m.restart, mq820.matches]);
+  const key = JSON.stringify([m.label, subKey, m.acts.map(a => a[0] + a[1]), m.seg, m.pause, S.play.paused, m.cancel, m.cancelBar, m.replay, m.report, m.reportOn, m.ready, m.why, m.track, m.restart, mq820.matches]);
   updateTrack(m.track);
   if (!force && key === BAR_KEY) return;
   BAR_KEY = key;
-  const prev = $("#bar").contains(document.activeElement) ? document.activeElement : null;
+  /* focus inside the bar, or on the ledger's 읽기 취소 (hidden by the bar model too), is re-homed if its control goes away */
+  const prev = $("#bar").contains(document.activeElement) || document.activeElement === $("#side-cancel") ? document.activeElement : null;
   setText($("#st-label"), m.label);
   const t = $("#st-sub-t"); if (t._k !== subKey) { t._k = subKey; t.textContent = ""; for (const x of m.sub) t.append(x); }
   /* on a phone the sub-line is one truncated line, so its actions get their own row in the bar */
@@ -2976,7 +2979,8 @@ function renderBar(force) {
   const rp = $("#replay-btn"); rp.hidden = !m.replay; rp.title = isSample() ? "같은 기록을 처음부터 다시 보여 줍니다." : "모델을 다시 실행하지 않고 같은 기록을 처음부터 다시 보여 줍니다.";
   const rb = $("#report-btn"); rb.hidden = !m.report; rb.disabled = !m.reportOn;
   $("#report-why").hidden = !m.why;
-  if (prev) rescueFocus(prev, "#report-btn", "#play-btn", "#s03-h");
+  $("#bar-ready").hidden = !m.ready;
+  if (prev) rescueFocus(prev, "#report-btn", "#ready-btn", "#play-btn", "#s03-h");
 }
 /* keep each action button as the same node while its key stays; renderBar re-homes focus from a removed one */
 function syncActs(box, acts, pre = "") {
@@ -3420,6 +3424,7 @@ function wireReadPaper() {
   });
 }
 async function doCancel() {
+  if (TERMINAL.has(S.job?.status)) { S.ui.confirmCancel = false; renderS03(); return; } /* already over: nothing to cancel */
   S.ui.confirmCancel = false; S.ui.userCancelled = true; renderS03();
   try { await SRC.cancel(S.jobId); }
   catch (e) {
@@ -4393,6 +4398,8 @@ function go(scr, o = {}) {
   else if (scr === "s05") renderEvidence(o);
   if (S.jobId && STEP[scr] >= 3) Rec.set({ screen: scr });
   measureBar(); renderNewbar();
+  /* a page turn still in flight belongs to the screen being left (the report can now open mid-playback) */
+  TWEEN.cancel();
   if (!o.restore && !o.keepScroll && scr !== "s05") scrollTo(0, 0);
   if (!o.noFocus) $("#" + scr + "-h")?.focus({ preventScroll: true });
 }
@@ -4664,6 +4671,7 @@ async function boot() {
   $("#side-cancel").addEventListener("click", openCancelConfirm);
   $("#replay-btn").addEventListener("click", replayLocal);
   $("#report-btn").addEventListener("click", () => { S.rep.ret = null; go("s04"); });
+  $("#ready-btn").addEventListener("click", () => { S.rep.ret = null; go("s04"); }); /* the user's choice; playback goes on behind the report */
   $("#newbar").addEventListener("click", returnToReading);
   $("#ev-back").addEventListener("click", backToReport); $("#ev-back-m").addEventListener("click", backToReport);
   $("#ev-prev").addEventListener("click", () => evItemStep(-1)); $("#ev-next").addEventListener("click", () => evItemStep(1));
