@@ -1,0 +1,878 @@
+{
+  "synthetic": true,
+  "fixture": true,
+  "authored": false,
+  "prepare_ms": 0,
+  "total_ms": 32953,
+  "prepare": {
+    "prepare_id": "synthetic-service-completed",
+    "input_hash": "516d849bc528cee65374e9f69f29e5da6553b26d8ce5d04f8b353bcebfa9419e",
+    "status": "ready",
+    "document": {
+      "doc_id": "synthetic-resolved_then_corrected",
+      "source_kind": "md",
+      "units": [
+        {
+          "id": "u1",
+          "block_id": "b1",
+          "order": 0,
+          "scope_id": "s1",
+          "start": 0,
+          "end": 8,
+          "text": "# 예약 서비스"
+        },
+        {
+          "id": "u2",
+          "block_id": "b2",
+          "order": 1,
+          "scope_id": "s1",
+          "start": 0,
+          "end": 19,
+          "text": "팀에서 예약 서비스를 개발했습니다."
+        },
+        {
+          "id": "u3",
+          "block_id": "b3",
+          "order": 2,
+          "scope_id": "s1",
+          "start": 0,
+          "end": 35,
+          "text": "예약 서비스의 중복 예약 방지 API는 제가 직접 구현했습니다."
+        },
+        {
+          "id": "u4",
+          "block_id": "b4",
+          "order": 3,
+          "scope_id": "s1",
+          "start": 0,
+          "end": 69,
+          "text": "앞 문장의 API 구현자 표기를 정정합니다. 중복 예약 방지 API는 동료가 구현했고 저는 그 API를 구현하지 않았습니다."
+        }
+      ],
+      "blocks": [
+        {
+          "id": "b1",
+          "type": "heading",
+          "text": "# 예약 서비스",
+          "unit_ids": [
+            "u1"
+          ]
+        },
+        {
+          "id": "b2",
+          "type": "paragraph",
+          "text": "팀에서 예약 서비스를 개발했습니다.",
+          "unit_ids": [
+            "u2"
+          ]
+        },
+        {
+          "id": "b3",
+          "type": "paragraph",
+          "text": "예약 서비스의 중복 예약 방지 API는 제가 직접 구현했습니다.",
+          "unit_ids": [
+            "u3"
+          ]
+        },
+        {
+          "id": "b4",
+          "type": "paragraph",
+          "text": "앞 문장의 API 구현자 표기를 정정합니다. 중복 예약 방지 API는 동료가 구현했고 저는 그 API를 구현하지 않았습니다.",
+          "unit_ids": [
+            "u4"
+          ]
+        }
+      ],
+      "warnings": [],
+      "truncated": false
+    },
+    "job": {
+      "source": "user_paste",
+      "text": "업무: 웹 서비스 기능 개발과 운영 문제 해결. 필수: 본인이 수행한 개발 업무를 설명할 수 있는 경험. 우대: 서비스 개선의 결과와 비교 근거를 설명할 수 있는 경험.",
+      "requirements": [
+        {
+          "id": "r1",
+          "kind": "duty",
+          "label": "웹 서비스 기능 개발",
+          "quote": "웹 서비스 기능 개발",
+          "start": 4,
+          "end": 15
+        },
+        {
+          "id": "r2",
+          "kind": "duty",
+          "label": "운영 문제 해결",
+          "quote": "운영 문제 해결",
+          "start": 17,
+          "end": 25
+        },
+        {
+          "id": "r3",
+          "kind": "required",
+          "label": "본인이 수행한 개발 업무를 설명할 수 있는 경험",
+          "quote": "본인이 수행한 개발 업무를 설명할 수 있는 경험",
+          "start": 31,
+          "end": 57
+        },
+        {
+          "id": "r4",
+          "kind": "preferred",
+          "label": "서비스 개선의 결과와 비교 근거를 설명할 수 있는 경험",
+          "quote": "서비스 개선의 결과와 비교 근거를 설명할 수 있는 경험",
+          "start": 63,
+          "end": 93
+        }
+      ],
+      "warnings": [],
+      "reader_profile": {
+        "version": "reader-profile-v2",
+        "id": "d67f8b9ddd717e9b82bff72d",
+        "criteria": [
+          {
+            "id": "c_r1",
+            "requirement_id": "r1",
+            "label": "웹 서비스 기능 개발",
+            "checks": [
+              {
+                "facet": "role",
+                "trigger": "웹 서비스 기능 개발 경험을 주장하지만 본인의 구체적인 수행 부분이 설명되지 않은 경우",
+                "sufficient": "같은 경험에서 지원자 본인이 실제로 수행한 구체적인 업무 한 가지가 설명됨. 수행 방법, 성과, 수치나 공고의 모든 업무 수행은 필수가 아님.",
+                "insufficient": "단순 참여, 팀이나 타인의 업무만 설명, 미래 계획, 가상 예시 또는 실제 수행 부정. 서로 다른 사람·행동의 사실을 합쳐 본인 역할로 만들지 않음.",
+                "question": "이 경험에서 본인이 직접 맡아 수행한 구체적인 업무는 무엇인가요?"
+              }
+            ]
+          },
+          {
+            "id": "c_r2",
+            "requirement_id": "r2",
+            "label": "운영 문제 해결",
+            "checks": [
+              {
+                "facet": "role",
+                "trigger": "운영 문제 해결 경험을 주장하지만 본인의 구체적인 수행 부분이 설명되지 않은 경우",
+                "sufficient": "같은 경험에서 지원자 본인이 실제로 수행한 구체적인 업무 한 가지가 설명됨. 수행 방법, 성과, 수치나 공고의 모든 업무 수행은 필수가 아님.",
+                "insufficient": "단순 참여, 팀이나 타인의 업무만 설명, 미래 계획, 가상 예시 또는 실제 수행 부정. 서로 다른 사람·행동의 사실을 합쳐 본인 역할로 만들지 않음.",
+                "question": "이 경험에서 본인이 직접 맡아 수행한 구체적인 업무는 무엇인가요?"
+              }
+            ]
+          },
+          {
+            "id": "c_r3",
+            "requirement_id": "r3",
+            "label": "본인이 수행한 개발 업무를 설명할 수 있는 경험",
+            "checks": [
+              {
+                "facet": "role",
+                "trigger": "개발 경험을 주장하지만 본인이 실제 수행한 개발 업무가 설명되지 않은 경우",
+                "sufficient": "같은 경험에서 지원자 본인이 실제로 수행한 구체적인 업무 한 가지가 설명됨. 수행 방법, 성과, 수치나 공고의 모든 업무 수행은 필수가 아님.",
+                "insufficient": "단순 참여, 팀이나 타인의 업무만 설명, 미래 계획, 가상 예시 또는 실제 수행 부정. 서로 다른 사람·행동의 사실을 합쳐 본인 역할로 만들지 않음.",
+                "question": "이 경험에서 본인이 직접 맡아 수행한 구체적인 업무는 무엇인가요?"
+              }
+            ]
+          },
+          {
+            "id": "c_r4",
+            "requirement_id": "r4",
+            "label": "서비스 개선의 결과와 비교 근거를 설명할 수 있는 경험",
+            "checks": [
+              {
+                "facet": "result",
+                "trigger": "서비스 개선 경험을 주장하지만 개선 결과가 설명되지 않은 경우",
+                "sufficient": "해당 서비스 개선으로 나타난 변화나 반응이 설명됨. 정성적인 결과도 인정함.",
+                "insufficient": "개선 활동이나 목표만 있고 실제 결과 설명이 없음.",
+                "question": "이 서비스 개선으로 어떤 변화나 반응이 나타났나요?"
+              },
+              {
+                "facet": "basis",
+                "trigger": "서비스 개선의 수치·비교 성과를 주장하지만 그 수치나 비교의 범위가 불명확한 경우",
+                "sufficient": "비교 성과는 동일 지표의 전후 값 또는 계산 관계, 대상·범위, 비교 기간이 설명됨. 단순 개수·기간은 해당 대상·범위가 설명되면 되며, 측정 담당자나 계산 방식 설명도 활용함.",
+                "insufficient": "비교 성과를 주장하면서 지표의 전후 관계, 대상·범위 또는 비교 기간이 불명확함. 단순 개수·기간의 대상이 불명확함.",
+                "question": "제시한 수치의 대상·범위는 무엇이며, 비교 성과라면 같은 지표의 전후 값이나 계산 관계와 비교 기간은 어떻게 되나요?"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "expires_at": "2100-01-01T00:00:00.000Z"
+  },
+  "snapshots": [
+    {
+      "job_id": "yyLVBtTNE21WVROKGe93VXtWqFzKeGh2",
+      "status": "completed",
+      "events": [
+        {
+          "type": "window_started",
+          "window_id": "w1",
+          "unit_ids": [
+            "u1"
+          ],
+          "seq": 1
+        },
+        {
+          "type": "window_completed",
+          "window_id": "w1",
+          "unit_ids": [
+            "u1"
+          ],
+          "seq": 2
+        },
+        {
+          "type": "window_started",
+          "window_id": "w2",
+          "unit_ids": [
+            "u2"
+          ],
+          "seq": 3
+        },
+        {
+          "at_unit_id": "u2",
+          "context_id": "c1",
+          "type": "context",
+          "topic": "# 예약 서비스",
+          "source_unit_ids": [
+            "u2"
+          ],
+          "seq": 4
+        },
+        {
+          "at_unit_id": "u2",
+          "context_id": "c1",
+          "type": "inquiry",
+          "question": {
+            "id": "q1",
+            "origin_unit_id": "u2",
+            "context_id": "c1",
+            "facet": "role",
+            "text": "이 경험에서 직접 맡아 수행한 부분은 무엇인가요?",
+            "status": "open",
+            "evidence": [],
+            "focus": "active",
+            "state_version": 1,
+            "withdrawn_evidence": [],
+            "correction_evidence": []
+          },
+          "state_version": 1,
+          "seq": 5
+        },
+        {
+          "at_unit_id": "u2",
+          "context_id": "c1",
+          "type": "speech",
+          "code": "ask_role",
+          "question_id": "q1",
+          "target_unit_ids": [
+            "u2"
+          ],
+          "seq": 6
+        },
+        {
+          "type": "window_completed",
+          "window_id": "w2",
+          "unit_ids": [
+            "u2"
+          ],
+          "seq": 7
+        },
+        {
+          "type": "window_started",
+          "window_id": "w3",
+          "unit_ids": [
+            "u3"
+          ],
+          "seq": 8
+        },
+        {
+          "at_unit_id": "u3",
+          "context_id": "c1",
+          "type": "context",
+          "topic": "# 예약 서비스",
+          "source_unit_ids": [
+            "u2",
+            "u3"
+          ],
+          "seq": 9
+        },
+        {
+          "at_unit_id": "u3",
+          "context_id": "c1",
+          "type": "revisit",
+          "question_id": "q1",
+          "target_unit_ids": [
+            "u2"
+          ],
+          "reason": "answer",
+          "seq": 10
+        },
+        {
+          "at_unit_id": "u3",
+          "context_id": "c1",
+          "type": "updated",
+          "question": {
+            "id": "q1",
+            "origin_unit_id": "u2",
+            "context_id": "c1",
+            "facet": "role",
+            "text": "이 경험에서 직접 맡아 수행한 부분은 무엇인가요?",
+            "status": "resolved",
+            "evidence": [
+              {
+                "unit_id": "u3",
+                "quote": "예약 서비스의 중복 예약 방지 API는 제가 직접 구현했습니다.",
+                "start": 0,
+                "end": 35
+              }
+            ],
+            "focus": "parked",
+            "state_version": 2,
+            "withdrawn_evidence": [],
+            "correction_evidence": []
+          },
+          "previous_status": "open",
+          "state_version": 2,
+          "target_unit_ids": [
+            "u2"
+          ],
+          "seq": 11
+        },
+        {
+          "at_unit_id": "u3",
+          "context_id": "c1",
+          "type": "speech",
+          "code": "resolved",
+          "question_id": "q1",
+          "target_unit_ids": [
+            "u3"
+          ],
+          "seq": 12
+        },
+        {
+          "type": "window_completed",
+          "window_id": "w3",
+          "unit_ids": [
+            "u3"
+          ],
+          "seq": 13
+        },
+        {
+          "type": "window_started",
+          "window_id": "w4",
+          "unit_ids": [
+            "u4"
+          ],
+          "seq": 14
+        },
+        {
+          "at_unit_id": "u4",
+          "context_id": "c1",
+          "type": "context",
+          "topic": "# 예약 서비스",
+          "source_unit_ids": [
+            "u2",
+            "u3",
+            "u4"
+          ],
+          "seq": 15
+        },
+        {
+          "at_unit_id": "u4",
+          "context_id": "c1",
+          "type": "revisit",
+          "question_id": "q1",
+          "target_unit_ids": [
+            "u2",
+            "u3"
+          ],
+          "reason": "correction",
+          "seq": 16
+        },
+        {
+          "at_unit_id": "u4",
+          "context_id": "c1",
+          "type": "updated",
+          "question": {
+            "id": "q1",
+            "origin_unit_id": "u2",
+            "context_id": "c1",
+            "facet": "role",
+            "text": "이 경험에서 직접 맡아 수행한 부분은 무엇인가요?",
+            "status": "reopened",
+            "evidence": [],
+            "focus": "parked",
+            "state_version": 3,
+            "withdrawn_evidence": [
+              {
+                "unit_id": "u3",
+                "quote": "예약 서비스의 중복 예약 방지 API는 제가 직접 구현했습니다.",
+                "start": 0,
+                "end": 35
+              }
+            ],
+            "correction_evidence": [
+              {
+                "unit_id": "u4",
+                "quote": "앞 문장의 API 구현자 표기를 정정합니다. 중복 예약 방지 API는 동료가 구현했고 저는 그 API를 구현하지 않았습니다.",
+                "start": 0,
+                "end": 69
+              }
+            ]
+          },
+          "previous_status": "resolved",
+          "state_version": 3,
+          "target_unit_ids": [
+            "u2",
+            "u3"
+          ],
+          "seq": 17
+        },
+        {
+          "at_unit_id": "u4",
+          "context_id": "c1",
+          "type": "speech",
+          "code": "reopened",
+          "question_id": "q1",
+          "target_unit_ids": [
+            "u4"
+          ],
+          "seq": 18
+        },
+        {
+          "type": "window_completed",
+          "window_id": "w4",
+          "unit_ids": [
+            "u4"
+          ],
+          "seq": 19
+        },
+        {
+          "type": "reading_completed",
+          "seq": 20
+        },
+        {
+          "type": "report_completed",
+          "seq": 21
+        }
+      ],
+      "next_seq": 21,
+      "progress": {
+        "read_unit_count": 4,
+        "total_unit_count": 4,
+        "current_window": null
+      },
+      "report": {
+        "items": [
+          {
+            "id": "report1",
+            "category": "open",
+            "text": "팀의 예약 서비스 개발 경험은 적혀 있지만, 뒤의 정정에서는 중복 예약 방지 API를 동료가 구현했고 본인은 구현하지 않았다고 설명합니다. 정정을 반영하면 본인이 실제 맡은 개발 업무가 설명되지 않아, 이 경험에서의 개인 역할을 이해하기 어렵습니다.",
+            "reason": "예약 서비스 경험을 정정 내용에 맞춰 합치고 동료의 API 구현을 본인 업무와 구분하세요. 실제 수행한 개발 업무가 있다면 그 작업을 적고, 없다면 팀의 개발 경험으로 주장 범위를 좁히세요.",
+            "note_ids": [],
+            "requirement_ids": [
+              "r1",
+              "r3"
+            ],
+            "citations": [
+              {
+                "unit_id": "u2",
+                "block_id": "b2",
+                "start": 0,
+                "end": 19
+              },
+              {
+                "unit_id": "u4",
+                "block_id": "b4",
+                "start": 0,
+                "end": 69
+              }
+            ]
+          }
+        ],
+        "questions": [
+          {
+            "id": "q1",
+            "unit_id": "u2",
+            "scope_id": "s1",
+            "text": "이 경험에서 직접 맡아 수행한 부분은 무엇인가요?",
+            "status": "reopened",
+            "candidate_unit_ids": [],
+            "evidence_unit_ids": [],
+            "facet": "role",
+            "state_version": 3
+          }
+        ],
+        "limitations": [
+          "질문 상태는 읽는 동안 남긴 기록입니다. 다 읽은 뒤 원문에서 설명을 찾더라도 이전 기록을 바꾸지는 않습니다.",
+          "읽는 동안 문장의 역할·방식·결과·선택 이유에서 생긴 의문과 뒤의 설명을 연결했습니다. 모집 요건은 최종 보고서에서 원문과 별도로 대조했습니다. 보류와 메모 없음은 문서의 부족을 뜻하지 않습니다.",
+          "읽는 동안의 판단은 Typesafe의 Jev 모델로 처리했습니다. 판단 정확도는 검증 중이며, ‘유지할 설명’은 문서 안에서 설명을 찾았다는 뜻이지 경험의 진위를 인증한 결과가 아닙니다.",
+          "공고 기준과 추출된 이력서 전체의 최종 점검은 OpenAI Codex의 클라우드 모델로 처리했습니다. 모든 피드백은 사람이 다시 확인해야 합니다."
+        ]
+      },
+      "error": null,
+      "generation": {
+        "engine": "jev",
+        "policy_version": "readme-focus-v1",
+        "model": {
+          "model": "jev-1.13.0",
+          "provider": "typesafe",
+          "execution": "remote",
+          "calibrated_for_readme": false
+        },
+        "prepare_engine": "codex_cli",
+        "report_engine": "codex_cli",
+        "codex_model": "cli_default"
+      },
+      "expires_at": "2100-01-01T00:00:00.000Z"
+    }
+  ],
+  "final": {
+    "job_id": "yyLVBtTNE21WVROKGe93VXtWqFzKeGh2",
+    "status": "completed",
+    "events": [
+      {
+        "type": "window_started",
+        "window_id": "w1",
+        "unit_ids": [
+          "u1"
+        ],
+        "seq": 1
+      },
+      {
+        "type": "window_completed",
+        "window_id": "w1",
+        "unit_ids": [
+          "u1"
+        ],
+        "seq": 2
+      },
+      {
+        "type": "window_started",
+        "window_id": "w2",
+        "unit_ids": [
+          "u2"
+        ],
+        "seq": 3
+      },
+      {
+        "at_unit_id": "u2",
+        "context_id": "c1",
+        "type": "context",
+        "topic": "# 예약 서비스",
+        "source_unit_ids": [
+          "u2"
+        ],
+        "seq": 4
+      },
+      {
+        "at_unit_id": "u2",
+        "context_id": "c1",
+        "type": "inquiry",
+        "question": {
+          "id": "q1",
+          "origin_unit_id": "u2",
+          "context_id": "c1",
+          "facet": "role",
+          "text": "이 경험에서 직접 맡아 수행한 부분은 무엇인가요?",
+          "status": "open",
+          "evidence": [],
+          "focus": "active",
+          "state_version": 1,
+          "withdrawn_evidence": [],
+          "correction_evidence": []
+        },
+        "state_version": 1,
+        "seq": 5
+      },
+      {
+        "at_unit_id": "u2",
+        "context_id": "c1",
+        "type": "speech",
+        "code": "ask_role",
+        "question_id": "q1",
+        "target_unit_ids": [
+          "u2"
+        ],
+        "seq": 6
+      },
+      {
+        "type": "window_completed",
+        "window_id": "w2",
+        "unit_ids": [
+          "u2"
+        ],
+        "seq": 7
+      },
+      {
+        "type": "window_started",
+        "window_id": "w3",
+        "unit_ids": [
+          "u3"
+        ],
+        "seq": 8
+      },
+      {
+        "at_unit_id": "u3",
+        "context_id": "c1",
+        "type": "context",
+        "topic": "# 예약 서비스",
+        "source_unit_ids": [
+          "u2",
+          "u3"
+        ],
+        "seq": 9
+      },
+      {
+        "at_unit_id": "u3",
+        "context_id": "c1",
+        "type": "revisit",
+        "question_id": "q1",
+        "target_unit_ids": [
+          "u2"
+        ],
+        "reason": "answer",
+        "seq": 10
+      },
+      {
+        "at_unit_id": "u3",
+        "context_id": "c1",
+        "type": "updated",
+        "question": {
+          "id": "q1",
+          "origin_unit_id": "u2",
+          "context_id": "c1",
+          "facet": "role",
+          "text": "이 경험에서 직접 맡아 수행한 부분은 무엇인가요?",
+          "status": "resolved",
+          "evidence": [
+            {
+              "unit_id": "u3",
+              "quote": "예약 서비스의 중복 예약 방지 API는 제가 직접 구현했습니다.",
+              "start": 0,
+              "end": 35
+            }
+          ],
+          "focus": "parked",
+          "state_version": 2,
+          "withdrawn_evidence": [],
+          "correction_evidence": []
+        },
+        "previous_status": "open",
+        "state_version": 2,
+        "target_unit_ids": [
+          "u2"
+        ],
+        "seq": 11
+      },
+      {
+        "at_unit_id": "u3",
+        "context_id": "c1",
+        "type": "speech",
+        "code": "resolved",
+        "question_id": "q1",
+        "target_unit_ids": [
+          "u3"
+        ],
+        "seq": 12
+      },
+      {
+        "type": "window_completed",
+        "window_id": "w3",
+        "unit_ids": [
+          "u3"
+        ],
+        "seq": 13
+      },
+      {
+        "type": "window_started",
+        "window_id": "w4",
+        "unit_ids": [
+          "u4"
+        ],
+        "seq": 14
+      },
+      {
+        "at_unit_id": "u4",
+        "context_id": "c1",
+        "type": "context",
+        "topic": "# 예약 서비스",
+        "source_unit_ids": [
+          "u2",
+          "u3",
+          "u4"
+        ],
+        "seq": 15
+      },
+      {
+        "at_unit_id": "u4",
+        "context_id": "c1",
+        "type": "revisit",
+        "question_id": "q1",
+        "target_unit_ids": [
+          "u2",
+          "u3"
+        ],
+        "reason": "correction",
+        "seq": 16
+      },
+      {
+        "at_unit_id": "u4",
+        "context_id": "c1",
+        "type": "updated",
+        "question": {
+          "id": "q1",
+          "origin_unit_id": "u2",
+          "context_id": "c1",
+          "facet": "role",
+          "text": "이 경험에서 직접 맡아 수행한 부분은 무엇인가요?",
+          "status": "reopened",
+          "evidence": [],
+          "focus": "parked",
+          "state_version": 3,
+          "withdrawn_evidence": [
+            {
+              "unit_id": "u3",
+              "quote": "예약 서비스의 중복 예약 방지 API는 제가 직접 구현했습니다.",
+              "start": 0,
+              "end": 35
+            }
+          ],
+          "correction_evidence": [
+            {
+              "unit_id": "u4",
+              "quote": "앞 문장의 API 구현자 표기를 정정합니다. 중복 예약 방지 API는 동료가 구현했고 저는 그 API를 구현하지 않았습니다.",
+              "start": 0,
+              "end": 69
+            }
+          ]
+        },
+        "previous_status": "resolved",
+        "state_version": 3,
+        "target_unit_ids": [
+          "u2",
+          "u3"
+        ],
+        "seq": 17
+      },
+      {
+        "at_unit_id": "u4",
+        "context_id": "c1",
+        "type": "speech",
+        "code": "reopened",
+        "question_id": "q1",
+        "target_unit_ids": [
+          "u4"
+        ],
+        "seq": 18
+      },
+      {
+        "type": "window_completed",
+        "window_id": "w4",
+        "unit_ids": [
+          "u4"
+        ],
+        "seq": 19
+      },
+      {
+        "type": "reading_completed",
+        "seq": 20
+      },
+      {
+        "type": "report_completed",
+        "seq": 21
+      }
+    ],
+    "next_seq": 21,
+    "progress": {
+      "read_unit_count": 4,
+      "total_unit_count": 4,
+      "current_window": null
+    },
+    "report": {
+      "items": [
+        {
+          "id": "report1",
+          "category": "open",
+          "text": "팀의 예약 서비스 개발 경험은 적혀 있지만, 뒤의 정정에서는 중복 예약 방지 API를 동료가 구현했고 본인은 구현하지 않았다고 설명합니다. 정정을 반영하면 본인이 실제 맡은 개발 업무가 설명되지 않아, 이 경험에서의 개인 역할을 이해하기 어렵습니다.",
+          "reason": "예약 서비스 경험을 정정 내용에 맞춰 합치고 동료의 API 구현을 본인 업무와 구분하세요. 실제 수행한 개발 업무가 있다면 그 작업을 적고, 없다면 팀의 개발 경험으로 주장 범위를 좁히세요.",
+          "note_ids": [],
+          "requirement_ids": [
+            "r1",
+            "r3"
+          ],
+          "citations": [
+            {
+              "unit_id": "u2",
+              "block_id": "b2",
+              "start": 0,
+              "end": 19
+            },
+            {
+              "unit_id": "u4",
+              "block_id": "b4",
+              "start": 0,
+              "end": 69
+            }
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "unit_id": "u2",
+          "scope_id": "s1",
+          "text": "이 경험에서 직접 맡아 수행한 부분은 무엇인가요?",
+          "status": "reopened",
+          "candidate_unit_ids": [],
+          "evidence_unit_ids": [],
+          "facet": "role",
+          "state_version": 3
+        }
+      ],
+      "limitations": [
+        "질문 상태는 읽는 동안 남긴 기록입니다. 다 읽은 뒤 원문에서 설명을 찾더라도 이전 기록을 바꾸지는 않습니다.",
+        "읽는 동안 문장의 역할·방식·결과·선택 이유에서 생긴 의문과 뒤의 설명을 연결했습니다. 모집 요건은 최종 보고서에서 원문과 별도로 대조했습니다. 보류와 메모 없음은 문서의 부족을 뜻하지 않습니다.",
+        "읽는 동안의 판단은 Typesafe의 Jev 모델로 처리했습니다. 판단 정확도는 검증 중이며, ‘유지할 설명’은 문서 안에서 설명을 찾았다는 뜻이지 경험의 진위를 인증한 결과가 아닙니다.",
+        "공고 기준과 추출된 이력서 전체의 최종 점검은 OpenAI Codex의 클라우드 모델로 처리했습니다. 모든 피드백은 사람이 다시 확인해야 합니다."
+      ]
+    },
+    "error": null,
+    "generation": {
+      "engine": "jev",
+      "policy_version": "readme-focus-v1",
+      "model": {
+        "model": "jev-1.13.0",
+        "provider": "typesafe",
+        "execution": "remote",
+        "calibrated_for_readme": false
+      },
+      "prepare_engine": "codex_cli",
+      "report_engine": "codex_cli",
+      "codex_model": "cli_default"
+    },
+    "expires_at": "2100-01-01T00:00:00.000Z"
+  },
+  "metrics": {
+    "calls": 9,
+    "input_tokens": 11623,
+    "output_tokens": 1801,
+    "steps": 4,
+    "retrievals": 2,
+    "abstentions": 0,
+    "limited": 0
+  },
+  "provenance": {
+    "reading": "actual_jev",
+    "report": "actual_codex",
+    "transport": "actual_ReadmeLab_JobView",
+    "prepared_profile": "reused_actual_synthetic_Codex_profile",
+    "expires_at": "changed_to_fixture_value",
+    "snapshots": "single_actual_completed_snapshot",
+    "source_hashes": {
+      "python/jev_focus_reader.py": "94d974add76840189235c8fdc8c675c486e567627a9721800b4bf7490d2e37b2",
+      "focus-contract.ts": "a81e9ea38d766f68f1706f52d853c975330343ce8996ed5fb6b41cb6fd6a3c14",
+      "focus-jev.ts": "2147385e1a353955fa3afcf2582b3f962331f5b450b8cff7637fce87a26e89c1",
+      "focus-report.ts": "f4412cbdc19317959daaee2aeedf21e50afeb4c611f6295ad4a7fa8c23575b28",
+      "report-v2.ts": "868262c93579ed07fa895a921c537a350da4317f4754914bd7243d6791b82131",
+      "service.ts": "d4c3331a5e032cd912a509a2c4d302235525114d3896c299e0d9047ee2a2a901"
+    }
+  }
+}

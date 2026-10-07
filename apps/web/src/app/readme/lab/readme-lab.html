@@ -432,6 +432,14 @@ details[open]>summary::after{transform:translateY(0) rotate(-135deg)}
 .gaze-dot.d0{background:rgb(var(--gaze-rgb)/.28)} .gaze-dot.d1{background:rgb(var(--gaze-rgb)/.18)} .gaze-dot.d2{background:rgb(var(--gaze-rgb)/.10)}
 .gaze-dot.on{opacity:1;transition:none}
 
+/* speech: one fixed phrase for a verified change, resting beside the gaze for a moment. The memo keeps the words */
+.speech{position:absolute;left:0;top:0;z-index:3;max-width:min(240px,70%);padding:3px 8px;background:color-mix(in srgb,var(--paper) 94%,transparent);border:1px solid var(--rule);border-radius:2px;box-shadow:var(--shadow-paper);
+  font:500 12px/18px var(--f-ui);color:var(--ink);pointer-events:none;opacity:0;translate:0 4px;transition:opacity var(--t-3) var(--ease-out),translate var(--t-3) var(--ease-out)}
+.speech.on{opacity:1;translate:0 0}
+.speech.still,.rm .speech{transition:none}
+.speech::before{content:"";position:absolute;left:10px;bottom:-4px;width:6px;height:6px;background:inherit;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);transform:rotate(45deg)}
+.speech.below::before{bottom:auto;top:-4px;border:0;border-left:1px solid var(--rule);border-top:1px solid var(--rule)}
+
 /* ---------- S03 reading ---------- */
 .s03{padding-top:0}
 .bar{position:sticky;top:var(--safe-t);z-index:20;background:var(--desk);border-bottom:1px solid var(--rule)}
@@ -800,7 +808,7 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
     --wave-q-faint:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='5'%3E%3Cpath d='M0 2.5Q3 .5 6 2.5T12 2.5' fill='none' stroke='%237B3F70' stroke-opacity='.32' stroke-width='1.25' stroke-linecap='round'/%3E%3C/svg%3E");
     --wave-q-bold:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='5'%3E%3Cpath d='M0 2.5Q3 .5 6 2.5T12 2.5' fill='none' stroke='%237B3F70' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
   }
-  .head .nav,.head .cta,.foot,.steps-line,.rail,.anchors,.r-acts,.bar,.btn-text.see,.skip{display:none!important}
+  .head .nav,.head .cta,.foot,.steps-line,.speech,.rail,.anchors,.r-acts,.bar,.btn-text.see,.skip{display:none!important}
   .r-layout{grid-template-columns:minmax(0,1fr)}
   .ritem,.ledger-row{break-inside:avoid}
   .ritem,button.cite,.pen,mark.cite{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -875,8 +883,8 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
         <ol class="mt-steps">
           <li><span class="n">1 입력</span><div><h3>공고 본문과 이력서 파일</h3><p>공고의 담당 업무와 자격·우대 사항을 그대로 붙여 넣고, 이력서 파일(PDF·DOCX·TXT·MD)을 올립니다. 파일은 서버 메모리에서 글자만 꺼내고 보관하지 않습니다.</p></div></li>
           <li><span class="n">2 확인</span><div><h3>요건과 문장이 원문과 같은지</h3><p>Codex가 공고에서 뽑은 담당 업무·자격·우대 요건과 파일에서 꺼낸 문장을 원문과 비교해 확인합니다. 여기서 고치지는 않고, 틀렸다면 입력으로 돌아갑니다.</p></div></li>
-          <li><span class="n">3 읽기</span><div><h3>앞에서부터, 그 문장까지만 보고</h3><p>문장 판단 엔진이 그 문장까지 읽은 내용만 보고 메모를 남깁니다. 뒤 문장을 미리 보지 않습니다. 질문이 생기면 남겨 두고, 뒤에서 설명을 찾으면 그 문장과 연결합니다.</p></div></li>
-          <li><span class="n">4 리포트</span><div><h3>먼저 고칠 부분과 유지할 설명</h3><p>다 읽은 뒤 Codex가 이력서 전체 문장과 읽기 메모를 보고 ‘먼저 고칠 부분’과 ‘고칠 때 유지할 설명’을 정리합니다. 항목마다 인용을 누르면 원문 문장으로 이동합니다.</p></div></li>
+          <li><span class="n">3 읽기</span><div><h3>앞에서부터, 그 문장까지만 보고</h3><p>문장 판단 엔진이 그 문장까지 읽은 내용만 보고 메모를 남깁니다. 뒤 문장을 미리 보지 않습니다. 역할·방식·결과·비교 근거·선택 이유에서 의문이 생기면 남겨 두고, 뒤에서 설명을 찾으면 그 문장과 연결합니다. 공고 요건을 문장마다 대조하는 단계가 아닙니다.</p></div></li>
+          <li><span class="n">4 리포트</span><div><h3>먼저 고칠 부분과 유지할 설명</h3><p>다 읽은 뒤 Codex가 이력서 전체 문장과 읽기 메모를 보고 ‘먼저 고칠 부분’과 ‘고칠 때 유지할 설명’을 정리합니다. 공고 요건과 원문 전체의 대조는 이 단계에서 한 번에 합니다. 항목마다 인용을 누르면 원문 문장으로 이동합니다.</p></div></li>
         </ol>
       </section>
       <section class="sec" aria-labelledby="mt-marks-h">
@@ -1190,7 +1198,27 @@ const isoAt = ms => new Date(ms).toISOString();
 
 /* ===================== 1. sample content (the preview copy only; see pickSource) ===================== */
 const KIND_WORD = { duty: "담당 업무", required: "자격 요건", preferred: "우대 사항", other: "고용·지원 참고사항" };
-const FACET_WORD = { role: "역할", method: "방법", result: "결과", basis: "뒷받침" };
+const FACET_WORD = { role: "역할", method: "방법", result: "결과", basis: "뒷받침", reason: "이유" };
+/* ===== focus reader (readme-focus-v1) · consumer side of docs/FOCUS_READER_CONTRACT.md =====
+   The stream carries inquiries, their updates, parking, evidence-backed revisits, observations and speech codes.
+   Nothing here calls a model: speech is a fixed phrase per verified code, chosen by the screen. */
+const FOCUS_POLICY = "readme-focus-v1";
+const isFocus = ds => (ds || S.ds)?.generation?.policy_version === FOCUS_POLICY;
+const FOCUS_TYPES = new Set(["context", "inquiry", "parked", "revisit", "updated", "observation", "retracted", "speech"]);
+const SPEECH_TEXT = {
+  ask_role: "직접 맡은 부분은 무엇일까?", ask_method: "어떤 방식으로 풀었을까?", ask_result: "그 뒤의 결과도 나올까?",
+  ask_basis: "무엇을 기준으로 비교했을까?", ask_reason: "왜 그 방향을 택했을까?",
+  partial: "조금 더 알겠다. 더 읽어 보자.", resolved: "아, 여기서 설명되는구나.", revisit: "앞 문장과 다시 이어 보자.",
+  reopened: "앞의 설명을 다시 봐야겠다.", parked: "일단 기억해 두고 넘어가자.", understood: "어떤 일을 했는지 조금 더 보인다.",
+  revised: "앞에 적은 것을 고쳐야겠다."
+};
+const FOCUS_UPDATE_TEXT = { partial: "앞 질문의 설명이 일부 이어집니다.", resolved: "앞 질문이 여기서 설명됩니다.", reopened: "앞의 설명과 맞지 않아 질문을 다시 엽니다." };
+const OBS_TEXT = { action: "한 일이 구체적으로 적혀 있습니다.", method: "어떻게 했는지가 적혀 있습니다.", outcome: "결과가 적혀 있습니다.", reason: "그렇게 한 이유가 적혀 있습니다.", boundary: "맡은 범위의 경계가 적혀 있습니다.", plan: "실제 경험이 아니라 계획으로 적혀 있습니다." };
+function unitQuote(ds, uid, max = 64) {
+  const u = ds.unitById[uid]; if (!u) return "";
+  const cut = Array.from(ds.blockById[u.block_id].text.slice(u.start, u.end).trim());
+  return cut.slice(0, max).join("") + (cut.length > max ? "…" : "");
+}
 /* a served question label already ends with its facet ("<criterion> · 본인 역할"); add the facet word only when it does not */
 const qTitle = (q, fallback = "") => q.label || (q.text || fallback).slice(0, 24);
 const facetExtra = q => (q.facet && !String(q.label || "").includes(" · ") ? FACET_WORD[q.facet] : null);
@@ -1382,6 +1410,51 @@ function compileScript(ds, script, Qdefs) {
 }
 function snapQ(q) { return { ...q, candidate_unit_ids: [...q.candidate_unit_ids], evidence_unit_ids: [...(q.evidence_unit_ids || [])] }; }
 
+/* the same example under the focus policy: hand-authored, labelled, used only when the sample is opened with
+   <meta name="readme-lab-sample" content="focus"> or ?sample=focus. Not a model output. */
+const SAMPLE_FOCUS = (() => { try { return document.querySelector('meta[name="readme-lab-sample"]')?.getAttribute("content")?.trim() === "focus" || /[?&]sample=focus(?:&|$)/.test(location.search); } catch { return false; } })();
+const SCRIPT_FOCUS = [
+  [1, ["ask", "q1", "role", "이 경험에서 본인이 직접 맡은 일은 무엇인가요?"], ["say", "ask_role", "q1"]],
+  [2, ["to", "q1", "resolved"], ["say", "resolved", "q1"]],
+  [3, ["obs", "action", "o1"]],
+  [4, ["ask", "q2", "basis", "만족도가 높아졌다는 것을 어떤 자료로 확인했나요?"], ["say", "ask_basis", "q2"]],
+  [5, ["park", "q2"], ["say", "parked", "q2"], ["ask", "q3", "role", "학습 지원에서 본인이 맡은 범위는 무엇인가요?"], ["say", "ask_role", "q3"]],
+  [6, ["to", "q3", "partial"], ["say", "partial", "q3"]],
+  [7, ["park", "q3"], ["ask", "q4", "role", "체험 부스에서 본인이 맡은 일은 무엇인가요?"], ["say", "ask_role", "q4"]],
+  [8, ["to", "q4", "resolved"], ["say", "resolved", "q4"]],
+  [9, ["obs", "outcome", "o2"], ["say", "understood"]]
+];
+/* events in the shape backend focus-contract.ts validates: a proof is {unit_id, quote, start, end} inside the unit text,
+   an inquiry opens with no adopted evidence, every updated follows a revisit to the question's origin in the same
+   window, a resolved question is parked, speech names its unit. */
+function compileFocus(ds, script) {
+  const byUnit = new Map(), qs = new Map(); let ctx = 0;
+  const snap = q => ({ ...q, evidence: q.evidence.map(e => ({ ...e })), withdrawn_evidence: [...q.withdrawn_evidence], correction_evidence: [...q.correction_evidence], unit_id: q.origin_unit_id, evidence_unit_ids: q.evidence.map(e => e.unit_id), candidate_unit_ids: q.correction_evidence.map(e => e.unit_id) });
+  const proof = uid => { const t = ds.unitById[uid].text, q = t.trim(), start = Math.max(0, t.indexOf(q)); return { unit_id: uid, quote: q, start, end: start + q.length }; };
+  for (const [si, ...ops] of script) {
+    const uid = ds.sent[si - 1], list = [], cid = "c" + (++ctx);
+    for (const op of ops) {
+      if (op[0] === "ask") { const q = { id: op[1], origin_unit_id: uid, context_id: cid, facet: op[2], text: op[3], status: "open", evidence: [], focus: "active", state_version: 1, withdrawn_evidence: [], correction_evidence: [] }; qs.set(q.id, q); list.push({ type: "inquiry", at_unit_id: uid, context_id: cid, question: snap(q), state_version: 1 }); }
+      else if (op[0] === "to") {
+        const q = qs.get(op[1]), prev = q.status, targets = [q.origin_unit_id];
+        list.push({ type: "revisit", at_unit_id: uid, context_id: cid, question_id: q.id, target_unit_ids: targets, reason: "answer" });
+        q.status = op[2]; q.state_version++; q.evidence = [...q.evidence, proof(uid)]; if (op[2] === "resolved") q.focus = "parked";
+        list.push({ type: "updated", at_unit_id: uid, context_id: cid, previous_status: prev, question: snap(q), state_version: q.state_version, target_unit_ids: targets });
+      }
+      else if (op[0] === "park") { const q = qs.get(op[1]); q.focus = "parked"; list.push({ type: "parked", at_unit_id: uid, context_id: cid, question_id: q.id }); }
+      else if (op[0] === "obs") list.push({ type: "observation", at_unit_id: uid, context_id: cid, note_id: op[2], kind: op[1], evidence: [proof(uid)] });
+      else if (op[0] === "say") list.push({ type: "speech", at_unit_id: uid, context_id: cid, code: op[1], ...(op[2] ? { question_id: op[2] } : {}), target_unit_ids: [uid] });
+    }
+    if (list.length) byUnit.set(uid, list);
+  }
+  return { byUnit, end: [], questions: [...qs.values()].map(snap) };
+}
+function sampleFocusReport(ds, comp) {
+  const rep = sampleReport(ds, comp), map = { n1: "fq:q1", n2: "fu:q1:2", n3: "fq:q2", n4: "fq:q3", n5: "fu:q3:2", n6: "fq:q4", n7: "fu:q4:2" };
+  rep.items = rep.items.map(it => ({ ...it, note_ids: it.note_ids.map(n => map[n] || n) }));
+  return rep;
+}
+
 function sampleReport(ds, comp) {
   const C = si => { const uid = ds.sent[si - 1], u = ds.unitById[uid]; return { unit_id: uid, block_id: u.block_id, start: ds.contentStart(uid), end: u.end }; };
   const items = [
@@ -1466,8 +1539,9 @@ const SampleSource = {
   data() {
     if (this.memo) return this.memo;
     const job = makeJob(SAMPLE_JOB_TEXT, SAMPLE_REQS), document = makeDoc("sample-resume", "docx", SAMPLE_BLOCKS);
-    const ds = finalizeDS("sample", job, document, SAMPLE_FILE, SAMPLE_GEN), comp = compileScript(ds, SCRIPT_MAIN, Q_MAIN);
-    this.memo = { job, document, ds, comp, report: sampleReport(ds, comp) }; return this.memo;
+    const gen = SAMPLE_FOCUS ? { ...SAMPLE_GEN, policy_version: FOCUS_POLICY } : SAMPLE_GEN;
+    const ds = finalizeDS("sample", job, document, SAMPLE_FILE, gen), comp = SAMPLE_FOCUS ? compileFocus(ds, SCRIPT_FOCUS) : compileScript(ds, SCRIPT_MAIN, Q_MAIN);
+    this.memo = { job, document, ds, comp, report: SAMPLE_FOCUS ? sampleFocusReport(ds, comp) : sampleReport(ds, comp) }; return this.memo;
   },
   timeline() {
     if (this.tl) return this.tl;
@@ -1534,7 +1608,7 @@ const SampleSource = {
     return {
       job_id: id, status, events: evs.filter(e => e.seq > after).map(e => ({ ...e.ev, seq: e.seq })), next_seq: last,
       progress: { read_unit_count: read, total_unit_count: T.total, current_window: cur },
-      report: hasReport ? T.report : null, error, generation: SAMPLE_GEN, expires_at: isoAt(p.t0 + 2 * 3600e3)
+      report: hasReport ? T.report : null, error, generation: this.data().ds.generation, expires_at: isoAt(p.t0 + 2 * 3600e3)
     };
   },
   async cancel(id) { if (!this.parse(id, "sj")) throw new LabError("not_found", 404); this.stop(id); }
@@ -1546,15 +1620,73 @@ const SampleSource = {
    "auto"   the example only where this page cannot be the deployed site: a file:// page, an opaque origin,
             or a page shown inside another page's frame (an embedded preview). Every top-level http(s)
             page uses the API and never falls back to the example on its own. */
+/* A recorded run (work24-readme docs/fixtures/readme-lab/focus-*.json: actual Jev output in an authored or actual
+   JobView envelope) replayed through the same job-view path the API uses: cumulative snapshots at a fixed pace,
+   cursor filtering, the recorded reconnect replay, invalid_cursor, cancel. Verification only: it is chosen by
+   ?fixture=<name> and never on the deployed copy (its source is pinned to http). Nothing leaves the browser. */
+const FIXTURE_NAME = (() => { try { return (new URLSearchParams(location.search).get("fixture") || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80); } catch { return ""; } })();
+const FIXTURE_PACE = (() => { try { return clamp(parseInt(new URLSearchParams(location.search).get("pace") || "900", 10) || 900, 50, 5000); } catch { return 900; } })();
+const FixtureSource = {
+  kind: "fixture", token: "", fx: null, t0: null, cancelledAt: null, rc: 0, floor: 0,
+  async load() {
+    if (this.fx) return this.fx;
+    let res;
+    try { res = await fetch(`fixtures/${FIXTURE_NAME}.json`, { cache: "no-store", credentials: "same-origin" }); } catch { throw new LabError("upstream_unavailable", 0); }
+    if (!res.ok) throw new LabError("not_found", 404);
+    const fx = await res.json();
+    if (!fx || !fx.prepare || !Array.isArray(fx.snapshots) || !fx.snapshots.length) throw new LabError("response_invalid", 200);
+    this.fx = fx; return fx;
+  },
+  async createSession() { await this.load(); return { access_token: "fixture", expires_at: isoAt(nowMs() + 2 * 3600e3) }; },
+  async prepare() { const fx = await this.load(); return { prepare_id: fx.prepare.prepare_id, input_hash: fx.prepare.input_hash, status: "extracting", error: null, expires_at: fx.prepare.expires_at }; },
+  async getPrepare(id) { const fx = await this.load(); if (id !== fx.prepare.prepare_id) throw new LabError("not_found", 404); return fx.prepare; },
+  async discardPrepare() { /* nothing to drop */ },
+  async start(prep) {
+    const fx = await this.load();
+    if (!prep || prep.prepare_id !== fx.prepare.prepare_id) throw new LabError("prepare_not_ready", 409);
+    this.t0 = nowMs(); this.rc = 0; this.floor = 0; this.cancelledAt = null;
+    return this.view(0);
+  },
+  async getJob(id, after = 0) { await this.load(); return this.view(after); },
+  async cancel() { if (this.t0 == null) throw new LabError("not_found", 404); this.cancelledAt = nowMs(); },
+  view(after) {
+    const fx = this.fx, snaps = fx.snapshots;
+    /* the snapshot for this moment, never behind one already served (a reconnect replay may run ahead of the clock) */
+    let i = Math.min(snaps.length - 1, Math.floor((nowMs() - this.t0) / FIXTURE_PACE));
+    while (i < snaps.length - 1 && snaps[i].next_seq < this.floor) i++;
+    /* recorded snapshots may be incremental (each with its new events only) or cumulative: serve the union so far */
+    const seen = new Set(), all = [];
+    for (let k = 0; k <= i; k++) for (const e of snaps[k].events || []) if (!seen.has(e.seq)) { seen.add(e.seq); all.push(e); }
+    all.sort((a, b) => a.seq - b.seq);
+    let v = { ...snaps[i], events: all };
+    const rc = fx.reconnect;
+    if (rc && Array.isArray(rc.responses) && this.rc < rc.responses.length && v.next_seq >= rc.after_seq) {
+      /* the recorded replay happened at cursor after_seq: hold the stream there until the client polls from it, then
+         serve the recorded responses (a replayed seq first, then the rest) exactly as the server did */
+      if (after < rc.after_seq) { const held = snaps.find(x => x.next_seq === rc.after_seq) || v; v = { ...held, events: all.filter(e => e.seq <= rc.after_seq), next_seq: rc.after_seq }; }
+      else if (after === rc.after_seq) v = rc.responses[this.rc++];
+    }
+    if (after > v.next_seq) throw new LabError("invalid_cursor", 400);
+    this.floor = Math.max(this.floor, v.next_seq);
+    const events = v.events.filter(e => e.seq > after);
+    if (this.cancelledAt != null && !TERMINAL.has(v.status)) {
+      const seq = v.next_seq + 1;
+      return { ...v, status: "cancelled", error: "cancelled", events: [...events, { type: "cancelled", seq }], next_seq: seq };
+    }
+    return { ...v, events };
+  }
+};
 function pickSource() {
   const want = metaContent("readme-lab-source") || "auto";
   if (want === "http") return HttpSource;
+  if (FIXTURE_NAME && (want === "fixture" || want === "sample" || want === "auto")) return FixtureSource;
   if (want === "sample") return SampleSource;
   let framed = true; try { framed = window.top !== window.self; } catch { /* a cross-origin parent */ }
   return location.protocol === "file:" || self.origin === "null" || framed ? SampleSource : HttpSource;
 }
 let SRC = pickSource();
 const isSample = () => SRC.kind === "sample";
+const isFixture = () => SRC.kind === "fixture";
 /* engine names appear only when a real engine produced the text */
 const who = s => (isSample() ? "" : s);
 const quota = s => (isSample() ? "" : s);
@@ -1567,6 +1699,9 @@ const JEV_NAME = "Typesafe Jev(원격 모델)";
 /* what live Jev reading looks at; everything else is the report's final source review */
 const SCOPE_LINE = "공고에서 만든 기준으로 읽으며 연결되는 설명, 남은 질문, 뒤에서 달라진 근거를 기록합니다. 역할·수행 방식·결과·비교 근거는 해당 공고와 주장에 필요할 때만 확인합니다. 실제 채용 담당자의 생각이나 요건 충족 판정은 아닙니다.";
 const SCOPE_SHORT = "공고에 필요한 설명과 근거를 연결하며 읽습니다. 메모가 없다고 모든 요건이 설명됐다는 뜻은 아닙니다.";
+/* the focus policy reads for inquiries, not for a checklist: requirements are compared once, in the final report */
+const SCOPE_FOCUS = "읽는 동안에는 문장의 역할·방식·결과·비교 근거·선택 이유에서 생긴 의문과 뒤의 설명을 연결합니다. 공고 요건은 읽는 동안 문장마다 대조하지 않고, 다 읽은 뒤 리포트가 원문 전체와 공고를 직접 대조합니다. 실제 채용 담당자의 생각이나 요건 충족 판정은 아닙니다.";
+const SCOPE_FOCUS_SHORT = "의문과 설명을 연결하며 읽었습니다. 공고 요건 대조는 리포트에서 합니다.";
 
 /* Refresh resume: only the bearer token and ids live in sessionStorage. Never document text or file names. */
 const REC_KEY = "readme-lab-run";
@@ -1604,13 +1739,14 @@ const S = {
 };
 function newSrv() { return { started: new Set(), done: new Set(), byUnit: new Map(), end: [], open: null, windowSeen: {}, readingCompleted: false, reportCompleted: false, failed: null, cancelled: false, qv: new Map() }; }
 function newPlay() { return { shown: 0, paused: false, follow: true, unseen: 0, mode: "reading", finished: false, terminal: false, replay: false, waiting: null, unit: null, instant: null, stopAt: null, resume: false }; }
-function newA() { return { notes: [], noteById: new Map(), updates: [], q: new Map(), ended: false, applied: new Set(), retracted: new Map() }; }
+function newA() { return { notes: [], noteById: new Map(), updates: [], q: new Map(), ended: false, applied: new Set(), retracted: new Map(), revisits: [], speech: [], contexts: [], obs: 0 }; }
 
 /* applied state: only what the replay has reached (never ahead of the server, never ahead of the screen) */
 function applyEvents(A, evs, ds) {
   const fresh = [], trans = []; let n = 0;
-  const v1 = ds.generation.policy_version !== "readme-prefix-v2";
+  const v1 = ds.generation.policy_version !== "readme-prefix-v2", focus = isFocus(ds);
   for (const e of evs) {
+    if (FOCUS_TYPES.has(e.type)) { if (focus && applyFocusEvent(A, e, ds, fresh, trans)) n++; continue; }
     if (e.type === "question_updated") {
       let q = A.q.get(e.question_id);
       if (q && e.state_version != null && q.hist.some(u => !u.pseudo && u.state_version === e.state_version)) continue;
@@ -1640,6 +1776,72 @@ function applyEvents(A, evs, ds) {
     }
   }
   return { fresh, trans, n };
+}
+/* focus events become the same accumulator the screen already draws: a question with its history, memos on the
+   sheet, plus revisits and speech kept beside the question. Returns true when something new was applied. */
+const evUnits = (ev, ds) => (ev || []).map(x => x.unit_id).filter((x, i, a) => ds.unitById[x] && a.indexOf(x) === i);
+function focusSnap(qs, ds) { return { ...qs, unit_id: qs.origin_unit_id, evidence_unit_ids: evUnits(qs.evidence, ds), candidate_unit_ids: evUnits(qs.correction_evidence, ds), label: qs.label || null }; }
+function focusNote(A, fresh, note) { note.num = A.notes.length + 1; note.review_required = true; A.notes.push(note); A.noteById.set(note.id, note); fresh.push(note); }
+function applyFocusEvent(A, e, ds, fresh, trans) {
+  const uid = e.at_unit_id; if (!ds.unitById[uid]) return false;
+  if (e.type === "context") { A.contexts.push(e); return false; }
+  if (e.type === "inquiry") {
+    const qs = e.question; if (!qs || !qs.id || A.q.has(qs.id)) return false;
+    const origin = ds.unitById[qs.origin_unit_id] ? qs.origin_unit_id : uid, sv = qs.state_version ?? 1;
+    const q = { id: qs.id, origin, snap: focusSnap(qs, ds), status: qs.status || "open", focus: qs.focus || "active", revisits: [], speech: [], hist: [] };
+    const u = { question_id: q.id, previous_status: null, status: q.status, at_unit_id: origin, evidence_unit_ids: evUnits(qs.evidence, ds), state_version: sv, focus: q.focus };
+    q.hist.push(u); A.q.set(q.id, q); A.updates.push(u);
+    focusNote(A, fresh, { id: "fq:" + q.id, unit_id: origin, kind: "question", text: `“${unitQuote(ds, origin)}” — ${qs.text || ""}`, evidence_unit_ids: [origin], question_id: q.id });
+    return true;
+  }
+  if (e.type === "updated") {
+    const qs = e.question, q = qs && A.q.get(qs.id); if (!q || !qs.status) return false;
+    const sv = qs.state_version ?? (q.hist.length + 1);
+    if (q.hist.some(x => x.state_version === sv)) return false;
+    const prev = e.previous_status ?? q.status;
+    const u = { question_id: q.id, previous_status: prev, status: qs.status, at_unit_id: uid, evidence_unit_ids: evUnits(qs.evidence, ds), state_version: sv, focus: qs.focus || q.focus };
+    q.snap = focusSnap(qs, ds); q.status = qs.status; q.focus = u.focus; q.hist.push(u); A.updates.push(u);
+    if (prev != null) trans.push(u);
+    if (FOCUS_UPDATE_TEXT[qs.status]) focusNote(A, fresh, { id: `fu:${q.id}:${sv}`, unit_id: uid, kind: qs.status === "resolved" ? "resolves" : "hold", text: `“${unitQuote(ds, uid)}” — ${FOCUS_UPDATE_TEXT[qs.status]}`, evidence_unit_ids: q.origin === uid ? [uid] : [q.origin, uid], question_id: q.id });
+    return true;
+  }
+  if (e.type === "parked") { const q = A.q.get(e.question_id); if (!q || q.focus === "parked") return false; q.focus = "parked"; q.parkedAt = uid; return true; }
+  if (e.type === "revisit") {
+    const q = A.q.get(e.question_id); if (!q || q.revisits.some(r => r.at_unit_id === uid)) return false; /* one revisit per question per window */
+    const r = { question_id: q.id, targets: (e.target_unit_ids || []).filter(t => ds.unitById[t]), reason: e.reason === "correction" ? "correction" : "answer", at_unit_id: uid, outcome: e.outcome || null };
+    q.revisits.push(r); A.revisits.push(r); return true;
+  }
+  if (e.type === "observation") {
+    const ev = evUnits(e.evidence, ds), at = ev.includes(uid) ? uid : ev[0] || uid, id = e.note_id ? `fo:${e.note_id}` : `fo:${uid}:${A.obs++}`;
+    if (A.noteById.has(id)) return false;
+    focusNote(A, fresh, { id, unit_id: at, kind: "observation", text: `“${unitQuote(ds, at)}” — ${OBS_TEXT[e.kind] || "원문에서 읽은 내용입니다."}`, evidence_unit_ids: ev.length ? ev : [at] });
+    return true;
+  }
+  if (e.type === "retracted") {
+    const prior = e.note_id && A.noteById.get(`fo:${e.note_id}`), id = `fr:${e.note_id}`;
+    if (!prior || A.retracted.has(prior.id) || A.noteById.has(id)) return false;
+    const ev = evUnits(e.evidence, ds), at = ev.includes(uid) ? uid : ev[0] || uid;
+    focusNote(A, fresh, { id, unit_id: at, kind: "observation", text: `“${unitQuote(ds, at)}” — 앞의 참고(메모 ${prior.num})와 맞지 않아 그 메모를 거둡니다.`, evidence_unit_ids: ev.length ? ev : [at], retracted_note_id: prior.id });
+    A.retracted.set(prior.id, id);
+    return true;
+  }
+  if (e.type === "speech") {
+    if (!SPEECH_TEXT[e.code]) return false;
+    const s = { code: e.code, question_id: e.question_id || null, targets: (e.target_unit_ids || []).filter(t => ds.unitById[t]), at_unit_id: uid, seq: e.seq ?? null };
+    A.speech.push(s); const q = s.question_id && A.q.get(s.question_id); if (q) q.speech.push(s);
+    return false; /* words alone draw nothing; they ride the beat of the change they describe */
+  }
+  return false;
+}
+/* at the end of reading every still-open inquiry is settled by the screen, not by the server (parked ones included);
+   a reopened question keeps 다시 열림, the state the final report also keeps */
+function focusEnd(A, ds) {
+  const last = ds.order[ds.order.length - 1];
+  for (const q of A.q.values()) {
+    if (q.status !== "open") continue;
+    const u = { question_id: q.id, previous_status: q.status, status: "open_at_end", at_unit_id: last, evidence_unit_ids: [], state_version: (q.hist[q.hist.length - 1]?.state_version || 0) + 1, pseudo: true };
+    q.status = "open_at_end"; q.hist.push(u); A.updates.push(u);
+  }
 }
 /* a unit's events reach S.A exactly once, whichever path (beat, catch-up, retry after an error) gets there first */
 function applyUnit(uid) {
@@ -1672,7 +1874,7 @@ function markOf(n, A) {
     return n.kind === "resolves" ? { cls: "ok", word: "설명 찾음" } : { cls: "held", word: "판단 보류", noq: true };
   }
   if (n.kind === "evidence") { const was = A.retracted.has(n.id); return { cls: "req", was, word: was ? "요건 연결 · 이전" : "요건 연결", reqs: n.requirement_ids || [] }; }
-  return { cls: "obs", word: "참고" };
+  { const was = A.retracted.has(n.id); return { cls: "obs", was, word: was ? "참고 · 이전" : "참고" }; }
 }
 /* evidence that a later reopen withdrew stays "· 이전", whatever the question did afterwards */
 function laterReopen(q, sv) { return !!q && q.hist.some(x => x.status === "reopened" && (x.state_version || 0) > sv); }
@@ -2111,6 +2313,7 @@ function paperVisible() { return S.screen === "s03" && !document.hidden && (!mq8
 const shownSent = () => S.ds.order.slice(0, S.play.shown).filter(u => !S.ds.isHeading(u)).length;
 const doneSent = () => S.ds.sent.filter(u => S.srv.done.has(u)).length;
 function setCurrent(uid) {
+  unspeak();
   const sp = PAPERS.read.units.get(uid); if (!sp) return;
   for (const x of PAPERS.read.el.querySelectorAll('[aria-current="location"]')) x.removeAttribute("aria-current");
   sp.classList.remove("unread"); sp.classList.add("current"); sp.setAttribute("aria-current", "location");
@@ -2255,22 +2458,31 @@ async function beat(uid, mode, tok) {
   paintRead({ draw: !instant && !rm, quick, enter: instant || rm ? null : new Set(fresh.map(n => n.id)), threads: false });
   renderLegend(); renderSeg(); renderLedger(); renderReqPanel(); renderTabsAndPanels(); renderFeedState(); renderNewbar();
   announceNew(fresh);
+  const says = speechFor(uid), said = says.find(s => s.code !== "revisit") || says[0];
   if (instant) { addFeedRows(fresh, false); drawReadThreads(false); return; }
-  if (rm) { addFeedRows(fresh, false); drawReadThreads(false); await sleep(200); return; }
-  if (quick) { addFeedRows(fresh, false); drawReadThreads(true); await sleep(200); return; }
+  if (rm) { addFeedRows(fresh, false); drawReadThreads(false); if (said) speak(said.code, true); await sleep(200); return; }
+  if (quick) { addFeedRows(fresh, false); drawReadThreads(true); if (said) speak(said.code, true); await sleep(200); return; }
   await sleep(120); if (!alive(tok)) return;
   addFeedRows(fresh, true);
+  if (said) speak(said.code, false);
   await sleep(240); if (!alive(tok)) return;
   drawReadThreads(true);
+  /* a second phrase in the same window (a parked question, then a new one) follows after a breath */
+  let extra = 0; const second = says.find(s => s !== said && s.code !== "revisit");
+  if (second) { await sleep(700); if (!alive(tok)) return; speak(second.code, false); extra = 900; }
   let glanceEnd = performance.now();
+  /* a glance back: a focus revisit names its target; otherwise a transition points at the question's origin */
+  const rv = S.A.revisits.find(r => r.at_unit_id === uid && r.targets.length);
   const tr = trans.find(t => t.at_unit_id === uid);
   const q = tr && S.A.q.get(tr.question_id);
-  if (q && q.origin !== uid && mode === "reading" && unitOnScreen(q.origin)) {
-    const rs = rangeWords(P, q.origin), back = GZ.pos;
+  const target = rv ? rv.targets[0] : q && q.origin !== uid ? q.origin : null;
+  if (target && target !== uid && mode === "reading" && unitOnScreen(target)) {
+    const rs = rangeWords(P, target), back = GZ.pos;
+    if (rv && says.some(s => s.code === "revisit")) speak("revisit", false);
     if (rs[0] && back) { await gzSaccade(fixPoint(P, rs[0]), { trail: false }); await sleep(320); if (!alive(tok)) return; await gzSaccade(back, { trail: false }); }
     glanceEnd = performance.now();
   }
-  await sleep(Math.max(0, Math.max(t0 + 420, glanceEnd) + 300 - performance.now()));
+  await sleep(Math.max(0, Math.max(t0 + 420, glanceEnd) + 300 + extra - performance.now()));
 }
 function unitOnScreen(uid) { const sp = PAPERS.read.units.get(uid), r = sp && firstRect(sp); return !!r && r.top > barBottom() && r.bottom < innerHeight; }
 function catchUp(toIdx) {
@@ -2287,7 +2499,7 @@ function catchUp(toIdx) {
   renderS03();
   return fresh.length;
 }
-function applyEnd() { applyEvents(S.A, S.srv.end, S.ds); S.A.ended = true; paintRead({}); updateFeedRows(); }
+function applyEnd() { applyEvents(S.A, S.srv.end, S.ds); if (isFocus()) focusEnd(S.A, S.ds); S.A.ended = true; paintRead({}); updateFeedRows(); }
 function placeGazeAtFrontier() {
   const P = PAPERS.read; if (!isRendered(P.el) || S.srv.readingCompleted) return;
   const idx = Math.min(S.play.shown, S.ds.order.length) - 1; if (idx < 0) return;
@@ -2300,6 +2512,25 @@ async function gzLoading() {
   gzSet("loading");
 }
 function gzIdle() { if (!GZ.pos) placeGazeAtFrontier(); else gzSet("waiting"); }
+/* the speech bubble: one phrase beside the gaze when a verified change lands on the sentence just read.
+   Positioned over the line above (already read), or below on the first line; it never covers controls. */
+const SPEECH = { el: null, timer: 0 };
+function speechFor(uid) { return isFocus() ? S.A.speech.filter(s => s.at_unit_id === uid) : []; }
+function speak(code, still) {
+  const text = SPEECH_TEXT[code], P = PAPERS.read;
+  if (!text || !P || !isRendered(P.el) || !GZ.pos) return;
+  if (!SPEECH.el || !SPEECH.el.isConnected) { SPEECH.el = h("div", { class: "speech", "aria-hidden": "true" }); P.el.append(SPEECH.el); }
+  const el = SPEECH.el; clearTimeout(SPEECH.timer);
+  el.classList.remove("on"); el.classList.toggle("still", !!still || RM()); el.textContent = text;
+  const pw = P.el.clientWidth, lh = lineH(), w = el.offsetWidth, hgt = el.offsetHeight;
+  const above = GZ.pos.y - lh * .55 - hgt - 6, below = above < 4;
+  el.style.left = clamp(GZ.pos.x + 10, 8, Math.max(8, pw - w - 8)) + "px";
+  el.style.top = (below ? GZ.pos.y + lh * .55 + 6 : above) + "px";
+  el.classList.toggle("below", below);
+  void el.offsetWidth; el.classList.add("on");
+  SPEECH.timer = setTimeout(unspeak, 2600);
+}
+function unspeak() { clearTimeout(SPEECH.timer); SPEECH.timer = 0; if (SPEECH.el) SPEECH.el.classList.remove("on"); }
 async function exitGaze() {
   if (!GZ.el || !GZ.pos) { gzSet("hidden"); return; }
   const gen = GZ.gen, el = GZ.el;
@@ -2391,14 +2622,15 @@ function afterShown() {
   renderBar(); renderLedger(); renderFeedState(); renderNewbar(); updateTrack();
 }
 /* the one announcement for a stop; the on-screen notice is plain text so it is not read twice */
+const stoppedAfter = () => (doneSent() ? `${doneSent()}번째 문장 뒤에서 멈췄습니다.` : "첫 문장을 읽기 전에 멈췄습니다.");
 function onTerminal() {
   const R = S.srv;
-  if (R.failed) alertMsg(R.readingCompleted ? `다 읽었지만 리포트를 만들지 못했습니다. ${failText(R.failed.error)}` : `${doneSent()}번째 문장 뒤에서 멈췄습니다. ${failText(R.failed.error)}`);
+  if (R.failed) alertMsg(R.readingCompleted ? `다 읽었지만 리포트를 만들지 못했습니다. ${failText(R.failed.error)}` : `${stoppedAfter()} ${failText(R.failed.error)}`);
   else if (R.cancelled) announce(R.readingCompleted ? (cancelledByUser() ? "리포트 작성을 취소했습니다" : "리포트 작성이 취소됐습니다") : cancelledByUser() ? "읽기를 취소했습니다" : "읽기가 취소됐습니다");
   renderS03();
 }
 function resetReadingState() {
-  stopPlayer(); TWEEN.cancel();
+  stopPlayer(); TWEEN.cancel(); unspeak();
   S.job = null; S.jobId = null; S.jobSeen = {}; S.cursor = 0; S.srv = newSrv(); S.play = newPlay(); S.A = newA(); S.expired = false; S.evBuiltFor = null;
   S.conn = { state: "connected", attempt: 0 };
   const sessionEnded = S.ui.sessionEnded; S.ui = freshUi(); S.ui.sessionEnded = sessionEnded;
@@ -2481,8 +2713,9 @@ function onJobError(code) {
 /* the contract's integrity rules: contiguous sequence numbers from the cursor, one job id,
    and every question_updated is the next version of that question (v2 only), matching its own snapshot */
 function questionsConsistent(v, fresh) {
-  const qv = new Map(S.srv.qv);
+  const qv = new Map(S.srv.qv), focus = v.generation?.policy_version === FOCUS_POLICY;
   for (const e of fresh) {
+    if (FOCUS_TYPES.has(e.type)) { if (focus && !focusConsistent(qv, e)) return false; continue; }
     if (e.type !== "question_updated") continue;
     if (v.generation?.policy_version !== "readme-prefix-v2") return false;
     const prev = qv.get(e.question_id), q = e.question;
@@ -2492,6 +2725,17 @@ function questionsConsistent(v, fresh) {
     qv.set(e.question_id, { state_version: q.state_version, status: q.status });
   }
   S.srv.qv = qv;
+  return true;
+}
+/* focus stream integrity: an inquiry opens a question at version 1 once; every update is the next version of that
+   question and names the status it leaves. Other focus types carry no version. */
+function focusConsistent(qv, e) {
+  if (e.type === "inquiry") { const q = e.question; if (!q || !q.id || qv.has(q.id) || (q.state_version ?? 1) !== 1) return false; qv.set(q.id, { state_version: 1, status: q.status || "open" }); return true; }
+  if (e.type === "updated") {
+    const q = e.question, prev = q && qv.get(q.id);
+    if (!prev || !q.status || q.state_version !== prev.state_version + 1 || (e.previous_status != null && e.previous_status !== prev.status)) return false;
+    qv.set(q.id, { state_version: q.state_version, status: q.status }); return true;
+  }
   return true;
 }
 function handleJobView(v) {
@@ -2532,6 +2776,7 @@ function ingest(e) {
     case "window_started": for (const u of e.unit_ids) { R.started.add(u); R.windowSeen[u] = nowMs(); } R.open = e.unit_ids[0]; break;
     case "window_completed": for (const u of e.unit_ids) R.done.add(u); R.open = null; break;
     case "note": case "question_updated":
+    case "context": case "inquiry": case "parked": case "revisit": case "updated": case "observation": case "retracted": case "speech":
       if (R.open) { if (!R.byUnit.has(R.open)) R.byUnit.set(R.open, []); R.byUnit.get(R.open).push(e); } else R.end.push(e);
       break;
     case "reading_completed": R.readingCompleted = true; break;
@@ -2766,7 +3011,7 @@ function renderNotices(force) {
   if (S.conn.state === "disconnected") box.append(notice([h("p", null, "읽은 부분까지는 남아 있습니다. 1분 안에 다시 연결되지 않으면 서버 작업이 취소될 수 있습니다.")]));
   if (S.ui.invalidCursor) box.append(notice([h("p", null, "다시 불러오면 지금까지의 읽기 기록을 한꺼번에 다시 받아 옵니다. " + (isSample() ? "처음부터 다시 읽지는 않습니다." : "모델이 다시 읽지 않고 준비 횟수도 쓰지 않습니다.")), row(btnText("다시 불러오기", reloadFromStart, "", "reload"))]));
   if (term && !S.ui.failAck) {
-    if (failed && !R.readingCompleted) box.append(notice([h("p", null, `${doneSent()}번째 문장 뒤에서 멈췄습니다. ${failText(failed.error)} 읽은 부분과 메모는 그대로 남아 있고, 리포트는 만들지 않았습니다.`), cap, row(restartBtn(), ack())]));
+    if (failed && !R.readingCompleted) box.append(notice([h("p", null, `${stoppedAfter()} ${failText(failed.error)} 읽은 부분과 메모는 그대로 남아 있고, 리포트는 만들지 않았습니다.`), cap, row(restartBtn(), ack())]));
     else if (failed) box.append(notice([h("p", null, `리포트를 만들지 못했습니다. ${failText(failed.error)} ${total}문장은 모두 읽었고, 읽기 메모와 표시는 그대로 볼 수 있습니다.`), cap, row(restartBtn(), ack())]));
     else if (R.cancelled) {
       const [wo, wi] = R.readingCompleted ? ["리포트 작성을", "리포트 작성이"] : ["읽기를", "읽기가"];
@@ -2942,7 +3187,8 @@ function updateNoteRow(li, n) {
   li.style.setProperty("--mk", MARK_COLOR[m.cls]);
   const swc = li.querySelector(".swc"), sk = m.cls + (m.q || "") + (m.was ? "w" : "");
   if (swc.dataset.k !== sk) { swc.dataset.k = sk; swc.textContent = ""; swc.append(swatch(m)); }
-  li.querySelector(".state").textContent = m.word;
+  const fq = n.question_id && S.A.q.get(n.question_id), parked = !!fq && fq.focus === "parked" && (fq.status === "open" || fq.status === "reopened") && n.kind === "question";
+  li.querySelector(".state").textContent = m.word + (parked ? " · 잠시 보관" : "");
   const sel = S.ui.sel === n.id; li.classList.toggle("sel", sel);
   li.querySelector(".note-head").setAttribute("aria-expanded", String(sel));
   const det = li.querySelector(".detail");
@@ -2969,25 +3215,32 @@ function noteSourceIds(n) {
 }
 function renderDetail(det, n) {
   const A = S.A, q = n.question_id && A.q.get(n.question_id);
-  const sig = JSON.stringify([n.id, q ? q.hist.length : 0, q?.status || "", A.ended, A.retracted.get(n.id) || ""]);
+  const sig = JSON.stringify([n.id, q ? q.hist.length : 0, q?.status || "", A.ended, A.retracted.get(n.id) || "", q?.focus || "", q?.revisits?.length || 0, q?.speech?.length || 0]);
   if (det._sig === sig && !det.hidden) return;
   det._sig = sig; det.textContent = ""; det.hidden = false;
   if (q) {
     det.append(h("h4", null, `질문 기록 · ${qTitle(q.snap, n.text)}${facetExtra(q.snap) ? " · " + facetExtra(q.snap) : ""}`));
-    const ol = h("ol", { class: "timeline" });
-    q.hist.forEach((u, i) => {
-      const cur = i === q.hist.length - 1;
-      const w = u.previous_status == null ? "질문 생김" : qsWord(u.status);
+    const ol = h("ol", { class: "timeline" }), pos = uid => S.ds.order.indexOf(uid);
+    const rows = q.hist.map((u, i) => ({ k: pos(u.previous_status == null ? q.origin : u.at_unit_id), o: i, u }));
+    for (const r of q.revisits || []) rows.push({ k: pos(r.at_unit_id), o: -1, r }); /* the look back comes before the change it led to */
+    rows.sort((a, b) => a.k - b.k || a.o - b.o);
+    rows.forEach((row, i) => {
+      const cur = i === rows.length - 1;
+      if (row.r) { ol.append(h("li", { "aria-current": cur ? "step" : null }, h("span", { class: "sw obs-sw", "aria-hidden": "true" }), h("span", { class: "w" }, row.r.reason === "correction" ? "다시 확인" : "다시 봄"), row.r.targets[0] ? qbtn(row.r.targets[0]) : h("span", { class: "state-note" }, "앞 문장"))); return; }
+      const u = row.u, w = u.previous_status == null ? "질문 생김" : qsWord(u.status);
       const third = u.status === "open_at_end" ? h("span", { class: "state-note" }, "문서 끝까지 읽음") : qbtn(u.previous_status == null ? q.origin : u.at_unit_id);
       ol.append(h("li", { "aria-current": cur ? "step" : null }, statusSwatch(u.previous_status == null ? "open" : u.status), h("span", { class: "w" }, w), third));
     });
     det.append(ol);
+    if ((q.revisits || []).some(r => r.outcome === "none")) det.append(h("p", { class: "state-note" }, "앞 문장을 다시 봤지만 이 질문의 상태는 달라지지 않았습니다."));
+    if (q.focus === "parked" && (q.status === "open" || q.status === "reopened")) det.append(h("p", { class: "state-note" }, "답을 찾지 못한 채 잠시 보관한 질문입니다. 뒤에서 관련 근거가 나오면 다시 봅니다. 문서에 답이 없다는 판정은 아닙니다."));
+    if (q.speech?.length) det.append(h("p", { class: "state-note" }, "말풍선 · " + q.speech.map(s => `“${SPEECH_TEXT[s.code]}”`).join(" ")));
     /* open_at_end is the reader's own outcome, not a finding about the document */
     if (q.status === "open_at_end") det.append(h("p", { class: "state-note" }, "읽는 동안 이 질문의 답을 확인하지 못했다는 뜻입니다. 문서에 답이 없다는 판정은 아닙니다. 리포트에서 전체 문장을 다시 본 결과를 함께 확인해 주세요."));
   }
   if (A.retracted.has(n.id)) {
     const correction = A.noteById.get(A.retracted.get(n.id));
-    det.append(h("p", { class: "state-note" }, "뒤의 설명에서 정정된 이전 근거입니다. 현재 요건 연결에서는 제외했습니다."));
+    det.append(h("p", { class: "state-note" }, n.kind === "evidence" ? "뒤의 설명에서 정정된 이전 근거입니다. 현재 요건 연결에서는 제외했습니다." : "뒤 문장에서 거둔 이전 참고입니다. 현재 설명에서는 제외했습니다."));
     if (correction) det.append(h("div", null, "정정된 문장 · ", qbtn(correction.unit_id)));
   }
   if (n.requirement_ids?.length) {
@@ -3034,7 +3287,7 @@ function renderReqPanel() {
     if (rep) for (const it of rep.items) if ((it.requirement_ids || []).includes(r.id)) for (const c of it.citations) { const ci = citeInfo(ds, c); if (ci && !cites.includes(ci.uid)) cites.push(ci.uid); }
     if (list.length) row.append(h("div", { class: "links-l" }, list.map(u => h("div", { class: "lk" }, h("button", { type: "button", class: "qbtn", "data-k": r.id + u, onclick: () => showUnitInDoc(u) }, shortQuote(ds, u, 22)), h("span", { class: "loc" }, whereText(ds, u))))));
     else if (cites.length) row.append(h("p", { class: "none" }, "읽는 동안 연결한 문장은 없습니다."));
-    else row.append(h("p", { class: "none" }, done ? "읽는 동안 연결한 문장이 없습니다. 이 요건을 갖추지 못했다는 뜻은 아닙니다." : "아직 연결된 문장이 없습니다."));
+    else row.append(h("p", { class: "none" }, done ? (isFocus() ? "읽는 동안에는 요건을 문장마다 대조하지 않습니다. 다 읽은 뒤 리포트가 공고와 원문 전체를 직접 대조합니다. 이 요건을 갖추지 못했다는 뜻은 아닙니다." : "읽는 동안 연결한 문장이 없습니다. 이 요건을 갖추지 못했다는 뜻은 아닙니다.") : "아직 연결된 문장이 없습니다."));
     if (cites.length) row.append(h("p", { class: "sub-h" }, "리포트에서 연결"), h("div", { class: "links-l" }, cites.map(u => h("div", { class: "lk" }, h("button", { type: "button", class: "qbtn", "data-k": "r" + r.id + u, onclick: () => showUnitInDoc(u) }, shortQuote(ds, u, 22)), h("span", { class: "loc" }, whereText(ds, u))))));
     box.append(row);
   });
@@ -3044,7 +3297,7 @@ function renderPanelLines() {
   setText($("#check-line"), isSample() ? "메모는 확정된 판단이 아닙니다. 문장을 직접 확인해 주세요."
     : isJev() ? `메모는 ${JEV_NAME}가 남긴 초안입니다. 이력서용으로 보정하지 않아 틀릴 수 있으니 문장을 직접 확인해 주세요.`
     : isLaya() ? "메모는 학습 전 모델의 초안이라 틀릴 수 있습니다. 문장을 직접 확인해 주세요." : "메모는 모델이 남긴 초안이라 틀릴 수 있습니다. 문장을 직접 확인해 주세요.");
-  const sc = $("#scope-line"); sc.hidden = !isJev(); setText(sc, isJev() ? SCOPE_LINE : "");
+  const sc = $("#scope-line"); sc.hidden = !isJev(); setText(sc, isFocus() ? SCOPE_FOCUS : isJev() ? SCOPE_LINE : "");
   setText($("#gaze-line"), isSample() ? "둥근 표시는 지금 읽는 문장을 가리킬 뿐, 실제로 어디를 봤는지는 아닙니다." : "둥근 표시는 지금 읽는 문장을 가리킬 뿐, 모델이 실제로 본 곳은 아닙니다.");
 }
 function renderS03() {
@@ -3215,7 +3468,7 @@ function alertMsg(msg) { const r = $("#alert"); r.textContent = ""; setTimeout((
 const WHERE = [
   ["전송 경로", "입력한 공고와 파일은 Cloudflare 네트워크를 거쳐 README 운영 서버(운영자가 관리하는 Mac mini)로 갑니다."],
   ["이력서 파일", "서버 메모리에서 글자를 꺼낸 뒤 파일은 보관하지 않습니다. 파일 자체는 어느 모델 제공자에게도 보내지 않습니다."],
-  ["읽는 동안 · Typesafe Jev(원격 모델)", "문장마다 판단하도록 공고 요건 문구와 거기서 만든 확인 조건, 그때까지 읽은 이력서 문장 전부(이름·연락처 같은 줄 포함, 마지막에는 전체 글), 확인 중인 질문을 보냅니다."],
+  ["읽는 동안 · Typesafe Jev(원격 모델)", "문장마다 판단하도록 이력서에서 꺼낸 글을 보내며, 읽기 방식에 따라 범위가 다릅니다. 기존 방식은 공고 요건 문구와 거기서 만든 확인 조건, 그때까지 읽은 문장 전부(마지막에는 전체 글), 확인 중인 질문을 보냅니다. 의문 중심 방식은 지금 읽는 문장과 최근 문장, 맥락·질문의 짧은 색인, 그 판단에 필요한 앞 문장만 보내고, 공고에서는 주요 업무만 배경으로 보냅니다. 어느 방식이든 보내는 문장에 이름·연락처 같은 줄이 있으면 함께 갑니다."],
   ["준비와 리포트 · OpenAI Codex(클라우드)", "요건 정리에는 공고 본문을, 리포트와 최종 원문 점검에는 이력서에서 꺼낸 모든 글(이름·연락처 같은 줄 포함)과 읽기 메모를 보냅니다."],
   ["보관", "꺼낸 글과 메모, 결과는 서버 메모리에 최대 2시간 머물고, 서버가 다시 시작되면 바로 사라집니다. README는 이 내용을 모델 학습·평가나 다른 목적에 쓰지 않습니다. 두 제공자의 보관 정책은 따로 적용됩니다."]
 ];
@@ -3314,8 +3567,13 @@ function resetS01(o = {}) {
   if (o.keep && S.s01) { S.s01.confirmCancel = false; return; }
   S.s01 = { file: null, confirmCancel: false }; $("#job-text").value = "";
 }
-function useSample() {
+async function useSample() {
   if (prepActive()) return;
+  if (isFixture()) {
+    let fx; try { fx = await SRC.load(); } catch { alertMsg("기록된 실행을 불러오지 못했습니다."); return; }
+    $("#job-text").value = fx.prepare.job?.text || ""; S.s01.file = { name: `${fx.prepare.document?.doc_id || "fixture"}.md`, state: "ok", sample: true }; renderS01();
+    announce("기록된 실행의 공고와 이력서를 넣었습니다"); return;
+  }
   $("#job-text").value = SAMPLE_JOB_TEXT; S.s01.file = sampleFile(); renderS01();
   announce("예시 공고와 이력서를 넣었습니다");
 }
@@ -3330,11 +3588,15 @@ function renderS01() {
   if (!S.s01) resetS01();
   const ta = $("#job-text"), locked = prepActive(), js = jobTextState(), f = S.s01.file, sample = isSample();
   ta.readOnly = locked;
-  $("#sample-row").hidden = !sample; $("#use-sample").disabled = locked;
+  const fixture = isFixture();
+  $("#sample-row").hidden = !(sample || fixture); $("#use-sample").disabled = locked;
+  setText($("#use-sample"), fixture ? "기록된 실행의 공고와 이력서 넣기" : "예시 공고와 이력서로 해 보기");
   setText($("#s01-time"), sample ? "예시는 미리 써 둔 읽기 기록을 문장마다 다시 보여 줍니다. 30초쯤 걸립니다."
+    : fixture ? `검증용 재생입니다. 기록된 실행 ${FIXTURE_NAME}을(를) 같은 전송 경로로 다시 보여 줍니다.`
     : "준비와 리포트는 보통 각각 1분 안팎이고, 읽기는 문장 수에 따라 길어집니다. 읽기와 리포트가 합쳐 10분을 넘으면 자동으로 멈춥니다.");
   setText($("#send-line"), sample ? "지금은 서버에 연결하지 않고 미리 준비한 예시만 볼 수 있습니다. 입력한 내용은 이 브라우저 밖으로 나가지 않습니다."
-    : "준비를 누르면 공고 본문이 요건 정리를 위해 OpenAI Codex로 갑니다. 읽는 동안에는 그때까지 읽은 이력서 문장 전부와 공고 요건 문구·확인 조건이 Typesafe Jev로, 다 읽은 뒤에는 이력서 전체 글과 읽기 메모가 리포트를 위해 Codex로 갑니다. 올린 파일 자체는 두 모델 제공자에게 보내지 않습니다.");
+    : fixture ? "서버에 연결하지 않습니다. 기록된 실행 파일만 읽고, 입력한 내용은 이 브라우저 밖으로 나가지 않습니다."
+    : "준비를 누르면 공고 본문이 요건 정리를 위해 OpenAI Codex로 갑니다. 읽는 동안에는 이력서에서 꺼낸 문장이 Typesafe Jev로 갑니다. 기존 방식은 그때까지 읽은 문장 전부와 공고 요건 문구·확인 조건을, 의문 중심 방식은 지금 읽는 문장과 최근 문장, 짧은 맥락·질문 색인, 필요한 앞 문장과 공고의 주요 업무만 보냅니다. 다 읽은 뒤에는 이력서 전체 글과 읽기 메모가 리포트를 위해 Codex로 갑니다. 올린 파일 자체는 두 모델 제공자에게 보내지 않습니다.");
   $("#where-01-d").hidden = sample; $("#quota-line").hidden = sample; $("#file-privacy").hidden = sample;
   const cnt = $("#job-count"); cnt.textContent = `${fmt(ta.value.length)}${NB}/${NB}6,000자`; cnt.classList.toggle("over", !!js.over);
   fieldErr($("#job-err"), js.err && ta.value.length ? js.err : null);
@@ -3422,6 +3684,7 @@ async function startPrepare() {
   try {
     let input;
     if (isSample()) input = { sample: true, job_text: jobText };
+    else if (isFixture()) input = { fixture: FIXTURE_NAME, job_text: jobText };
     else {
       const b64 = await readBase64(f.blob);
       if (b64.length > 2666672) throw new LabError("request_too_large", 413);
@@ -3762,7 +4025,7 @@ function renderReport(o = {}) {
   const rail = h("nav", { class: "rail", "aria-label": "리포트 목차" }, h("ol", null, navItems.map(([id, t, n]) => h("li", null, h("a", { href: "#" + id, "data-sec": id }, h("span", null, t), n ? h("span", { class: "num" }, String(n)) : null)))));
   const anchors = h("nav", { class: "anchors", "aria-label": "리포트 목차" }, navItems.map(([id, t, n]) => h("a", { href: "#" + id }, n ? `${t} ${n}` : t)));
   const main = h("div", { class: "r-main" }, head, anchors);
-  if (zero) main.append(h("p", { class: "r-zero" }, (isJev() ? "이번 읽기에서는 메모가 남지 않았습니다. " + SCOPE_SHORT : isLaya() && !isSample() ? "이번 읽기에서 Laya 기본 모델은 확신이 낮아 메모를 남기지 않았습니다." : "이번 읽기에서는 메모가 남지 않았습니다.") + " 아래 항목은 다 읽은 뒤 " + who("Codex가 ") + "이력서 전체 문장을 보고 정리한 것입니다."));
+  if (zero) main.append(h("p", { class: "r-zero" }, (isJev() ? "이번 읽기에서는 메모가 남지 않았습니다. " + (isFocus() ? SCOPE_FOCUS_SHORT : SCOPE_SHORT) : isLaya() && !isSample() ? "이번 읽기에서 Laya 기본 모델은 확신이 낮아 메모를 남기지 않았습니다." : "이번 읽기에서는 메모가 남지 않았습니다.") + " 아래 항목은 다 읽은 뒤 " + who("Codex가 ") + "이력서 전체 문장을 보고 정리한 것입니다."));
   const seenCite = new Map();
   for (const group of groups) {
     const id = group.id;
@@ -3854,7 +4117,7 @@ function ledgerList(qs) {
       flowUnits.forEach((u, i) => { if (i) flow.append(h("span", { class: "arr", "aria-hidden": "true" }, "→")); const id = `lq-${q.id}-${i}`; flow.append(h("button", { type: "button", class: "qbtn", id, onclick: () => openQuestion(q.id, u, { btnId: id }) }, shortQuote(ds, u, 14))); });
       g.append(h("div", { class: "ledger-row" },
         h("div", { class: "stw" }, statusSwatch(q.status), qsWord(q.status)),
-        h("div", null, h("p", { class: "ql" }, qTitle(q)), h("p", { class: "qf" }, [facetExtra(q), q.status === "held" ? (isSample() ? "확정하지 않음" : "모델이 확정하지 않음") : null].filter(Boolean).join(" · ") || "")),
+        h("div", null, h("p", { class: "ql" }, qTitle(q)), h("p", { class: "qf" }, [facetExtra(q), q.status === "held" ? (isSample() ? "확정하지 않음" : "모델이 확정하지 않음") : null, q.focus === "parked" && (q.status === "open" || q.status === "reopened") ? "잠시 보관" : null].filter(Boolean).join(" · ") || "")),
         flow));
     }
     box.append(g);
@@ -3870,7 +4133,7 @@ function reqView(rep, A) {
     linked.sort((a, b) => ds.order.indexOf(a.uid) - ds.order.indexOf(b.uid));
     const lst = h("div", { class: "lst" });
     if (r.kind === "other") lst.append(h("p", { class: "r-empty", style: "border:0;padding:0" }, "공고 참고사항입니다. 실제 서류 제출 여부나 고용조건 수용 여부는 이 이력서만으로 판단하지 않습니다."));
-    else if (!linked.length) lst.append(h("p", { class: "r-empty", style: "border:0;padding:0" }, "이번 읽기에서 연결한 문장이 없습니다. 이 요건을 갖추지 못했다는 뜻은 아닙니다."));
+    else if (!linked.length) lst.append(h("p", { class: "r-empty", style: "border:0;padding:0" }, isFocus() ? "읽는 동안에는 요건을 문장마다 대조하지 않습니다. 리포트가 공고와 원문 전체를 직접 대조한 인용을 보여 줍니다. 이 요건을 갖추지 못했다는 뜻은 아닙니다." : "이번 읽기에서 연결한 문장이 없습니다. 이 요건을 갖추지 못했다는 뜻은 아닙니다."));
     for (const l of linked) {
       const b = h("button", { type: "button", class: "cite" }, h("span", { class: "loc" }, `${whereText(ds, l.uid)} · ${l.tag}`), h("q", { class: "cite-q" }, shortQuote(ds, l.uid, 60).slice(1, -1)));
       b.id = `rv-${r.id}-${l.uid}`;
@@ -3897,7 +4160,7 @@ function limitsBlock(rep, qs) {
   const srv = (rep.limitations || []).filter(l => typeof l === "string").join(" "), said = (...w) => !isSample() && w.every(x => srv.includes(x));
   add("점수, 등급, 합격 가능성은 만들지 않습니다. 실제 채용 담당자의 판단도 아닙니다.");
   if (!said("진위")) add("‘유지할 설명’은 문서 안에서 설명을 찾았다는 뜻이고, 경험이 사실인지 확인한 것은 아닙니다.");
-  if (!isSample() && !(isJev() && said("Jev", "Codex"))) add(`${isJev() ? "Jev는" : isLaya() ? "Laya는" : "읽기 모델은"} 각 문장을 그 문장까지 읽은 내용만 보고 판단했고, 리포트는 Codex가 다 읽은 뒤 이력서 전체 문장을 보고 썼습니다.`);
+  if (!isSample() && !(isJev() && said("Jev", "Codex"))) add(`${isJev() ? "Jev는" : isLaya() ? "Laya는" : "읽기 모델은"} ${isFocus() ? "각 문장을 지금 읽는 문장과 최근 문장, 필요한 앞 문장만 보고 판단했고" : "각 문장을 그 문장까지 읽은 내용만 보고 판단했고"}, 리포트는 Codex가 다 읽은 뒤 이력서 전체 문장을 보고 썼습니다.`);
   if (!said("사람이 다시 확인")) add("모든 메모와 항목은 사람이 다시 확인해야 하는 초안입니다.");
   add("메모가 없는 문장은 문제가 없다는 뜻도, 잘 썼다는 뜻도 아닙니다.");
   if (qs.some(q => q.status === "held")) add(isSample() ? "‘답 후보’는 앞 질문의 답일 수 있는 문장이지만 읽는 동안 확정하지 않은 상태입니다. 문서의 설명이 부족하다는 뜻이 아니어서 보완해 볼 곳에 넣지 않았습니다."
@@ -3909,7 +4172,9 @@ function limitsBlock(rep, qs) {
       h("dt", null, "읽기 메모"), h("dd", null, isJev() ? `${JEV_NAME} · 이력서용 보정 전` : isLaya() ? "Laya 기본 모델 · 이력서용 학습·보정 전" : "문장 판단 모델 · 이력서용 보정 전"),
       h("dt", null, "요건 정리·리포트"), h("dd", null, !g.codex_model || g.codex_model === "cli_default" ? "OpenAI Codex · 기본 설정" : "OpenAI Codex"));
     if (g.policy_version === "readme-prefix-v2") gen.append(h("dt", null, "읽기 방식"), h("dd", null, "질문이 생기고 설명이 이어지는 과정을 기록"));
-    if (isJev()) gen.append(h("dt", null, "읽는 동안 본 것"), h("dd", null, "공고에 따른 역할·수행 방식·결과·비교 근거"));
+    else if (g.policy_version === FOCUS_POLICY) gen.append(h("dt", null, "읽기 방식"), h("dd", null, "의문을 하나씩 따라가며 설명과 재검토를 기록"));
+    if (isFocus()) gen.append(h("dt", null, "읽는 동안 보낸 것"), h("dd", null, "지금 읽는 문장과 최근 문장, 맥락·질문의 짧은 색인, 필요할 때 가져온 앞 문장, 공고의 주요 업무(배경)"));
+    else if (isJev()) gen.append(h("dt", null, "읽는 동안 보낸 것"), h("dd", null, "공고 요건 문구와 확인 조건, 그때까지 읽은 문장 전부, 확인 중인 질문 · 본 것은 공고에 따른 역할·수행 방식·결과·비교 근거"));
     box.append(gen);
   }
   return box;
