@@ -43,6 +43,7 @@ type AdminArticlePayload = {
     sourceText?: string;
     renderedHtml?: string | null;
     previewRenderedHtml?: string | null;
+    previewIssues?: Array<{ name: string; line: number }>;
     blocks?: AdminArticleBlock[];
     currentRevisionNumber?: number | null;
     editingRevisionNumber?: number | null;
@@ -301,7 +302,8 @@ export async function POST(request: Request): Promise<Response> {
     if (!published.ok) {
       return jsonResponse(published.status, {
         ok: false,
-        error: "backend_publish_failed",
+        error: published.error ?? "backend_publish_failed",
+        issues: published.issues,
         status: published.status,
       });
     }
@@ -456,7 +458,12 @@ type BackendFetchOptions = {
 
 type BackendFetchResult<T> =
   | { ok: true; status: number; data: T }
-  | { ok: false; status: number };
+  | {
+      ok: false;
+      status: number;
+      error?: string;
+      issues?: Array<{ name: string; line: number }>;
+    };
 
 async function fetchBackendJson<T>(
   origin: string,
@@ -482,7 +489,32 @@ async function fetchBackendJson<T>(
     if (response.status === 204) {
       return { ok: true, status: response.status, data: {} as T };
     }
-    if (!response.ok) return { ok: false, status: response.status };
+    if (!response.ok) {
+      if (response.status === 409) {
+        const body = (await response.json().catch(() => ({}))) as Record<
+          string,
+          unknown
+        >;
+        const issues = Array.isArray(body.issues)
+          ? body.issues
+              .filter(
+                (issue): issue is { name: string; line: number } =>
+                  Boolean(issue) &&
+                  typeof issue === "object" &&
+                  typeof issue.name === "string" &&
+                  typeof issue.line === "number",
+              )
+              .slice(0, 20)
+          : undefined;
+        return {
+          ok: false,
+          status: 409,
+          error: typeof body.error === "string" ? body.error : undefined,
+          issues,
+        };
+      }
+      return { ok: false, status: response.status };
+    }
     return {
       ok: true,
       status: response.status,

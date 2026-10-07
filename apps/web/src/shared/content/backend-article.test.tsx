@@ -85,6 +85,66 @@ const article: BackendArticleApiResponse = {
 };
 
 describe("backend article content adapter", () => {
+  it("keeps sanitized CMS inline formatting in headings, lists, tables, and quotes", () => {
+    const content = toBackendArticleContentData({
+      ...article,
+      body: {
+        html: "",
+        blocks: [
+          {
+            id: "h",
+            type: "HEADING",
+            sortOrder: 0,
+            content: {
+              level: 2,
+              text: "Title",
+              html: "<strong>Title</strong>",
+            },
+            plainText: "Title",
+          },
+          {
+            id: "l",
+            type: "PARAGRAPH",
+            sortOrder: 1,
+            content: {
+              listType: "unordered",
+              items: ["one"],
+              itemsHtml: ["<em>one</em>"],
+            },
+            plainText: "one",
+          },
+          {
+            id: "t",
+            type: "PARAGRAPH",
+            sortOrder: 2,
+            content: {
+              table: {
+                headers: ["Key"],
+                headersHtml: ["<strong>Key</strong>"],
+                rows: [["value"]],
+                rowsHtml: [["<code>value</code>"]],
+              },
+            },
+            plainText: "Key | value",
+          },
+          {
+            id: "q",
+            type: "QUOTE",
+            sortOrder: 3,
+            content: { text: "quoted", html: "<em>quoted</em>" },
+            plainText: "quoted",
+          },
+        ],
+      },
+    });
+    const Component = content.compiled.default;
+    const markup = renderToStaticMarkup(<Component />);
+    expect(markup).toContain("<strong>Title</strong>");
+    expect(markup).toContain("<em>one</em>");
+    expect(markup).toContain("<code>value</code>");
+    expect(markup).toContain("<em>quoted</em>");
+  });
+
   it("maps public article API payload to SEOJing content data", () => {
     const content = toBackendArticleContentData(article);
     const Component = content.compiled.default;

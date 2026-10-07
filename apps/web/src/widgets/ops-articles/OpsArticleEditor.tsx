@@ -29,6 +29,7 @@ type EditorArticle = {
   sourceText?: string;
   renderedHtml?: string | null;
   previewRenderedHtml?: string | null;
+  previewIssues?: Array<{ name: string; line: number }>;
   blocks?: ArticleBlock[];
   currentRevisionNumber?: number | null;
   editingRevisionNumber?: number | null;
@@ -54,6 +55,7 @@ type MutationPayload = {
   article?: EditorArticle;
   error?: string;
   status?: number;
+  issues?: Array<{ name: string; line: number }>;
 };
 
 const blockTypes: Array<{ type: BlockType; label: string }> = [
@@ -88,9 +90,10 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
     article.previewRenderedHtml !== article.renderedHtml;
   const conversionIncomplete =
     !isBlockArticle &&
-    (Boolean(
-      article?.previewRenderedHtml?.includes("component omitted by backend"),
-    ) ||
+    (Boolean(article?.previewIssues?.length) ||
+      Boolean(
+        article?.previewRenderedHtml?.includes("component omitted by backend"),
+      ) ||
       (sourceText.includes("<span style=") &&
         !article?.previewRenderedHtml?.includes("<span style=")));
 
@@ -188,7 +191,12 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
       });
       const body = (await response.json()) as MutationPayload;
       if (!response.ok || !body.ok) {
-        throw new Error(body.error ?? `request failed: ${response.status}`);
+        const issue = body.issues?.[0];
+        throw new Error(
+          issue
+            ? `${body.error ?? "본문 변환 미완료"} (${issue.name}, ${issue.line}행)`
+            : (body.error ?? `request failed: ${response.status}`),
+        );
       }
       if (action === "delete") {
         window.location.assign("/ops/articles");
@@ -412,13 +420,25 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
             </p>
           ) : null}
           {conversionIncomplete ? (
-            <p
+            <div
               role="status"
               className="mt-2 text-xs text-amber-700 dark:text-amber-300"
             >
               서버 변환에서 구성요소 또는 글자 서식이 보존되지 않아 공개 전환을
               막았습니다. 편집본은 저장할 수 있습니다.
-            </p>
+              {article.previewIssues?.length ? (
+                <p className="mt-1">
+                  확인할 위치:{" "}
+                  {article.previewIssues
+                    .slice(0, 5)
+                    .map((issue) => `${issue.name} (${issue.line}행)`)
+                    .join(", ")}
+                  {article.previewIssues.length > 5
+                    ? ` 외 ${article.previewIssues.length - 5}곳`
+                    : ""}
+                </p>
+              ) : null}
+            </div>
           ) : null}
           <details className="mt-6 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
             <summary className="cursor-pointer text-sm font-semibold">

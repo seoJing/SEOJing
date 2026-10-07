@@ -111,6 +111,35 @@ describe("/api/ops/articles", () => {
     });
   });
 
+  it("shows the backend's publication gap without exposing article source", async () => {
+    configureBackend();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json(
+          {
+            error: "MDX contains content the CMS renderer cannot preserve.",
+            issues: [{ name: "UnknownWidget", line: 12 }],
+          },
+          { status: 409 },
+        ),
+      ),
+    );
+
+    const response = await POST(
+      new Request("http://localhost/api/ops/articles", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "publish", slug: "cms/draft" }),
+      }),
+    );
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "MDX contains content the CMS renderer cannot preserve.",
+      issues: [{ name: "UnknownWidget", line: 12 }],
+    });
+  });
+
   it("accepts the backend's empty 204 response after permanent deletion", async () => {
     configureBackend();
     const fetchSpy = vi.fn(async () => new Response(null, { status: 204 }));

@@ -216,6 +216,7 @@ function renderBackendArticleBlock(
             ""
           }
           caption={readStringField(content.caption)}
+          size={readImageSize(content.size)}
         />
       );
     case "QUIZ":
@@ -231,10 +232,15 @@ function renderHeadingBlock(content: BackendArticleBlockContent, key: string) {
   const level = clampHeadingLevel(content.level);
   const tag = `h${level}`;
   const text = readStringField(content.text) ?? "";
+  const html = readStringField(content.html);
   return React.createElement(
     tag,
-    { key, id: readStringField(content.id) },
-    text,
+    {
+      key,
+      id: readStringField(content.id),
+      ...(html ? { dangerouslySetInnerHTML: { __html: html } } : {}),
+    },
+    html ? undefined : text,
   );
 }
 
@@ -254,7 +260,9 @@ function renderParagraphBlock(
       <MarkdownList
         key={key}
         items={listItems}
+        itemsHtml={readHtmlArray(content.itemsHtml)}
         ordered={readStringField(content.listType) === "ordered"}
+        start={readPositiveInteger(content.start)}
       />
     );
   }
@@ -281,11 +289,16 @@ function renderQuoteBlock(
   plainText: string | null,
   key: string,
 ) {
+  const html = readStringField(content.html);
   return (
     <blockquote key={key}>
-      <InlineMarkdownText
-        text={readStringField(content.text) ?? plainText ?? ""}
-      />
+      {html ? (
+        <div dangerouslySetInnerHTML={{ __html: html }} />
+      ) : (
+        <InlineMarkdownText
+          text={readStringField(content.text) ?? plainText ?? ""}
+        />
+      )}
     </blockquote>
   );
 }
@@ -442,7 +455,10 @@ function readBlockContent(value: unknown): BackendArticleBlockContent {
 
 interface MarkdownTableData {
   headers: string[];
+  headersHtml?: string[];
   rows: string[][];
+  rowsHtml?: string[][];
+  align?: Array<"left" | "center" | "right" | null>;
 }
 
 function MarkdownTable({ table }: { table: MarkdownTableData }) {
@@ -451,9 +467,20 @@ function MarkdownTable({ table }: { table: MarkdownTableData }) {
       <table>
         <thead>
           <tr>
-            {table.headers.map((header) => (
-              <th key={header}>
-                <InlineMarkdownText text={header} />
+            {table.headers.map((header, index) => (
+              <th
+                key={`${header}-${index}`}
+                style={{ textAlign: table.align?.[index] ?? undefined }}
+              >
+                {table.headersHtml?.[index] ? (
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: table.headersHtml[index],
+                    }}
+                  />
+                ) : (
+                  <InlineMarkdownText text={header} />
+                )}
               </th>
             ))}
           </tr>
@@ -462,8 +489,19 @@ function MarkdownTable({ table }: { table: MarkdownTableData }) {
           {table.rows.map((row, rowIndex) => (
             <tr key={`${row.join("|")}-${rowIndex}`}>
               {row.map((cell, cellIndex) => (
-                <td key={`${cell}-${cellIndex}`}>
-                  <InlineMarkdownText text={cell} />
+                <td
+                  key={`${cell}-${cellIndex}`}
+                  style={{ textAlign: table.align?.[cellIndex] ?? undefined }}
+                >
+                  {table.rowsHtml?.[rowIndex]?.[cellIndex] ? (
+                    <span
+                      dangerouslySetInnerHTML={{
+                        __html: table.rowsHtml[rowIndex]![cellIndex]!,
+                      }}
+                    />
+                  ) : (
+                    <InlineMarkdownText text={cell} />
+                  )}
                 </td>
               ))}
             </tr>
@@ -476,20 +514,31 @@ function MarkdownTable({ table }: { table: MarkdownTableData }) {
 
 function MarkdownList({
   items,
+  itemsHtml,
   ordered,
+  start,
 }: {
   items: string[];
+  itemsHtml?: string[];
   ordered: boolean;
+  start?: number;
 }) {
   const tag = ordered ? "ol" : "ul";
   return React.createElement(
     tag,
-    null,
-    items.map((item, index) => (
-      <li key={`${item}-${index}`}>
-        <InlineMarkdownText text={item} />
-      </li>
-    )),
+    ordered && start && start > 1 ? { start } : null,
+    items.map((item, index) =>
+      itemsHtml?.[index] ? (
+        React.createElement("li", {
+          key: `${item}-${index}`,
+          dangerouslySetInnerHTML: { __html: itemsHtml[index] },
+        })
+      ) : (
+        <li key={`${item}-${index}`}>
+          <InlineMarkdownText text={item} />
+        </li>
+      ),
+    ),
   );
 }
 
@@ -510,7 +559,38 @@ function readMarkdownTable(value: unknown): MarkdownTableData | null {
     })
     .filter((row): row is string[] => row != null);
 
-  return rows.length ? { headers, rows } : null;
+  const headersHtml = readHtmlArray(table.headersHtml);
+  const rowsHtml = Array.isArray(table.rowsHtml)
+    ? table.rowsHtml.map((row) => readHtmlArray(row) ?? [])
+    : undefined;
+  const align = Array.isArray(table.align)
+    ? table.align.map((value) =>
+        value === "left" || value === "center" || value === "right"
+          ? value
+          : null,
+      )
+    : undefined;
+  return rows.length ? { headers, headersHtml, rows, rowsHtml, align } : null;
+}
+
+function readPositiveInteger(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isInteger(value) && value > 0
+    ? value
+    : undefined;
+}
+
+function readImageSize(
+  value: unknown,
+): "sm" | "md" | "lg" | "full" | undefined {
+  return value === "sm" || value === "md" || value === "lg" || value === "full"
+    ? value
+    : undefined;
+}
+
+function readHtmlArray(value: unknown): string[] | undefined {
+  return Array.isArray(value)
+    ? value.map((item) => readStringField(item) ?? "")
+    : undefined;
 }
 
 function InlineMarkdownText({ text }: { text: string }) {
