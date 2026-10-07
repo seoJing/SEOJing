@@ -29,6 +29,7 @@ type EditorArticle = {
   sourceFormat?: string;
   sourceText?: string;
   renderedHtml?: string | null;
+  previewRenderedHtml?: string | null;
   blocks?: ArticleBlock[];
   currentRevisionNumber?: number | null;
   editingRevisionNumber?: number | null;
@@ -102,6 +103,10 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
   const hasStaticPage = migrationManifest.some(
     (entry) => entry.slug === article?.slug,
   );
+  const needsPreviewRefresh =
+    !isBlockArticle &&
+    article?.previewRenderedHtml != null &&
+    article.previewRenderedHtml !== article.renderedHtml;
 
   useEffect(() => {
     if (!hasSelection) return;
@@ -346,8 +351,13 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                   보기에서 편집할 수 있습니다.
                 </p>
               ) : null}
-              <section aria-label="CMS 저장본 미리보기" className="space-y-2">
-                <h3 className="text-sm font-semibold">CMS 저장본 시각 점검</h3>
+              <details
+                aria-label="CMS 저장본 미리보기"
+                className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"
+              >
+                <summary className="cursor-pointer text-sm font-semibold">
+                  CMS 저장본 시각 점검
+                </summary>
                 <p className="text-xs text-zinc-500">
                   서버에서 다시 읽어온 revision{" "}
                   {article.editingRevisionNumber ?? "—"} 기준입니다. 저장 전
@@ -365,29 +375,32 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                     onError={() => {}}
                   />
                 </Suspense>
-                {article.renderedHtml ? (
-                  <details className="rounded-lg border border-zinc-200 p-3 text-xs dark:border-zinc-800">
-                    <summary className="cursor-pointer">
-                      CMS 서버 HTML 변환 결과 확인
-                    </summary>
-                    <p className="mt-2 text-zinc-500">
-                      저장된 revision의 서버 변환 결과입니다. MDX 특수
-                      컴포넌트는 서버 변환에서 지원되지 않을 수 있습니다.
-                    </p>
-                    <iframe
-                      title="CMS 서버 HTML 변환 결과"
-                      srcDoc={htmlPreviewDocument(article.renderedHtml)}
-                      sandbox=""
-                      className="mt-3 h-80 w-full bg-white"
-                    />
-                  </details>
-                ) : null}
-              </section>
+              </details>
+              {(article.previewRenderedHtml ?? article.renderedHtml) ? (
+                <details className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
+                  <summary className="cursor-pointer text-sm font-semibold">
+                    CMS 서버 변환 미리보기
+                  </summary>
+                  <p className="mt-2 text-xs text-zinc-500">
+                    현재 서버 변환기로 저장된 MDX 원문을 해석한 결과입니다. 기존
+                    revision에 저장된 HTML은 다음 저장 시 갱신됩니다.
+                  </p>
+                  <iframe
+                    title="CMS 서버 변환 미리보기"
+                    srcDoc={htmlPreviewDocument(
+                      article.previewRenderedHtml ?? article.renderedHtml ?? "",
+                    )}
+                    sandbox=""
+                    loading="lazy"
+                    className="mt-3 h-80 w-full bg-white"
+                  />
+                </details>
+              ) : null}
               {publicReadback?.status === 200 && publicReadback.html ? (
-                <section className="min-w-0 max-w-full overflow-hidden sm:rounded-2xl sm:border sm:border-zinc-200 sm:bg-white sm:p-6 sm:dark:border-zinc-800 sm:dark:bg-zinc-950">
-                  <h3 className="text-sm font-semibold">
+                <details className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800 sm:p-6">
+                  <summary className="cursor-pointer text-sm font-semibold">
                     CMS 공개 API 본문 비교
-                  </h3>
+                  </summary>
                   <p className="mt-1 text-xs text-zinc-500">
                     현재 발행된 CMS 본문입니다. 비공개 수정본은 발행 전까지
                     반영되지 않습니다.
@@ -399,13 +412,13 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                     loading="lazy"
                     className="mt-5 h-[32rem] w-full min-w-0 max-w-full bg-white sm:h-[40rem] sm:rounded-xl sm:border sm:border-zinc-200"
                   />
-                </section>
+                </details>
               ) : null}
               {article.slug && hasStaticPage ? (
-                <section className="min-w-0 max-w-full overflow-hidden sm:rounded-2xl sm:border sm:border-zinc-200 sm:bg-white sm:p-6 sm:dark:border-zinc-800 sm:dark:bg-zinc-950">
-                  <h3 className="text-sm font-semibold">
+                <details className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800 sm:p-6">
+                  <summary className="cursor-pointer text-sm font-semibold">
                     기존 웹 글 비교 · 저장본과 별개
-                  </h3>
+                  </summary>
                   <p className="mt-1 text-xs text-zinc-500">
                     발행 전 수정 내용은 이 화면에 반영되지 않습니다.
                   </p>
@@ -416,7 +429,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                     loading="lazy"
                     className="mt-5 h-[32rem] w-full min-w-0 max-w-full bg-white sm:h-[40rem] sm:rounded-xl sm:border sm:border-zinc-200"
                   />
-                </section>
+                </details>
               ) : null}
             </div>
           )}
@@ -428,13 +441,17 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
               }
               disabled={
                 isBusy ||
-                !dirty ||
+                (!dirty && !needsPreviewRefresh) ||
                 (isBlockArticle
                   ? blocks.length === 0
                   : !sourceText.trim() || Boolean(mdxEditorError))
               }
             >
-              {status === "saving" ? "저장 중" : "revision 저장"}
+              {status === "saving"
+                ? "저장 중"
+                : needsPreviewRefresh && !dirty
+                  ? "변환 결과 revision 저장"
+                  : "revision 저장"}
             </button>
             <button
               className="rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-semibold text-zinc-800 disabled:cursor-not-allowed disabled:opacity-45 dark:border-zinc-700 dark:text-zinc-100"
@@ -442,6 +459,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
               disabled={
                 isBusy ||
                 dirty ||
+                needsPreviewRefresh ||
                 (article.status === "PUBLISHED" &&
                   !article.hasUnpublishedChanges)
               }
@@ -495,6 +513,15 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
             저장은 비공개 revision만 만듭니다. 저장된 수정본을 확인한 뒤
             발행하세요. 저장하지 않은 변경이 있으면 발행할 수 없습니다.
           </p>
+          {needsPreviewRefresh ? (
+            <p
+              role="status"
+              className="mt-2 text-xs text-amber-700 dark:text-amber-300"
+            >
+              기존 revision의 서버 HTML이 현재 변환 결과와 다릅니다. “변환 결과
+              revision 저장”으로 새 비공개 revision을 만든 뒤 검토·발행하세요.
+            </p>
+          ) : null}
           <details className="mt-6 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
             <summary className="cursor-pointer text-sm font-semibold">
               revision 기록 ({article.revisions?.length ?? 0})

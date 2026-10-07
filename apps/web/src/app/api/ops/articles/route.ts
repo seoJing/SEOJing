@@ -42,6 +42,7 @@ type AdminArticlePayload = {
     sourceFormat?: string;
     sourceText?: string;
     renderedHtml?: string | null;
+    previewRenderedHtml?: string | null;
     blocks?: AdminArticleBlock[];
     currentRevisionNumber?: number | null;
     editingRevisionNumber?: number | null;

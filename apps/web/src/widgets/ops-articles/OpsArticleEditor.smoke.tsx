@@ -16,6 +16,7 @@ describe("OpsArticleEditor", () => {
       sourceFormat: "MDX",
       sourceText: "# Draft heading\n\nSaved revision",
       renderedHtml: "<h1>Draft heading</h1><p>Saved revision</p>",
+      previewRenderedHtml: "<h1>Draft heading</h1><p>Saved revision</p>",
       currentRevisionNumber: 1,
       editingRevisionNumber: 2,
       hasUnpublishedChanges: true,
@@ -57,7 +58,7 @@ describe("OpsArticleEditor", () => {
     await screen.findByText("기존 웹 글 비교 · 저장본과 별개");
     await waitFor(() =>
       expect(
-        screen.getByRole("region", { name: "CMS 저장본 미리보기" }),
+        screen.getByText("CMS 저장본 시각 점검").closest("details"),
       ).toHaveTextContent("Saved revision"),
     );
     fireEvent.click(screen.getByRole("button", { name: "MDX 원문 보기" }));
@@ -73,8 +74,17 @@ describe("OpsArticleEditor", () => {
       screen.getByTitle("CMS 공개 API 본문 비교").getAttribute("srcdoc"),
     ).toContain("Published revision");
     expect(
-      screen.getByTitle("CMS 서버 HTML 변환 결과").getAttribute("srcdoc"),
+      screen.getByTitle("CMS 서버 변환 미리보기").getAttribute("srcdoc"),
     ).toContain("Saved revision");
+    expect(
+      screen.getByText("CMS 저장본 시각 점검").closest("details"),
+    ).not.toHaveAttribute("open");
+    expect(
+      screen.getByText("CMS 공개 API 본문 비교").closest("details"),
+    ).not.toHaveAttribute("open");
+    expect(
+      screen.getByText("기존 웹 글 비교 · 저장본과 별개").closest("details"),
+    ).not.toHaveAttribute("open");
     expect(screen.getByText("발행 대기")).toBeInTheDocument();
     const publish = screen.getByRole("button", {
       name: "latest revision 발행",
@@ -96,11 +106,11 @@ describe("OpsArticleEditor", () => {
     });
     await waitFor(() =>
       expect(
-        screen.getByRole("region", { name: "CMS 저장본 미리보기" }),
+        screen.getByText("CMS 저장본 시각 점검").closest("details"),
       ).toHaveTextContent("Unsaved change"),
     );
     expect(
-      screen.getByRole("region", { name: "CMS 저장본 미리보기" }),
+      screen.getByText("CMS 저장본 시각 점검").closest("details"),
     ).toHaveTextContent("revision 3");
   });
 
@@ -147,5 +157,64 @@ describe("OpsArticleEditor", () => {
       expect.stringContaining("Public backend body"),
     );
     expect(screen.queryByTitle("기존 웹 글 비교 · 저장본과 별개")).toBeNull();
+  });
+
+  it("shows a fresh server conversion instead of the old stored placeholder", async () => {
+    const originalSource = "<Subtitle level={2}>문제 상황</Subtitle>";
+    const freshHtml = '<h2 id="문제-상황">문제 상황</h2>';
+    let storedHtml =
+      "<aside>Subtitle component omitted by backend MDX ingest MVP</aside>";
+    const fetchMock = vi.fn(
+      async (_input: RequestInfo | URL, init?: RequestInit) => {
+        if (init?.method === "POST") {
+          expect(JSON.parse(String(init.body))).toMatchObject({
+            action: "saveRevision",
+            sourceText: originalSource,
+          });
+          storedHtml = freshHtml;
+        }
+        return Response.json({
+          ok: true,
+          article: {
+            slug: "SEOJing/cloudflare-workers-fs-issue",
+            sourceFormat: "MDX",
+            sourceText: originalSource,
+            renderedHtml: storedHtml,
+            previewRenderedHtml: freshHtml,
+            status: "DRAFT",
+          },
+          publicReadback: { status: 404 },
+        });
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <OpsArticleEditor selectedSlug="SEOJing/cloudflare-workers-fs-issue" />,
+    );
+    expect(await screen.findByTitle("CMS 서버 변환 미리보기")).toHaveAttribute(
+      "srcdoc",
+      expect.stringContaining('<h2 id="문제-상황">문제 상황</h2>'),
+    );
+    expect(
+      screen.getByTitle("CMS 서버 변환 미리보기").getAttribute("srcdoc"),
+    ).not.toContain("component omitted");
+    expect(
+      screen.getByRole("button", { name: "변환 결과 revision 저장" }),
+    ).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "latest revision 발행" }),
+    ).toBeDisabled();
+    fireEvent.click(
+      screen.getByRole("button", { name: "변환 결과 revision 저장" }),
+    );
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "latest revision 발행" }),
+      ).toBeEnabled(),
+    );
+    expect(
+      screen.getByRole("button", { name: "revision 저장" }),
+    ).toBeDisabled();
   });
 });
