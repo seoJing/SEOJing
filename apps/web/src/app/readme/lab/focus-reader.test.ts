@@ -195,7 +195,7 @@ describe("focus reader consumer", () => {
     }).toEqual(before);
   });
 
-  it("settles open and reopened inquiries at the end on the client, leaving partial ones alone", () => {
+  it("settles open inquiries at the end on the client, leaving partial and reopened ones alone", () => {
     const api = lab();
     const ds = dataset(api, api.FOCUS_POLICY);
     const { A } = replay(api, ds, api.compileFocus(ds, api.SCRIPT_FOCUS));
@@ -371,7 +371,7 @@ describe("focus reader consumer", () => {
       ).n,
     ).toBe(0);
     api.focusEnd(A, ds);
-    expect(qa.status).toBe("open_at_end");
+    expect(qa.status).toBe("reopened");
   });
 
   it("ignores focus types under the current policy, unknown types, unknown speech codes and unread targets", () => {

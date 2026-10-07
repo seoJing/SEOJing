@@ -9,3 +9,6 @@ coverage
 
 # README Lab page: synced copy of work24-readme docs/design/readme-lab-prototype.html (whitespace-sensitive, not hand-edited)
 apps/web/src/app/readme/lab/readme-lab.html
+
+# README Lab recorded focus fixtures (verbatim copies of work24-readme docs/fixtures/readme-lab, not reformatted)
+apps/web/src/app/readme/lab/__fixtures__/

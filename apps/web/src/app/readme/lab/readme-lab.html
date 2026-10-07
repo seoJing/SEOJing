@@ -883,8 +883,8 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
         <ol class="mt-steps">
           <li><span class="n">1 입력</span><div><h3>공고 본문과 이력서 파일</h3><p>공고의 담당 업무와 자격·우대 사항을 그대로 붙여 넣고, 이력서 파일(PDF·DOCX·TXT·MD)을 올립니다. 파일은 서버 메모리에서 글자만 꺼내고 보관하지 않습니다.</p></div></li>
           <li><span class="n">2 확인</span><div><h3>요건과 문장이 원문과 같은지</h3><p>Codex가 공고에서 뽑은 담당 업무·자격·우대 요건과 파일에서 꺼낸 문장을 원문과 비교해 확인합니다. 여기서 고치지는 않고, 틀렸다면 입력으로 돌아갑니다.</p></div></li>
-          <li><span class="n">3 읽기</span><div><h3>앞에서부터, 그 문장까지만 보고</h3><p>문장 판단 엔진이 그 문장까지 읽은 내용만 보고 메모를 남깁니다. 뒤 문장을 미리 보지 않습니다. 질문이 생기면 남겨 두고, 뒤에서 설명을 찾으면 그 문장과 연결합니다.</p></div></li>
-          <li><span class="n">4 리포트</span><div><h3>먼저 고칠 부분과 유지할 설명</h3><p>다 읽은 뒤 Codex가 이력서 전체 문장과 읽기 메모를 보고 ‘먼저 고칠 부분’과 ‘고칠 때 유지할 설명’을 정리합니다. 항목마다 인용을 누르면 원문 문장으로 이동합니다.</p></div></li>
+          <li><span class="n">3 읽기</span><div><h3>앞에서부터, 그 문장까지만 보고</h3><p>문장 판단 엔진이 그 문장까지 읽은 내용만 보고 메모를 남깁니다. 뒤 문장을 미리 보지 않습니다. 역할·방식·결과·비교 근거·선택 이유에서 의문이 생기면 남겨 두고, 뒤에서 설명을 찾으면 그 문장과 연결합니다. 공고 요건을 문장마다 대조하는 단계가 아닙니다.</p></div></li>
+          <li><span class="n">4 리포트</span><div><h3>먼저 고칠 부분과 유지할 설명</h3><p>다 읽은 뒤 Codex가 이력서 전체 문장과 읽기 메모를 보고 ‘먼저 고칠 부분’과 ‘고칠 때 유지할 설명’을 정리합니다. 공고 요건과 원문 전체의 대조는 이 단계에서 한 번에 합니다. 항목마다 인용을 누르면 원문 문장으로 이동합니다.</p></div></li>
         </ol>
       </section>
       <section class="sec" aria-labelledby="mt-marks-h">
@@ -1620,15 +1620,73 @@ const SampleSource = {
    "auto"   the example only where this page cannot be the deployed site: a file:// page, an opaque origin,
             or a page shown inside another page's frame (an embedded preview). Every top-level http(s)
             page uses the API and never falls back to the example on its own. */
+/* A recorded run (work24-readme docs/fixtures/readme-lab/focus-*.json: actual Jev output in an authored or actual
+   JobView envelope) replayed through the same job-view path the API uses: cumulative snapshots at a fixed pace,
+   cursor filtering, the recorded reconnect replay, invalid_cursor, cancel. Verification only: it is chosen by
+   ?fixture=<name> and never on the deployed copy (its source is pinned to http). Nothing leaves the browser. */
+const FIXTURE_NAME = (() => { try { return (new URLSearchParams(location.search).get("fixture") || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80); } catch { return ""; } })();
+const FIXTURE_PACE = (() => { try { return clamp(parseInt(new URLSearchParams(location.search).get("pace") || "900", 10) || 900, 50, 5000); } catch { return 900; } })();
+const FixtureSource = {
+  kind: "fixture", token: "", fx: null, t0: null, cancelledAt: null, rc: 0, floor: 0,
+  async load() {
+    if (this.fx) return this.fx;
+    let res;
+    try { res = await fetch(`fixtures/${FIXTURE_NAME}.json`, { cache: "no-store", credentials: "same-origin" }); } catch { throw new LabError("upstream_unavailable", 0); }
+    if (!res.ok) throw new LabError("not_found", 404);
+    const fx = await res.json();
+    if (!fx || !fx.prepare || !Array.isArray(fx.snapshots) || !fx.snapshots.length) throw new LabError("response_invalid", 200);
+    this.fx = fx; return fx;
+  },
+  async createSession() { await this.load(); return { access_token: "fixture", expires_at: isoAt(nowMs() + 2 * 3600e3) }; },
+  async prepare() { const fx = await this.load(); return { prepare_id: fx.prepare.prepare_id, input_hash: fx.prepare.input_hash, status: "extracting", error: null, expires_at: fx.prepare.expires_at }; },
+  async getPrepare(id) { const fx = await this.load(); if (id !== fx.prepare.prepare_id) throw new LabError("not_found", 404); return fx.prepare; },
+  async discardPrepare() { /* nothing to drop */ },
+  async start(prep) {
+    const fx = await this.load();
+    if (!prep || prep.prepare_id !== fx.prepare.prepare_id) throw new LabError("prepare_not_ready", 409);
+    this.t0 = nowMs(); this.rc = 0; this.floor = 0; this.cancelledAt = null;
+    return this.view(0);
+  },
+  async getJob(id, after = 0) { await this.load(); return this.view(after); },
+  async cancel() { if (this.t0 == null) throw new LabError("not_found", 404); this.cancelledAt = nowMs(); },
+  view(after) {
+    const fx = this.fx, snaps = fx.snapshots;
+    /* the snapshot for this moment, never behind one already served (a reconnect replay may run ahead of the clock) */
+    let i = Math.min(snaps.length - 1, Math.floor((nowMs() - this.t0) / FIXTURE_PACE));
+    while (i < snaps.length - 1 && snaps[i].next_seq < this.floor) i++;
+    /* recorded snapshots may be incremental (each with its new events only) or cumulative: serve the union so far */
+    const seen = new Set(), all = [];
+    for (let k = 0; k <= i; k++) for (const e of snaps[k].events || []) if (!seen.has(e.seq)) { seen.add(e.seq); all.push(e); }
+    all.sort((a, b) => a.seq - b.seq);
+    let v = { ...snaps[i], events: all };
+    const rc = fx.reconnect;
+    if (rc && Array.isArray(rc.responses) && this.rc < rc.responses.length && v.next_seq >= rc.after_seq) {
+      /* the recorded replay happened at cursor after_seq: hold the stream there until the client polls from it, then
+         serve the recorded responses (a replayed seq first, then the rest) exactly as the server did */
+      if (after < rc.after_seq) { const held = snaps.find(x => x.next_seq === rc.after_seq) || v; v = { ...held, events: all.filter(e => e.seq <= rc.after_seq), next_seq: rc.after_seq }; }
+      else if (after === rc.after_seq) v = rc.responses[this.rc++];
+    }
+    if (after > v.next_seq) throw new LabError("invalid_cursor", 400);
+    this.floor = Math.max(this.floor, v.next_seq);
+    const events = v.events.filter(e => e.seq > after);
+    if (this.cancelledAt != null && !TERMINAL.has(v.status)) {
+      const seq = v.next_seq + 1;
+      return { ...v, status: "cancelled", error: "cancelled", events: [...events, { type: "cancelled", seq }], next_seq: seq };
+    }
+    return { ...v, events };
+  }
+};
 function pickSource() {
   const want = metaContent("readme-lab-source") || "auto";
   if (want === "http") return HttpSource;
+  if (FIXTURE_NAME && (want === "fixture" || want === "sample" || want === "auto")) return FixtureSource;
   if (want === "sample") return SampleSource;
   let framed = true; try { framed = window.top !== window.self; } catch { /* a cross-origin parent */ }
   return location.protocol === "file:" || self.origin === "null" || framed ? SampleSource : HttpSource;
 }
 let SRC = pickSource();
 const isSample = () => SRC.kind === "sample";
+const isFixture = () => SRC.kind === "fixture";
 /* engine names appear only when a real engine produced the text */
 const who = s => (isSample() ? "" : s);
 const quota = s => (isSample() ? "" : s);
@@ -1641,6 +1699,9 @@ const JEV_NAME = "Typesafe Jev(원격 모델)";
 /* what live Jev reading looks at; everything else is the report's final source review */
 const SCOPE_LINE = "공고에서 만든 기준으로 읽으며 연결되는 설명, 남은 질문, 뒤에서 달라진 근거를 기록합니다. 역할·수행 방식·결과·비교 근거는 해당 공고와 주장에 필요할 때만 확인합니다. 실제 채용 담당자의 생각이나 요건 충족 판정은 아닙니다.";
 const SCOPE_SHORT = "공고에 필요한 설명과 근거를 연결하며 읽습니다. 메모가 없다고 모든 요건이 설명됐다는 뜻은 아닙니다.";
+/* the focus policy reads for inquiries, not for a checklist: requirements are compared once, in the final report */
+const SCOPE_FOCUS = "읽는 동안에는 문장의 역할·방식·결과·비교 근거·선택 이유에서 생긴 의문과 뒤의 설명을 연결합니다. 공고 요건은 읽는 동안 문장마다 대조하지 않고, 다 읽은 뒤 리포트가 원문 전체와 공고를 직접 대조합니다. 실제 채용 담당자의 생각이나 요건 충족 판정은 아닙니다.";
+const SCOPE_FOCUS_SHORT = "의문과 설명을 연결하며 읽었습니다. 공고 요건 대조는 리포트에서 합니다.";
 
 /* Refresh resume: only the bearer token and ids live in sessionStorage. Never document text or file names. */
 const REC_KEY = "readme-lab-run";
@@ -1772,11 +1833,12 @@ function applyFocusEvent(A, e, ds, fresh, trans) {
   }
   return false;
 }
-/* at the end of reading every still-open inquiry is settled by the screen, not by the server (parked ones included) */
+/* at the end of reading every still-open inquiry is settled by the screen, not by the server (parked ones included);
+   a reopened question keeps 다시 열림, the state the final report also keeps */
 function focusEnd(A, ds) {
   const last = ds.order[ds.order.length - 1];
   for (const q of A.q.values()) {
-    if (q.status !== "open" && q.status !== "reopened") continue;
+    if (q.status !== "open") continue;
     const u = { question_id: q.id, previous_status: q.status, status: "open_at_end", at_unit_id: last, evidence_unit_ids: [], state_version: (q.hist[q.hist.length - 1]?.state_version || 0) + 1, pseudo: true };
     q.status = "open_at_end"; q.hist.push(u); A.updates.push(u);
   }
@@ -2560,9 +2622,10 @@ function afterShown() {
   renderBar(); renderLedger(); renderFeedState(); renderNewbar(); updateTrack();
 }
 /* the one announcement for a stop; the on-screen notice is plain text so it is not read twice */
+const stoppedAfter = () => (doneSent() ? `${doneSent()}번째 문장 뒤에서 멈췄습니다.` : "첫 문장을 읽기 전에 멈췄습니다.");
 function onTerminal() {
   const R = S.srv;
-  if (R.failed) alertMsg(R.readingCompleted ? `다 읽었지만 리포트를 만들지 못했습니다. ${failText(R.failed.error)}` : `${doneSent()}번째 문장 뒤에서 멈췄습니다. ${failText(R.failed.error)}`);
+  if (R.failed) alertMsg(R.readingCompleted ? `다 읽었지만 리포트를 만들지 못했습니다. ${failText(R.failed.error)}` : `${stoppedAfter()} ${failText(R.failed.error)}`);
   else if (R.cancelled) announce(R.readingCompleted ? (cancelledByUser() ? "리포트 작성을 취소했습니다" : "리포트 작성이 취소됐습니다") : cancelledByUser() ? "읽기를 취소했습니다" : "읽기가 취소됐습니다");
   renderS03();
 }
@@ -2948,7 +3011,7 @@ function renderNotices(force) {
   if (S.conn.state === "disconnected") box.append(notice([h("p", null, "읽은 부분까지는 남아 있습니다. 1분 안에 다시 연결되지 않으면 서버 작업이 취소될 수 있습니다.")]));
   if (S.ui.invalidCursor) box.append(notice([h("p", null, "다시 불러오면 지금까지의 읽기 기록을 한꺼번에 다시 받아 옵니다. " + (isSample() ? "처음부터 다시 읽지는 않습니다." : "모델이 다시 읽지 않고 준비 횟수도 쓰지 않습니다.")), row(btnText("다시 불러오기", reloadFromStart, "", "reload"))]));
   if (term && !S.ui.failAck) {
-    if (failed && !R.readingCompleted) box.append(notice([h("p", null, `${doneSent()}번째 문장 뒤에서 멈췄습니다. ${failText(failed.error)} 읽은 부분과 메모는 그대로 남아 있고, 리포트는 만들지 않았습니다.`), cap, row(restartBtn(), ack())]));
+    if (failed && !R.readingCompleted) box.append(notice([h("p", null, `${stoppedAfter()} ${failText(failed.error)} 읽은 부분과 메모는 그대로 남아 있고, 리포트는 만들지 않았습니다.`), cap, row(restartBtn(), ack())]));
     else if (failed) box.append(notice([h("p", null, `리포트를 만들지 못했습니다. ${failText(failed.error)} ${total}문장은 모두 읽었고, 읽기 메모와 표시는 그대로 볼 수 있습니다.`), cap, row(restartBtn(), ack())]));
     else if (R.cancelled) {
       const [wo, wi] = R.readingCompleted ? ["리포트 작성을", "리포트 작성이"] : ["읽기를", "읽기가"];
@@ -3224,7 +3287,7 @@ function renderReqPanel() {
     if (rep) for (const it of rep.items) if ((it.requirement_ids || []).includes(r.id)) for (const c of it.citations) { const ci = citeInfo(ds, c); if (ci && !cites.includes(ci.uid)) cites.push(ci.uid); }
     if (list.length) row.append(h("div", { class: "links-l" }, list.map(u => h("div", { class: "lk" }, h("button", { type: "button", class: "qbtn", "data-k": r.id + u, onclick: () => showUnitInDoc(u) }, shortQuote(ds, u, 22)), h("span", { class: "loc" }, whereText(ds, u))))));
     else if (cites.length) row.append(h("p", { class: "none" }, "읽는 동안 연결한 문장은 없습니다."));
-    else row.append(h("p", { class: "none" }, done ? "읽는 동안 연결한 문장이 없습니다. 이 요건을 갖추지 못했다는 뜻은 아닙니다." : "아직 연결된 문장이 없습니다."));
+    else row.append(h("p", { class: "none" }, done ? (isFocus() ? "읽는 동안에는 요건을 문장마다 대조하지 않습니다. 다 읽은 뒤 리포트가 공고와 원문 전체를 직접 대조합니다. 이 요건을 갖추지 못했다는 뜻은 아닙니다." : "읽는 동안 연결한 문장이 없습니다. 이 요건을 갖추지 못했다는 뜻은 아닙니다.") : "아직 연결된 문장이 없습니다."));
     if (cites.length) row.append(h("p", { class: "sub-h" }, "리포트에서 연결"), h("div", { class: "links-l" }, cites.map(u => h("div", { class: "lk" }, h("button", { type: "button", class: "qbtn", "data-k": "r" + r.id + u, onclick: () => showUnitInDoc(u) }, shortQuote(ds, u, 22)), h("span", { class: "loc" }, whereText(ds, u))))));
     box.append(row);
   });
@@ -3234,7 +3297,7 @@ function renderPanelLines() {
   setText($("#check-line"), isSample() ? "메모는 확정된 판단이 아닙니다. 문장을 직접 확인해 주세요."
     : isJev() ? `메모는 ${JEV_NAME}가 남긴 초안입니다. 이력서용으로 보정하지 않아 틀릴 수 있으니 문장을 직접 확인해 주세요.`
     : isLaya() ? "메모는 학습 전 모델의 초안이라 틀릴 수 있습니다. 문장을 직접 확인해 주세요." : "메모는 모델이 남긴 초안이라 틀릴 수 있습니다. 문장을 직접 확인해 주세요.");
-  const sc = $("#scope-line"); sc.hidden = !isJev(); setText(sc, isJev() ? SCOPE_LINE : "");
+  const sc = $("#scope-line"); sc.hidden = !isJev(); setText(sc, isFocus() ? SCOPE_FOCUS : isJev() ? SCOPE_LINE : "");
   setText($("#gaze-line"), isSample() ? "둥근 표시는 지금 읽는 문장을 가리킬 뿐, 실제로 어디를 봤는지는 아닙니다." : "둥근 표시는 지금 읽는 문장을 가리킬 뿐, 모델이 실제로 본 곳은 아닙니다.");
 }
 function renderS03() {
@@ -3504,8 +3567,13 @@ function resetS01(o = {}) {
   if (o.keep && S.s01) { S.s01.confirmCancel = false; return; }
   S.s01 = { file: null, confirmCancel: false }; $("#job-text").value = "";
 }
-function useSample() {
+async function useSample() {
   if (prepActive()) return;
+  if (isFixture()) {
+    let fx; try { fx = await SRC.load(); } catch { alertMsg("기록된 실행을 불러오지 못했습니다."); return; }
+    $("#job-text").value = fx.prepare.job?.text || ""; S.s01.file = { name: `${fx.prepare.document?.doc_id || "fixture"}.md`, state: "ok", sample: true }; renderS01();
+    announce("기록된 실행의 공고와 이력서를 넣었습니다"); return;
+  }
   $("#job-text").value = SAMPLE_JOB_TEXT; S.s01.file = sampleFile(); renderS01();
   announce("예시 공고와 이력서를 넣었습니다");
 }
@@ -3520,10 +3588,14 @@ function renderS01() {
   if (!S.s01) resetS01();
   const ta = $("#job-text"), locked = prepActive(), js = jobTextState(), f = S.s01.file, sample = isSample();
   ta.readOnly = locked;
-  $("#sample-row").hidden = !sample; $("#use-sample").disabled = locked;
+  const fixture = isFixture();
+  $("#sample-row").hidden = !(sample || fixture); $("#use-sample").disabled = locked;
+  setText($("#use-sample"), fixture ? "기록된 실행의 공고와 이력서 넣기" : "예시 공고와 이력서로 해 보기");
   setText($("#s01-time"), sample ? "예시는 미리 써 둔 읽기 기록을 문장마다 다시 보여 줍니다. 30초쯤 걸립니다."
+    : fixture ? `검증용 재생입니다. 기록된 실행 ${FIXTURE_NAME}을(를) 같은 전송 경로로 다시 보여 줍니다.`
     : "준비와 리포트는 보통 각각 1분 안팎이고, 읽기는 문장 수에 따라 길어집니다. 읽기와 리포트가 합쳐 10분을 넘으면 자동으로 멈춥니다.");
   setText($("#send-line"), sample ? "지금은 서버에 연결하지 않고 미리 준비한 예시만 볼 수 있습니다. 입력한 내용은 이 브라우저 밖으로 나가지 않습니다."
+    : fixture ? "서버에 연결하지 않습니다. 기록된 실행 파일만 읽고, 입력한 내용은 이 브라우저 밖으로 나가지 않습니다."
     : "준비를 누르면 공고 본문이 요건 정리를 위해 OpenAI Codex로 갑니다. 읽는 동안에는 그때까지 읽은 이력서 문장 전부와 공고 요건 문구·확인 조건이 Typesafe Jev로, 다 읽은 뒤에는 이력서 전체 글과 읽기 메모가 리포트를 위해 Codex로 갑니다. 올린 파일 자체는 두 모델 제공자에게 보내지 않습니다.");
   $("#where-01-d").hidden = sample; $("#quota-line").hidden = sample; $("#file-privacy").hidden = sample;
   const cnt = $("#job-count"); cnt.textContent = `${fmt(ta.value.length)}${NB}/${NB}6,000자`; cnt.classList.toggle("over", !!js.over);
@@ -3612,6 +3684,7 @@ async function startPrepare() {
   try {
     let input;
     if (isSample()) input = { sample: true, job_text: jobText };
+    else if (isFixture()) input = { fixture: FIXTURE_NAME, job_text: jobText };
     else {
       const b64 = await readBase64(f.blob);
       if (b64.length > 2666672) throw new LabError("request_too_large", 413);
@@ -3952,7 +4025,7 @@ function renderReport(o = {}) {
   const rail = h("nav", { class: "rail", "aria-label": "리포트 목차" }, h("ol", null, navItems.map(([id, t, n]) => h("li", null, h("a", { href: "#" + id, "data-sec": id }, h("span", null, t), n ? h("span", { class: "num" }, String(n)) : null)))));
   const anchors = h("nav", { class: "anchors", "aria-label": "리포트 목차" }, navItems.map(([id, t, n]) => h("a", { href: "#" + id }, n ? `${t} ${n}` : t)));
   const main = h("div", { class: "r-main" }, head, anchors);
-  if (zero) main.append(h("p", { class: "r-zero" }, (isJev() ? "이번 읽기에서는 메모가 남지 않았습니다. " + SCOPE_SHORT : isLaya() && !isSample() ? "이번 읽기에서 Laya 기본 모델은 확신이 낮아 메모를 남기지 않았습니다." : "이번 읽기에서는 메모가 남지 않았습니다.") + " 아래 항목은 다 읽은 뒤 " + who("Codex가 ") + "이력서 전체 문장을 보고 정리한 것입니다."));
+  if (zero) main.append(h("p", { class: "r-zero" }, (isJev() ? "이번 읽기에서는 메모가 남지 않았습니다. " + (isFocus() ? SCOPE_FOCUS_SHORT : SCOPE_SHORT) : isLaya() && !isSample() ? "이번 읽기에서 Laya 기본 모델은 확신이 낮아 메모를 남기지 않았습니다." : "이번 읽기에서는 메모가 남지 않았습니다.") + " 아래 항목은 다 읽은 뒤 " + who("Codex가 ") + "이력서 전체 문장을 보고 정리한 것입니다."));
   const seenCite = new Map();
   for (const group of groups) {
     const id = group.id;
@@ -4060,7 +4133,7 @@ function reqView(rep, A) {
     linked.sort((a, b) => ds.order.indexOf(a.uid) - ds.order.indexOf(b.uid));
     const lst = h("div", { class: "lst" });
     if (r.kind === "other") lst.append(h("p", { class: "r-empty", style: "border:0;padding:0" }, "공고 참고사항입니다. 실제 서류 제출 여부나 고용조건 수용 여부는 이 이력서만으로 판단하지 않습니다."));
-    else if (!linked.length) lst.append(h("p", { class: "r-empty", style: "border:0;padding:0" }, "이번 읽기에서 연결한 문장이 없습니다. 이 요건을 갖추지 못했다는 뜻은 아닙니다."));
+    else if (!linked.length) lst.append(h("p", { class: "r-empty", style: "border:0;padding:0" }, isFocus() ? "읽는 동안에는 요건을 문장마다 대조하지 않습니다. 리포트가 공고와 원문 전체를 직접 대조한 인용을 보여 줍니다. 이 요건을 갖추지 못했다는 뜻은 아닙니다." : "이번 읽기에서 연결한 문장이 없습니다. 이 요건을 갖추지 못했다는 뜻은 아닙니다."));
     for (const l of linked) {
       const b = h("button", { type: "button", class: "cite" }, h("span", { class: "loc" }, `${whereText(ds, l.uid)} · ${l.tag}`), h("q", { class: "cite-q" }, shortQuote(ds, l.uid, 60).slice(1, -1)));
       b.id = `rv-${r.id}-${l.uid}`;
