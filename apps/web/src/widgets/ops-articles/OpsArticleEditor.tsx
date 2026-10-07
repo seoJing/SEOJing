@@ -3,7 +3,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 
 import { ArticleImage, ArticleQuiz, ArticleQuizItem, CodeBlock } from "@app/ui";
-import migrationManifest from "@/shared/content/mdx-migration-manifest.json";
 
 import {
   normalizeBlocks,
@@ -44,20 +43,9 @@ type EditorArticle = {
   updatedAt?: string;
 };
 
-type PublicReadback = {
-  status?: number;
-  title?: string;
-  updatedAt?: string;
-  publishedAt?: string | null;
-  htmlLength?: number;
-  html?: string;
-  missing?: boolean;
-};
-
 type EditorPayload = {
   ok?: boolean;
   article?: EditorArticle;
-  publicReadback?: PublicReadback;
   error?: string;
 };
 
@@ -77,10 +65,6 @@ const blockTypes: Array<{ type: BlockType; label: string }> = [
   { type: "QUIZ", label: "퀴즈" },
 ];
 
-function htmlPreviewDocument(html: string): string {
-  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline'"><style>body{font:16px/1.75 system-ui,sans-serif;max-width:760px;margin:0 auto;padding:24px;color:#202124}h1,h2,h3{line-height:1.3}pre{overflow:auto;padding:16px;background:#18181b;color:#fff}code{font-family:ui-monospace,monospace}table{border-collapse:collapse;display:block;overflow:auto}td,th{border:1px solid #ddd;padding:8px}img{max-width:100%;height:auto}</style></head><body>${html}</body></html>`;
-}
-
 export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
   const [payload, setPayload] = useState<EditorPayload | null>(null);
   const [blocks, setBlocks] = useState<ArticleBlock[]>([]);
@@ -88,7 +72,6 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("SEOJing");
   const [sourceText, setSourceText] = useState("");
-  const [showRawMdx, setShowRawMdx] = useState(false);
   const [mdxEditorError, setMdxEditorError] = useState("");
   const [status, setStatus] = useState<
     "idle" | "loading" | "saving" | "publishing"
@@ -97,16 +80,19 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
 
   const isBusy = status !== "idle";
   const article = payload?.article;
-  const publicReadback = payload?.publicReadback;
   const hasSelection = selectedSlug.trim().length > 0;
   const isBlockArticle = article?.sourceFormat === "BLOCKS";
-  const hasStaticPage = migrationManifest.some(
-    (entry) => entry.slug === article?.slug,
-  );
   const needsPreviewRefresh =
     !isBlockArticle &&
     article?.previewRenderedHtml != null &&
     article.previewRenderedHtml !== article.renderedHtml;
+  const conversionIncomplete =
+    !isBlockArticle &&
+    (Boolean(
+      article?.previewRenderedHtml?.includes("component omitted by backend"),
+    ) ||
+      (sourceText.includes("<span style=") &&
+        !article?.previewRenderedHtml?.includes("<span style=")));
 
   useEffect(() => {
     if (!hasSelection) return;
@@ -161,6 +147,16 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
     sourceText,
     title,
   ]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   async function mutate(
     action:
@@ -245,7 +241,6 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
       <ArticleStatusCard
         article={article}
         message={message}
-        publicReadback={publicReadback}
         selectedSlug={selectedSlug}
       />
 
@@ -288,148 +283,51 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                 <div>
                   <h3 className="text-sm font-semibold">본문 편집</h3>
                   <p className="mt-1 text-xs text-zinc-500">
-                    글처럼 보이는 화면에서 본문을 편집할 수 있습니다. 원본 MDX와
-                    특수 컴포넌트는 원문 보기에서 확인하세요.
+                    글 본문에서 바로 편집하고, 필요한 구성요소를 추가하거나
+                    제거할 수 있습니다.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium dark:border-zinc-700"
-                  onClick={() => {
-                    setMdxEditorError("");
-                    setShowRawMdx(!showRawMdx);
-                  }}
-                >
-                  {showRawMdx ? "시각 편집으로 보기" : "MDX 원문 보기"}
-                </button>
               </div>
-              {showRawMdx ? (
-                <TextAreaField
-                  label="MDX 원문"
-                  value={sourceText}
-                  onChange={(next) => {
-                    const restored = preserveMdxLineEndings(
-                      next,
-                      sourceText,
-                      sourceText,
-                    );
-                    setSourceText(restored);
-                    setMdxEditorError("");
-                  }}
+              <Suspense fallback={<p>시각 편집기 불러오는 중…</p>}>
+                <MdxRichEditor
+                  key={`${selectedSlug}:${article.editingRevisionNumber ?? 0}`}
+                  markdown={splitMdxFrontmatter(sourceText).body}
                   disabled={isBusy}
-                  mono
-                  minimalMobile
-                  rows={24}
+                  onReplace={(start, end, replacement) => {
+                    const { prefix, body } = splitMdxFrontmatter(sourceText);
+                    setMdxEditorError("");
+                    setSourceText(
+                      prefix +
+                        body.slice(0, start) +
+                        preserveMdxLineEndings(
+                          replacement,
+                          body.slice(start, end),
+                          sourceText,
+                        ) +
+                        body.slice(end),
+                    );
+                  }}
+                  onError={setMdxEditorError}
                 />
-              ) : (
-                <Suspense fallback={<p>시각 편집기 불러오는 중…</p>}>
-                  <MdxRichEditor
-                    key={`${selectedSlug}:${article.editingRevisionNumber ?? 0}:${showRawMdx}`}
-                    markdown={splitMdxFrontmatter(sourceText).body}
-                    disabled={isBusy}
-                    onReplace={(start, end, replacement) => {
-                      const { prefix, body } = splitMdxFrontmatter(sourceText);
-                      setMdxEditorError("");
-                      setSourceText(
-                        prefix +
-                          body.slice(0, start) +
-                          preserveMdxLineEndings(
-                            replacement,
-                            body.slice(start, end),
-                            sourceText,
-                          ) +
-                          body.slice(end),
-                      );
-                    }}
-                    onError={setMdxEditorError}
-                  />
-                </Suspense>
-              )}
+              </Suspense>
               {mdxEditorError ? (
-                <p role="alert" className="text-sm text-rose-700">
-                  시각 편집기가 이 MDX를 읽지 못했습니다: {mdxEditorError}. 원문
-                  보기에서 편집할 수 있습니다.
-                </p>
-              ) : null}
-              <details
-                aria-label="CMS 저장본 미리보기"
-                className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"
-              >
-                <summary className="cursor-pointer text-sm font-semibold">
-                  CMS 저장본 시각 점검
-                </summary>
-                <p className="text-xs text-zinc-500">
-                  서버에서 다시 읽어온 revision{" "}
-                  {article.editingRevisionNumber ?? "—"} 기준입니다. 저장 전
-                  수정 내용은 위 편집 화면에서 확인하세요. 특수 구성요소는 이
-                  화면에서 생략될 수 있습니다.
-                </p>
-                <Suspense fallback={<p>저장본 미리보기 불러오는 중…</p>}>
-                  <MdxRichEditor
-                    markdown={
-                      splitMdxFrontmatter(article.sourceText ?? "").body
-                    }
-                    disabled={false}
-                    readOnly
-                    onReplace={() => {}}
-                    onError={() => {}}
+                <div role="alert" className="text-sm text-rose-700">
+                  시각 편집기가 이 MDX를 읽지 못했습니다: {mdxEditorError}.
+                  원문으로 수정할 수 있습니다.
+                  <TextAreaField
+                    label="MDX 원문"
+                    value={sourceText}
+                    onChange={(next) => {
+                      setSourceText(
+                        preserveMdxLineEndings(next, sourceText, sourceText),
+                      );
+                      setMdxEditorError("");
+                    }}
+                    disabled={isBusy}
+                    mono
+                    rows={24}
                   />
-                </Suspense>
-              </details>
-              {(article.previewRenderedHtml ?? article.renderedHtml) ? (
-                <details className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
-                  <summary className="cursor-pointer text-sm font-semibold">
-                    CMS 서버 변환 미리보기
-                  </summary>
-                  <p className="mt-2 text-xs text-zinc-500">
-                    현재 서버 변환기로 저장된 MDX 원문을 해석한 결과입니다. 기존
-                    revision에 저장된 HTML은 다음 저장 시 갱신됩니다.
-                  </p>
-                  <iframe
-                    title="CMS 서버 변환 미리보기"
-                    srcDoc={htmlPreviewDocument(
-                      article.previewRenderedHtml ?? article.renderedHtml ?? "",
-                    )}
-                    sandbox=""
-                    loading="lazy"
-                    className="mt-3 h-80 w-full bg-white"
-                  />
-                </details>
-              ) : null}
-              {publicReadback?.status === 200 && publicReadback.html ? (
-                <details className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800 sm:p-6">
-                  <summary className="cursor-pointer text-sm font-semibold">
-                    CMS 공개 API 본문 비교
-                  </summary>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    현재 발행된 CMS 본문입니다. 비공개 수정본은 발행 전까지
-                    반영되지 않습니다.
-                  </p>
-                  <iframe
-                    title="CMS 공개 API 본문 비교"
-                    srcDoc={htmlPreviewDocument(publicReadback.html)}
-                    sandbox=""
-                    loading="lazy"
-                    className="mt-5 h-[32rem] w-full min-w-0 max-w-full bg-white sm:h-[40rem] sm:rounded-xl sm:border sm:border-zinc-200"
-                  />
-                </details>
-              ) : null}
-              {article.slug && hasStaticPage ? (
-                <details className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800 sm:p-6">
-                  <summary className="cursor-pointer text-sm font-semibold">
-                    기존 웹 글 비교 · 저장본과 별개
-                  </summary>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    발행 전 수정 내용은 이 화면에 반영되지 않습니다.
-                  </p>
-                  <iframe
-                    title="기존 웹 글 비교 · 저장본과 별개"
-                    src={`/blog/${article.slug.split("/").map(encodeURIComponent).join("/")}`}
-                    sandbox="allow-same-origin"
-                    loading="lazy"
-                    className="mt-5 h-[32rem] w-full min-w-0 max-w-full bg-white sm:h-[40rem] sm:rounded-xl sm:border sm:border-zinc-200"
-                  />
-                </details>
+                </div>
               ) : null}
             </div>
           )}
@@ -441,7 +339,6 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
               }
               disabled={
                 isBusy ||
-                (!dirty && !needsPreviewRefresh) ||
                 (isBlockArticle
                   ? blocks.length === 0
                   : !sourceText.trim() || Boolean(mdxEditorError))
@@ -451,68 +348,60 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                 ? "저장 중"
                 : needsPreviewRefresh && !dirty
                   ? "변환 결과 revision 저장"
-                  : "revision 저장"}
+                  : "저장"}
             </button>
             <button
               className="rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-semibold text-zinc-800 disabled:cursor-not-allowed disabled:opacity-45 dark:border-zinc-700 dark:text-zinc-100"
-              onClick={() => void mutate("publish")}
+              onClick={() => {
+                if (
+                  article.status === "PUBLISHED" &&
+                  !article.hasUnpublishedChanges
+                ) {
+                  if (window.confirm("이 글을 비공개로 전환할까요?"))
+                    void mutate("unpublish");
+                } else if (window.confirm("저장된 최신 수정본을 공개할까요?")) {
+                  void mutate("publish");
+                }
+              }}
               disabled={
                 isBusy ||
                 dirty ||
-                needsPreviewRefresh ||
-                (article.status === "PUBLISHED" &&
-                  !article.hasUnpublishedChanges)
+                ((article.status !== "PUBLISHED" ||
+                  article.hasUnpublishedChanges) &&
+                  (needsPreviewRefresh || conversionIncomplete))
               }
             >
-              {status === "publishing" ? "발행 중" : "latest revision 발행"}
+              {status === "publishing"
+                ? "변경 중"
+                : article.status === "PUBLISHED" &&
+                    !article.hasUnpublishedChanges
+                  ? "공개 → 비공개"
+                  : "비공개 → 공개"}
             </button>
-            <button
-              className="rounded-full px-5 py-2.5 text-sm font-semibold text-zinc-500 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-45 dark:text-zinc-400 dark:hover:text-zinc-100"
-              onClick={() => void reload()}
-              disabled={isBusy}
-            >
-              다시 불러오기
-            </button>
-            {article?.status === "PUBLISHED" ? (
-              <button
-                className="rounded-full border border-amber-400 px-5 py-2.5 text-sm font-semibold text-amber-800 disabled:opacity-45"
-                onClick={() =>
-                  window.confirm("공개 글을 비공개 초안으로 전환할까요?") &&
-                  void mutate("unpublish")
-                }
-                disabled={isBusy}
-              >
-                비공개
-              </button>
-            ) : null}
-            {article?.status !== "ARCHIVED" ? (
-              <button
-                className="rounded-full border border-zinc-400 px-5 py-2.5 text-sm font-semibold disabled:opacity-45"
-                onClick={() =>
-                  window.confirm("이 글을 보관하고 공개 목록에서 내릴까요?") &&
-                  void mutate("archive")
-                }
-                disabled={isBusy}
-              >
-                보관
-              </button>
-            ) : null}
             <button
               className="rounded-full border border-rose-400 px-5 py-2.5 text-sm font-semibold text-rose-700 disabled:opacity-45"
               onClick={() =>
                 window.confirm(
-                  "영구 삭제합니다. 모든 revision과 block을 되돌릴 수 없습니다. 계속할까요?",
+                  isBlockArticle
+                    ? "CMS 글과 모든 revision을 영구 삭제합니다. 계속할까요?"
+                    : "CMS 글과 모든 revision을 영구 삭제합니다. 기존 MDX 파일과 /blog 공개 글은 삭제되지 않습니다. 계속할까요?",
                 ) && void mutate("delete")
               }
               disabled={isBusy}
             >
-              영구 삭제
+              삭제
             </button>
           </div>
           <p className="mt-3 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-            저장은 비공개 revision만 만듭니다. 저장된 수정본을 확인한 뒤
-            발행하세요. 저장하지 않은 변경이 있으면 발행할 수 없습니다.
+            저장은 새 비공개 revision을 만듭니다. 공개 상태의 글도 저장된 최신
+            수정본은 공개로 전환하기 전까지 반영되지 않습니다.
           </p>
+          {!isBlockArticle ? (
+            <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+              공개·비공개 전환은 CMS API에만 적용됩니다. 기존 /blog MDX 경로는
+              별도 전환 전까지 그대로입니다.
+            </p>
+          ) : null}
           {needsPreviewRefresh ? (
             <p
               role="status"
@@ -520,6 +409,15 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
             >
               기존 revision의 서버 HTML이 현재 변환 결과와 다릅니다. “변환 결과
               revision 저장”으로 새 비공개 revision을 만든 뒤 검토·발행하세요.
+            </p>
+          ) : null}
+          {conversionIncomplete ? (
+            <p
+              role="status"
+              className="mt-2 text-xs text-amber-700 dark:text-amber-300"
+            >
+              서버 변환에서 구성요소 또는 글자 서식이 보존되지 않아 공개 전환을
+              막았습니다. 편집본은 저장할 수 있습니다.
             </p>
           ) : null}
           <details className="mt-6 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
@@ -604,7 +502,7 @@ function NewCmsArticleForm() {
         );
       }
       window.location.assign(
-        `/ops/articles?slug=${encodeURIComponent(body.article.slug)}`,
+        `/ops/articles/edit?slug=${encodeURIComponent(body.article.slug)}`,
       );
     } catch (error) {
       setMessage(
@@ -778,7 +676,6 @@ function BlockEditor({
           canMoveUp={index > 0}
         />
       ))}
-      <CmsBlockPreview blocks={blocks} />
     </div>
   );
 }
@@ -972,28 +869,10 @@ function BlockCard({
           />
         </>
       ) : null}
+      <div className="article-prose mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+        <CmsPreviewBlock block={block} />
+      </div>
     </article>
-  );
-}
-
-function CmsBlockPreview({ blocks }: { blocks: ArticleBlock[] }) {
-  return (
-    <section className="mt-8 rounded-3xl border border-dashed border-zinc-300 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-950">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold">작성 중 미리보기</h3>
-        <span className="text-xs text-zinc-500">
-          기존 공개 글 컴포넌트 기준
-        </span>
-      </div>
-      <div className="article-prose mt-5">
-        {blocks.map((block, index) => (
-          <CmsPreviewBlock
-            block={block}
-            key={block.id ?? `${block.type}-preview-${index}`}
-          />
-        ))}
-      </div>
-    </section>
   );
 }
 
@@ -1134,12 +1013,10 @@ function arrayValue(value: unknown): string[] {
 
 function ArticleStatusCard({
   article,
-  publicReadback,
   message,
   selectedSlug,
 }: {
   article?: EditorArticle;
-  publicReadback?: PublicReadback;
   message: string;
   selectedSlug: string;
 }) {
@@ -1147,45 +1024,41 @@ function ArticleStatusCard({
     <div className="sm:rounded-3xl sm:border sm:border-zinc-200 sm:bg-white/80 sm:p-5 sm:shadow-sm sm:dark:border-zinc-800 sm:dark:bg-zinc-950/70">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
-            Selected article
+          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            선택한 글 · {selectedSlug}
           </p>
           <h2 className="mt-1 break-all text-2xl font-semibold">
-            {selectedSlug}
+            {article?.title ?? selectedSlug}
           </h2>
-          <a
-            href={`/blog/${selectedSlug}`}
-            className="mt-2 inline-block text-sm underline underline-offset-4"
-          >
-            공개 글 보기
-          </a>
+          {article &&
+          (article.sourceFormat !== "BLOCKS" ||
+            article.status === "PUBLISHED") ? (
+            <a
+              href={`/blog/${selectedSlug}`}
+              className="mt-2 inline-block text-sm underline underline-offset-4"
+            >
+              공개 글 보기
+            </a>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2 text-xs">
-          <StatusPill label="format" value={article?.sourceFormat ?? "-"} />
-          <StatusPill label="status" value={article?.status ?? "-"} />
           <StatusPill
-            label={
-              article?.status === "PUBLISHED"
-                ? "공개 revision"
-                : "현재 revision"
-            }
-            value={String(article?.currentRevisionNumber ?? "-")}
+            label="형식"
+            value={article?.sourceFormat === "BLOCKS" ? "CMS" : "MDX"}
           />
           <StatusPill
-            label="편집 revision"
-            value={String(article?.editingRevisionNumber ?? "-")}
+            label="상태"
+            value={
+              article?.status === "PUBLISHED"
+                ? "공개"
+                : article?.status === "ARCHIVED"
+                  ? "보관"
+                  : "비공개"
+            }
           />
           {article?.hasUnpublishedChanges ? (
-            <StatusPill label="수정본" value="발행 대기" />
+            <StatusPill label="수정본" value="저장됨 · 비공개" />
           ) : null}
-          <StatusPill
-            label="public"
-            value={
-              publicReadback?.missing
-                ? "missing"
-                : String(publicReadback?.status ?? "-")
-            }
-          />
         </div>
       </div>
       {message ? (

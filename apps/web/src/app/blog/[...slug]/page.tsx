@@ -116,7 +116,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         <PostGrid rootPath={rootPath} title="같은 섹션의 대표 이미지" />
         <div className="mt-16 border-t border-foreground/10 pt-5 text-right">
           <a
-            href={`/ops/articles?slug=${encodeURIComponent(slug.join("/"))}`}
+            href={`/ops/articles/edit?slug=${encodeURIComponent(slug.join("/"))}`}
             className="text-xs text-foreground/35 transition-colors hover:text-foreground/65"
             title="관리자 전용 · Cloudflare Access 로그인 필요"
           >

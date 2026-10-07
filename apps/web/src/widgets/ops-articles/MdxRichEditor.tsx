@@ -5,6 +5,8 @@ import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkMdx from "remark-mdx";
 import remarkGfm from "remark-gfm";
+import { ArticleImage, ArticleQuiz, ArticleQuizItem } from "@app/ui";
+import { TiptapInlineEditor } from "./TiptapInlineEditor";
 
 type Node = {
   type: string;
@@ -39,6 +41,11 @@ function hasOpaqueInline(nodes: Node[]): boolean {
       return true;
     if (node.type.startsWith("mdxJsx")) {
       if (
+        node.name === "span" &&
+        node.attributes?.every((attribute) => attribute.name === "style")
+      )
+        return hasOpaqueInline(node.children ?? []);
+      if (
         (node.name !== "strong" && node.name !== "em") ||
         node.attributes?.length
       )
@@ -71,7 +78,7 @@ function innerRange(body: string, node: Node, tag: string) {
   return { start: start + opening.length, end: start + closing };
 }
 
-function serializeInline(element: Element): string {
+export function serializeInline(element: Element): string {
   const walk = (node: globalThis.Node): string => {
     if (node.nodeType === 3)
       return (node.textContent ?? "").replace(/[\\`*_{}[\]<>#~!+-]/g, "\\$&");
@@ -89,7 +96,26 @@ function serializeInline(element: Element): string {
         return `\`${child.textContent ?? ""}\``;
       case "a": {
         const href = child.getAttribute("href") ?? "";
-        return href ? `[${content}](${href})` : content;
+        return /^(https?:\/\/|\/)[^\s)]*$/.test(href)
+          ? `[${content}](${href})`
+          : content;
+      }
+      case "span": {
+        const style = (child as HTMLElement).style;
+        const styles = [
+          /^#[0-9a-f]{3,8}$|^rgb\([\d,\s]+\)$/i.test(style.color)
+            ? `color: ${JSON.stringify(style.color)}`
+            : "",
+          /^\d{1,2}px$/.test(style.fontSize)
+            ? `fontSize: ${JSON.stringify(style.fontSize)}`
+            : "",
+          ["sans-serif", "serif", "monospace"].includes(style.fontFamily)
+            ? `fontFamily: ${JSON.stringify(style.fontFamily)}`
+            : "",
+        ].filter(Boolean);
+        return styles.length
+          ? `<span style={{ ${styles.join(", ")} }}>${content}</span>`
+          : content;
       }
       case "br":
         return "\n";
@@ -153,36 +179,121 @@ function Inline({ nodes }: { nodes: Node[] }) {
   );
 }
 
+function inlineHtml(nodes: Node[]): string {
+  const escape = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  return nodes
+    .map((node) => {
+      const content = inlineHtml(node.children ?? []);
+      if (node.type === "text") return escape(node.value ?? "");
+      if (node.type === "inlineCode")
+        return `<code>${escape(node.value ?? "")}</code>`;
+      if (node.type === "strong" || node.name === "strong")
+        return `<strong>${content}</strong>`;
+      if (node.type === "emphasis" || node.name === "em")
+        return `<em>${content}</em>`;
+      if (node.name === "span") {
+        const raw = node.attributes?.find(
+          (attribute) => attribute.name === "style",
+        )?.value;
+        const expression =
+          raw && typeof raw === "object" ? (raw.value ?? "") : "";
+        const styles = ["color", "fontSize", "fontFamily"].flatMap((name) => {
+          const match = new RegExp(`${name}\\s*:\\s*["']([^"']+)["']`).exec(
+            expression,
+          );
+          if (!match) return [];
+          const value = match[1] ?? "";
+          if (
+            name === "color" &&
+            !/^#[0-9a-f]{3,8}$|^rgb\([\d,\s]+\)$/i.test(value)
+          )
+            return [];
+          if (name === "fontSize" && !/^\d{1,2}px$/.test(value)) return [];
+          if (
+            name === "fontFamily" &&
+            !["sans-serif", "serif", "monospace"].includes(value)
+          )
+            return [];
+          return [
+            `${name === "fontSize" ? "font-size" : name === "fontFamily" ? "font-family" : name}:${value}`,
+          ];
+        });
+        return `<span style="${escape(styles.join(";"))}">${content}</span>`;
+      }
+      if (node.type === "link")
+        return `<a href="${escape(node.url ?? "")}">${content}</a>`;
+      return content;
+    })
+    .join("");
+}
+
+function jsxString(node: Node, name: string): string {
+  const raw = node.attributes?.find(
+    (attribute) => attribute.name === name,
+  )?.value;
+  return typeof raw === "string"
+    ? raw
+    : typeof raw === "object" && raw
+      ? (raw.value ?? "")
+      : "";
+}
+
+function jsxChoices(node: Node): string[] {
+  const raw = jsxString(node, "choices");
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 function Editable({
   tag,
-  children,
+  nodes,
   onCommit,
   readOnly,
 }: {
   tag: "div" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "blockquote";
-  children: React.ReactNode;
+  nodes: Node[];
   onCommit: (markdown: string) => void;
   readOnly: boolean;
 }) {
-  const Tag = tag;
+  const className =
+    tag === "h1"
+      ? "text-3xl font-bold"
+      : tag === "h2"
+        ? "text-2xl font-semibold"
+        : tag === "h3"
+          ? "text-xl font-semibold"
+          : tag === "h4" || tag === "h5" || tag === "h6"
+            ? "text-lg font-semibold"
+            : tag === "blockquote"
+              ? "border-l-4 border-zinc-300 pl-4 italic dark:border-zinc-700"
+              : "text-base";
   return (
-    <Tag
-      contentEditable={!readOnly}
-      suppressContentEditableWarning
-      data-rich-body
-      onInput={(event) => {
-        event.currentTarget.dataset.changed = "true";
+    <TiptapInlineEditor
+      html={inlineHtml(nodes)}
+      tag={
+        tag.startsWith("h")
+          ? (tag as "h1" | "h2" | "h3" | "h4" | "h5" | "h6")
+          : "p"
+      }
+      readOnly={readOnly}
+      className={className}
+      onCommit={(html) => {
+        const parsed = new DOMParser().parseFromString(html, "text/html");
+        onCommit(serializeInline(parsed.body));
       }}
-      onPaste={pastePlainText}
-      onBlur={(event) => {
-        if (event.currentTarget.dataset.changed !== "true") return;
-        event.currentTarget.dataset.changed = "false";
-        onCommit(serializeInline(event.currentTarget));
-      }}
-      className={`min-w-0 rounded-md px-2 py-1 leading-8 outline-none hover:bg-zinc-50 focus:bg-zinc-50 focus:ring-1 focus:ring-zinc-300 dark:hover:bg-zinc-900 dark:focus:bg-zinc-900 ${tag === "h1" ? "text-3xl font-bold" : tag === "h2" ? "text-2xl font-semibold" : tag === "h3" ? "text-xl font-semibold" : tag === "h4" || tag === "h5" || tag === "h6" ? "text-lg font-semibold" : tag === "blockquote" ? "border-l-4 border-zinc-300 pl-4 italic dark:border-zinc-700" : "text-base"}`}
-    >
-      {children}
-    </Tag>
+    />
   );
 }
 
@@ -248,6 +359,66 @@ function VisualNode({
         ? soleChild
         : null;
 
+  if (component?.name === "ArticleQuiz") {
+    const items = (component.children ?? []).filter(
+      (child) => child.name === "ArticleQuizItem",
+    );
+    return (
+      <div>
+        {items.length ? (
+          <ArticleQuiz>
+            {items.map((item, index) => (
+              <ArticleQuizItem
+                key={index}
+                mode={
+                  jsxString(item, "mode") === "multiple"
+                    ? "multiple"
+                    : "description"
+                }
+                question={jsxString(item, "question") || "질문"}
+                choices={jsxChoices(item)}
+                answer={jsxString(item, "answer")}
+                explanation={jsxString(item, "explanation")}
+              />
+            ))}
+          </ArticleQuiz>
+        ) : (
+          <p className="text-sm text-zinc-500">퀴즈 구성요소</p>
+        )}
+        <RawNode
+          original={original}
+          start={start}
+          end={end}
+          onReplace={onReplace}
+          readOnly={readOnly}
+          label="퀴즈 내용 수정"
+        />
+      </div>
+    );
+  }
+  if (component?.name === "ArticleImage") {
+    const src = jsxString(component, "src");
+    return (
+      <div>
+        {src ? (
+          <ArticleImage
+            src={src}
+            alt={jsxString(component, "alt")}
+            caption={jsxString(component, "caption") || undefined}
+          />
+        ) : null}
+        <RawNode
+          original={original}
+          start={start}
+          end={end}
+          onReplace={onReplace}
+          readOnly={readOnly}
+          label="이미지 정보 수정"
+        />
+      </div>
+    );
+  }
+
   if (component?.name === "Subtitle") {
     const range = innerRange(body, component, "Subtitle");
     if (!range)
@@ -282,12 +453,12 @@ function VisualNode({
         : 2;
     return (
       <Editable
+        key={original}
         readOnly={readOnly}
         tag={`h${level}` as "h1" | "h2" | "h3" | "h4" | "h5" | "h6"}
+        nodes={component.children ?? []}
         onCommit={(markdown) => onReplace(range.start, range.end, markdown)}
-      >
-        <Inline nodes={component.children ?? []} />
-      </Editable>
+      />
     );
   }
   if (component?.name === "Paragraph") {
@@ -314,12 +485,12 @@ function VisualNode({
       );
     return (
       <Editable
+        key={original}
         readOnly={readOnly}
         tag="div"
+        nodes={component.children ?? []}
         onCommit={(markdown) => onReplace(range.start, range.end, markdown)}
-      >
-        <Inline nodes={component.children ?? []} />
-      </Editable>
+      />
     );
   }
   if (node.type === "heading") {
@@ -337,14 +508,14 @@ function VisualNode({
     const tag = `h${depth}` as "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
     return (
       <Editable
+        key={original}
         readOnly={readOnly}
         tag={tag}
+        nodes={node.children ?? []}
         onCommit={(markdown) =>
           onReplace(start, end, `${"#".repeat(node.depth ?? 2)} ${markdown}`)
         }
-      >
-        <Inline nodes={node.children ?? []} />
-      </Editable>
+      />
     );
   }
   if (node.type === "paragraph" || node.type === "blockquote") {
@@ -365,8 +536,14 @@ function VisualNode({
       );
     return (
       <Editable
+        key={original}
         readOnly={readOnly}
         tag={node.type === "blockquote" ? "blockquote" : "div"}
+        nodes={
+          node.type === "blockquote"
+            ? (node.children?.[0]?.children ?? [])
+            : (node.children ?? [])
+        }
         onCommit={(markdown) =>
           onReplace(
             start,
@@ -374,15 +551,7 @@ function VisualNode({
             node.type === "blockquote" ? `> ${markdown}` : markdown,
           )
         }
-      >
-        <Inline
-          nodes={
-            node.type === "blockquote"
-              ? (node.children?.[0]?.children ?? [])
-              : (node.children ?? [])
-          }
-        />
-      </Editable>
+      />
     );
   }
   if (node.type === "code") {
@@ -466,15 +635,18 @@ function VisualNode({
         {items.map((item, index) => (
           <li key={index}>
             <Editable
+              key={body.slice(
+                itemRanges[index]?.start ?? 0,
+                itemRanges[index]?.end ?? 0,
+              )}
               readOnly={readOnly}
               tag="div"
+              nodes={item.children ?? []}
               onCommit={(markdown) => {
                 const range = itemRanges[index];
                 if (range) onReplace(range.start, range.end, markdown);
               }}
-            >
-              <Inline nodes={item.children ?? []} />
-            </Editable>
+            />
           </li>
         ))}
       </Tag>
@@ -620,41 +792,87 @@ export function MdxRichEditor({
       disabled={disabled || readOnly}
       className={`min-w-0 space-y-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950 sm:p-6 ${disabled ? "pointer-events-none opacity-60" : ""}`}
     >
-      {!readOnly ? (
-        <div className="flex gap-2 border-b border-zinc-200 pb-3 text-xs dark:border-zinc-800">
-          {(["bold", "italic"] as const).map((format) => (
-            <button
-              key={format}
-              type="button"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => {
-                document.execCommand(format);
-                const active =
-                  document.activeElement?.closest<HTMLElement>(
-                    "[data-rich-body]",
-                  );
-                if (active) active.dataset.changed = "true";
-              }}
-              className="rounded border border-zinc-200 px-2 py-1 dark:border-zinc-700"
-              aria-label={format === "bold" ? "굵게" : "기울임"}
-            >
-              {format === "bold" ? "굵게" : "기울임"}
-            </button>
-          ))}
-          <span className="self-center text-zinc-500">
-            문단을 클릭해 편집 · 영역 밖을 클릭하면 반영
-          </span>
-        </div>
-      ) : null}
       {parsed.nodes.map((node, index) => (
-        <VisualNode
+        <div
           key={`${index}:${node.position?.start.offset ?? 0}`}
-          node={node}
-          body={markdown}
-          onReplace={onReplace}
-          readOnly={readOnly || disabled}
-        />
+          className="group relative min-w-0 border-b border-zinc-100 pb-4 last:border-0 dark:border-zinc-900"
+        >
+          <VisualNode
+            node={node}
+            body={markdown}
+            onReplace={onReplace}
+            readOnly={readOnly || disabled}
+          />
+          {!readOnly && !disabled && node.position?.end.offset !== undefined ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+              <select
+                aria-label={`구성요소 추가 ${index + 1}`}
+                defaultValue=""
+                className="rounded border border-zinc-200 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+                onChange={(event) => {
+                  const snippet = componentSnippets[event.target.value];
+                  if (snippet)
+                    onReplace(
+                      node.position!.end.offset!,
+                      node.position!.end.offset!,
+                      `\n\n${snippet}\n\n`,
+                    );
+                  event.target.value = "";
+                }}
+              >
+                <option value="">+ 아래에 구성요소 추가</option>
+                {Object.keys(componentSnippets).map((name) => (
+                  <option value={name} key={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="rounded border border-zinc-200 px-2 py-1 text-rose-600 dark:border-zinc-700"
+                onClick={() => {
+                  if (window.confirm("이 구성요소를 편집본에서 제거할까요?"))
+                    onReplace(
+                      node.position!.start.offset!,
+                      node.position!.end.offset!,
+                      "",
+                    );
+                }}
+              >
+                이 구성요소 제거
+              </button>
+            </div>
+          ) : null}
+        </div>
       ))}
+      {!readOnly && !disabled && parsed.nodes.length === 0 ? (
+        <select
+          aria-label="첫 구성요소 추가"
+          defaultValue=""
+          onChange={(event) => {
+            const snippet = componentSnippets[event.target.value];
+            if (snippet) onReplace(0, 0, snippet);
+            event.target.value = "";
+          }}
+        >
+          <option value="">+ 구성요소 추가</option>
+          {Object.keys(componentSnippets).map((name) => (
+            <option value={name} key={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+      ) : null}
     </fieldset>
   );
 }
+
+const componentSnippets: Record<string, string> = {
+  문단: "<Paragraph>새 문단</Paragraph>",
+  제목: "<Subtitle level={2}>새 제목</Subtitle>",
+  표: "| 제목 1 | 제목 2 |\n| --- | --- |\n| 내용 1 | 내용 2 |",
+  코드블록: "```ts\n// 코드를 입력하세요\n```",
+  퀴즈: '<ArticleQuiz>\n  <ArticleQuizItem mode="description" question="질문" answer="정답" />\n</ArticleQuiz>',
+  이미지: "![이미지 설명](https://example.com/image.png)",
+  콜아웃: "> 중요한 내용을 입력하세요.",
+};
