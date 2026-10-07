@@ -3468,7 +3468,7 @@ function alertMsg(msg) { const r = $("#alert"); r.textContent = ""; setTimeout((
 const WHERE = [
   ["전송 경로", "입력한 공고와 파일은 Cloudflare 네트워크를 거쳐 README 운영 서버(운영자가 관리하는 Mac mini)로 갑니다."],
   ["이력서 파일", "서버 메모리에서 글자를 꺼낸 뒤 파일은 보관하지 않습니다. 파일 자체는 어느 모델 제공자에게도 보내지 않습니다."],
-  ["읽는 동안 · Typesafe Jev(원격 모델)", "문장마다 판단하도록 공고 요건 문구와 거기서 만든 확인 조건, 그때까지 읽은 이력서 문장 전부(이름·연락처 같은 줄 포함, 마지막에는 전체 글), 확인 중인 질문을 보냅니다."],
+  ["읽는 동안 · Typesafe Jev(원격 모델)", "문장마다 판단하도록 이력서에서 꺼낸 글을 보내며, 읽기 방식에 따라 범위가 다릅니다. 기존 방식은 공고 요건 문구와 거기서 만든 확인 조건, 그때까지 읽은 문장 전부(마지막에는 전체 글), 확인 중인 질문을 보냅니다. 의문 중심 방식은 지금 읽는 문장과 최근 문장, 맥락·질문의 짧은 색인, 그 판단에 필요한 앞 문장만 보내고, 공고에서는 주요 업무만 배경으로 보냅니다. 어느 방식이든 보내는 문장에 이름·연락처 같은 줄이 있으면 함께 갑니다."],
   ["준비와 리포트 · OpenAI Codex(클라우드)", "요건 정리에는 공고 본문을, 리포트와 최종 원문 점검에는 이력서에서 꺼낸 모든 글(이름·연락처 같은 줄 포함)과 읽기 메모를 보냅니다."],
   ["보관", "꺼낸 글과 메모, 결과는 서버 메모리에 최대 2시간 머물고, 서버가 다시 시작되면 바로 사라집니다. README는 이 내용을 모델 학습·평가나 다른 목적에 쓰지 않습니다. 두 제공자의 보관 정책은 따로 적용됩니다."]
 ];
@@ -3596,7 +3596,7 @@ function renderS01() {
     : "준비와 리포트는 보통 각각 1분 안팎이고, 읽기는 문장 수에 따라 길어집니다. 읽기와 리포트가 합쳐 10분을 넘으면 자동으로 멈춥니다.");
   setText($("#send-line"), sample ? "지금은 서버에 연결하지 않고 미리 준비한 예시만 볼 수 있습니다. 입력한 내용은 이 브라우저 밖으로 나가지 않습니다."
     : fixture ? "서버에 연결하지 않습니다. 기록된 실행 파일만 읽고, 입력한 내용은 이 브라우저 밖으로 나가지 않습니다."
-    : "준비를 누르면 공고 본문이 요건 정리를 위해 OpenAI Codex로 갑니다. 읽는 동안에는 그때까지 읽은 이력서 문장 전부와 공고 요건 문구·확인 조건이 Typesafe Jev로, 다 읽은 뒤에는 이력서 전체 글과 읽기 메모가 리포트를 위해 Codex로 갑니다. 올린 파일 자체는 두 모델 제공자에게 보내지 않습니다.");
+    : "준비를 누르면 공고 본문이 요건 정리를 위해 OpenAI Codex로 갑니다. 읽는 동안에는 이력서에서 꺼낸 문장이 Typesafe Jev로 갑니다. 기존 방식은 그때까지 읽은 문장 전부와 공고 요건 문구·확인 조건을, 의문 중심 방식은 지금 읽는 문장과 최근 문장, 짧은 맥락·질문 색인, 필요한 앞 문장과 공고의 주요 업무만 보냅니다. 다 읽은 뒤에는 이력서 전체 글과 읽기 메모가 리포트를 위해 Codex로 갑니다. 올린 파일 자체는 두 모델 제공자에게 보내지 않습니다.");
   $("#where-01-d").hidden = sample; $("#quota-line").hidden = sample; $("#file-privacy").hidden = sample;
   const cnt = $("#job-count"); cnt.textContent = `${fmt(ta.value.length)}${NB}/${NB}6,000자`; cnt.classList.toggle("over", !!js.over);
   fieldErr($("#job-err"), js.err && ta.value.length ? js.err : null);
@@ -4160,7 +4160,7 @@ function limitsBlock(rep, qs) {
   const srv = (rep.limitations || []).filter(l => typeof l === "string").join(" "), said = (...w) => !isSample() && w.every(x => srv.includes(x));
   add("점수, 등급, 합격 가능성은 만들지 않습니다. 실제 채용 담당자의 판단도 아닙니다.");
   if (!said("진위")) add("‘유지할 설명’은 문서 안에서 설명을 찾았다는 뜻이고, 경험이 사실인지 확인한 것은 아닙니다.");
-  if (!isSample() && !(isJev() && said("Jev", "Codex"))) add(`${isJev() ? "Jev는" : isLaya() ? "Laya는" : "읽기 모델은"} 각 문장을 그 문장까지 읽은 내용만 보고 판단했고, 리포트는 Codex가 다 읽은 뒤 이력서 전체 문장을 보고 썼습니다.`);
+  if (!isSample() && !(isJev() && said("Jev", "Codex"))) add(`${isJev() ? "Jev는" : isLaya() ? "Laya는" : "읽기 모델은"} ${isFocus() ? "각 문장을 지금 읽는 문장과 최근 문장, 필요한 앞 문장만 보고 판단했고" : "각 문장을 그 문장까지 읽은 내용만 보고 판단했고"}, 리포트는 Codex가 다 읽은 뒤 이력서 전체 문장을 보고 썼습니다.`);
   if (!said("사람이 다시 확인")) add("모든 메모와 항목은 사람이 다시 확인해야 하는 초안입니다.");
   add("메모가 없는 문장은 문제가 없다는 뜻도, 잘 썼다는 뜻도 아닙니다.");
   if (qs.some(q => q.status === "held")) add(isSample() ? "‘답 후보’는 앞 질문의 답일 수 있는 문장이지만 읽는 동안 확정하지 않은 상태입니다. 문서의 설명이 부족하다는 뜻이 아니어서 보완해 볼 곳에 넣지 않았습니다."
@@ -4173,7 +4173,8 @@ function limitsBlock(rep, qs) {
       h("dt", null, "요건 정리·리포트"), h("dd", null, !g.codex_model || g.codex_model === "cli_default" ? "OpenAI Codex · 기본 설정" : "OpenAI Codex"));
     if (g.policy_version === "readme-prefix-v2") gen.append(h("dt", null, "읽기 방식"), h("dd", null, "질문이 생기고 설명이 이어지는 과정을 기록"));
     else if (g.policy_version === FOCUS_POLICY) gen.append(h("dt", null, "읽기 방식"), h("dd", null, "의문을 하나씩 따라가며 설명과 재검토를 기록"));
-    if (isJev()) gen.append(h("dt", null, "읽는 동안 본 것"), h("dd", null, "공고에 따른 역할·수행 방식·결과·비교 근거"));
+    if (isFocus()) gen.append(h("dt", null, "읽는 동안 보낸 것"), h("dd", null, "지금 읽는 문장과 최근 문장, 맥락·질문의 짧은 색인, 필요할 때 가져온 앞 문장, 공고의 주요 업무(배경)"));
+    else if (isJev()) gen.append(h("dt", null, "읽는 동안 보낸 것"), h("dd", null, "공고 요건 문구와 확인 조건, 그때까지 읽은 문장 전부, 확인 중인 질문 · 본 것은 공고에 따른 역할·수행 방식·결과·비교 근거"));
     box.append(gen);
   }
   return box;
