@@ -1,9 +1,7 @@
 import { notFound } from "next/navigation";
 import { ArticleHeader, Paper } from "@app/ui";
 import { calculateReadingTime } from "@app/utils";
-import { isSlugFolder, loadContent } from "@/shared/config";
-import { mdxComponents } from "@/widgets/mdx-renderer/MdxRenderer";
-import type { MDXComponents } from "mdx/types";
+import { getContentTree, isSlugFolder, loadContent } from "@/shared/config";
 import { NewPostsCarousel } from "@/widgets/new-posts-carousel/NewPostsCarousel";
 import { RecentlyRead } from "@/widgets/recently-read/RecentlyRead";
 import { PostExplorer } from "@/widgets/post-explorer/PostExplorer";
@@ -28,8 +26,9 @@ export async function generateMetadata({
   params,
 }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const contentTree = await getContentTree();
 
-  if (isSlugFolder(slug)) {
+  if (isSlugFolder(slug, contentTree)) {
     return buildFolderMetadata(slug);
   }
 
@@ -47,17 +46,22 @@ export async function generateMetadata({
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
+  const contentTree = await getContentTree();
 
-  if (isSlugFolder(slug)) {
+  if (isSlugFolder(slug, contentTree)) {
     const rootPath = `/${slug.join("/")}`;
 
     return (
       <>
         <JsonLd data={breadcrumbJsonLd(slug)} />
-        <NewPostsCarousel rootPath={rootPath} />
-        <RecentlyRead rootPath={rootPath} />
-        <PostExplorer rootPath={rootPath} />
-        <PostGrid rootPath={rootPath} title="이 섹션의 대표 이미지" />
+        <NewPostsCarousel rootPath={rootPath} contentTree={contentTree} />
+        <RecentlyRead rootPath={rootPath} contentTree={contentTree} />
+        <PostExplorer rootPath={rootPath} contentTree={contentTree} />
+        <PostGrid
+          rootPath={rootPath}
+          contentTree={contentTree}
+          title="이 섹션의 대표 이미지"
+        />
       </>
     );
   }
@@ -68,7 +72,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound();
   }
 
-  const MDXContent = content.compiled.default;
+  const ArticleContent = content.compiled.default;
   const wayFindingPath = `/blog/${slug.join("/")}`;
   const rootPath = `/${slug.slice(0, -1).join("/")}`;
   const description = getArticleDescription(
@@ -103,7 +107,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           />
           {/* TTS is intentionally paused while backend-backed text rendering is stabilized. */}
           <div className="article-prose" data-article-content>
-            <MDXContent components={mdxComponents as MDXComponents} />
+            <ArticleContent />
           </div>
           <SectionQaPrompts slug={slug.join("/")} />
         </div>
@@ -112,8 +116,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           slug={slug.join("/")}
           title={content.frontmatter.title}
         />
-        <PostExplorer rootPath={rootPath} wayFindingPath={wayFindingPath} />
-        <PostGrid rootPath={rootPath} title="같은 섹션의 대표 이미지" />
+        <PostExplorer
+          rootPath={rootPath}
+          wayFindingPath={wayFindingPath}
+          contentTree={contentTree}
+        />
+        <PostGrid
+          rootPath={rootPath}
+          title="같은 섹션의 대표 이미지"
+          contentTree={contentTree}
+        />
         <div className="mt-16 border-t border-foreground/10 pt-5 text-right">
           <a
             href={`/ops/articles/edit?slug=${encodeURIComponent(slug.join("/"))}`}

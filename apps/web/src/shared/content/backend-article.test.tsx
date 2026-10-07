@@ -46,6 +46,10 @@ vi.mock("@app/ui", async () => {
         { "data-code-block": true, "data-language": language },
         React.createElement("code", null, children),
       ),
+    ArticleTable: ({ children }: MockChildrenProps) =>
+      React.createElement("table", null, children),
+    Subtitle: ({ children, id }: MockChildrenProps & { id?: string }) =>
+      React.createElement("h2", { id }, children),
   };
 });
 
@@ -56,6 +60,7 @@ import {
   toBackendArticleContentData,
   type BackendArticleApiResponse,
 } from "./backend-article";
+import { BackendArticleDocument } from "./backend-article-document";
 
 const article: BackendArticleApiResponse = {
   slug: "study/backend/day1",
@@ -85,6 +90,352 @@ const article: BackendArticleApiResponse = {
 };
 
 describe("backend article content adapter", () => {
+  it("fails closed on malformed document roots and unsafe presentation attributes", () => {
+    for (const document of [null, {}, { type: "doc", content: null }]) {
+      expect(
+        renderToStaticMarkup(<BackendArticleDocument document={document} />),
+      ).toBe("");
+    }
+    const markup = renderToStaticMarkup(
+      <BackendArticleDocument
+        document={{
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                {
+                  type: "text",
+                  text: "unsafe link",
+                  marks: [
+                    { type: "link", attrs: { href: "javascript:alert(1)" } },
+                  ],
+                },
+                {
+                  type: "text",
+                  text: "invalid style",
+                  marks: [
+                    {
+                      type: "textStyle",
+                      attrs: {
+                        color: "red;position:fixed",
+                        fontSize: "999px",
+                        fontFamily: "unknown",
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: "image",
+              attrs: { src: "/safe.png", alt: "safe", size: "oversize" },
+            },
+            {
+              type: "table",
+              content: [
+                {
+                  type: "tableRow",
+                  content: [
+                    {
+                      type: "tableCell",
+                      attrs: { colspan: "2", align: "url(evil)" },
+                      content: [
+                        {
+                          type: "paragraph",
+                          content: [{ type: "text", text: "cell" }],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            { type: "unknown" },
+          ],
+        }}
+      />,
+    );
+    expect(markup).toContain("unsafe link");
+    expect(markup).toContain("/safe.png");
+    expect(markup).not.toContain("javascript:");
+    expect(markup).not.toContain("position:fixed");
+    expect(markup).not.toContain("url(evil)");
+    expect(markup).not.toContain('colSpan="2"');
+  });
+  it("renders JSON documents with marks, aligned tables, and every quiz item", () => {
+    const content = toBackendArticleContentData({
+      ...article,
+      tags: ["CMS"],
+      cover: { src: "/cover.png", alt: "cover" },
+      displayDate: "2026-03-23T00:00:00.000Z",
+      body: {
+        html: "<p>HTML fallback</p>",
+        document: {
+          type: "doc",
+          content: [
+            {
+              type: "heading",
+              attrs: { level: 2 },
+              content: [{ type: "text", text: "제목" }],
+            },
+            {
+              type: "paragraph",
+              content: [
+                { type: "text", text: "중요", marks: [{ type: "bold" }] },
+              ],
+            },
+            {
+              type: "table",
+              content: [
+                {
+                  type: "tableRow",
+                  content: [
+                    {
+                      type: "tableHeader",
+                      attrs: { align: "right" },
+                      content: [
+                        {
+                          type: "paragraph",
+                          content: [{ type: "text", text: "값" }],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: "quiz",
+              attrs: {
+                items: [
+                  {
+                    mode: "multiple",
+                    question: "첫째?",
+                    choices: ["아니오", "예"],
+                    answer: 1,
+                  },
+                  { mode: "description", question: "둘째?", answer: "정답" },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    });
+    const Component = content.compiled.default;
+    const markup = renderToStaticMarkup(<Component />);
+    expect(markup).toContain("<strong>중요</strong>");
+    expect(markup).toContain("text-align:right");
+    expect(markup).toContain("첫째?");
+    expect(markup).toContain("둘째?");
+    expect(markup).not.toContain("HTML fallback");
+    expect(content.frontmatter.tags).toEqual(["CMS"]);
+    expect(content.frontmatter.cover?.src).toBe("/cover.png");
+  });
+
+  it("preserves the converted document's lists, media, code, callouts, and safe inline marks", () => {
+    const content = toBackendArticleContentData({
+      ...article,
+      body: {
+        html: "<p>Obsolete MDX fallback</p>",
+        document: {
+          type: "doc",
+          content: [
+            {
+              type: "heading",
+              attrs: { level: 1 },
+              content: [{ type: "text", text: "Main title" }],
+            },
+            {
+              type: "heading",
+              attrs: { level: 3 },
+              content: [{ type: "text", text: "Sub title" }],
+            },
+            {
+              type: "heading",
+              attrs: { level: 4 },
+              content: [{ type: "text", text: "Deep title" }],
+            },
+            {
+              type: "heading",
+              attrs: { level: 5 },
+              content: [{ type: "text", text: "Fifth title" }],
+            },
+            {
+              type: "heading",
+              attrs: { level: 6 },
+              content: [{ type: "text", text: "Sixth title" }],
+            },
+            {
+              type: "paragraph",
+              content: [
+                {
+                  type: "text",
+                  text: "emphasis",
+                  marks: [{ type: "italic" }, { type: "strike" }],
+                },
+                { type: "hardBreak" },
+                { type: "text", text: "code", marks: [{ type: "code" }] },
+                {
+                  type: "text",
+                  text: "mail",
+                  marks: [
+                    {
+                      type: "link",
+                      attrs: { href: "mailto:hello@example.com" },
+                    },
+                  ],
+                },
+                {
+                  type: "text",
+                  text: "unsafe",
+                  marks: [
+                    { type: "link", attrs: { href: "javascript:alert(1)" } },
+                  ],
+                },
+                {
+                  type: "text",
+                  text: "colored",
+                  marks: [
+                    {
+                      type: "textStyle",
+                      attrs: {
+                        color: "#123456",
+                        fontSize: "18px",
+                        fontFamily: "serif",
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: "bulletList",
+              content: [
+                {
+                  type: "listItem",
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "bullet" }],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: "orderedList",
+              attrs: { start: 3 },
+              content: [
+                {
+                  type: "listItem",
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "third" }],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: "blockquote",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "quoted" }],
+                },
+              ],
+            },
+            { type: "horizontalRule" },
+            {
+              type: "codeBlock",
+              attrs: { language: "ts" },
+              content: [{ type: "text", text: "const answer = 42;" }],
+            },
+            {
+              type: "image",
+              attrs: {
+                src: "/image.png",
+                alt: "diagram",
+                caption: "Diagram",
+                size: "lg",
+              },
+            },
+            {
+              type: "callout",
+              attrs: { tone: "warning", title: "Caution" },
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "Careful" }],
+                },
+              ],
+            },
+            {
+              type: "table",
+              content: [
+                {
+                  type: "tableRow",
+                  content: [
+                    {
+                      type: "tableHeader",
+                      attrs: { colspan: 2, align: "center" },
+                      content: [
+                        {
+                          type: "paragraph",
+                          content: [{ type: "text", text: "Header" }],
+                        },
+                      ],
+                    },
+                    {
+                      type: "tableCell",
+                      attrs: { rowspan: 2, align: "left" },
+                      content: [
+                        {
+                          type: "paragraph",
+                          content: [{ type: "text", text: "Cell" }],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: "quiz",
+              attrs: {
+                title: "Knowledge check",
+                items: [
+                  {
+                    mode: "essay",
+                    question: "Why?",
+                    answer: "Because",
+                    explanation: "Reason",
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    });
+    const Component = content.compiled.default;
+    const markup = renderToStaticMarkup(<Component />);
+    expect(markup).toContain("data-backend-article-document");
+    expect(markup).toContain('<h1 id="main-title-0">Main title</h1>');
+    expect(markup).toContain('<ol start="3">');
+    expect(markup).toContain("mailto:hello@example.com");
+    expect(markup).not.toContain('href="javascript:');
+    expect(markup).toContain("color:#123456");
+    expect(markup).toContain("data-code-block");
+    expect(markup).toContain("/image.png");
+    expect(markup).toContain('data-callout-tone="warning"');
+    expect(markup).toContain('colSpan="2"');
+    expect(markup).toContain("Knowledge check");
+    expect(markup).not.toContain("Obsolete MDX fallback");
+  });
   it("keeps sanitized CMS inline formatting in headings, lists, tables, and quotes", () => {
     const content = toBackendArticleContentData({
       ...article,
@@ -650,7 +1001,10 @@ describe("backend article content adapter", () => {
   });
 
   it("uses the Cloudflare Worker env binding when process env is absent", async () => {
-    const runtimeEnv = cloudflareEnv as Record<string, string | undefined>;
+    const runtimeEnv = cloudflareEnv as unknown as Record<
+      string,
+      string | undefined
+    >;
     runtimeEnv.SEOJING_BACKEND_ARTICLE_API_ORIGIN = "http://127.0.0.1:4000";
     const fetchMock = vi.fn(async () => Response.json(article));
     vi.stubGlobal("fetch", fetchMock);

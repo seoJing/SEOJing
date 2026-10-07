@@ -6,7 +6,7 @@ type ArticleRow = {
   slug: string;
   title: string;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
-  sourceFormat: "MDX" | "BLOCKS";
+  sourceFormat: "MDX" | "BLOCKS" | "DOCUMENT";
   updatedAt: string;
 };
 
@@ -123,8 +123,9 @@ export function OpsArticleList() {
             className={inputClass}
           >
             <option value="all">전체</option>
+            <option value="DOCUMENT">CMS 문서</option>
             <option value="MDX">MDX</option>
-            <option value="BLOCKS">CMS</option>
+            <option value="BLOCKS">기존 CMS 블록</option>
           </select>
         </label>
       </div>
@@ -140,8 +141,8 @@ export function OpsArticleList() {
             {filtered.length}개 글 · 최근 수정일 순
           </p>
           <p className="mt-1 text-xs text-zinc-500">
-            MDX는 CMS에 보관된 원본 형식, CMS는 블록 형식입니다. 공개 배지는 CMS
-            API 상태이며 기존 /blog MDX 경로와는 별개입니다.
+            CMS 문서는 리치에디터로 편집합니다. 이전 MDX 글은 문서 전환 전까지
+            읽기 전용입니다. 공개 배지는 서버의 발행 상태입니다.
           </p>
           <div className="mt-3 overflow-x-auto">
             <table className="w-full min-w-[42rem] border-collapse text-left text-sm">
@@ -157,7 +158,7 @@ export function OpsArticleList() {
                     수정일
                   </th>
                   <th scope="col" className="w-24 px-3 py-3">
-                    CMS 공개
+                    서버 상태
                   </th>
                   <th scope="col" className="w-20 px-3 py-3">
                     형식
@@ -207,7 +208,11 @@ export function OpsArticleList() {
                     </td>
                     <td className="px-3 py-3">
                       <span className="inline-block rounded-full bg-zinc-100 px-2 py-1 text-xs dark:bg-zinc-800">
-                        {row.sourceFormat === "BLOCKS" ? "CMS" : "MDX"}
+                        {row.sourceFormat === "DOCUMENT"
+                          ? "CMS 문서"
+                          : row.sourceFormat === "BLOCKS"
+                            ? "기존 블록"
+                            : "MDX"}
                       </span>
                     </td>
                   </tr>

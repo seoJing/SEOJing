@@ -1,23 +1,20 @@
 "use client";
 
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { ArticleImage, ArticleQuiz, ArticleQuizItem, CodeBlock } from "@app/ui";
 
 import {
   normalizeBlocks,
-  preserveMdxLineEndings,
-  splitMdxFrontmatter,
   toBackendBlocks,
   type ArticleBlock,
   type BlockType,
 } from "./ops-article-editor.utils";
-
-const MdxRichEditor = lazy(() =>
-  import("./MdxRichEditor").then((module) => ({
-    default: module.MdxRichEditor,
-  })),
-);
+import {
+  NativeDocumentEditor,
+  emptyArticleDocument,
+  type ArticleDocument,
+} from "./NativeDocumentEditor";
 
 type EditorArticle = {
   slug?: string;
@@ -26,6 +23,20 @@ type EditorArticle = {
   category?: string;
   status?: string;
   sourceFormat?: string;
+  document?: ArticleDocument | null;
+  tags?: string[];
+  cover?: { src: string; alt: string; caption?: string; kind?: string } | null;
+  summaryVideo?: {
+    src: string;
+    title?: string;
+    caption?: string;
+    poster?: string;
+    subtitles?: string;
+    provider?: string;
+  } | null;
+  displayDate?: string | null;
+  displayUpdatedAt?: string | null;
+  editingRevisionId?: string | null;
   sourceText?: string;
   renderedHtml?: string | null;
   previewRenderedHtml?: string | null;
@@ -36,6 +47,7 @@ type EditorArticle = {
   hasUnpublishedChanges?: boolean;
   revisions?: Array<{
     revisionNumber: number;
+    sourceFormat?: string;
     changeSummary?: string | null;
     createdAt: string;
     isPublished: boolean;
@@ -56,6 +68,8 @@ type MutationPayload = {
   error?: string;
   status?: number;
   issues?: Array<{ name: string; line: number }>;
+  backendPublished?: boolean;
+  retryAction?: string;
 };
 
 const blockTypes: Array<{ type: BlockType; label: string }> = [
@@ -74,28 +88,26 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("SEOJing");
   const [sourceText, setSourceText] = useState("");
-  const [mdxEditorError, setMdxEditorError] = useState("");
+  const [document, setDocument] =
+    useState<ArticleDocument>(emptyArticleDocument);
+  const [tags, setTags] = useState("");
+  const [coverSrc, setCoverSrc] = useState("");
+  const [coverAlt, setCoverAlt] = useState("");
+  const [displayDate, setDisplayDate] = useState("");
+  const [displayUpdatedAt, setDisplayUpdatedAt] = useState("");
+  const [summaryVideoSrc, setSummaryVideoSrc] = useState("");
+  const [summaryVideoTitle, setSummaryVideoTitle] = useState("");
   const [status, setStatus] = useState<
     "idle" | "loading" | "saving" | "publishing"
   >("idle");
   const [message, setMessage] = useState("");
+  const [snapshotSyncRequired, setSnapshotSyncRequired] = useState(false);
 
   const isBusy = status !== "idle";
   const article = payload?.article;
   const hasSelection = selectedSlug.trim().length > 0;
   const isBlockArticle = article?.sourceFormat === "BLOCKS";
-  const needsPreviewRefresh =
-    !isBlockArticle &&
-    article?.previewRenderedHtml != null &&
-    article.previewRenderedHtml !== article.renderedHtml;
-  const conversionIncomplete =
-    !isBlockArticle &&
-    (Boolean(article?.previewIssues?.length) ||
-      Boolean(
-        article?.previewRenderedHtml?.includes("component omitted by backend"),
-      ) ||
-      (sourceText.includes("<span style=") &&
-        !article?.previewRenderedHtml?.includes("<span style=")));
+  const isDocumentArticle = article?.sourceFormat === "DOCUMENT";
 
   useEffect(() => {
     if (!hasSelection) return;
@@ -115,7 +127,14 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
         setDescription(body.article?.description ?? "");
         setCategory(body.article?.category ?? "SEOJing");
         setSourceText(body.article?.sourceText ?? "");
-        setMdxEditorError("");
+        setDocument(body.article?.document ?? emptyArticleDocument);
+        setTags(body.article?.tags?.join(", ") ?? "");
+        setCoverSrc(body.article?.cover?.src ?? "");
+        setCoverAlt(body.article?.cover?.alt ?? "");
+        setDisplayDate(body.article?.displayDate?.slice(0, 10) ?? "");
+        setDisplayUpdatedAt(body.article?.displayUpdatedAt?.slice(0, 10) ?? "");
+        setSummaryVideoSrc(body.article?.summaryVideo?.src ?? "");
+        setSummaryVideoTitle(body.article?.summaryVideo?.title ?? "");
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
@@ -136,10 +155,21 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
       (title !== (article?.title ?? "") ||
         description !== (article?.description ?? "") ||
         category !== (article?.category ?? "SEOJing") ||
-        (isBlockArticle
-          ? JSON.stringify(blocks) !==
-            JSON.stringify(normalizeBlocks(article?.blocks))
-          : sourceText !== (article?.sourceText ?? "")))
+        (isDocumentArticle
+          ? JSON.stringify(document) !==
+              JSON.stringify(article?.document ?? emptyArticleDocument) ||
+            tags !== (article?.tags?.join(", ") ?? "") ||
+            coverSrc !== (article?.cover?.src ?? "") ||
+            coverAlt !== (article?.cover?.alt ?? "") ||
+            displayDate !== (article?.displayDate?.slice(0, 10) ?? "") ||
+            displayUpdatedAt !==
+              (article?.displayUpdatedAt?.slice(0, 10) ?? "") ||
+            summaryVideoSrc !== (article?.summaryVideo?.src ?? "") ||
+            summaryVideoTitle !== (article?.summaryVideo?.title ?? "")
+          : isBlockArticle
+            ? JSON.stringify(blocks) !==
+              JSON.stringify(normalizeBlocks(article?.blocks))
+            : false))
     );
   }, [
     article,
@@ -147,7 +177,15 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
     category,
     description,
     isBlockArticle,
-    sourceText,
+    isDocumentArticle,
+    document,
+    tags,
+    coverSrc,
+    coverAlt,
+    displayDate,
+    displayUpdatedAt,
+    summaryVideoSrc,
+    summaryVideoTitle,
     title,
   ]);
 
@@ -165,8 +203,10 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
     action:
       | "saveBlocks"
       | "saveRevision"
+      | "saveDocument"
       | "restoreRevision"
       | "publish"
+      | "syncPublished"
       | "unpublish"
       | "archive"
       | "delete",
@@ -186,11 +226,32 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
           category,
           blocks: toBackendBlocks(blocks),
           sourceText,
+          document,
+          tags: tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+          cover: coverSrc
+            ? { ...article?.cover, src: coverSrc, alt: coverAlt }
+            : null,
+          summaryVideo: summaryVideoSrc
+            ? {
+                ...article?.summaryVideo,
+                src: summaryVideoSrc,
+                title: summaryVideoTitle,
+              }
+            : null,
+          displayDate: displayDate || null,
+          displayUpdatedAt: displayUpdatedAt || null,
+          expectedRevisionId: article?.editingRevisionId,
           revisionNumber,
         }),
       });
       const body = (await response.json()) as MutationPayload;
       if (!response.ok || !body.ok) {
+        if (body.backendPublished && body.retryAction === "syncPublished") {
+          setSnapshotSyncRequired(true);
+        }
         const issue = body.issues?.[0];
         throw new Error(
           issue
@@ -198,20 +259,23 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
             : (body.error ?? `request failed: ${response.status}`),
         );
       }
+      setSnapshotSyncRequired(false);
       if (action === "delete") {
         window.location.assign("/ops/articles");
         return;
       }
       setMessage(
         action === "publish"
-          ? "발행 완료. public API/body readback을 다시 불러옵니다."
-          : action === "unpublish"
-            ? "비공개 초안으로 전환했습니다."
-            : action === "archive"
-              ? "글을 보관하고 공개 목록에서 내렸습니다."
-              : action === "restoreRevision"
-                ? "이전 revision을 새 비공개 수정본으로 복원했습니다. 확인 후 발행하세요."
-                : "revision 저장 완료. 공개 본문은 발행 전까지 유지됩니다.",
+          ? "발행 완료. 공개 글과 목록을 다시 불러옵니다."
+          : action === "syncPublished"
+            ? "공개 사본 동기화가 완료됐습니다."
+            : action === "unpublish"
+              ? "비공개 초안으로 전환했습니다."
+              : action === "archive"
+                ? "글을 보관하고 공개 목록에서 내렸습니다."
+                : action === "restoreRevision"
+                  ? "이전 revision을 새 비공개 수정본으로 복원했습니다. 확인 후 발행하세요."
+                  : "revision 저장 완료. 공개 본문은 발행 전까지 유지됩니다.",
       );
       await reload();
     } catch (error) {
@@ -237,7 +301,14 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
     setDescription(body.article?.description ?? "");
     setCategory(body.article?.category ?? "SEOJing");
     setSourceText(body.article?.sourceText ?? "");
-    setMdxEditorError("");
+    setDocument(body.article?.document ?? emptyArticleDocument);
+    setTags(body.article?.tags?.join(", ") ?? "");
+    setCoverSrc(body.article?.cover?.src ?? "");
+    setCoverAlt(body.article?.cover?.alt ?? "");
+    setDisplayDate(body.article?.displayDate?.slice(0, 10) ?? "");
+    setDisplayUpdatedAt(body.article?.displayUpdatedAt?.slice(0, 10) ?? "");
+    setSummaryVideoSrc(body.article?.summaryVideo?.src ?? "");
+    setSummaryVideoTitle(body.article?.summaryVideo?.title ?? "");
   }
 
   if (!hasSelection) {
@@ -256,7 +327,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
         <div className="sm:rounded-3xl sm:border sm:border-zinc-200 sm:bg-white/80 sm:p-5 sm:dark:border-zinc-800 sm:dark:bg-zinc-950/70">
           <ArticleMetadata
             description={description}
-            disabled={isBusy}
+            disabled={isBusy || (!isDocumentArticle && !isBlockArticle)}
             onDescriptionChange={setDescription}
             onTitleChange={setTitle}
             title={title}
@@ -268,7 +339,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
               className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50 sm:rounded-2xl sm:px-4 sm:py-3"
               value={category}
               onChange={(event) => setCategory(event.target.value)}
-              disabled={isBusy}
+              disabled={isBusy || (!isDocumentArticle && !isBlockArticle)}
               placeholder="Study 또는 새 카테고리 입력"
             />
             <datalist id="cms-article-categories">
@@ -279,7 +350,33 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
               <option value="KD Team" />
             </datalist>
           </label>
-          {isBlockArticle ? (
+          {isDocumentArticle ? (
+            <>
+              <DocumentMetadata
+                tags={tags}
+                onTagsChange={setTags}
+                coverSrc={coverSrc}
+                onCoverSrcChange={setCoverSrc}
+                coverAlt={coverAlt}
+                onCoverAltChange={setCoverAlt}
+                displayDate={displayDate}
+                onDisplayDateChange={setDisplayDate}
+                displayUpdatedAt={displayUpdatedAt}
+                onDisplayUpdatedAtChange={setDisplayUpdatedAt}
+                summaryVideoSrc={summaryVideoSrc}
+                onSummaryVideoSrcChange={setSummaryVideoSrc}
+                summaryVideoTitle={summaryVideoTitle}
+                onSummaryVideoTitleChange={setSummaryVideoTitle}
+                disabled={isBusy}
+              />
+              <NativeDocumentEditor
+                key={`${selectedSlug}:${article.editingRevisionId ?? "draft"}`}
+                value={document}
+                onChange={setDocument}
+                disabled={isBusy}
+              />
+            </>
+          ) : isBlockArticle ? (
             <BlockEditor
               blocks={blocks}
               disabled={isBusy}
@@ -287,76 +384,48 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
             />
           ) : (
             <div className="mt-6 min-w-0 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-sm font-semibold">본문 편집</h3>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    글 본문에서 바로 편집하고, 필요한 구성요소를 추가하거나
-                    제거할 수 있습니다.
-                  </p>
-                </div>
-              </div>
-              <Suspense fallback={<p>시각 편집기 불러오는 중…</p>}>
-                <MdxRichEditor
-                  key={`${selectedSlug}:${article.editingRevisionNumber ?? 0}`}
-                  markdown={splitMdxFrontmatter(sourceText).body}
-                  disabled={isBusy}
-                  onReplace={(start, end, replacement) => {
-                    const { prefix, body } = splitMdxFrontmatter(sourceText);
-                    setMdxEditorError("");
-                    setSourceText(
-                      prefix +
-                        body.slice(0, start) +
-                        preserveMdxLineEndings(
-                          replacement,
-                          body.slice(start, end),
-                          sourceText,
-                        ) +
-                        body.slice(end),
-                    );
-                  }}
-                  onError={setMdxEditorError}
-                />
-              </Suspense>
-              {mdxEditorError ? (
-                <div role="alert" className="text-sm text-rose-700">
-                  시각 편집기가 이 MDX를 읽지 못했습니다: {mdxEditorError}.
-                  원문으로 수정할 수 있습니다.
-                  <TextAreaField
-                    label="MDX 원문"
-                    value={sourceText}
-                    onChange={(next) => {
-                      setSourceText(
-                        preserveMdxLineEndings(next, sourceText, sourceText),
-                      );
-                      setMdxEditorError("");
-                    }}
-                    disabled={isBusy}
-                    mono
-                    rows={24}
-                  />
-                </div>
-              ) : null}
+              <p
+                role="status"
+                className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-200"
+              >
+                이 글은 이전 형식입니다. JSON 문서 전환을 완료한 뒤
+                리치에디터에서 수정·공개할 수 있습니다.
+              </p>
+              <TextAreaField
+                label="이전 원문 (읽기 전용)"
+                value={sourceText}
+                onChange={() => {}}
+                disabled
+                mono
+                rows={16}
+              />
             </div>
           )}
           <div className="mt-4 flex flex-wrap items-center gap-3">
+            {snapshotSyncRequired ? (
+              <button
+                type="button"
+                className="rounded-full border border-amber-500 px-5 py-2.5 text-sm font-semibold text-amber-800 disabled:opacity-45"
+                disabled={isBusy}
+                onClick={() => void mutate("syncPublished")}
+              >
+                공개 사본 다시 동기화
+              </button>
+            ) : null}
             <button
               className="rounded-full bg-zinc-950 px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-45 dark:bg-zinc-50 dark:text-zinc-950"
               onClick={() =>
-                void mutate(isBlockArticle ? "saveBlocks" : "saveRevision")
+                void mutate(isDocumentArticle ? "saveDocument" : "saveBlocks")
               }
               disabled={
                 isBusy ||
-                (isBlockArticle
-                  ? blocks.length === 0
-                  : !sourceText.trim() || Boolean(mdxEditorError))
+                (!isDocumentArticle && !isBlockArticle) ||
+                (isDocumentArticle
+                  ? !document.content?.length || !title.trim()
+                  : blocks.length === 0)
               }
             >
-              {status === "saving"
-                ? "저장 중"
-                : needsPreviewRefresh && !dirty
-                  ? "변환 결과 revision 저장"
-                  : "저장"}
+              {status === "saving" ? "저장 중" : "저장"}
             </button>
             <button
               className="rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-semibold text-zinc-800 disabled:cursor-not-allowed disabled:opacity-45 dark:border-zinc-700 dark:text-zinc-100"
@@ -374,9 +443,10 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
               disabled={
                 isBusy ||
                 dirty ||
-                ((article.status !== "PUBLISHED" ||
-                  article.hasUnpublishedChanges) &&
-                  (needsPreviewRefresh || conversionIncomplete))
+                (!isDocumentArticle &&
+                  !isBlockArticle &&
+                  (article.status !== "PUBLISHED" ||
+                    article.hasUnpublishedChanges))
               }
             >
               {status === "publishing"
@@ -390,9 +460,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
               className="rounded-full border border-rose-400 px-5 py-2.5 text-sm font-semibold text-rose-700 disabled:opacity-45"
               onClick={() =>
                 window.confirm(
-                  isBlockArticle
-                    ? "CMS 글과 모든 revision을 영구 삭제합니다. 계속할까요?"
-                    : "CMS 글과 모든 revision을 영구 삭제합니다. 기존 MDX 파일과 /blog 공개 글은 삭제되지 않습니다. 계속할까요?",
+                  "CMS 글과 모든 revision을 영구 삭제합니다. 계속할까요?",
                 ) && void mutate("delete")
               }
               disabled={isBusy}
@@ -404,42 +472,6 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
             저장은 새 비공개 revision을 만듭니다. 공개 상태의 글도 저장된 최신
             수정본은 공개로 전환하기 전까지 반영되지 않습니다.
           </p>
-          {!isBlockArticle ? (
-            <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-              공개·비공개 전환은 CMS API에만 적용됩니다. 기존 /blog MDX 경로는
-              별도 전환 전까지 그대로입니다.
-            </p>
-          ) : null}
-          {needsPreviewRefresh ? (
-            <p
-              role="status"
-              className="mt-2 text-xs text-amber-700 dark:text-amber-300"
-            >
-              기존 revision의 서버 HTML이 현재 변환 결과와 다릅니다. “변환 결과
-              revision 저장”으로 새 비공개 revision을 만든 뒤 검토·발행하세요.
-            </p>
-          ) : null}
-          {conversionIncomplete ? (
-            <div
-              role="status"
-              className="mt-2 text-xs text-amber-700 dark:text-amber-300"
-            >
-              서버 변환에서 구성요소 또는 글자 서식이 보존되지 않아 공개 전환을
-              막았습니다. 편집본은 저장할 수 있습니다.
-              {article.previewIssues?.length ? (
-                <p className="mt-1">
-                  확인할 위치:{" "}
-                  {article.previewIssues
-                    .slice(0, 5)
-                    .map((issue) => `${issue.name} (${issue.line}행)`)
-                    .join(", ")}
-                  {article.previewIssues.length > 5
-                    ? ` 외 ${article.previewIssues.length - 5}곳`
-                    : ""}
-                </p>
-              ) : null}
-            </div>
-          ) : null}
           <details className="mt-6 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
             <summary className="cursor-pointer text-sm font-semibold">
               revision 기록 ({article.revisions?.length ?? 0})
@@ -452,6 +484,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                 >
                   <span>
                     #{revision.revisionNumber} ·{" "}
+                    {revision.sourceFormat ?? "이전 형식"} ·{" "}
                     {revision.changeSummary ?? "수정"}
                     {revision.isPublished ? " · 현재 공개본" : ""}
                   </span>
@@ -460,6 +493,8 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
                     className="rounded-full border border-zinc-300 px-3 py-1 text-xs disabled:opacity-40 dark:border-zinc-700"
                     disabled={
                       isBusy ||
+                      (!isDocumentArticle && !isBlockArticle) ||
+                      revision.sourceFormat !== article.sourceFormat ||
                       dirty ||
                       revision.revisionNumber === article.editingRevisionNumber
                     }
@@ -492,10 +527,15 @@ function NewCmsArticleForm() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("SEOJing");
-  const [blocks, setBlocks] = useState<ArticleBlock[]>([
-    defaultBlock("HEADING"),
-    defaultBlock("PARAGRAPH"),
-  ]);
+  const [document, setDocument] =
+    useState<ArticleDocument>(emptyArticleDocument);
+  const [tags, setTags] = useState("");
+  const [coverSrc, setCoverSrc] = useState("");
+  const [coverAlt, setCoverAlt] = useState("");
+  const [displayDate, setDisplayDate] = useState("");
+  const [displayUpdatedAt, setDisplayUpdatedAt] = useState("");
+  const [summaryVideoSrc, setSummaryVideoSrc] = useState("");
+  const [summaryVideoTitle, setSummaryVideoTitle] = useState("");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -507,12 +547,22 @@ function NewCmsArticleForm() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          action: "createBlocks",
+          action: "createDocument",
           slug,
           title,
           description,
           category,
-          blocks: toBackendBlocks(blocks),
+          document,
+          tags: tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+          cover: coverSrc ? { src: coverSrc, alt: coverAlt } : undefined,
+          summaryVideo: summaryVideoSrc
+            ? { src: summaryVideoSrc, title: summaryVideoTitle }
+            : undefined,
+          displayDate: displayDate || undefined,
+          displayUpdatedAt: displayUpdatedAt || undefined,
         }),
       });
       const body = (await response.json()) as MutationPayload;
@@ -540,8 +590,7 @@ function NewCmsArticleForm() {
       </p>
       <h2 className="mt-2 text-2xl font-semibold">새 CMS 글</h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-300">
-        새 글은 MDX가 아니라 block revision으로 저장됩니다. 기존 MDX 글은
-        건드리지 않고 함께 운영합니다.
+        새 글은 서버의 JSON 문서 revision으로 저장됩니다.
       </p>
       <div className="mt-5">
         <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-300">
@@ -580,7 +629,28 @@ function NewCmsArticleForm() {
           <option value="KD Team" />
         </datalist>
       </label>
-      <BlockEditor blocks={blocks} disabled={saving} onChange={setBlocks} />
+      <DocumentMetadata
+        tags={tags}
+        onTagsChange={setTags}
+        coverSrc={coverSrc}
+        onCoverSrcChange={setCoverSrc}
+        coverAlt={coverAlt}
+        onCoverAltChange={setCoverAlt}
+        displayDate={displayDate}
+        onDisplayDateChange={setDisplayDate}
+        displayUpdatedAt={displayUpdatedAt}
+        onDisplayUpdatedAtChange={setDisplayUpdatedAt}
+        summaryVideoSrc={summaryVideoSrc}
+        onSummaryVideoSrcChange={setSummaryVideoSrc}
+        summaryVideoTitle={summaryVideoTitle}
+        onSummaryVideoTitleChange={setSummaryVideoTitle}
+        disabled={saving}
+      />
+      <NativeDocumentEditor
+        value={document}
+        onChange={setDocument}
+        disabled={saving}
+      />
       {message ? (
         <p className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:bg-rose-950/30 dark:text-rose-200">
           {message}
@@ -590,12 +660,119 @@ function NewCmsArticleForm() {
         className="mt-5 rounded-full bg-zinc-950 px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-45 dark:bg-zinc-50 dark:text-zinc-950"
         onClick={() => void createDraft()}
         disabled={
-          saving || !slug.trim() || !title.trim() || blocks.length === 0
+          saving || !slug.trim() || !title.trim() || !document.content?.length
         }
       >
         {saving ? "CMS 초안 생성 중" : "CMS 초안 만들기"}
       </button>
     </section>
+  );
+}
+
+function DocumentMetadata({
+  tags,
+  onTagsChange,
+  coverSrc,
+  onCoverSrcChange,
+  coverAlt,
+  onCoverAltChange,
+  displayDate,
+  onDisplayDateChange,
+  displayUpdatedAt,
+  onDisplayUpdatedAtChange,
+  summaryVideoSrc,
+  onSummaryVideoSrcChange,
+  summaryVideoTitle,
+  onSummaryVideoTitleChange,
+  disabled,
+}: {
+  tags: string;
+  onTagsChange: (value: string) => void;
+  coverSrc: string;
+  onCoverSrcChange: (value: string) => void;
+  coverAlt: string;
+  onCoverAltChange: (value: string) => void;
+  displayDate: string;
+  onDisplayDateChange: (value: string) => void;
+  displayUpdatedAt: string;
+  onDisplayUpdatedAtChange: (value: string) => void;
+  summaryVideoSrc: string;
+  onSummaryVideoSrcChange: (value: string) => void;
+  summaryVideoTitle: string;
+  onSummaryVideoTitleChange: (value: string) => void;
+  disabled: boolean;
+}) {
+  const inputClass =
+    "mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900";
+  return (
+    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <label className="text-sm">
+        태그 (쉼표로 구분)
+        <input
+          className={inputClass}
+          value={tags}
+          onChange={(event) => onTagsChange(event.target.value)}
+          disabled={disabled}
+        />
+      </label>
+      <label className="text-sm">
+        표시 날짜
+        <input
+          type="date"
+          className={inputClass}
+          value={displayDate}
+          onChange={(event) => onDisplayDateChange(event.target.value)}
+          disabled={disabled}
+        />
+      </label>
+      <label className="text-sm">
+        수정 표시 날짜
+        <input
+          type="date"
+          className={inputClass}
+          value={displayUpdatedAt}
+          onChange={(event) => onDisplayUpdatedAtChange(event.target.value)}
+          disabled={disabled}
+        />
+      </label>
+      <label className="text-sm">
+        대표 이미지 URL
+        <input
+          className={inputClass}
+          value={coverSrc}
+          onChange={(event) => onCoverSrcChange(event.target.value)}
+          disabled={disabled}
+          placeholder="/images/cover.png"
+        />
+      </label>
+      <label className="text-sm">
+        대표 이미지 설명
+        <input
+          className={inputClass}
+          value={coverAlt}
+          onChange={(event) => onCoverAltChange(event.target.value)}
+          disabled={disabled}
+        />
+      </label>
+      <label className="text-sm">
+        요약 영상 URL
+        <input
+          className={inputClass}
+          value={summaryVideoSrc}
+          onChange={(event) => onSummaryVideoSrcChange(event.target.value)}
+          disabled={disabled}
+        />
+      </label>
+      <label className="text-sm">
+        요약 영상 제목
+        <input
+          className={inputClass}
+          value={summaryVideoTitle}
+          onChange={(event) => onSummaryVideoTitleChange(event.target.value)}
+          disabled={disabled}
+        />
+      </label>
+    </div>
   );
 }
 
@@ -1050,9 +1227,7 @@ function ArticleStatusCard({
           <h2 className="mt-1 break-all text-2xl font-semibold">
             {article?.title ?? selectedSlug}
           </h2>
-          {article &&
-          (article.sourceFormat !== "BLOCKS" ||
-            article.status === "PUBLISHED") ? (
+          {article && article.status === "PUBLISHED" ? (
             <a
               href={`/blog/${selectedSlug}`}
               className="mt-2 inline-block text-sm underline underline-offset-4"
@@ -1064,7 +1239,13 @@ function ArticleStatusCard({
         <div className="flex flex-wrap gap-2 text-xs">
           <StatusPill
             label="형식"
-            value={article?.sourceFormat === "BLOCKS" ? "CMS" : "MDX"}
+            value={
+              article?.sourceFormat === "DOCUMENT"
+                ? "CMS 문서"
+                : article?.sourceFormat === "BLOCKS"
+                  ? "기존 CMS 블록"
+                  : "이전 형식"
+            }
           />
           <StatusPill
             label="상태"

@@ -1,4 +1,4 @@
-import contentTree from "@/generated/content-tree.json";
+import { getPublicContentTree } from "@/shared/content/public-article-store";
 import {
   buildOpsAnalyticsSummary,
   buildPublicAnalyticsSummary,
@@ -45,7 +45,7 @@ function walkContentTree(
       walkContentTree(node.children ?? [], items);
       continue;
     }
-    if (node.extension !== "mdx") continue;
+    if (node.extension !== "post" && node.extension !== "mdx") continue;
     const slug = slugFromPath(node.path);
     items.push({
       slug,
@@ -58,9 +58,11 @@ function walkContentTree(
   }
 }
 
-export function getAnalyticsContentInventory(): AnalyticsContentInventoryItem[] {
+export async function getAnalyticsContentInventory(): Promise<
+  AnalyticsContentInventoryItem[]
+> {
   const items: AnalyticsContentInventoryItem[] = [];
-  walkContentTree(contentTree as ContentTreeNode[], items);
+  walkContentTree((await getPublicContentTree()) as ContentTreeNode[], items);
   return items.sort((a, b) =>
     (b.published_at ?? "").localeCompare(a.published_at ?? ""),
   );
@@ -95,7 +97,7 @@ export async function loadPublicAnalyticsSummary(): Promise<AnalyticsPublicSumma
 
   return buildPublicAnalyticsSummary({
     rows: [],
-    inventory: getAnalyticsContentInventory(),
+    inventory: await getAnalyticsContentInventory(),
     generatedAt: new Date().toISOString(),
     source: "content-inventory",
   });
@@ -111,7 +113,7 @@ export async function loadOpsAnalyticsSummary(): Promise<AnalyticsOpsSummary> {
 
   return buildOpsAnalyticsSummary({
     rows: [],
-    inventory: getAnalyticsContentInventory(),
+    inventory: await getAnalyticsContentInventory(),
     generatedAt: new Date().toISOString(),
   });
 }

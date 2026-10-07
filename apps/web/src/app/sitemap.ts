@@ -1,8 +1,9 @@
 import { absoluteUrl } from "@/shared/config/site";
 import { flattenContentTree, normalizeDate } from "@/shared/seo/content";
+import { getContentTree } from "@/shared/config";
 
-export default function sitemap() {
-  const entries = flattenContentTree();
+export default async function sitemap() {
+  const entries = flattenContentTree(await getContentTree());
   const posts = entries.map((entry) => ({
     url: entry.url,
     lastModified: normalizeDate(
