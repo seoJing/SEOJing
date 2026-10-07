@@ -543,6 +543,58 @@ describe("prepared view against the request snapshot (onPrepView)", () => {
     expect(
       arrive(api, preparedView([]), { docType: "cover_letter", prompts: [] }),
     ).toBe(false); // a prompt-less cover letter echoes []
+    expect(
+      arrive(
+        api,
+        preparedView([
+          { id: "ep1", text: INJECT },
+          { text: "입사 후 계획" } as Prompt,
+        ]),
+        snap,
+      ),
+    ).toBe(true); // id missing: the contract always numbers ep1…epN
+    expect(
+      arrive(
+        api,
+        preparedView([
+          { id: null as unknown as string, text: INJECT },
+          { id: "ep2", text: "입사 후 계획" },
+        ]),
+        snap,
+      ),
+    ).toBe(true); // id null
+  });
+
+  it("keeps newly typed prompts after a refreshed session is discarded and prepared again", () => {
+    vi.useFakeTimers();
+    const api = lab();
+    api.resetS01();
+    api.restoreInputs(preparedView([{ id: "ep1", text: "지원동기" }])); // restored session: refreshed stays true after discard
+    expect(api.S.s01!.docType).toBe("cover_letter");
+    api.S.s01!.prompts = ["새로 적은 문항", "두 번째 문항"]; // edited after 입력 바꾸기
+    const snap = api.prepareSnapshot();
+    (api.S as unknown as { prep: PrepState }).prep = {
+      ...api.blankPrep(),
+      id: "p2",
+      snap,
+    } as PrepState;
+    api.onPrepView(preparedView([{ id: "ep1", text: "지원동기" }])); // the server answers with the old record
+    expect(api.S.s02.unsupported).toBe(true);
+    expect(api.S.s01!.prompts).toEqual(["새로 적은 문항", "두 번째 문항"]); // nothing overwritten
+    expect(api.S.s01!.docType).toBe("cover_letter");
+
+    (api.S as unknown as { prep: PrepState }).prep = {
+      ...api.blankPrep(),
+      id: "p3",
+      snap,
+    } as PrepState;
+    api.onPrepView(
+      preparedView([
+        { id: "ep1", text: "새로 적은 문항" },
+        { id: "ep2", text: "두 번째 문항" },
+      ]),
+    );
+    expect(api.S.s02.unsupported).toBe(false);
   });
 
   it("restores kind and prompts from the record when a pending preparation becomes ready after a refresh", () => {

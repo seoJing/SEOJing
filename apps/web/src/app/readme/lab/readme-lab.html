@@ -1428,7 +1428,7 @@ function essayMismatch(pv, snap) {
   const c = pv?.document?.document_context;
   if (!c || typeof c !== "object" || Array.isArray(c) || c.type !== "cover_letter" || !Array.isArray(c.prompts)) return true;
   if (c.prompts.length !== snap.prompts.length) return true;
-  return c.prompts.some((p, i) => !p || typeof p !== "object" || typeof p.text !== "string" || p.text !== snap.prompts[i] || (p.id != null && p.id !== "ep" + (i + 1)));
+  return c.prompts.some((p, i) => !p || typeof p !== "object" || typeof p.text !== "string" || p.text !== snap.prompts[i] || p.id !== "ep" + (i + 1));
 }
 /* what was asked of the server, frozen at 준비하기 time (inputs are locked until the preparation is discarded) */
 const prepareSnapshot = () => ({ docType: S.s01?.docType || "resume", prompts: isEssay() ? essayPrompts(S.s01.prompts) : [] });
@@ -3928,8 +3928,9 @@ function onPrepView(v) {
   }
   if (v.status === "ready") {
     stopPrepPoll(); S.prepared = v; S.ds = dsFromPrepare(v, S.s01?.file);
-    /* after a refresh the first view had no document yet: the kind and prompts come from the server record now */
-    if (S.s01?.refreshed) { S.s01.docType = S.ds.ctx.type; S.s01.prompts = S.ds.ctx.prompts.length ? S.ds.ctx.prompts.map(p => p.text) : [""]; }
+    /* a preparation picked up after a refresh (no request snapshot) had no document in its first view: the kind and prompts
+       come from the server record now. A new 준비하기 in the same refreshed tab has a snapshot and keeps what was typed. */
+    if (S.s01?.refreshed && !P.snap) { S.s01.docType = S.ds.ctx.type; S.s01.prompts = S.ds.ctx.prompts.length ? S.ds.ctx.prompts.map(p => p.text) : [""]; }
     /* P.snap is null for a preparation picked up after a refresh: the server record is then the only source and is trusted as such */
     S.s02 = { okJob: false, okDoc: false, confirmReset: false, starting: false, err: null, unsupported: essayMismatch(v, P.snap) };
     if (S.screen === "s01") renderS01();
