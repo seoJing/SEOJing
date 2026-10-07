@@ -76,6 +76,28 @@ export function MdxReviewQueue({ selectedSlug }: { selectedSlug: string }) {
         있으므로 공개 원본 화면과 직접 대조하세요. 이 목록은 검토 완료나 공개
         전환을 자동 판정하지 않습니다.
       </p>
+      <details className="mt-3 rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-800">
+        <summary className="cursor-pointer font-medium">
+          검토 대기 글을 서버 공개 글로 전환하는 절차
+        </summary>
+        <ol className="mt-2 list-decimal space-y-1 pl-5 text-zinc-600 dark:text-zinc-300">
+          <li>
+            편집 화면에서 원문·CMS 변환·기존 웹 글을 대조하고 필요한 수정본을
+            저장합니다.
+          </li>
+          <li>
+            검토가 끝난 revision을 발행하면 CMS 공개 API에서 읽을 수 있습니다.
+          </li>
+          <li>
+            기존 /blog 주소가 CMS 서버 본문을 읽도록 하는 전환은 별도 릴리스가
+            필요합니다. 글별 렌더 결과와 공개 페이지를 검증한 뒤 전환합니다.
+          </li>
+        </ol>
+        <p className="mt-2 text-xs">
+          이전된 글은 현재도 MDX 형식입니다. 서버에서 읽는 것과 BLOCKS 형식으로
+          바꾸는 것은 다른 작업입니다.
+        </p>
+      </details>
       {loading ? <p className="mt-3 text-sm">CMS 상태 조회 중…</p> : null}
       {error ? (
         <p className="mt-3 text-sm text-red-600">
