@@ -77,6 +77,37 @@ test("requires the document renderer and representative content signals", () => 
   );
 });
 
+test("checks React-streamed article chunks but ignores unrelated page chunks", () => {
+  const article =
+    '<div data-article-content><div data-backend-article-document><template id="P:1"></template></div></div>';
+  const quiz =
+    '<div hidden id="S:1"><section data-article-quiz><template id="P:2"></template></section></div><script>$RS("S:1","P:1")</script>';
+  const image =
+    '<div hidden id="S:2"><img src="/inference-api-design.svg"/></div><script>$RS("S:2","P:2")</script>';
+  const unrelated =
+    '<div hidden id="S:3">RAW_MDX</div><script>$RS("S:3","P:3")</script>';
+  const sentinel = {
+    signals: ["data-article-quiz", "inference-api-design.svg"],
+  };
+  assert.equal(
+    inspectPublicHtml(article + quiz + image + unrelated, sentinel).ok,
+    true,
+  );
+  assert.deepEqual(
+    inspectPublicHtml(article + quiz + unrelated, sentinel).missing,
+    ["inference-api-design.svg"],
+  );
+  assert.deepEqual(
+    inspectPublicHtml(
+      article +
+        quiz.replace("data-article-quiz", "ArticleQuiz fallback") +
+        image,
+      sentinel,
+    ).forbidden,
+    ["ArticleQuiz fallback"],
+  );
+});
+
 test("reads a D1-backed index and three public pages without requiring backend publication", async (t) => {
   const fetched = [];
   t.mock.method(globalThis, "fetch", async (url) => {
