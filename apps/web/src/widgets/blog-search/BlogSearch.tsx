@@ -4,10 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import { cn } from "@app/utils";
 import type { ContentNode } from "@app/utils";
-import contentTree from "@/generated/content-tree.json";
 import { flattenFiles, toPostHref } from "./blog-search.utils";
-
-const allPosts = flattenFiles(contentTree as ContentNode[]);
 
 interface BlogSearchProps {
   onClose: () => void;
@@ -23,10 +20,35 @@ interface BlogSearchProps {
  */
 export function BlogSearch({ onClose }: BlogSearchProps) {
   const [query, setQuery] = useState("");
+  const [contentTree, setContentTree] = useState<ContentNode[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/public/articles/index", { signal: controller.signal })
+      .then((response) =>
+        response.ok
+          ? response.json()
+          : Promise.reject(new Error("Public article index unavailable")),
+      )
+      .then((data: unknown) => {
+        if (
+          data &&
+          typeof data === "object" &&
+          "articles" in data &&
+          Array.isArray(data.articles)
+        ) {
+          setContentTree(data.articles as ContentNode[]);
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) console.error(error);
+      });
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -38,6 +60,7 @@ export function BlogSearch({ onClose }: BlogSearchProps) {
   }, [onClose]);
 
   const lowerQuery = query.toLowerCase().trim();
+  const allPosts = flattenFiles(contentTree);
   const results =
     lowerQuery.length > 0
       ? allPosts.filter(

@@ -1,5 +1,6 @@
 import { absoluteUrl, siteConfig } from "@/shared/config/site";
 import { flattenContentTree, normalizeDate } from "@/shared/seo/content";
+import { getContentTree } from "@/shared/config";
 
 function escapeXml(value: string): string {
   return value
@@ -10,8 +11,8 @@ function escapeXml(value: string): string {
     .replace(/'/g, "&apos;");
 }
 
-export function GET() {
-  const items = flattenContentTree()
+export async function GET() {
+  const items = flattenContentTree(await getContentTree())
     .slice(0, 50)
     .map((entry) => {
       const pubDate = new Date(normalizeDate(entry.frontmatter.date));

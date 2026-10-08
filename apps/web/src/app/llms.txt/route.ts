@@ -1,8 +1,9 @@
 import { absoluteUrl, siteConfig } from "@/shared/config/site";
 import { flattenContentTree } from "@/shared/seo/content";
+import { getContentTree } from "@/shared/config";
 
-export function GET() {
-  const entries = flattenContentTree();
+export async function GET() {
+  const entries = flattenContentTree(await getContentTree());
   const featured = entries
     .slice(0, 30)
     .map(

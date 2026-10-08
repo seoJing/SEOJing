@@ -71,7 +71,7 @@ export async function handleAnalyticsRequest(
       200,
       buildOpsAnalyticsSummary({
         rows,
-        inventory: getAnalyticsContentInventory(),
+        inventory: await getAnalyticsContentInventory(),
         generatedAt: new Date().toISOString(),
         source: "live-d1",
       }),

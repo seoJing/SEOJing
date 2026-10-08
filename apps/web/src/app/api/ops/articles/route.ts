@@ -1,4 +1,10 @@
 import { isOpsAuthorized } from "../../../../../worker/ops-access";
+import {
+  deletePublicArticle,
+  putPublicArticle,
+  readPublicArticle,
+} from "@/shared/content/public-article-store";
+import type { BackendArticleApiResponse } from "@/shared/content/backend-article";
 
 const MAX_SOURCE_BYTES = 512 * 1024;
 const OPS_PROXY_TIMEOUT_MS = 8_000;
@@ -40,15 +46,36 @@ type AdminArticlePayload = {
     category?: string;
     status?: string;
     sourceFormat?: string;
+    document?: unknown;
+    tags?: string[];
+    cover?: {
+      src: string;
+      alt: string;
+      caption?: string;
+      kind?: string;
+    } | null;
+    summaryVideo?: {
+      src: string;
+      title?: string;
+      caption?: string;
+      poster?: string;
+      subtitles?: string;
+      provider?: string;
+    } | null;
+    displayDate?: string | null;
+    displayUpdatedAt?: string | null;
+    editingRevisionId?: string | null;
     sourceText?: string;
     renderedHtml?: string | null;
     previewRenderedHtml?: string | null;
+    previewIssues?: Array<{ name: string; line: number }>;
     blocks?: AdminArticleBlock[];
     currentRevisionNumber?: number | null;
     editingRevisionNumber?: number | null;
     hasUnpublishedChanges?: boolean;
     revisions?: Array<{
       revisionNumber: number;
+      sourceFormat?: string;
       changeSummary?: string | null;
       createdAt: string;
       isPublished: boolean;
@@ -76,7 +103,23 @@ export async function GET(request: Request): Promise<Response> {
   const access = await verifyOpsAccess(request);
   if (!access.ok) return jsonResponse(access.status, access.body);
 
-  const slug = new URL(request.url).searchParams.get("slug")?.trim();
+  const requestUrl = new URL(request.url);
+  const slug = requestUrl.searchParams.get("slug")?.trim();
+  if (requestUrl.searchParams.get("mode") === "published-slugs") {
+    const config = readBackendConfig();
+    if (!config.ok) return jsonResponse(config.status, config.body);
+    const result = await fetchBackendJson<{ slugs: string[] }>(
+      config.origin,
+      "/admin/articles/published-slugs",
+      { method: "GET", adminToken: config.adminToken },
+    );
+    return result.ok
+      ? jsonResponse(200, { ok: true, slugs: result.data.slugs })
+      : jsonResponse(result.status, {
+          ok: false,
+          error: "backend_published_slugs_read_failed",
+        });
+  }
   if (!slug) {
     const config = readBackendConfig();
     if (!config.ok) return jsonResponse(config.status, config.body);
@@ -155,6 +198,65 @@ export async function POST(request: Request): Promise<Response> {
 
   const config = readBackendConfig();
   if (!config.ok) return jsonResponse(config.status, config.body);
+
+  if (action === "createDocument" || action === "saveDocument") {
+    const title = readString(body, "title");
+    const document = readField(body, "document");
+    const expectedRevisionId = readString(body, "expectedRevisionId");
+    if (
+      !title ||
+      !document ||
+      typeof document !== "object" ||
+      Array.isArray(document) ||
+      (action === "saveDocument" && !expectedRevisionId)
+    ) {
+      return jsonResponse(400, {
+        ok: false,
+        error: "invalid_document_request",
+      });
+    }
+    const fields = {
+      ...(action === "createDocument" ? { slug } : {}),
+      title,
+      description: readString(body, "description"),
+      category: readString(body, "category"),
+      tags: readField(body, "tags") ?? [],
+      cover: readField(body, "cover"),
+      summaryVideo: readField(body, "summaryVideo"),
+      displayDate: readField(body, "displayDate"),
+      displayUpdatedAt: readField(body, "displayUpdatedAt"),
+      document,
+      ...(action === "saveDocument" ? { expectedRevisionId } : {}),
+      changeSummary:
+        readString(body, "changeSummary") ||
+        (action === "createDocument"
+          ? "Create CMS document"
+          : "Save CMS document"),
+      authorName: "SEOJing Ops",
+    };
+    const result = await fetchBackendJson<AdminArticlePayload>(
+      config.origin,
+      action === "createDocument"
+        ? "/admin/articles/documents"
+        : `/admin/articles/${encodeURIComponent(slug)}/document`,
+      {
+        method: action === "createDocument" ? "POST" : "PUT",
+        adminToken: config.adminToken,
+        body: JSON.stringify(fields),
+      },
+    );
+    if (!result.ok)
+      return jsonResponse(result.status, {
+        ok: false,
+        error: result.error ?? "backend_document_write_failed",
+        status: result.status,
+      });
+    return jsonResponse(action === "createDocument" ? 201 : 200, {
+      ok: true,
+      action,
+      article: result.data.article,
+    });
+  }
 
   if (action === "createBlocks") {
     const title = readString(body, "title");
@@ -289,6 +391,13 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
+  if (action === "syncPublished") {
+    const synced = await syncPublicSnapshot(config.origin, slug);
+    return synced.ok
+      ? jsonResponse(200, { ok: true, action, slug })
+      : jsonResponse(synced.status, { ok: false, error: synced.error });
+  }
+
   if (action === "publish") {
     const published = await fetchBackendJson<AdminArticlePayload>(
       config.origin,
@@ -301,10 +410,19 @@ export async function POST(request: Request): Promise<Response> {
     if (!published.ok) {
       return jsonResponse(published.status, {
         ok: false,
-        error: "backend_publish_failed",
+        error: published.error ?? "backend_publish_failed",
+        issues: published.issues,
         status: published.status,
       });
     }
+    const synced = await syncPublicSnapshot(config.origin, slug);
+    if (!synced.ok)
+      return jsonResponse(synced.status, {
+        ok: false,
+        error: synced.error,
+        backendPublished: true,
+        retryAction: "syncPublished",
+      });
     return jsonResponse(200, {
       ok: true,
       action,
@@ -315,12 +433,20 @@ export async function POST(request: Request): Promise<Response> {
   const visibilityAction =
     action === "unpublish" || action === "archive" ? action : null;
   if (visibilityAction) {
+    const previous = await removePublicSnapshotBeforeBackend(slug);
+    if (!previous.ok)
+      return jsonResponse(503, {
+        ok: false,
+        error: "public_snapshot_delete_failed",
+        backendVisibilityChanged: false,
+      });
     const updated = await fetchBackendJson<AdminArticlePayload>(
       config.origin,
       `/admin/articles/${encodeURIComponent(slug)}/${visibilityAction}`,
       { method: "POST", adminToken: config.adminToken },
     );
     if (!updated.ok) {
+      await restorePublicSnapshot(previous.article);
       return jsonResponse(updated.status, {
         ok: false,
         error: `backend_${visibilityAction}_failed`,
@@ -335,12 +461,20 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   if (action === "delete") {
+    const previous = await removePublicSnapshotBeforeBackend(slug);
+    if (!previous.ok)
+      return jsonResponse(503, {
+        ok: false,
+        error: "public_snapshot_delete_failed",
+        backendDeleted: false,
+      });
     const deleted = await fetchBackendJson<Record<string, never>>(
       config.origin,
       `/admin/articles/${encodeURIComponent(slug)}`,
       { method: "DELETE", adminToken: config.adminToken },
     );
     if (!deleted.ok) {
+      await restorePublicSnapshot(previous.article);
       return jsonResponse(deleted.status, {
         ok: false,
         error: "backend_delete_failed",
@@ -351,6 +485,59 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   return jsonResponse(400, { ok: false, error: "unsupported_action" });
+}
+
+async function removePublicSnapshotBeforeBackend(
+  slug: string,
+): Promise<
+  { ok: true; article: BackendArticleApiResponse | null } | { ok: false }
+> {
+  try {
+    const article = await readPublicArticle(slug);
+    await deletePublicArticle(slug);
+    return { ok: true, article };
+  } catch (error) {
+    console.error("Public article snapshot deletion failed", { slug, error });
+    return { ok: false };
+  }
+}
+
+async function restorePublicSnapshot(
+  article: BackendArticleApiResponse | null,
+): Promise<void> {
+  if (!article) return;
+  try {
+    await putPublicArticle(article);
+  } catch (error) {
+    console.error("Public article snapshot restoration failed", {
+      slug: article.slug,
+      error,
+    });
+  }
+}
+
+async function syncPublicSnapshot(
+  origin: string,
+  slug: string,
+): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  const result = await fetchBackendJson<BackendArticleApiResponse>(
+    origin,
+    `/articles/${encodeURIComponent(slug)}`,
+    { method: "GET" },
+  );
+  if (!result.ok)
+    return {
+      ok: false,
+      status: result.status,
+      error: "backend_public_readback_failed",
+    };
+  try {
+    await putPublicArticle(result.data);
+    return { ok: true };
+  } catch (error) {
+    console.error("Public article snapshot sync failed", { slug, error });
+    return { ok: false, status: 503, error: "public_snapshot_sync_failed" };
+  }
 }
 
 export function PUT(): Response {
@@ -456,7 +643,12 @@ type BackendFetchOptions = {
 
 type BackendFetchResult<T> =
   | { ok: true; status: number; data: T }
-  | { ok: false; status: number };
+  | {
+      ok: false;
+      status: number;
+      error?: string;
+      issues?: Array<{ name: string; line: number }>;
+    };
 
 async function fetchBackendJson<T>(
   origin: string,
@@ -482,7 +674,32 @@ async function fetchBackendJson<T>(
     if (response.status === 204) {
       return { ok: true, status: response.status, data: {} as T };
     }
-    if (!response.ok) return { ok: false, status: response.status };
+    if (!response.ok) {
+      if (response.status === 400 || response.status === 409) {
+        const body = (await response.json().catch(() => ({}))) as Record<
+          string,
+          unknown
+        >;
+        const issues = Array.isArray(body.issues)
+          ? body.issues
+              .filter(
+                (issue): issue is { name: string; line: number } =>
+                  Boolean(issue) &&
+                  typeof issue === "object" &&
+                  typeof issue.name === "string" &&
+                  typeof issue.line === "number",
+              )
+              .slice(0, 20)
+          : undefined;
+        return {
+          ok: false,
+          status: response.status,
+          error: typeof body.error === "string" ? body.error : undefined,
+          issues,
+        };
+      }
+      return { ok: false, status: response.status };
+    }
     return {
       ok: true,
       status: response.status,
@@ -520,6 +737,12 @@ function readNumber(body: unknown, key: string): number {
   if (!body || typeof body !== "object" || Array.isArray(body)) return NaN;
   const value = (body as Record<string, unknown>)[key];
   return typeof value === "number" ? value : NaN;
+}
+
+function readField(body: unknown, key: string): unknown {
+  return body && typeof body === "object" && !Array.isArray(body)
+    ? (body as Record<string, unknown>)[key]
+    : undefined;
 }
 
 function readBlocks(body: unknown): AdminArticleBlock[] {

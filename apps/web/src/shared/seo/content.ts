@@ -1,4 +1,3 @@
-import contentTree from "@/generated/content-tree.json";
 import type { ContentNode, ContentTree } from "@app/utils";
 import { blogUrl, siteConfig } from "@/shared/config/site";
 
@@ -10,9 +9,7 @@ export interface SeoContentEntry {
   frontmatter: NonNullable<ContentNode["frontmatter"]>;
 }
 
-export function flattenContentTree(
-  nodes: ContentTree = contentTree as ContentTree,
-): SeoContentEntry[] {
+export function flattenContentTree(nodes: ContentTree): SeoContentEntry[] {
   const entries: SeoContentEntry[] = [];
 
   function walk(currentNodes: ContentTree) {
@@ -44,9 +41,12 @@ export function flattenContentTree(
   });
 }
 
-export function findContentEntry(slug: string[]): SeoContentEntry | undefined {
+export function findContentEntry(
+  slug: string[],
+  nodes: ContentTree,
+): SeoContentEntry | undefined {
   const key = slug.join("/");
-  return flattenContentTree().find((entry) => entry.slug === key);
+  return flattenContentTree(nodes).find((entry) => entry.slug === key);
 }
 
 export function normalizeDate(value: string | undefined): string {
