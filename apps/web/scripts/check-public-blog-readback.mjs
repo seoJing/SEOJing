@@ -116,14 +116,41 @@ function extractArticleContent(html) {
     html,
   );
   if (!start) return "";
-  const tag = start[1];
+  let body = extractElement(html, start.index, start[1]);
+  const streams = new Map(
+    [...html.matchAll(/\$RS\("(S:[^"]+)","(P:[^"]+)"\)/g)].map(
+      ([, streamId, placeholderId]) => [placeholderId, streamId],
+    ),
+  );
+  const pending = [...body.matchAll(/<template id="(P:[^"]+)"/g)].map(
+    ([, id]) => id,
+  );
+  const seen = new Set();
+  while (pending.length) {
+    const placeholderId = pending.shift();
+    if (seen.has(placeholderId)) continue;
+    seen.add(placeholderId);
+    const streamId = streams.get(placeholderId);
+    if (!streamId) continue;
+    const chunkStart = html.indexOf(`<div hidden id="${streamId}">`);
+    if (chunkStart < 0) continue;
+    const chunk = extractElement(html, chunkStart, "div");
+    body += chunk;
+    pending.push(
+      ...[...chunk.matchAll(/<template id="(P:[^"]+)"/g)].map(([, id]) => id),
+    );
+  }
+  return body;
+}
+
+function extractElement(html, start, tag) {
   const pattern = new RegExp(`<${tag}\\b[^>]*>|</${tag}\\s*>`, "gi");
-  pattern.lastIndex = start.index;
+  pattern.lastIndex = start;
   let depth = 0;
   let match;
   while ((match = pattern.exec(html))) {
     depth += match[0].startsWith("</") ? -1 : 1;
-    if (depth === 0) return html.slice(start.index, pattern.lastIndex);
+    if (depth === 0) return html.slice(start, pattern.lastIndex);
   }
   return "";
 }
