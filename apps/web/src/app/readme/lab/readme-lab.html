@@ -256,6 +256,25 @@ details[open]>summary::after{transform:translateY(0) rotate(-135deg)}
 #file-err:not(:has(.ic)){display:block;color:var(--ink-2)}
 .send{display:grid;gap:8px;font:400 14px/22px var(--f-ui)}
 .send details[open] .where-list{margin-top:12px}
+/* document kind: two native radios in one row; the file field and the optional prompts below follow the choice */
+.doc-type{border:0;margin:0;padding:0;min-width:0}
+.doc-type legend{padding:0;margin-bottom:8px}
+.doc-type .choices{display:flex;flex-wrap:wrap;gap:8px 24px}
+.doc-type .check{align-items:center}
+input[type=radio]{width:18px;height:18px;margin:0;accent-color:var(--ink);flex:none}
+.opt{font:400 13px/20px var(--f-ui);color:var(--ink-2);margin-left:6px}
+/* optional cover-letter prompts: one textarea per item, numbered like the confirmation list; never part of the sheet */
+.prompts{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.prompts li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:4px 8px;align-items:start}
+.prompts .n{font:600 14px/40px var(--f-ui);color:var(--ink-2)}
+.prompts .prompt{display:block;width:100%;min-height:40px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:2px;background:var(--paper);color:var(--ink);font:400 15px/24px var(--f-ui);resize:vertical}
+.prompts .prompt[readonly]{background:var(--desk);color:var(--ink-2)}
+.prompts .prompt[aria-invalid="true"]{border:1.5px solid var(--ink)}
+.prompts .rm-p{line-height:40px}
+.prompts .field-err{grid-column:2/-1;margin-top:0}
+.prompts-view{margin:0;padding:0 0 0 24px;display:grid;gap:6px;font:400 15px/24px var(--f-ui)}
+.prompts-view li::marker{color:var(--ink-2);font-weight:600}
+.prompts-view li{overflow-wrap:anywhere;white-space:pre-wrap}
 .prep{display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:8px 12px;margin-top:0;padding-top:16px;border-top:1px solid var(--rule);font:400 14px/22px var(--f-ui);align-items:start}
 .prep .mk{width:16px;height:22px;display:grid;place-items:center}
 .prep .ring{width:8px;height:8px;border-radius:50%;border:1px solid var(--line-strong)}
@@ -345,7 +364,6 @@ details[open]>summary::after{transform:translateY(0) rotate(-135deg)}
   background-repeat:no-repeat,repeat-x,repeat-x,no-repeat,no-repeat,repeat-x;
   padding-bottom:3px;-webkit-box-decoration-break:slice;box-decoration-break:slice}
 .pen.draw{animation:pen-in var(--t-4) var(--ease-out) both}
-.pen.draw.quick{animation-duration:var(--t-2)}
 @keyframes pen-in{from{--reveal:0%}to{--reveal:100%}}
 .pen.q{--l-wave:var(--wave-q)}
 .pen.q[data-q="partial"]{--l-wave:var(--wave-q-mid)}
@@ -417,7 +435,7 @@ details[open]>summary::after{transform:translateY(0) rotate(-135deg)}
 :root[data-theme="dark"] .gaze-lens::after{--spec:.22}
 .gaze[data-state="stopped"] .gaze-lens{display:none}
 /* the jelly keyframes run only while the gaze is on screen: a hidden or leaving gaze costs nothing */
-.gaze:is([data-state="reading"],[data-state="skimming"],[data-state="jumping"]) .gaze-blob{animation:gz-jelly 3.2s var(--ease-in-out) infinite}
+.gaze[data-state="reading"] .gaze-blob{animation:gz-jelly 3.2s var(--ease-in-out) infinite}
 .gaze:is([data-state="waiting"],[data-state="loading"]) .gaze-blob{animation:gz-jelly 5.2s var(--ease-in-out) infinite,gz-breathe 2.4s var(--ease-in-out) infinite alternate}
 .gaze[data-state="paused"] .gaze-blob{background:none;box-shadow:inset 0 0 0 1px rgb(var(--gaze-rgb)/.45)}
 .gaze[data-state="stopped"] .gaze-blob{animation:none;background:none;box-shadow:none;outline:1px dashed var(--ink-2);outline-offset:-1px;border-radius:50%}
@@ -457,6 +475,12 @@ details[open]>summary::after{transform:translateY(0) rotate(-135deg)}
 .st-acts:empty{display:none}
 #st-sub-t:empty+.st-acts{margin-left:0}
 .bar-acts-m{display:none}
+/* the report finished before the screen did: one row inside the sticky bar, so it stays in view without covering the
+   sheet or the controls. Same ink-rule voice as .notice; it never moves focus and the playback goes on beneath it. */
+.bar-ready{display:flex;flex-wrap:wrap;align-items:center;gap:4px 16px;padding:8px 0 8px 12px;margin-bottom:6px;border-top:1px solid var(--rule);border-left:2px solid var(--ink);animation:rise var(--t-3) var(--ease-out) both}
+.bar-ready .rr-t{font:600 14px/22px var(--f-ui);color:var(--ink)}
+.bar-ready .rr-s{font:400 13px/20px var(--f-ui);color:var(--ink-2)}
+.bar-ready .btn-primary{margin-left:auto}
 .bar-ctrl{display:flex;align-items:center;gap:12px;justify-content:flex-end}
 .bar-ctrl .why{max-width:12em;text-align:right}
 .legend{display:flex;flex-wrap:nowrap;gap:0;align-items:center;min-width:0}
@@ -733,6 +757,10 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
   .bar-ctrl{gap:0}
   .bar-ctrl .why,.bar-ctrl .btn-quiet.replay,.bar-ctrl #restart-btn{display:none}
   .bar-ctrl .bar-cancel-d{margin-left:8px}
+  .bar-ready{gap:4px 12px;padding:6px 0 6px 10px;margin-bottom:4px}
+  .bar-ready .rr-t{font-size:13px;line-height:20px}
+  .bar-ready .rr-s{display:none}
+  .bar-ready .btn-primary{height:34px;padding:0 12px;font-size:13px}
   .only-m{display:inline-flex}
   .seg{border:0;height:44px}
   .seg button{width:44px}
@@ -793,7 +821,7 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
 /* ---------- reduced motion (decided in JS so the state sequence is kept) ---------- */
 .rm .gaze-blob,.rm .mini-gaze{animation:none!important}
 .rm .gaze{transition:opacity 160ms linear}
-.rm .pen.draw,.rm .sn.enter,.rm .note.enter,.rm .paper.ev,.rm .ritem.back::before{animation:none!important}
+.rm .pen.draw,.rm .sn.enter,.rm .note.enter,.rm .bar-ready,.rm .paper.ev,.rm .ritem.back::before{animation:none!important}
 .rm .u.current .w.inked,.rm .paper.reading .u.unread{transition:none}
 .rm .track .t-shw{transition:none}
 @media (prefers-reduced-motion:reduce){ .gaze-blob,.mini-gaze{animation:none} }
@@ -881,10 +909,10 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
       <section class="sec" aria-labelledby="mt-steps-h">
         <h2 id="mt-steps-h">네 단계</h2>
         <ol class="mt-steps">
-          <li><span class="n">1 입력</span><div><h3>공고 본문과 이력서 파일</h3><p>공고의 담당 업무와 자격·우대 사항을 그대로 붙여 넣고, 이력서 파일(PDF·DOCX·TXT·MD)을 올립니다. 파일은 서버 메모리에서 글자만 꺼내고 보관하지 않습니다.</p></div></li>
+          <li><span class="n">1 입력</span><div><h3>공고 본문과 이력서·자기소개서 파일</h3><p>공고의 담당 업무와 자격·우대 사항을 그대로 붙여 넣고, 이력서나 자기소개서 파일(PDF·DOCX·TXT·MD)을 올립니다. 자기소개서라면 지원처가 준 문항이나 직접 정한 항목 제목을 선택으로 적을 수 있고, 적지 않으면 이력서와 같은 방식으로 읽습니다. 파일은 서버 메모리에서 글자만 꺼내고 보관하지 않습니다.</p></div></li>
           <li><span class="n">2 확인</span><div><h3>요건과 문장이 원문과 같은지</h3><p>Codex가 공고에서 뽑은 담당 업무·자격·우대 요건과 파일에서 꺼낸 문장을 원문과 비교해 확인합니다. 여기서 고치지는 않고, 틀렸다면 입력으로 돌아갑니다.</p></div></li>
           <li><span class="n">3 읽기</span><div><h3>앞에서부터, 그 문장까지만 보고</h3><p>문장 판단 엔진이 그 문장까지 읽은 내용만 보고 메모를 남깁니다. 뒤 문장을 미리 보지 않습니다. 역할·방식·결과·비교 근거·선택 이유에서 의문이 생기면 남겨 두고, 뒤에서 설명을 찾으면 그 문장과 연결합니다. 공고 요건을 문장마다 대조하는 단계가 아닙니다.</p></div></li>
-          <li><span class="n">4 리포트</span><div><h3>먼저 고칠 부분과 유지할 설명</h3><p>다 읽은 뒤 Codex가 이력서 전체 문장과 읽기 메모를 보고 ‘먼저 고칠 부분’과 ‘고칠 때 유지할 설명’을 정리합니다. 공고 요건과 원문 전체의 대조는 이 단계에서 한 번에 합니다. 항목마다 인용을 누르면 원문 문장으로 이동합니다.</p></div></li>
+          <li><span class="n">4 리포트</span><div><h3>먼저 고칠 부분과 유지할 설명</h3><p>다 읽은 뒤 Codex가 이력서 전체 문장과 읽기 메모를 보고 ‘먼저 고칠 부분’과 ‘고칠 때 유지할 설명’을 정리합니다. 공고 요건과 원문 전체의 대조는 이 단계에서 한 번에 합니다. 자기소개서 문항을 적었다면 문항의 요청과 본문 설명을 함께 보되, 문항마다 점수를 매기지는 않습니다. 항목마다 인용을 누르면 원문 문장으로 이동합니다.</p></div></li>
         </ol>
       </section>
       <section class="sec" aria-labelledby="mt-marks-h">
@@ -947,7 +975,7 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
             <p class="where-h" id="where-h-00">처리되는 곳</p>
             <dl class="where-list" id="where-00" aria-labelledby="where-h-00"></dl>
           </div>
-          <label class="check" for="consent"><input type="checkbox" id="consent"><span>위 ‘처리되는 곳’에 적은 대로 공고와 이력서에서 꺼낸 글(이름·연락처 같은 줄 포함)이 Typesafe Jev와 OpenAI Codex로 전송되는 데 동의합니다.</span></label>
+          <label class="check" for="consent"><input type="checkbox" id="consent"><span>위 ‘처리되는 곳’에 적은 대로 공고와 이력서·자기소개서에서 꺼낸 글(이름·연락처 같은 줄 포함)과 적은 문항이 Typesafe Jev와 OpenAI Codex로 전송되는 데 동의합니다.</span></label>
           <div class="actions">
             <button class="btn-primary" id="enter" type="submit" disabled>들어가기</button>
             <span class="why" id="enter-why">초대 코드를 입력하고 동의해야 들어갈 수 있습니다.</span>
@@ -971,8 +999,8 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
     <section class="screen" id="s01" aria-labelledby="s01-h" hidden>
       <div class="s-head">
         <p class="steps-line" data-steps aria-label="단계" hidden></p>
-        <h1 class="title" id="s01-h" tabindex="-1">공고와 이력서</h1>
-        <p class="lede">붙여 넣은 공고를 기준으로 이력서를 앞에서부터 읽고, 질문이 생긴 문장과 설명을 찾은 문장을 표시합니다. 점수나 합격 가능성은 내지 않습니다.</p>
+        <h1 class="title" id="s01-h" tabindex="-1">공고와 이력서·자기소개서</h1>
+        <p class="lede">붙여 넣은 공고를 기준으로 이력서나 자기소개서를 앞에서부터 읽고, 질문이 생긴 문장과 설명을 찾은 문장을 표시합니다. 점수나 합격 가능성은 내지 않습니다.</p>
         <p class="meta-line" id="s01-time"></p>
         <div class="actions" id="sample-row" hidden><button class="btn-quiet" id="use-sample" type="button">예시 공고와 이력서로 해 보기</button></div>
       </div>
@@ -984,6 +1012,14 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
           <p class="help" id="job-edited" hidden></p>
         </div>
         <div class="col side-form">
+          <fieldset class="field doc-type" id="doc-type">
+            <legend class="label">문서 종류</legend>
+            <div class="choices">
+              <label class="check" for="dt-resume"><input type="radio" name="doc-type" id="dt-resume" value="resume" checked><span>이력서</span></label>
+              <label class="check" for="dt-cover"><input type="radio" name="doc-type" id="dt-cover" value="cover_letter"><span>자기소개서</span></label>
+            </div>
+            <p class="help" id="doc-type-help">둘 다 같은 공고를 기준으로 앞에서부터 읽습니다. 자기소개서는 문항을 적을 수 있고, 적지 않으면 이력서와 같은 방식으로 읽습니다.</p>
+          </fieldset>
           <div class="field">
             <span class="label" id="file-label">이력서 파일</span>
             <div class="drop" id="drop" role="group" aria-labelledby="file-label"></div>
@@ -991,6 +1027,13 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
             <p class="help">PDF·DOCX·TXT·MD · 2&nbsp;MB 이하 · 최대 24,000자·120문장·PDF 10쪽. 스캔한 PDF는 읽을 수 없습니다.</p>
             <p class="help" id="file-privacy">필요 없는 연락처·주소는 지우고 올려 주세요.</p>
             <p class="field-err" id="file-err" hidden></p>
+          </div>
+          <div class="field" id="prompts-field" hidden>
+            <div class="label-row"><span class="label" id="prompts-label">작성 문항<span class="opt">선택</span></span><span class="help num" id="prompts-count"></span></div>
+            <p class="help" id="prompts-help">지원처가 준 문항이나 직접 정한 항목 제목을 한 칸에 하나씩 적어 주세요. 비워 두면 이력서처럼 읽습니다. 문항은 본문에 넣지 않고, 확인 화면과 리포트에 참고로만 보여 줍니다. 문항마다 점수를 매기지 않습니다.</p>
+            <ol class="prompts" id="prompts-list" aria-labelledby="prompts-label"></ol>
+            <div class="actions"><button class="btn-text sm" id="prompt-add" type="button" aria-describedby="prompt-limit prompts-err">문항 추가</button><span class="help" id="prompt-limit"></span></div>
+            <p class="field-err" id="prompts-err" hidden></p>
           </div>
           <div class="send">
             <p id="send-line"></p>
@@ -1050,6 +1093,11 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
           </div>
         </div>
         <div class="bar-acts-m" id="st-acts-m"></div>
+        <div class="bar-ready" id="bar-ready" hidden>
+          <p class="rr-t">리포트가 준비되었어요!</p>
+          <p class="rr-s">화면 재생은 그대로 이어집니다. 지금 열어도 읽기 기록은 남습니다.</p>
+          <button class="btn-primary sm" id="ready-btn" type="button">리포트 보기</button>
+        </div>
         <div class="mtabs" role="tablist" aria-label="문서와 읽기 메모" id="mtabs">
           <button class="tab" role="tab" id="mt-doc" type="button" aria-controls="doc-col" aria-selected="true">문서</button>
           <button class="tab" role="tab" id="mt-notes" type="button" aria-controls="tp-notes" aria-selected="false" tabindex="-1">읽기 메모 <span class="num" id="mt-notes-n"></span></button>
@@ -1338,9 +1386,58 @@ function finalizeDS(key, job, document, file, generation) {
 }
 function dsFromPrepare(pv, file) {
   const gen = { policy_version: pv.job?.reader_profile ? "readme-prefix-v2" : "readme-prefix-v1", model: null };
-  return finalizeDS(pv.document.doc_id || pv.prepare_id, pv.job, pv.document, file ? { name: file.name, size: file.size } : null, gen);
+  const ds = finalizeDS(pv.document.doc_id || pv.prepare_id, pv.job, pv.document, file ? { name: file.name, size: file.size } : null, gen);
+  ds.ctx = docContext(pv); return ds;
 }
 const docLabel = ds => `${ds.file?.name ? ds.file.name + " · " : ""}${ds.sent.length}문장`;
+/* ===== document kind and optional cover-letter prompts · consumer side of docs/ESSAY_INPUT_CONTRACT.md (WEB-11) =====
+   The prompts are the applicant's own typed headings or the employer's questions. They are never inserted into the
+   sheet (blocks/units), never read as memos or questions, never scored; the final report only gets them as context.
+   Resume mode sends the legacy payload with no new keys at all, so a hidden prompt cannot travel. */
+const DOC_WORD = { resume: "이력서", cover_letter: "자기소개서" };
+const ESSAY = { max: 10, each: 1000, total: 6000 };
+/* document_context from a PrepareView: absent (older server, older session, fixtures) means a resume */
+function docContext(pv) {
+  const c = pv?.document?.document_context, type = c?.type === "cover_letter" ? "cover_letter" : "resume";
+  const prompts = type === "cover_letter" && Array.isArray(c.prompts)
+    ? c.prompts.filter(p => p && typeof p.text === "string" && p.text.trim()).map(p => ({ id: String(p.id ?? ""), text: p.text }))
+    : [];
+  return { type, prompts, present: !!c };
+}
+/* docWord(ds) names the prepared document; docWord(null) names the kind being chosen on S01 (a stale S.ds must not win there) */
+const docWord = ds => DOC_WORD[ds === null ? S.s01?.docType : (ds || S.ds)?.ctx?.type || S.s01?.docType] || "이력서";
+const isEssay = () => S.s01?.docType === "cover_letter";
+/* the contract's normalization: trim, drop blanks, keep order and duplicates */
+const essayPrompts = list => (list || []).map(s => String(s ?? "").trim()).filter(Boolean);
+/* client mirror of the limits (UTF-16 lengths, like the server); the server stays authoritative */
+function promptsState(list) {
+  const raw = list || [], errs = raw.map(() => null), kept = essayPrompts(raw);
+  raw.forEach((s, i) => { if (String(s ?? "").trim().length > ESSAY.each) errs[i] = `문항 하나는 ${fmt(ESSAY.each)}자까지입니다.`; });
+  const total = kept.reduce((n, s) => n + s.length, 0);
+  let err = null;
+  if (raw.length > ESSAY.max) err = `문항은 ${ESSAY.max}개까지입니다.`;
+  else if (total > ESSAY.total) err = `문항을 모두 합쳐 ${fmt(ESSAY.total)}자까지입니다. 지금 ${fmt(total)}자입니다.`;
+  return { kept, total, errs, err, bad: !!err || errs.some(Boolean) };
+}
+/* A newly requested cover letter must come back with its own record, checked against the request snapshot taken when
+   준비하기 was pressed: the raw shape (an object with type "cover_letter" and a prompts array of {id, text}), then the
+   prompts in the same order with the same text, ids ep1…epN. Anything else means the prompts did not arrive as typed
+   (older or mismatched server) and reading never starts from it. docContext()'s lenient parsing is for display only. */
+function essayMismatch(pv, snap) {
+  if (!snap || snap.docType !== "cover_letter") return false;
+  const c = pv?.document?.document_context;
+  if (!c || typeof c !== "object" || Array.isArray(c) || c.type !== "cover_letter" || !Array.isArray(c.prompts)) return true;
+  if (c.prompts.length !== snap.prompts.length) return true;
+  return c.prompts.some((p, i) => !p || typeof p !== "object" || typeof p.text !== "string" || p.text !== snap.prompts[i] || p.id !== "ep" + (i + 1));
+}
+/* what was asked of the server, frozen at 준비하기 time (inputs are locked until the preparation is discarded) */
+const prepareSnapshot = () => ({ docType: S.s01?.docType || "resume", prompts: isEssay() ? essayPrompts(S.s01.prompts) : [] });
+/* the POST /prepare body: a resume is the unchanged legacy request; a cover letter adds exactly the two contract fields */
+function buildPrepareInput(base, docType, prompts) {
+  const input = { ...base };
+  if (docType === "cover_letter") { input.document_type = "cover_letter"; input.essay_prompts = essayPrompts(prompts); }
+  return input;
+}
 function scopeName(ds, scopeId) {
   let b = ds.blockById[scopeId];
   if (!b || b.type !== "heading") {
@@ -1517,7 +1614,11 @@ const HttpSource = {
     catch (e) { if (signal?.aborted || e instanceof TypeError) throw lost(); throw new LabError("response_invalid", res.status); }
   },
   createSession(code, consent) { return this.request("/session", "POST", { invite_code: code, cloud_consent: consent, consent_version: CONSENT_VERSION }); },
-  prepare(input) { return this.request("/prepare", "POST", { job_text: input.job_text, resume_filename: input.resume_filename, resume_media_type: input.resume_media_type, resume_base64: input.resume_base64 }); },
+  prepare(input) {
+    const body = { job_text: input.job_text, resume_filename: input.resume_filename, resume_media_type: input.resume_media_type, resume_base64: input.resume_base64 };
+    if (input.document_type === "cover_letter") { body.document_type = "cover_letter"; body.essay_prompts = input.essay_prompts || []; }
+    return this.request("/prepare", "POST", body);
+  },
   getPrepare(id, signal) { return this.request(`/prepare/${encodeURIComponent(id)}`, "GET", undefined, signal); },
   discardPrepare(id) { return this.request(`/prepare/${encodeURIComponent(id)}`, "DELETE"); },
   start(prep) { return this.request("/jobs", "POST", { prepare_id: prep.prepare_id, input_hash: prep.input_hash, confirmed: true }); },
@@ -1565,9 +1666,24 @@ const SampleSource = {
     this.tl = { E, end: t, report: d.report, total: ds.order.length }; return this.tl;
   },
   async createSession() { return { access_token: "sample", expires_at: isoAt(nowMs() + 2 * 3600e3) }; },
+  /* the example stands in for the server: it keeps the document kind and prompts of each preparation the way the
+     server keeps them (same-tab storage, never sent anywhere) and applies the contract's validation */
+  ctx(id, set) {
+    let all = {}; try { all = JSON.parse(sessionStorage.getItem("readme-lab-sample-ctx") || "{}"); } catch { /* memory only */ }
+    if (set === undefined) return all[id] || this.ctxMem?.[id] || null;
+    (this.ctxMem ||= {})[id] = set;
+    try { sessionStorage.setItem("readme-lab-sample-ctx", JSON.stringify({ ...all, [id]: set })); } catch { /* memory only */ }
+  },
   async prepare(input) {
     if (!input || !input.sample || String(input.job_text || "").trim() !== SAMPLE_JOB_TEXT.trim()) throw new LabError("sample_only", 400);
-    return this.getPrepare(`sp-${nowMs().toString(36)}`);
+    const type = input.document_type ?? "resume", raw = input.essay_prompts ?? [];
+    if (!["resume", "cover_letter"].includes(type) || !Array.isArray(raw) || raw.some(s => typeof s !== "string")) throw new LabError("invalid_input", 400);
+    const prompts = essayPrompts(raw);
+    if (type === "resume" && prompts.length) throw new LabError("invalid_input", 400);
+    if (prompts.length > ESSAY.max || prompts.some(s => s.length > ESSAY.each) || prompts.reduce((n, s) => n + s.length, 0) > ESSAY.total) throw new LabError("invalid_input", 400);
+    const id = `sp-${nowMs().toString(36)}`;
+    if (type === "cover_letter") this.ctx(id, { type, prompts: prompts.map((text, i) => ({ id: "ep" + (i + 1), text })) });
+    return this.getPrepare(id);
   },
   async getPrepare(id) {
     const p = this.parse(id, "sp"); if (!p) throw new LabError("not_found", 404);
@@ -1575,7 +1691,7 @@ const SampleSource = {
     let status = t < SAMPLE_OPEN_MS ? "extracting" : "ready";
     if (stop != null && stop - p.t0 < SAMPLE_OPEN_MS) status = "cancelled";
     const v = { prepare_id: id, input_hash: "0".repeat(64), status, error: null, expires_at: isoAt(p.t0 + 2 * 3600e3) };
-    if (status === "ready") { const d = this.data(); v.document = d.document; v.job = d.job; }
+    if (status === "ready") { const d = this.data(), ctx = this.ctx(id); v.document = ctx ? { ...d.document, document_context: ctx } : d.document; v.job = d.job; }
     return v;
   },
   async discardPrepare(id) { this.stop(id); const j = this.jobs.get(id); if (j) this.stop(j); },
@@ -1978,7 +2094,7 @@ function renderUnit(P, uid, o) {
       const cls = new Set(); let q = null, was = false;
       for (const r of cov) { cls.add(r.cls); if (r.cls === "q" && !q) q = r.q; if (r.was) was = true; }
       let c = "pen " + [...cls].join(" ") + (was ? " was" : "");
-      if (o.draw && [...cls].some(x => o.draw.has(x))) c += " draw" + (o.quick ? " quick" : "");
+      if (o.draw && [...cls].some(x => o.draw.has(x))) c += " draw";
       node = h("span", { class: c, "data-q": q });
       fillText(node, text, o.words);
     }
@@ -1997,7 +2113,7 @@ function paintMarks(P, A, o = {}) {
     const ranges = M.byUnit.get(uid) || [];
     const now = new Set(ranges.map(r => r.cls)), prev = P.base.get(uid) || new Set();
     const draw = o.draw ? new Set([...now].filter(c => !prev.has(c))) : null;
-    renderUnit(P, uid, { ranges, cites: o.cites?.get(uid), words: o.wordsUnit === uid, draw: draw && draw.size ? draw : null, quick: o.quick });
+    renderUnit(P, uid, { ranges, cites: o.cites?.get(uid), words: o.wordsUnit === uid, draw: draw && draw.size ? draw : null });
     P.base.set(uid, now);
   }
   unitAttrs(P, A, M);
@@ -2192,7 +2308,7 @@ function lensMap() {
     ctx.putImageData(img, 0, 0); return c.toDataURL("image/png");
   } catch { return null; }
 }
-const GZ_OP = { hidden: 0, loading: .5, reading: 1, skimming: 1, jumping: 1, waiting: .85, paused: .6, stopped: 1, exiting: 1 };
+const GZ_OP = { hidden: 0, loading: .5, reading: 1, waiting: .85, paused: .6, stopped: 1, exiting: 1 };
 function gzBuild(P) {
   GZ.dots = [0, 1, 2].map(i => h("div", { class: "gaze-dot d" + i, "aria-hidden": "true" }));
   const G = gzMake(); Object.assign(GZ, { el: G.el, axis: G.axis, tail: G.tail, jelly: G.jelly, lens: G.lens, blob: G.blob });
@@ -2277,11 +2393,6 @@ function linePoint(P, rects, frac = .3) {
   const l = relTo(P, line[0]), r = relTo(P, line[line.length - 1]);
   return { x: l.l + (r.r - l.l) * frac, y: l.t + l.h * .52 };
 }
-function groupLines(words) {
-  const out = []; let cur = null, top = null;
-  for (const w of words) { const r = firstRect(w); if (!r) continue; if (top === null || Math.abs(r.top - top) > 4) { cur = []; out.push(cur); top = r.top; } cur.push(w); }
-  return out;
-}
 function fixations(P, uid, words) {
   const rnd = mulberry32(fnv1a(uid + ":" + P.ds.key));
   const rs = words.map(firstRect);
@@ -2302,7 +2413,10 @@ function fixations(P, uid, words) {
 /* ===================== 7. reading playback ===================== */
 /* Two cursors: the server's (window_started / window_completed) and the screen's (shown). The gaze never
    enters a unit before window_started, and a unit's notes appear only after window_completed and after the
-   gaze has read it. Nothing beyond the screen cursor is ever drawn. */
+   gaze has read it. Nothing beyond the screen cursor is ever drawn.
+   The screen keeps its own reading pace however far the server runs ahead (WEB-10 decision b4a542): no dwell
+   multiplier, no skimming, no jumping. Catching up is only ever the user's choice (읽은 곳까지 바로 보기,
+   끝까지 바로 보기, 재생 건너뛰기) or a refresh; a report that finishes first is announced, never forced open. */
 const PL = { token: 0, waiters: new Set() };
 function nap(ms) { return new Promise(res => { let t = 0; const w = () => { clearTimeout(t); PL.waiters.delete(w); res(); }; t = setTimeout(w, ms); PL.waiters.add(w); }); }
 function wakePlayer() { for (const w of [...PL.waiters]) w(); }
@@ -2366,8 +2480,8 @@ function gzReanchor() {
   if (!rc) { const rs = rangeWords(PAPERS.read, S.play.unit); rc = rs[rs.length - 1]; }
   if (rc) { if (GZ.moveA) GZ.moveA.cancel(); gzPlace(fixPoint(PAPERS.read, rc)); }
 }
-function estimateRead(uid, mode) {
-  if (mode === "jumping") return 280; if (mode === "skimming") return 520;
+/* a hidden sheet still takes the reading time: the same fixations, without motion */
+function estimateRead(uid) {
   const words = S.ds.unitById[uid].text.trim().split(/\s+/);
   return 160 + words.reduce((s, w) => s + clamp(150 + 26 * syllables(w), 180, 420) * .75 + 90, 0);
 }
@@ -2381,10 +2495,10 @@ async function pauseGate(tok) {
 }
 /* Every point is measured right before it is used: the sheet can be hidden (phone tabs) or reflowed (rotation, inline note)
    between two awaits. When it is gone the rest of the unit is inked without motion. */
-async function readUnit(uid, mode, B, tok) {
+async function readUnit(uid, mode, tok) {
   const P = PAPERS.read, ds = S.ds, sp = P.units.get(uid);
   setCurrent(uid);
-  if (!paperVisible()) { await sleep(estimateRead(uid, mode)); return; }
+  if (!paperVisible()) { await sleep(estimateRead(uid)); return; }
   if (mode === "rm") {
     const rs = rangeWords(P, uid); gzSet("reading");
     if (rs[0]) { const p = fixPoint(P, rs[0]); await gzSaccade(p); if (!alive(tok)) return; GZ.lastFix = p; followTo(p); }
@@ -2393,26 +2507,8 @@ async function readUnit(uid, mode, B, tok) {
   renderUnit(P, uid, { ranges: unitRanges(P, uid), words: true, force: true });
   const words = $$(".w", sp);
   if (!words.length) return;
-  const ink = list => list.forEach(w => w.classList.add("inked"));
   const gone = () => halted() || !paperVisible();
-  if (mode === "jumping") {
-    gzSet("jumping"); const r = firstRect(words[0]);
-    if (r) { const p = fixPoint(P, r); await gzSaccade(p, { trail: false }); if (!alive(tok)) return; followTo(p); GZ.lastFix = p; }
-    ink(words); await sleep(280); return;
-  }
-  if (mode === "skimming") {
-    gzSet("skimming");
-    for (const ln of groupLines(words)) {
-      await pauseGate(tok); if (!alive(tok)) return;
-      if (gone()) { ink(words); return; }
-      const p = linePoint(P, ln.map(firstRect));
-      if (p) { await gzSaccade(p, { trail: false }); if (!alive(tok)) return; followTo(p); GZ.lastFix = p; }
-      ink(ln); await sleep(160);
-    }
-    return;
-  }
   gzSet("reading");
-  const pace = B >= 1 && B <= 3 ? Math.max(.6, 1 - .15 * B) : 1;
   const fx = ds.isHeading(uid) ? [{ wi: words.length - 1, dwell: 260, line: true }] : fixations(P, uid, words);
   let inked = 0;
   for (const f of fx) {
@@ -2425,9 +2521,9 @@ async function readUnit(uid, mode, B, tok) {
     if (!alive(tok)) return;
     for (; inked <= f.wi && inked < words.length; inked++) words[inked].classList.add("inked");
     followTo(p); GZ.lastFix = p;
-    const dwell = f.dwell * pace; scaleTo(1.04, dwell);
-    if (r && !f.line) gzDrift(GZ, { x: p.x + r.width * .16, y: p.y }, dwell);
-    await sleep(dwell);
+    scaleTo(1.04, f.dwell);
+    if (r && !f.line) gzDrift(GZ, { x: p.x + r.width * .16, y: p.y }, f.dwell);
+    await sleep(f.dwell);
   }
   for (; inked < words.length; inked++) words[inked].classList.add("inked");
 }
@@ -2452,16 +2548,16 @@ async function beat(uid, mode, tok) {
   finishUnit(uid);
   const { fresh, trans, n } = applyUnit(uid);
   if (!n) { repaintUnit(uid, false); return; }
-  const vis = paperVisible(), instant = mode === "jumping" || !vis, quick = mode === "skimming", rm = mode === "rm";
+  /* instant: a unit finished without motion (hidden sheet, or a layout read that failed) */
+  const vis = paperVisible(), instant = mode === "instant" || !vis, rm = mode === "rm";
   if (!S.play.follow) S.play.unseen += fresh.length;
   const t0 = performance.now();
-  paintRead({ draw: !instant && !rm, quick, enter: instant || rm ? null : new Set(fresh.map(n => n.id)), threads: false });
+  paintRead({ draw: !instant && !rm, enter: instant || rm ? null : new Set(fresh.map(n => n.id)), threads: false });
   renderLegend(); renderSeg(); renderLedger(); renderReqPanel(); renderTabsAndPanels(); renderFeedState(); renderNewbar();
   announceNew(fresh);
   const says = speechFor(uid), said = says.find(s => s.code !== "revisit") || says[0];
   if (instant) { addFeedRows(fresh, false); drawReadThreads(false); return; }
   if (rm) { addFeedRows(fresh, false); drawReadThreads(false); if (said) speak(said.code, true); await sleep(200); return; }
-  if (quick) { addFeedRows(fresh, false); drawReadThreads(true); if (said) speak(said.code, true); await sleep(200); return; }
   await sleep(120); if (!alive(tok)) return;
   addFeedRows(fresh, true);
   if (said) speak(said.code, false);
@@ -2589,7 +2685,7 @@ async function playStep(tok, ds) {
       if (!S.A.ended) applyEnd();
       await exitGaze(); if (!alive(tok)) return true;
       P.finished = true; P.replay = false; P.unit = null;
-      if (!S.A.notes.length) announce(`다 읽었습니다. 메모 없이 끝났고, 리포트는 ${who("Codex가 ")}이력서 전체 문장을 보고 따로 씁니다`);
+      if (!S.A.notes.length) announce(`다 읽었습니다. 메모 없이 끝났고, 리포트는 ${who("Codex가 ")}${docWord()} 전체 문장을 보고 따로 씁니다`);
       placePaperEnd(); renderS03(); return true;
     }
     gzIdle(); await nap(60000); return false;
@@ -2601,18 +2697,18 @@ async function playStep(tok, ds) {
     else gzIdle();
     renderBar(); await nap(R.started.size ? 60000 : 1000); return false;
   }
-  const B = P.replay ? 0 : doneSent() - shownSent();
-  const mode = RM() ? "rm" : B >= 12 ? "jumping" : B >= 4 ? "skimming" : "reading";
+  /* the pace is the sheet's own: the server lead (doneSent() − shownSent()) only shows in the bar, as a choice */
+  const mode = RM() ? "rm" : "reading";
   if (mode !== P.mode) { P.mode = mode; renderBar(); }
   const instant = P.instant === uid;
-  if (instant) setCurrent(uid); else await readUnit(uid, mode, B, tok);
+  if (instant) setCurrent(uid); else await readUnit(uid, mode, tok);
   if (!alive(tok)) return true;
   if (!R.done.has(uid) && !P.replay) {
     await waitForDone(uid, tok);
     if (!alive(tok)) return true;
     if (!R.done.has(uid)) return false;
   }
-  await beat(uid, instant ? "jumping" : mode, tok);
+  await beat(uid, instant ? "instant" : mode, tok);
   if (!alive(tok)) return true;
   P.shown++; P.instant = null;
   afterShown();
@@ -2643,6 +2739,7 @@ function resetReadingState() {
 /* view: the JobView from POST /jobs. A refresh passes {jobId, resume} instead and catches up on the first view. */
 function startReading(view, o = {}) {
   stopPolling(); stopPrepPoll(); S.prep = null;
+  for (const id of ["#paper-read", "#paper-ev"]) $(id).setAttribute("aria-label", `${docWord()} 본문`);
   resetReadingState();
   S.jobId = view ? view.job_id : o.jobId;
   if (o.resume) S.play.resume = o.resume;
@@ -2757,6 +2854,8 @@ function handleJobView(v) {
   /* a stop on the server ends a screen pause: the paused label must not outlive the job */
   if ((S.srv.failed || S.srv.cancelled) && S.play.paused) { S.play.paused = false; BAR_KEY = ""; wakePlayer(); }
   if (v.status !== prev) onJobStatus(prev, v.status);
+  /* a cancel question outlives nothing on the server: once the job is over (the report may arrive mid-playback) it closes */
+  if (TERMINAL.has(v.status) && S.ui.confirmCancel) { S.ui.confirmCancel = false; if (S.screen === "s03") renderNotices(); }
   if ((S.srv.failed || S.srv.cancelled) && S.play.finished && !S.play.terminal) { S.play.terminal = true; onTerminal(); }
   updateTrack();
   return true;
@@ -2786,7 +2885,9 @@ function ingest(e) {
   }
 }
 function onJobStatus(prev, now) {
-  const msg = { queued: "차례를 기다리고 있습니다", reading: "읽기를 시작했습니다", reporting: isSample() ? "예시 리포트를 여는 중입니다" : "리포트를 쓰고 있습니다", completed: "리포트가 준비됐습니다" }[now];
+  /* a report that arrives while the screen is still replaying is announced once, with the way to open it; nothing moves on its own */
+  const early = now === "completed" && S.screen === "s03" && S.play && !S.play.finished && !S.play.terminal && S.srv.reportCompleted && !!S.job?.report;
+  const msg = { queued: "차례를 기다리고 있습니다", reading: "읽기를 시작했습니다", reporting: isSample() ? "예시 리포트를 여는 중입니다" : "리포트를 쓰고 있습니다", completed: early ? "리포트가 준비되었어요. 화면 재생은 이어지고, 리포트 보기 단추로 바로 열 수 있습니다" : "리포트가 준비됐습니다" }[now];
   if (msg && prev) announce(msg);
   BAR_KEY = ""; renderEngine();
   if (S.screen === "s03") renderS03();
@@ -2882,7 +2983,8 @@ const cancelledByUser = () => S.ui.userCancelled || S.job?.error === "cancelled"
 const cancelledByLease = () => !S.ui.userCancelled && S.job?.error === "expired";
 function barModel() {
   const J = S.job, R = S.srv, P = S.play, total = S.ds.sent.length;
-  const m = { label: "", sub: [], acts: [], seg: false, pause: false, cancelBar: false, cancel: false, replay: false, report: false, reportOn: false, why: false, track: true, restart: false };
+  /* ready: the report is written (report_completed and content) while the screen is still replaying; the bar row carries the only 리포트 보기 */
+  const m = { label: "", sub: [], acts: [], seg: false, pause: false, cancelBar: false, cancel: false, replay: false, report: false, reportOn: false, ready: false, why: false, track: true, restart: false };
   const fr = (a, b) => `${a}${NB}/${NB}${b}`;
   if (!J) { m.label = "읽기 준비 중"; m.track = false; return m; }
   if (S.ui.invalidCursor) { m.label = "읽기 기록 일부를 받지 못했습니다"; m.seg = hasMarks(); return m; }
@@ -2902,7 +3004,7 @@ function barModel() {
   if (P.finished) {
     if (J.status === "reporting") {
       if (isSample()) { m.label = "예시 리포트를 여는 중"; m.sub = []; }
-      else { m.label = "리포트 쓰는 중"; m.sub = ["Codex가 이력서 전체 문장과 읽기 메모를 보고 리포트를 쓰고 있습니다 · ", sinceSpan(S.jobSeen.reporting ?? nowMs())]; }
+      else { m.label = "리포트 쓰는 중"; m.sub = [`Codex가 ${docWord()} 전체 문장과 읽기 메모를 보고 리포트를 쓰고 있습니다 · `, sinceSpan(S.jobSeen.reporting ?? nowMs())]; }
       m.report = true; m.why = true; m.cancel = !isSample(); m.seg = hasMarks(); return m;
     }
     m.label = "다 읽었습니다"; m.sub = [`${total}문장 · ${S.A.notes.length ? `메모 ${S.A.notes.length}개` : "메모 없음"}`];
@@ -2918,22 +3020,25 @@ function barModel() {
   }
   m.pause = true; m.cancel = true; m.seg = hasMarks();
   if (!R.started.size) { m.label = "읽기 준비 중"; m.sub = [isSample() ? "첫 문장을 여는 중" : isJev() ? "문장 판단 엔진(Jev)에 연결하는 중 · " : "문장 판단 모델을 불러오는 중 · ", isSample() ? null : sinceSpan(S.jobSeen.reading ?? nowMs())].filter(Boolean); m.pause = false; m.track = false; return m; }
+  /* the screen is still replaying (running or paused) but the report already exists: say so, in the bar, without moving anything */
+  m.ready = R.reportCompleted && !!J.report;
+  if (m.ready) m.cancel = false; /* nothing is left to cancel on the server */
   if (P.paused) {
     m.label = "화면 멈춤";
     if (R.readingCompleted) { m.sub = [`읽기는 끝났습니다 · ${fr(total, total)}문장`]; m.acts.push(["end", "끝까지 바로 보기", jumpToEnd]); }
     else m.sub = [isSample() ? `화면만 멈췄습니다 · 기록은 ${fr(doneSent(), total)}문장까지 나와 있습니다` : `읽기는 서버에서 계속됩니다 · ${fr(doneSent(), total)}문장까지 읽음`];
     return m;
   }
-  if (P.mode === "skimming" || P.mode === "jumping") { m.label = "화면이 따라가는 중"; m.sub = [`실제 읽기는 ${fr(doneSent(), total)}문장까지 진행됐습니다`]; m.acts.push(["jump", "읽은 곳까지 바로 보기", jumpToFrontier]); }
-  else {
-    m.label = "읽는 중"; m.sub = [`${fr(shownSent(), total)}문장`];
-    if (P.waiting) {
-      const t0 = R.windowSeen[P.waiting] ?? nowMs(), el = nowMs() - t0;
-      if (el > 60000) m.sub = ["이 문장에서 오래 걸리고 있습니다. 읽기와 리포트가 합쳐 10분을 넘으면 자동으로 멈춥니다."];
-      else if (el > 8000) m.sub = ["이 문장을 읽는 중 · ", sinceSpan(t0)];
-      else if (el > 3000) m.sub = ["이 문장을 읽는 중"];
-    }
+  m.label = "읽는 중"; m.sub = [`${fr(shownSent(), total)}문장`];
+  if (P.waiting) {
+    const t0 = R.windowSeen[P.waiting] ?? nowMs(), el = nowMs() - t0;
+    if (el > 60000) m.sub = ["이 문장에서 오래 걸리고 있습니다. 읽기와 리포트가 합쳐 10분을 넘으면 자동으로 멈춥니다."];
+    else if (el > 8000) m.sub = ["이 문장을 읽는 중 · ", sinceSpan(t0)];
+    else if (el > 3000) m.sub = ["이 문장을 읽는 중"];
   }
+  /* the server lead never changes the pace; from four sentences on it is named, with the one explicit way to skip ahead */
+  else if (R.readingCompleted) { m.sub.push(" · 읽기는 끝났습니다"); m.acts.push(["end", "끝까지 바로 보기", jumpToEnd]); }
+  else if (doneSent() - shownSent() >= 4) { m.sub.push(` · 실제 읽기는 ${fr(doneSent(), total)}문장까지`); m.acts.push(["jump", "읽은 곳까지 바로 보기", jumpToFrontier]); }
   if (!P.follow) m.acts.push(["return", `읽는 위치로 ${gazeDir()}`, returnToReading]);
   if (S.conn.state === "reconnecting") m.sub.push(` · 연결 다시 시도 중 (${S.conn.attempt}/3)`);
   return m;
@@ -2956,11 +3061,12 @@ function renderBar(force) {
   if (S.screen !== "s03" || !S.play) return;
   const m = barModel();
   const subKey = JSON.stringify(m.sub.map(x => typeof x === "string" ? x : (x.dataset?.since || x.textContent)));
-  const key = JSON.stringify([m.label, subKey, m.acts.map(a => a[0] + a[1]), m.seg, m.pause, S.play.paused, m.cancel, m.cancelBar, m.replay, m.report, m.reportOn, m.why, m.track, m.restart, mq820.matches]);
+  const key = JSON.stringify([m.label, subKey, m.acts.map(a => a[0] + a[1]), m.seg, m.pause, S.play.paused, m.cancel, m.cancelBar, m.replay, m.report, m.reportOn, m.ready, m.why, m.track, m.restart, mq820.matches]);
   updateTrack(m.track);
   if (!force && key === BAR_KEY) return;
   BAR_KEY = key;
-  const prev = $("#bar").contains(document.activeElement) ? document.activeElement : null;
+  /* focus inside the bar, or on the ledger's 읽기 취소 (hidden by the bar model too), is re-homed if its control goes away */
+  const prev = $("#bar").contains(document.activeElement) || document.activeElement === $("#side-cancel") ? document.activeElement : null;
   setText($("#st-label"), m.label);
   const t = $("#st-sub-t"); if (t._k !== subKey) { t._k = subKey; t.textContent = ""; for (const x of m.sub) t.append(x); }
   /* on a phone the sub-line is one truncated line, so its actions get their own row in the bar */
@@ -2976,7 +3082,8 @@ function renderBar(force) {
   const rp = $("#replay-btn"); rp.hidden = !m.replay; rp.title = isSample() ? "같은 기록을 처음부터 다시 보여 줍니다." : "모델을 다시 실행하지 않고 같은 기록을 처음부터 다시 보여 줍니다.";
   const rb = $("#report-btn"); rb.hidden = !m.report; rb.disabled = !m.reportOn;
   $("#report-why").hidden = !m.why;
-  if (prev) rescueFocus(prev, "#report-btn", "#play-btn", "#s03-h");
+  $("#bar-ready").hidden = !m.ready;
+  if (prev) rescueFocus(prev, "#report-btn", "#ready-btn", "#play-btn", "#s03-h");
 }
 /* keep each action button as the same node while its key stays; renderBar re-homes focus from a removed one */
 function syncActs(box, acts, pre = "") {
@@ -3134,7 +3241,7 @@ function renderFeedState() {
   const box = $("#notes-empty"); box.textContent = "";
   const n = S.A.notes.length, sh = shownSent(), R = S.srv, P = S.play;
   if (!n) {
-    if (P.finished || (P.terminal && R.readingCompleted)) box.append(h("h3", null, "이번 읽기에서는 메모가 남지 않았습니다"), h("p", null, (isLaya() && !isSample() ? "문장 판단을 맡은 Laya 기본 모델은 이력서용으로 학습하지 않아, 확신이 낮으면 메모를 남기지 않습니다. " : "") + "메모가 없다는 것은 문장에 문제가 없다는 뜻도, 부족하다는 뜻도 아닙니다. 리포트는 " + who("Codex가 ") + "이력서 전체 문장을 보고 따로 씁니다."));
+    if (P.finished || (P.terminal && R.readingCompleted)) box.append(h("h3", null, "이번 읽기에서는 메모가 남지 않았습니다"), h("p", null, (isLaya() && !isSample() ? "문장 판단을 맡은 Laya 기본 모델은 이력서용으로 학습하지 않아, 확신이 낮으면 메모를 남기지 않습니다. " : "") + "메모가 없다는 것은 문장에 문제가 없다는 뜻도, 부족하다는 뜻도 아닙니다. 리포트는 " + who("Codex가 ") + docWord() + " 전체 문장을 보고 따로 씁니다."));
     else if (!sh) box.append(h("p", null, "첫 문장을 읽기 시작하면 메모가 여기에 순서대로 쌓입니다."));
     else box.append(h("p", null, `지금까지 ${sh}문장을 읽었고, 남긴 메모는 없습니다.` + (isSample() || isJev() ? "" : " 모델이 확신하지 못한 문장에는 메모가 남지 않습니다.")));
   }
@@ -3291,6 +3398,13 @@ function renderReqPanel() {
     if (cites.length) row.append(h("p", { class: "sub-h" }, "리포트에서 연결"), h("div", { class: "links-l" }, cites.map(u => h("div", { class: "lk" }, h("button", { type: "button", class: "qbtn", "data-k": "r" + r.id + u, onclick: () => showUnitInDoc(u) }, shortQuote(ds, u, 22)), h("span", { class: "loc" }, whereText(ds, u))))));
     box.append(row);
   });
+  /* a cover letter's prompts, for reference while reading: not requirements, not memos, nothing links to them */
+  if (ds.ctx?.type === "cover_letter" && ds.ctx.prompts.length) {
+    const d = h("details", { class: "refs reqrow" }, h("summary", { class: "nm", "data-k": "essay-prompts" }, `작성 문항 ${ds.ctx.prompts.length}개 · 참고`), promptsView(ds.ctx), h("p", { class: "none" }, PROMPTS_CAP));
+    if (S.ui.promptsOpen) d.open = true;
+    d.addEventListener("toggle", () => { S.ui.promptsOpen = d.open; });
+    box.append(d);
+  }
   if (keep) { const el = box.querySelector(`[data-k="${CSS.escape(keep)}"]`); if (el) el.focus({ preventScroll: true }); }
 }
 function renderPanelLines() {
@@ -3420,6 +3534,7 @@ function wireReadPaper() {
   });
 }
 async function doCancel() {
+  if (TERMINAL.has(S.job?.status)) { S.ui.confirmCancel = false; renderS03(); return; } /* already over: nothing to cancel */
   S.ui.confirmCancel = false; S.ui.userCancelled = true; renderS03();
   try { await SRC.cancel(S.jobId); }
   catch (e) {
@@ -3467,9 +3582,9 @@ function alertMsg(msg) { const r = $("#alert"); r.textContent = ""; setTimeout((
 /* S00 (above the consent box) and S01: where each piece goes. The consent box itself only points here. */
 const WHERE = [
   ["전송 경로", "입력한 공고와 파일은 Cloudflare 네트워크를 거쳐 README 운영 서버(운영자가 관리하는 Mac mini)로 갑니다."],
-  ["이력서 파일", "서버 메모리에서 글자를 꺼낸 뒤 파일은 보관하지 않습니다. 파일 자체는 어느 모델 제공자에게도 보내지 않습니다."],
-  ["읽는 동안 · Typesafe Jev(원격 모델)", "문장마다 판단하도록 이력서에서 꺼낸 글을 보내며, 읽기 방식에 따라 범위가 다릅니다. 기존 방식은 공고 요건 문구와 거기서 만든 확인 조건, 그때까지 읽은 문장 전부(마지막에는 전체 글), 확인 중인 질문을 보냅니다. 의문 중심 방식은 지금 읽는 문장과 최근 문장, 맥락·질문의 짧은 색인, 그 판단에 필요한 앞 문장만 보내고, 공고에서는 주요 업무만 배경으로 보냅니다. 어느 방식이든 보내는 문장에 이름·연락처 같은 줄이 있으면 함께 갑니다."],
-  ["준비와 리포트 · OpenAI Codex(클라우드)", "요건 정리에는 공고 본문을, 리포트와 최종 원문 점검에는 이력서에서 꺼낸 모든 글(이름·연락처 같은 줄 포함)과 읽기 메모를 보냅니다."],
+  ["이력서·자기소개서 파일", "서버 메모리에서 글자를 꺼낸 뒤 파일은 보관하지 않습니다. 파일 자체는 어느 모델 제공자에게도 보내지 않습니다. 자기소개서 문항을 적었다면 문항은 본문과 따로 둡니다."],
+  ["읽는 동안 · Typesafe Jev(원격 모델)", "문장마다 판단하도록 이력서·자기소개서에서 꺼낸 글을 보내며, 읽기 방식에 따라 범위가 다릅니다. 기존 방식은 공고 요건 문구와 거기서 만든 확인 조건, 그때까지 읽은 문장 전부(마지막에는 전체 글), 확인 중인 질문을 보냅니다. 의문 중심 방식은 지금 읽는 문장과 최근 문장, 맥락·질문의 짧은 색인, 그 판단에 필요한 앞 문장만 보내고, 공고에서는 주요 업무만 배경으로 보냅니다. 어느 방식이든 보내는 문장에 이름·연락처 같은 줄이 있으면 함께 갑니다."],
+  ["준비와 리포트 · OpenAI Codex(클라우드)", "요건 정리에는 공고 본문을, 리포트와 최종 원문 점검에는 이력서·자기소개서에서 꺼낸 모든 글(이름·연락처 같은 줄 포함)과 읽기 메모를 보냅니다. 자기소개서 문항을 적었다면 리포트가 문항의 요청과 본문 설명을 함께 보도록 그 문항도 이때만 보냅니다. 읽는 동안 Jev에는 문항을 보내지 않습니다."],
   ["보관", "꺼낸 글과 메모, 결과는 서버 메모리에 최대 2시간 머물고, 서버가 다시 시작되면 바로 사라집니다. README는 이 내용을 모델 학습·평가나 다른 목적에 쓰지 않습니다. 두 제공자의 보관 정책은 따로 적용됩니다."]
 ];
 function fillWhere(dl) { dl.textContent = ""; for (const [t, d] of WHERE) dl.append(h("div", null, h("dt", null, t), h("dd", null, d))); }
@@ -3525,7 +3640,7 @@ const PREP_MSG = {
   unsupported_media_type: "이 형식은 읽을 수 없습니다. PDF, DOCX, TXT, MD 파일로 올려 주세요.",
   invalid_media_type: "이 형식은 읽을 수 없습니다. PDF, DOCX, TXT, MD 파일로 올려 주세요.",
   request_too_large: "파일이 2 MB를 넘습니다. 용량을 줄여 다시 올려 주세요.",
-  invalid_input: "입력을 읽지 못했습니다. 공고 본문(20–6,000자)과 파일을 확인하고 다시 눌러 주세요.",
+  invalid_input: "입력을 읽지 못했습니다. 공고 본문(20–6,000자)과 파일, 자기소개서라면 문항(10개·각 1,000자·합계 6,000자)을 확인하고 다시 눌러 주세요.",
   text_extraction_failed: "이 파일에서 글자를 찾지 못했습니다. 스캔한 PDF라면 글자를 선택할 수 있는 PDF나 DOCX로 다시 올려 주세요. 이 시도는 오늘 횟수에 포함됩니다.",
   document_too_short: "읽을 문장이 너무 적습니다. 경력이나 활동 문장이 들어 있는 파일인지 확인해 주세요. 이 시도는 오늘 횟수에 포함됩니다.",
   document_too_long: "문서가 길어 읽지 않았습니다. 24,000자·120문장·PDF 10쪽 안으로 줄여 주세요. 일부만 잘라 읽지는 않습니다. 이 시도는 오늘 횟수에 포함됩니다.",
@@ -3548,7 +3663,7 @@ const PREP_MSG = {
   not_found: "준비한 내용이 만료됐습니다. 처음부터 다시 준비해 주세요.",
   upstream_unavailable: "README 서버에 연결하지 못했습니다. 잠시 뒤 다시 눌러 주세요.",
   file_read_failed: "파일을 읽지 못했습니다. 파일을 다시 골라 주세요.",
-  empty_file: "빈 파일입니다. 내용이 있는 이력서 파일을 골라 주세요.",
+  empty_file: "빈 파일입니다. 내용이 있는 파일을 골라 주세요.",
   sample_only: "지금은 예시 공고와 이력서로만 해 볼 수 있습니다."
 };
 const COUNTED = " 이 시도는 오늘 횟수에 포함됩니다.";
@@ -3565,7 +3680,7 @@ const sampleFile = () => ({ name: SAMPLE_FILE.name, state: "ok", sample: true })
 function resetS01(o = {}) {
   stopPrepPoll(); S.prep = null;
   if (o.keep && S.s01) { S.s01.confirmCancel = false; return; }
-  S.s01 = { file: null, confirmCancel: false }; $("#job-text").value = "";
+  S.s01 = { file: null, confirmCancel: false, docType: "resume", prompts: [""] }; $("#job-text").value = "";
 }
 async function useSample() {
   if (prepActive()) return;
@@ -3575,7 +3690,7 @@ async function useSample() {
     announce("기록된 실행의 공고와 이력서를 넣었습니다"); return;
   }
   $("#job-text").value = SAMPLE_JOB_TEXT; S.s01.file = sampleFile(); renderS01();
-  announce("예시 공고와 이력서를 넣었습니다");
+  announce(`예시 공고와 ${docWord(null)}를 넣었습니다`);
 }
 const prepActive = () => !!(S.prep && !S.prep.error && (S.prep.sending || (S.prep.view && !PREP_TERMINAL.has(S.prep.view.status))));
 function jobTextState() {
@@ -3588,15 +3703,21 @@ function renderS01() {
   if (!S.s01) resetS01();
   const ta = $("#job-text"), locked = prepActive(), js = jobTextState(), f = S.s01.file, sample = isSample();
   ta.readOnly = locked;
-  const fixture = isFixture();
+  /* document kind: a recorded fixture is always the resume it recorded */
+  const fixture = isFixture(); if (fixture) S.s01.docType = "resume";
+  const essay = isEssay(), dw = docWord(null);
+  $("#doc-type").hidden = fixture;
+  for (const r of $$('#doc-type input[type=radio]')) { r.checked = r.value === S.s01.docType; r.disabled = locked; }
+  setText($("#file-label"), `${dw} 파일`);
+  const ps = renderPrompts(locked);
   $("#sample-row").hidden = !(sample || fixture); $("#use-sample").disabled = locked;
-  setText($("#use-sample"), fixture ? "기록된 실행의 공고와 이력서 넣기" : "예시 공고와 이력서로 해 보기");
+  setText($("#use-sample"), fixture ? "기록된 실행의 공고와 이력서 넣기" : `예시 공고와 ${dw}로 해 보기`);
   setText($("#s01-time"), sample ? "예시는 미리 써 둔 읽기 기록을 문장마다 다시 보여 줍니다. 30초쯤 걸립니다."
     : fixture ? `검증용 재생입니다. 기록된 실행 ${FIXTURE_NAME}을(를) 같은 전송 경로로 다시 보여 줍니다.`
     : "준비와 리포트는 보통 각각 1분 안팎이고, 읽기는 문장 수에 따라 길어집니다. 읽기와 리포트가 합쳐 10분을 넘으면 자동으로 멈춥니다.");
   setText($("#send-line"), sample ? "지금은 서버에 연결하지 않고 미리 준비한 예시만 볼 수 있습니다. 입력한 내용은 이 브라우저 밖으로 나가지 않습니다."
     : fixture ? "서버에 연결하지 않습니다. 기록된 실행 파일만 읽고, 입력한 내용은 이 브라우저 밖으로 나가지 않습니다."
-    : "준비를 누르면 공고 본문이 요건 정리를 위해 OpenAI Codex로 갑니다. 읽는 동안에는 이력서에서 꺼낸 문장이 Typesafe Jev로 갑니다. 기존 방식은 그때까지 읽은 문장 전부와 공고 요건 문구·확인 조건을, 의문 중심 방식은 지금 읽는 문장과 최근 문장, 짧은 맥락·질문 색인, 필요한 앞 문장과 공고의 주요 업무만 보냅니다. 다 읽은 뒤에는 이력서 전체 글과 읽기 메모가 리포트를 위해 Codex로 갑니다. 올린 파일 자체는 두 모델 제공자에게 보내지 않습니다.");
+    : `준비를 누르면 공고 본문이 요건 정리를 위해 OpenAI Codex로 갑니다. 읽는 동안에는 ${dw}에서 꺼낸 문장이 Typesafe Jev로 갑니다. 기존 방식은 그때까지 읽은 문장 전부와 공고 요건 문구·확인 조건을, 의문 중심 방식은 지금 읽는 문장과 최근 문장, 짧은 맥락·질문 색인, 필요한 앞 문장과 공고의 주요 업무만 보냅니다. 다 읽은 뒤에는 ${dw} 전체 글과 읽기 메모가 리포트를 위해 Codex로 갑니다.${essay ? " 적은 문항은 이때 리포트의 참고로만 함께 가고, 읽는 동안 Jev에는 가지 않습니다." : ""} 올린 파일 자체는 두 모델 제공자에게 보내지 않습니다.`);
   $("#where-01-d").hidden = sample; $("#quota-line").hidden = sample; $("#file-privacy").hidden = sample;
   const cnt = $("#job-count"); cnt.textContent = `${fmt(ta.value.length)}${NB}/${NB}6,000자`; cnt.classList.toggle("over", !!js.over);
   fieldErr($("#job-err"), js.err && ta.value.length ? js.err : null);
@@ -3606,36 +3727,69 @@ function renderS01() {
   renderDrop();
   let why = null;
   if (locked) why = "입력을 바꾸려면 준비를 취소하세요.";
-  else if (!ta.value.trim() || !f || f.state === "empty") why = "공고 본문과 이력서 파일이 있어야 준비할 수 있습니다.";
+  else if (!ta.value.trim() || !f || f.state === "empty") why = `공고 본문과 ${dw} 파일이 있어야 준비할 수 있습니다.`;
   else if (js.err) why = "공고 본문을 확인해 주세요.";
-  else if (f.state === "bad") why = "이력서 파일을 다시 골라 주세요.";
-  else if (f.state === "own") why = "예시 이력서를 넣으면 준비할 수 있습니다.";
+  else if (f.state === "bad") why = `${dw} 파일을 다시 골라 주세요.`;
+  else if (f.state === "own") why = `예시 ${dw}를 넣으면 준비할 수 있습니다.`;
   else if (js.edited) why = "예시 공고로 되돌리면 준비할 수 있습니다.";
+  else if (essay && ps.bad) why = "작성 문항을 확인해 주세요.";
   const pb = $("#prep-btn"); pb.disabled = !!why; setText(pb, locked ? "준비하는 중" : "준비하기");
   const w = $("#prep-why"); w.hidden = !why; w.textContent = why || "";
   renderPrepArea();
+}
+/* the prompt rows: one textarea per item, rebuilt only when the count changes so typing keeps its caret; errors per row */
+let PROMPT_ROWS = -1;
+function renderPrompts(locked) {
+  const box = $("#prompts-field"), list = $("#prompts-list"), essay = isEssay(), raw = S.s01.prompts || [""];
+  box.hidden = !essay;
+  const ps = promptsState(raw);
+  if (!essay) return ps;
+  if (PROMPT_ROWS !== raw.length || list.children.length !== raw.length) {
+    PROMPT_ROWS = raw.length; list.textContent = "";
+    raw.forEach((_, i) => list.append(h("li", null, h("span", { class: "n", "aria-hidden": "true" }, String(i + 1)),
+      h("textarea", { class: "prompt", rows: "2", "data-i": String(i), "aria-label": `문항 ${i + 1}`, "aria-describedby": `prompts-help prompt-err-${i}`, placeholder: i === 0 ? "예: 지원동기를 작성해 주세요. / 입사 후 계획" : "" }),
+      h("button", { type: "button", class: "btn-text sm rm-p", "data-i": String(i), "aria-label": `문항 ${i + 1} 지우기` }, "지우기"),
+      h("p", { class: "field-err", id: `prompt-err-${i}`, hidden: true }))));
+  }
+  [...list.children].forEach((li, i) => {
+    const ta = li.querySelector("textarea"), rm = li.querySelector(".rm-p"), err = li.querySelector(".field-err");
+    if (ta.value !== raw[i]) ta.value = raw[i];
+    ta.readOnly = locked; rm.disabled = locked || (raw.length === 1 && !raw[0]);
+    fieldErr(err, ps.errs[i]); if (ps.errs[i]) ta.setAttribute("aria-invalid", "true"); else ta.removeAttribute("aria-invalid");
+  });
+  const add = $("#prompt-add"); add.disabled = locked || raw.length >= ESSAY.max;
+  setText($("#prompt-limit"), raw.length >= ESSAY.max ? `${ESSAY.max}개까지 적을 수 있습니다` : "");
+  setText($("#prompts-count"), ps.kept.length ? `${ps.kept.length}개 · ${fmt(ps.total)}${NB}/${NB}${fmt(ESSAY.total)}자` : "없음 · 이력서처럼 읽습니다");
+  fieldErr($("#prompts-err"), ps.err);
+  return ps;
+}
+function setDocType(type) {
+  if (prepActive() || !S.s01 || S.s01.docType === type) return;
+  S.s01.docType = type; renderS01();
+  announce(type === "cover_letter" ? "자기소개서로 바꿨습니다. 문항은 선택 사항입니다" : "이력서로 바꿨습니다. 적어 둔 문항은 보내지 않습니다");
 }
 function pickFile() { if (!prepActive()) $("#file-input").click(); }
 let DROP_KEY = "";
 function renderDrop() {
   const d = $("#drop"), f = S.s01.file, locked = prepActive();
-  const key = JSON.stringify([f ? [f.name, f.size, f.state, f.reason, !!f.sample] : null, locked]);
+  const dw = docWord(null);
+  const key = JSON.stringify([f ? [f.name, f.size, f.state, f.reason, !!f.sample] : null, locked, dw]);
   if (key === DROP_KEY) return;
   DROP_KEY = key;
   d.className = "drop"; d.textContent = "";
-  if (!f || f.state === "empty") { d.classList.add("empty"); d.append(h("span", { class: "msg" }, S.s01.refreshed ? "새로고침하면 파일은 다시 골라야 합니다. 이력서 파일을 고르거나 여기로 끌어 놓으세요" : "이력서 파일을 고르거나 여기로 끌어 놓으세요"), btnText("파일 고르기", pickFile)); }
+  if (!f || f.state === "empty") { d.classList.add("empty"); d.append(h("span", { class: "msg" }, S.s01.refreshed ? `새로고침하면 파일은 다시 골라야 합니다. ${dw} 파일을 고르거나 여기로 끌어 놓으세요` : `${dw} 파일을 고르거나 여기로 끌어 놓으세요`), btnText("파일 고르기", pickFile)); }
   else if (f.state === "over") { d.classList.add("over"); d.append(h("span", { class: "msg" }, "여기에 놓으세요")); }
   else {
     if (f.state === "bad") d.classList.add("bad");
     d.append(h("span", { class: "file-name", title: f.name }, f.name));
     if (f.size != null) d.append(h("span", { class: "size num" }, sizeText(f.size)));
     d.append(btnText("바꾸기", pickFile));
-    if (f.state === "ok") d.append(h("span", { class: "cap" }, f.sample ? "예시 이력서" : "파일 선택됨 · 글자는 준비할 때 꺼냅니다"));
+    if (f.state === "ok") d.append(h("span", { class: "cap" }, f.sample ? `예시 ${dw}` : "파일 선택됨 · 글자는 준비할 때 꺼냅니다"));
   }
   if (locked) { d.classList.add("locked"); $$("button", d).forEach(b => { b.disabled = true; }); }
   const fe = $("#file-err"); fe.textContent = ""; fe.hidden = true;
   if (f && f.state === "bad") fieldErr(fe, f.reason);
-  else if (f && f.state === "own") { fe.hidden = false; fe.append(h("span", null, "지금은 예시 이력서로만 해 볼 수 있습니다. "), btnText("예시 이력서 넣기", () => { S.s01.file = sampleFile(); renderS01(); }, "sm")); }
+  else if (f && f.state === "own") { fe.hidden = false; fe.append(h("span", null, `지금은 예시 ${dw}로만 해 볼 수 있습니다. `), btnText(`예시 ${dw} 넣기`, () => { S.s01.file = sampleFile(); renderS01(); }, "sm")); }
 }
 /* checked here against the contract limits; the file itself is read only when 준비하기 is pressed */
 function takeFile(file) {
@@ -3658,10 +3812,25 @@ function wireS01() {
   d.addEventListener("dragleave", e => { if (!d.contains(e.relatedTarget) && S.s01.file?.state === "over") { S.s01.file = prevFile; renderDrop(); } });
   d.addEventListener("drop", e => { e.preventDefault(); if (prepActive()) return; S.s01.file = prevFile; takeFile(e.dataTransfer?.files?.[0]); });
   $("#prep-btn").addEventListener("click", startPrepare);
+  for (const r of $$('#doc-type input[type=radio]')) r.addEventListener("change", () => { if (r.checked) setDocType(r.value); });
+  const list = $("#prompts-list");
+  list.addEventListener("input", e => { const ta = e.target.closest("textarea.prompt"); if (!ta || prepActive()) return; S.s01.prompts[Number(ta.dataset.i)] = ta.value; renderS01(); });
+  list.addEventListener("click", e => {
+    const b = e.target.closest(".rm-p"); if (!b || prepActive()) return;
+    const i = Number(b.dataset.i), ps = S.s01.prompts;
+    if (ps.length === 1) ps[0] = ""; else ps.splice(i, 1);
+    renderS01(); announce(`문항 ${i + 1}을(를) 지웠습니다`);
+    const rows = $$("#prompts-list textarea"); (rows[Math.min(i, rows.length - 1)] || $("#prompt-add")).focus({ preventScroll: true });
+  });
+  $("#prompt-add").addEventListener("click", () => {
+    if (prepActive() || S.s01.prompts.length >= ESSAY.max) return;
+    S.s01.prompts.push(""); renderS01();
+    $$("#prompts-list textarea").pop()?.focus({ preventScroll: true });
+  });
 }
 const PREP = { gen: 0 };
 function stopPrepPoll() { PREP.gen++; wake("prep"); }
-function blankPrep() { return { id: null, view: null, seen: {}, done: {}, error: null, counted: true, slow: false, sending: false, userCancelled: false, conn: { state: "connected", attempt: 0 } }; }
+function blankPrep() { return { id: null, view: null, snap: null, seen: {}, done: {}, error: null, counted: true, slow: false, sending: false, userCancelled: false, conn: { state: "connected", attempt: 0 } }; }
 function readBase64(file) {
   return new Promise((res, rej) => {
     const r = new FileReader();
@@ -3676,19 +3845,20 @@ async function startPrepare() {
   if ($("#prep-btn").disabled || prepActive()) return;
   stopPrepPoll();
   const gen = PREP.gen, f = S.s01.file, jobText = $("#job-text").value.trim(), hadFocus = document.activeElement === $("#prep-btn");
-  S.prep = { ...blankPrep(), sending: true, seen: { sending: nowMs() } };
+  S.prep = { ...blankPrep(), sending: true, seen: { sending: nowMs() }, snap: prepareSnapshot() };
   renderS01();
   /* the pressed button is now disabled: its place is taken by 준비 취소 */
   if (hadFocus) focusFirst('#prep-area [data-k="prep-cancel"]', "#s01-h");
   let v;
   try {
     let input;
-    if (isSample()) input = { sample: true, job_text: jobText };
+    if (isSample()) input = buildPrepareInput({ sample: true, job_text: jobText }, S.s01.docType, S.s01.prompts);
     else if (isFixture()) input = { fixture: FIXTURE_NAME, job_text: jobText };
     else {
       const b64 = await readBase64(f.blob);
       if (b64.length > 2666672) throw new LabError("request_too_large", 413);
-      input = { job_text: jobText, resume_filename: uploadName(f.name), resume_media_type: MEDIA[extOf(f.name)], resume_base64: b64 };
+      /* the file keys keep their legacy names whatever the document kind (contract); a resume adds nothing */
+      input = buildPrepareInput({ job_text: jobText, resume_filename: uploadName(f.name), resume_media_type: MEDIA[extOf(f.name)], resume_base64: b64 }, S.s01.docType, S.s01.prompts);
     }
     if (gen !== PREP.gen) return;
     v = await SRC.prepare(input);
@@ -3757,7 +3927,12 @@ function onPrepView(v) {
     if (v.status === "queued") announce("차례를 기다리고 있습니다");
   }
   if (v.status === "ready") {
-    stopPrepPoll(); S.prepared = v; S.ds = dsFromPrepare(v, S.s01?.file); S.s02 = { okJob: false, okDoc: false, confirmReset: false, starting: false, err: null };
+    stopPrepPoll(); S.prepared = v; S.ds = dsFromPrepare(v, S.s01?.file);
+    /* a preparation picked up after a refresh (no request snapshot) had no document in its first view: the kind and prompts
+       come from the server record now. A new 준비하기 in the same refreshed tab has a snapshot and keeps what was typed. */
+    if (S.s01?.refreshed && !P.snap) { S.s01.docType = S.ds.ctx.type; S.s01.prompts = S.ds.ctx.prompts.length ? S.ds.ctx.prompts.map(p => p.text) : [""]; }
+    /* P.snap is null for a preparation picked up after a refresh: the server record is then the only source and is trusted as such */
+    S.s02 = { okJob: false, okDoc: false, confirmReset: false, starting: false, err: null, unsupported: essayMismatch(v, P.snap) };
     if (S.screen === "s01") renderS01();
     setTimeout(() => { if (S.screen === "s01" && S.prep?.view === v) { go("s02"); announce(isSample() ? "예시를 열었습니다. 확인 화면입니다" : "준비가 끝났습니다. 확인 화면입니다"); } }, 500);
     return;
@@ -3792,7 +3967,7 @@ function renderPrepArea(force) {
   if (isSample()) {
     /* the example only opens: no extraction or analysis is claimed */
     if (!P.error || P.view?.status === "ready") box.append(h("div", { class: "prep" }, row(P.view?.status === "ready" ? "done" : "on", "예시를 불러오는 중", null, P.view?.status === "ready" ? "완료" : "")));
-  } else if (P.sending && !P.error) box.append(h("div", { class: "prep" }, row("on", "이력서 파일을 보내는 중", null, sinceSpan(P.seen.sending))));
+  } else if (P.sending && !P.error) box.append(h("div", { class: "prep" }, row("on", `${docWord(null)} 파일을 보내는 중`, null, sinceSpan(P.seen.sending))));
   else if (P.view && !(P.error && !P.done.extracting && P.view.status !== "failed")) {
     const grid = h("div", { class: "prep" });
     const order = []; if (P.seen.queued) order.push("queued"); order.push("extracting", "analyzing_job");
@@ -3801,7 +3976,7 @@ function renderPrepArea(force) {
       const active = P.view.status === st && !P.error, done = P.done[st] != null && st !== failedAt;
       let label, small = null;
       if (st === "queued") { label = "차례를 기다리는 중"; if (active) small = "한 번에 한 작업씩 처리합니다. 앞선 작업이 끝나면 바로 시작합니다."; }
-      else if (st === "extracting") label = "이력서에서 글자와 문단을 꺼내는 중";
+      else if (st === "extracting") label = `${docWord(null)}에서 글자와 문단을 꺼내는 중`;
       else { label = "공고에서 요건을 찾는 중 · Codex"; if (active) small = P.slow ? "평소보다 오래 걸리고 있습니다. 계속 기다리거나 취소할 수 있습니다. 3분이 지나면 자동으로 멈춥니다." : "1분 안팎 걸립니다."; }
       if (active && recon) small = recon;
       if (st === failedAt) small = "여기서 멈췄습니다";
@@ -3827,9 +4002,15 @@ function prepTick() {
 
 /* ===================== 13. S02 · confirm ===================== */
 const S02_LEDE = {
-  http: "Codex가 공고에서 뽑은 요건과 파일에서 꺼낸 이력서 문장이 원문과 같은지 확인해 주세요. 공고 전체의 업무·자격·우대사항을 확인하며, 고용조건과 제출 안내는 참고사항으로 구분합니다. 여기서는 고칠 수 없습니다. 틀렸다면 입력으로 돌아가 공고나 파일을 바꿔 주세요. 다시 준비하면 오늘 횟수 1번을 씁니다.",
-  sample: "예시 공고에서 뽑은 요건과 예시 이력서의 문장입니다. 실제로 쓸 때는 여기서 요건과 문장이 원문과 같은지 확인한 뒤 읽기를 시작합니다. 두 항목을 확인하면 시작할 수 있습니다."
+  http: dw => `Codex가 공고에서 뽑은 요건과 파일에서 꺼낸 ${dw} 문장이 원문과 같은지 확인해 주세요. 공고 전체의 업무·자격·우대사항을 확인하며, 고용조건과 제출 안내는 참고사항으로 구분합니다. 여기서는 고칠 수 없습니다. 틀렸다면 입력으로 돌아가 공고나 파일을 바꿔 주세요. 다시 준비하면 오늘 횟수 1번을 씁니다.`,
+  sample: dw => `예시 공고에서 뽑은 요건과 예시 ${dw}의 문장입니다. 실제로 쓸 때는 여기서 요건과 문장이 원문과 같은지 확인한 뒤 읽기를 시작합니다. 두 항목을 확인하면 시작할 수 있습니다.`,
+  fixture: () => "기록된 실행의 요건과 문장입니다. 두 항목을 확인하면 같은 기록을 다시 보여 줍니다."
 };
+/* the prompts the server kept for this preparation, as a numbered list; the text is shown exactly as typed (DOM text, never markup) */
+function promptsView(ctx, cls = "") {
+  return h("ol", { class: "prompts-view " + cls, "aria-label": "작성 문항" }, ctx.prompts.map(p => h("li", null, p.text)));
+}
+const PROMPTS_CAP = "문항은 본문에 넣지 않고, 다 읽은 뒤 리포트가 문항의 요청과 본문 설명을 함께 볼 때만 참고합니다. 문항마다 점수나 충족 여부를 매기지 않고, 지원처의 판단도 아닙니다.";
 const START_MSG = {
   confirmation_required: "두 항목을 모두 확인해 주세요.",
   prepare_input_changed: "준비한 뒤 입력이 바뀌어 이 준비로는 시작할 수 없습니다. 처음부터 다시 준비해 주세요.",
@@ -3850,7 +4031,7 @@ function discardToInput() {
   if (id) SRC.discardPrepare(id).catch(() => { /* already gone: it expires on its own */ });
 }
 async function startJob() {
-  if (!(S.s02.okJob && S.s02.okDoc) || S.s02.starting || !S.prepared) return;
+  if (!(S.s02.okJob && S.s02.okDoc) || S.s02.starting || !S.prepared || S.s02.unsupported) return;
   S.s02.starting = true; S.s02.err = null; renderConfirm();
   let v;
   try { v = await SRC.start(S.prepared); }
@@ -3867,8 +4048,8 @@ async function startJob() {
 }
 function renderS02() {
   if (!S.prepared || !S.ds) return;
-  setText($("#s02-lede"), S02_LEDE[SRC.kind]);
-  const ds = S.ds, job = ds.job, doc = ds.document, reqs = job.requirements;
+  const ds = S.ds, job = ds.job, doc = ds.document, reqs = job.requirements, ctx = ds.ctx, dw = docWord(ds), essay = ctx.type === "cover_letter";
+  setText($("#s02-lede"), (S02_LEDE[SRC.kind] || S02_LEDE.http)(dw));
   const evaluated = reqs.filter(r => r.kind !== "other").length, context = reqs.length - evaluated;
   const countText = `판단 요건 ${evaluated}개${context ? ` · 참고사항 ${context}개` : ""}`;
   const L = $("#s02-job"); L.textContent = "";
@@ -3903,23 +4084,32 @@ function renderS02() {
   }
   L.append(h("label", { class: "check confirm-check", for: "ok-job" }, h("input", { type: "checkbox", id: "ok-job", checked: S.s02.okJob || null }), h("span", null, reqs.length ? `${countText}가 공고 원문과 같고, 빠진 중요한 항목이 없습니다` : "요건 없이 읽어도 됩니다")));
   const R = $("#s02-doc"); R.textContent = "";
-  R.append(h("div", { class: "col-head" }, h("h2", null, "이력서"), h("span", { class: "meta-line file-name" }, docLabel(ds))));
+  R.append(h("div", { class: "col-head" }, h("h2", null, dw), h("span", { class: "meta-line file-name" }, docLabel(ds))));
   for (const w of doc.warnings || []) R.append(h("p", { class: "warn" }, "※ " + w));
   if (doc.source_kind === "pdf") R.append(h("p", { class: "warn" }, "※ PDF는 줄 순서가 원본과 다를 수 있습니다. 순서를 꼭 확인해 주세요."));
-  const pe = h("div", { class: "paper", role: "group", "aria-label": "이력서 본문" }); R.append(pe);
+  /* a cover letter was requested but the server kept no document kind: the prompts did not arrive, so nothing starts from here */
+  if (S.s02.unsupported) R.append(h("div", { class: "notice" }, h("p", null, "README 서버가 자기소개서 문항을 적은 대로 받지 못했습니다. 서버가 이 화면과 맞지 않는 버전이거나 문항이 다르게 전달돼, 문항을 빼거나 바꾼 채 계속하지 않고 여기서 멈춥니다. 입력으로 돌아가 다시 준비하거나 이력서로 바꾸고, 같은 일이 반복되면 운영자에게 알려 주세요."), h("div", { class: "row" }, btnText("입력으로 돌아가기", discardToInput, "", "unsupported-back"))));
+  else if (essay) {
+    const n = ctx.prompts.length;
+    const sec = h("div", { class: "reqgroup" }, h("h3", null, n ? `작성 문항 ${n}개` : "작성 문항 없음"));
+    if (n) sec.append(promptsView(ctx), h("p", { class: "help", style: "margin-top:8px" }, PROMPTS_CAP));
+    else sec.append(h("p", { class: "help" }, "문항 없이 보냈습니다. 이력서와 같은 방식으로 읽고 리포트를 씁니다."));
+    R.append(sec);
+  }
+  const pe = h("div", { class: "paper", role: "group", "aria-label": `${dw} 본문` }); R.append(pe);
   PAPERS.conf = paperCtl(pe, "conf"); buildPaper(PAPERS.conf, ds);
-  R.append(h("label", { class: "check confirm-check", for: "ok-doc" }, h("input", { type: "checkbox", id: "ok-doc", checked: S.s02.okDoc || null }), h("span", null, "빠지거나 순서가 바뀐 문장이 없습니다")));
+  R.append(h("label", { class: "check confirm-check", for: "ok-doc" }, h("input", { type: "checkbox", id: "ok-doc", checked: S.s02.okDoc || null, disabled: S.s02.unsupported || null }), h("span", null, essay && ctx.prompts.length ? "빠지거나 순서가 바뀐 문장이 없고, 문항이 적은 대로입니다" : "빠지거나 순서가 바뀐 문장이 없습니다")));
   $("#ok-job").addEventListener("change", e => { S.s02.okJob = e.target.checked; renderConfirm(); });
   $("#ok-doc").addEventListener("change", e => { S.s02.okDoc = e.target.checked; renderConfirm(); });
   renderConfirm();
 }
 function renderConfirm() {
-  const { okJob, okDoc } = S.s02;
-  const s = okJob && okDoc ? (isSample() ? "모두 확인했습니다" : "모두 확인했습니다 · 읽기와 리포트는 문장 수에 따라 몇 분 걸립니다") : okJob ? "공고 확인됨 · 이력서 확인 전" : okDoc ? "이력서 확인됨 · 공고 확인 전" : "공고 확인 전 · 이력서 확인 전";
+  const { okJob, okDoc, unsupported } = S.s02, dw = docWord();
+  const s = unsupported ? "이 준비로는 시작할 수 없습니다" : okJob && okDoc ? (isSample() ? "모두 확인했습니다" : "모두 확인했습니다 · 읽기와 리포트는 문장 수에 따라 몇 분 걸립니다") : okJob ? `공고 확인됨 · ${dw} 확인 전` : okDoc ? `${dw} 확인됨 · 공고 확인 전` : `공고 확인 전 · ${dw} 확인 전`;
   $("#confirm-status").textContent = isSample() ? `${s}.` : `${s}. 이 준비는 ${clockText(S.prepared?.expires_at)}까지 유지됩니다.`;
-  const sb = $("#start-btn"); sb.disabled = !(okJob && okDoc); setText(sb, S.s02.starting ? "시작하는 중" : "읽기 시작");
+  const sb = $("#start-btn"); sb.disabled = !(okJob && okDoc) || !!unsupported; setText(sb, S.s02.starting ? "시작하는 중" : "읽기 시작");
   if (S.s02.starting) sb.setAttribute("aria-disabled", "true"); else sb.removeAttribute("aria-disabled");
-  $("#start-why").hidden = okJob && okDoc;
+  $("#start-why").hidden = (okJob && okDoc) || !!unsupported;
   const inl = $("#s02-inline"), keep = inl.contains(document.activeElement) ? document.activeElement.dataset.k : null; inl.textContent = "";
   if (S.s02.confirmReset) inl.append(notice([h("p", null, "지금 준비한 내용은 지워집니다." + quota(" 다시 준비하면 오늘 횟수 1번을 씁니다.")), h("div", { class: "row" },
     h("button", { type: "button", class: "btn-quiet", "data-k": "reset-yes", onclick: discardToInput }, "지우고 입력으로"),
@@ -3977,7 +4167,7 @@ function reportStateBlock() {
   if (!J) { box.append(h("p", { class: "lede" }, "아직 읽기를 시작하지 않았습니다.")); return box; }
   if (isSample() && J.status === "reporting") box.append(h("div", { class: "notice" }, h("p", null, "예시 리포트를 여는 중입니다.")));
   else if (J.status === "reporting" || (J.status === "queued" && R.readingCompleted)) {
-    box.append(h("div", { class: "notice" }, h("p", null, J.status === "queued" ? "차례를 기다리는 중 · 앞선 작업이 끝나면 리포트를 쓰기 시작합니다 · " : "읽기는 끝났습니다. 이제 Codex가 이력서 전체 문장을 보고 리포트를 쓰고 있습니다 · ", sinceSpan(S.jobSeen[J.status] ?? nowMs())), h("p", { class: "cap" }, "보통 1분 안팎 걸리고, 문서가 길수록 오래 걸립니다. 다 쓰면 이 화면에 바로 나타납니다.")));
+    box.append(h("div", { class: "notice" }, h("p", null, J.status === "queued" ? "차례를 기다리는 중 · 앞선 작업이 끝나면 리포트를 쓰기 시작합니다 · " : `읽기는 끝났습니다. 이제 Codex가 ${docWord()} 전체 문장을 보고 리포트를 쓰고 있습니다 · `, sinceSpan(S.jobSeen[J.status] ?? nowMs())), h("p", { class: "cap" }, "보통 1분 안팎 걸리고, 문서가 길수록 오래 걸립니다. 다 쓰면 이 화면에 바로 나타납니다.")));
   } else if (J.status === "failed") {
     const kids = [h("p", null, `리포트를 만들지 못했습니다. ${failText(R.failed?.error || J.error)}`), h("p", null, `${total}문장 중 ${doneSent()}문장까지 읽은 기록은 남아 있습니다.`), h("div", { class: "row" }, h("button", { type: "button", class: "btn-text", id: "open-range", onclick: () => openRange() }, "읽은 범위를 문서에서 보기"), h("button", { type: "button", class: "btn-primary sm", onclick: restartPrepare }, "처음부터 다시 준비"))];
     box.append(h("div", { class: "notice" }, kids));
@@ -4009,11 +4199,12 @@ function renderReport(o = {}) {
   const groups = reportGroups(rep);
   const qs = reportQuestions();
   const head = h("div", { class: "r-head" }, titleRow("리포트", "s04-h"),
-    h("p", { class: "lede" }, `다 읽은 뒤 ${who("Codex가 ")}이력서 전체 문장${zero ? "을" : "과 읽기 메모를"} 바탕으로 수정 방향을 정리했습니다. 먼저 고칠 부분부터 살펴보고, 이미 잘 전달되는 설명은 유지해 보세요. 인용을 누르면 해당 문장으로 이동합니다.`),
+    h("p", { class: "lede" }, `다 읽은 뒤 ${who("Codex가 ")}${docWord(ds)} 전체 문장${zero ? "을" : "과 읽기 메모를"} 바탕으로 수정 방향을 정리했습니다. 먼저 고칠 부분부터 살펴보고, 이미 잘 전달되는 설명은 유지해 보세요. 인용을 누르면 해당 문장으로 이동합니다.`),
     h("div", { class: "howto" }, h("p", null, "‘유지할 설명’은 문서 안에서 설명을 찾았다는 뜻이지 사실 확인이 아닙니다. 점수나 합격 가능성은 내지 않습니다.")),
     h("dl", { class: "r-meta" },
       h("dt", null, "공고"), h("dd", null, firstLine(ds.job.text, 30)),
-      h("dt", null, "문서"), h("dd", { class: "file-name" }, docLabel(ds)),
+      h("dt", null, "문서"), h("dd", { class: "file-name" }, `${docWord(ds)} · ${docLabel(ds)}`),
+      ds.ctx?.type === "cover_letter" ? [h("dt", null, "작성 문항"), h("dd", null, ds.ctx.prompts.length ? promptsView(ds.ctx) : "없음 · 이력서와 같은 방식으로 읽었습니다")] : null,
       h("dt", null, "읽기"), h("dd", null, `끝까지 읽음 · ${zero ? "메모 없음" : `읽기 메모 ${A.notes.length}개`}`),
       isSample() ? [h("dt", null, "결과"), h("dd", null, SAMPLE_NOTE)]
         : [h("dt", null, "볼 수 있는 시간"), h("dd", null, `${clockText(J.expires_at)}까지 · 새로고침은 괜찮지만 창을 닫으면 다시 열 수 없습니다`)]),
@@ -4025,7 +4216,7 @@ function renderReport(o = {}) {
   const rail = h("nav", { class: "rail", "aria-label": "리포트 목차" }, h("ol", null, navItems.map(([id, t, n]) => h("li", null, h("a", { href: "#" + id, "data-sec": id }, h("span", null, t), n ? h("span", { class: "num" }, String(n)) : null)))));
   const anchors = h("nav", { class: "anchors", "aria-label": "리포트 목차" }, navItems.map(([id, t, n]) => h("a", { href: "#" + id }, n ? `${t} ${n}` : t)));
   const main = h("div", { class: "r-main" }, head, anchors);
-  if (zero) main.append(h("p", { class: "r-zero" }, (isJev() ? "이번 읽기에서는 메모가 남지 않았습니다. " + (isFocus() ? SCOPE_FOCUS_SHORT : SCOPE_SHORT) : isLaya() && !isSample() ? "이번 읽기에서 Laya 기본 모델은 확신이 낮아 메모를 남기지 않았습니다." : "이번 읽기에서는 메모가 남지 않았습니다.") + " 아래 항목은 다 읽은 뒤 " + who("Codex가 ") + "이력서 전체 문장을 보고 정리한 것입니다."));
+  if (zero) main.append(h("p", { class: "r-zero" }, (isJev() ? "이번 읽기에서는 메모가 남지 않았습니다. " + (isFocus() ? SCOPE_FOCUS_SHORT : SCOPE_SHORT) : isLaya() && !isSample() ? "이번 읽기에서 Laya 기본 모델은 확신이 낮아 메모를 남기지 않았습니다." : "이번 읽기에서는 메모가 남지 않았습니다.") + " 아래 항목은 다 읽은 뒤 " + who("Codex가 ") + docWord(ds) + " 전체 문장을 보고 정리한 것입니다."));
   const seenCite = new Map();
   for (const group of groups) {
     const id = group.id;
@@ -4160,9 +4351,10 @@ function limitsBlock(rep, qs) {
   const srv = (rep.limitations || []).filter(l => typeof l === "string").join(" "), said = (...w) => !isSample() && w.every(x => srv.includes(x));
   add("점수, 등급, 합격 가능성은 만들지 않습니다. 실제 채용 담당자의 판단도 아닙니다.");
   if (!said("진위")) add("‘유지할 설명’은 문서 안에서 설명을 찾았다는 뜻이고, 경험이 사실인지 확인한 것은 아닙니다.");
-  if (!isSample() && !(isJev() && said("Jev", "Codex"))) add(`${isJev() ? "Jev는" : isLaya() ? "Laya는" : "읽기 모델은"} ${isFocus() ? "각 문장을 지금 읽는 문장과 최근 문장, 필요한 앞 문장만 보고 판단했고" : "각 문장을 그 문장까지 읽은 내용만 보고 판단했고"}, 리포트는 Codex가 다 읽은 뒤 이력서 전체 문장을 보고 썼습니다.`);
+  if (!isSample() && !(isJev() && said("Jev", "Codex"))) add(`${isJev() ? "Jev는" : isLaya() ? "Laya는" : "읽기 모델은"} ${isFocus() ? "각 문장을 지금 읽는 문장과 최근 문장, 필요한 앞 문장만 보고 판단했고" : "각 문장을 그 문장까지 읽은 내용만 보고 판단했고"}, 리포트는 Codex가 다 읽은 뒤 ${docWord()} 전체 문장을 보고 썼습니다.`);
   if (!said("사람이 다시 확인")) add("모든 메모와 항목은 사람이 다시 확인해야 하는 초안입니다.");
   add("메모가 없는 문장은 문제가 없다는 뜻도, 잘 썼다는 뜻도 아닙니다.");
+  if (S.ds?.ctx?.type === "cover_letter" && S.ds.ctx.prompts.length) add("작성 문항은 리포트가 문항의 요청과 본문 설명을 함께 볼 때 참고로만 썼습니다. 문항마다 점수나 충족 여부를 매기지 않았고, 문항만 보고 없는 경험을 있다고 쓰지 않습니다. 지원처의 판단이 아닙니다.");
   if (qs.some(q => q.status === "held")) add(isSample() ? "‘답 후보’는 앞 질문의 답일 수 있는 문장이지만 읽는 동안 확정하지 않은 상태입니다. 문서의 설명이 부족하다는 뜻이 아니어서 보완해 볼 곳에 넣지 않았습니다."
     : "‘답 후보’는 앞 질문의 답일 수 있는 문장을 찾았지만 모델이 확정하지 않은 상태입니다. 문서의 설명이 부족하다는 뜻이 아니어서 보완해 볼 곳에 넣지 않았습니다.");
   box.append(ul);
@@ -4328,7 +4520,7 @@ function renderEvSide(A, ev, entry) {
     reqQuotes(it.requirement_ids || []);
     const notes = (it.note_ids || []).map(id => A.noteById.get(id)).filter(Boolean);
     const nl = notes.length ? h("ul", { class: "ev-notes" }, notes.map(noteLi))
-      : h("p", { class: "state-note" }, "이 항목은 다 읽은 뒤 " + who("Codex가 ") + "이력서 전체 문장을 보고 인용했습니다. 읽는 동안 이 문장에 남은 메모는 없습니다.");
+      : h("p", { class: "state-note" }, "이 항목은 다 읽은 뒤 " + who("Codex가 ") + docWord() + " 전체 문장을 보고 인용했습니다. 읽는 동안 이 문장에 남은 메모는 없습니다.");
     if (inline) box.append(h("details", null, h("summary", null, "읽기 메모"), nl));
     else box.append(h("h3", null, "읽기 메모"), nl);
   } else if (ev.mode === "unit") {
@@ -4393,6 +4585,8 @@ function go(scr, o = {}) {
   else if (scr === "s05") renderEvidence(o);
   if (S.jobId && STEP[scr] >= 3) Rec.set({ screen: scr });
   measureBar(); renderNewbar();
+  /* a page turn still in flight belongs to the screen being left (the report can now open mid-playback) */
+  TWEEN.cancel();
   if (!o.restore && !o.keepScroll && scr !== "s05") scrollTo(0, 0);
   if (!o.noFocus) $("#" + scr + "-h")?.focus({ preventScroll: true });
 }
@@ -4632,6 +4826,9 @@ async function resumeRun(rec) {
 /* what a refresh can bring back without storing anything: the example itself, or the posting text the server
    already holds. A user's file is never kept, so it has to be chosen again. */
 function restoreInputs(pv) {
+  /* the document kind and prompts come back from the server's own record (document_context), never from local storage */
+  const ctx = docContext(pv);
+  S.s01.docType = ctx.type; S.s01.prompts = ctx.prompts.length ? ctx.prompts.map(p => p.text) : [""];
   if (isSample()) { $("#job-text").value = SAMPLE_JOB_TEXT; S.s01.file = sampleFile(); return; }
   if (pv.job?.text) $("#job-text").value = pv.job.text;
   S.s01.refreshed = true;
@@ -4664,6 +4861,7 @@ async function boot() {
   $("#side-cancel").addEventListener("click", openCancelConfirm);
   $("#replay-btn").addEventListener("click", replayLocal);
   $("#report-btn").addEventListener("click", () => { S.rep.ret = null; go("s04"); });
+  $("#ready-btn").addEventListener("click", () => { S.rep.ret = null; go("s04"); }); /* the user's choice; playback goes on behind the report */
   $("#newbar").addEventListener("click", returnToReading);
   $("#ev-back").addEventListener("click", backToReport); $("#ev-back-m").addEventListener("click", backToReport);
   $("#ev-prev").addEventListener("click", () => evItemStep(-1)); $("#ev-next").addEventListener("click", () => evItemStep(1));
