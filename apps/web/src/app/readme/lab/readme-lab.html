@@ -397,6 +397,35 @@ input[type=radio]{width:18px;height:18px;margin:0;accent-color:var(--ink);flex:n
 @keyframes sn-in{from{opacity:0;transform:translateX(-4px)}}
 .paper.ev .sn:not(.rel):not(.cite-sn),.paper.ev .sn:not(.rel):not(.cite-sn) .num{color:var(--ink-2)}
 
+/* Situation ink shares the paper palette. No animation or extra marker competes with the gaze. */
+.pen.sit{text-decoration:underline;text-decoration-color:var(--rule);text-decoration-thickness:1px;text-underline-offset:5px;cursor:pointer}
+.pen.sit-selected,.pen.sit-correction{text-decoration:underline;text-decoration-color:var(--ink-2);text-underline-offset:5px;background-color:color-mix(in srgb,var(--ink-2) 6%,transparent);cursor:pointer}
+.pen.sit-correction{text-decoration-style:dashed}
+.pen.sit-name{border:1px solid color-mix(in srgb,var(--ink-2) 55%,transparent);border-radius:45%;padding:2px 0;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.paper.sit-off :is(.sit,.sit-selected,.sit-correction){text-decoration:none;background-color:transparent}
+.paper.sit-off .sit-name{border-color:transparent}
+.sit-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px;color:var(--ink-2);font-size:12px;line-height:1.6}
+.sit-tools>span{flex:1;min-width:150px}
+.sit-tools button{min-height:36px}
+.sit-panel{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:20px 0;margin:4px 0 24px}
+.sit-panel h3{font-size:14px;font-weight:600;margin:0 0 6px}
+.sit-caption{font-size:12px;line-height:1.7;color:var(--ink-2);margin:6px 0 12px}
+.sit-choices{display:flex;flex-direction:column;gap:4px;margin:14px 0;max-height:220px;overflow:auto;scrollbar-width:thin}
+.sit-choice{font:inherit;text-align:left;background:none;border:1px solid transparent;border-radius:3px;color:var(--ink-2);padding:9px 10px;cursor:pointer;display:flex;gap:12px;justify-content:space-between;align-items:baseline;line-height:1.6}
+.sit-choice>span{font-size:13px;overflow-wrap:anywhere}.sit-choice small{font-size:11px;flex-shrink:0}
+.sit-choice:hover,.sit-choice[aria-pressed=true]{color:var(--ink);background:var(--paper);border-color:var(--rule)}
+.sit-detail{margin:16px 0 0;padding:16px;background:var(--paper);border:1px solid var(--rule);border-radius:3px;overflow-wrap:anywhere}
+.sit-detail:focus{outline:none}.sit-detail:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.sit-detail-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-size:13px;margin-bottom:18px}
+.sit-proof{position:relative;border-left:1px solid var(--rule);padding:0 0 20px 15px;margin-left:3px}
+.sit-proof:before{content:"";position:absolute;left:-3px;top:5px;width:5px;height:5px;border:1px solid var(--ink-2);border-radius:50%;background:var(--paper)}
+.sit-proof-label{font:500 11px/1.6 var(--f-ui);color:var(--ink-2)}
+.sit-proof p{font:400 14px/1.9 var(--f-doc);margin:6px 0}
+.sit-proof .btn-text{min-height:32px}.sit-old{color:var(--ink-2)}
+.sit-withdrawn{font-size:12px;color:var(--ink-2);margin-bottom:12px}.sit-withdrawn summary{cursor:pointer;margin-bottom:12px}
+.sit-foot{margin-bottom:0}
+@media(max-width:820px){.sit-tools{gap:4px 12px}.sit-tools>span{order:3;flex-basis:100%}.sit-tools button:last-child{margin-left:auto}.sit-choice{min-height:44px}.sit-detail{padding:16px}.sit-proof p{font-size:15px}}
+
 /* connector layer */
 .links{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:1}
 .thread{fill:none;stroke:currentColor;stroke-width:1.25;stroke-linecap:round;transition:opacity var(--t-6) var(--ease-out)}
@@ -1116,6 +1145,11 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
           <p class="mobile-wait" id="mobile-wait">화면을 끄거나 다른 앱으로 1분 넘게 옮기면 읽기가 취소될 수 있습니다.</p>
           <p class="doc-note" id="doc-note" hidden></p>
           <div class="legend-slot-doc" id="legend-slot-doc"></div>
+          <div class="sit-tools" id="situation-tools" hidden>
+            <button type="button" class="btn-text sm" id="situation-count">문장 연결 0</button>
+            <span>밑줄을 누르면 설명을 연결해 봅니다</span>
+            <button type="button" class="btn-text sm" id="situation-marks" aria-pressed="true">밑줄 숨기기</button>
+          </div>
           <div class="paper reading" id="paper-read" role="group" aria-label="이력서 본문"></div>
         </div>
         <aside class="side" id="side" aria-label="읽기 메모와 공고 요건">
@@ -1132,6 +1166,7 @@ mark.cite{background:var(--hl);color:var(--ink);border-radius:2px;box-shadow:0 0
               <p id="gaze-line"></p>
               <p id="restored-line" hidden></p>
             </div>
+            <section class="sit-panel" id="situation-panel" aria-label="이어 읽은 내용" hidden></section>
             <div id="pinned"></div>
             <ol class="feed" id="notes-feed" aria-label="읽기 메모"></ol>
             <div class="feed-empty" id="notes-empty"></div>
@@ -1251,7 +1286,7 @@ const FACET_WORD = { role: "역할", method: "방법", result: "결과", basis: 
    The stream carries inquiries, their updates, parking, evidence-backed revisits, observations and speech codes.
    Nothing here calls a model: speech is a fixed phrase per verified code, chosen by the screen. */
 const FOCUS_POLICY = "readme-focus-v1";
-const isFocus = ds => (ds || S.ds)?.generation?.policy_version === FOCUS_POLICY;
+const isFocus = ds => [FOCUS_POLICY, SITUATION_POLICY].includes((ds || S.ds)?.generation?.policy_version);
 const FOCUS_TYPES = new Set(["context", "inquiry", "parked", "revisit", "updated", "observation", "retracted", "speech"]);
 const SPEECH_TEXT = {
   ask_role: "직접 맡은 부분은 무엇일까?", ask_method: "어떤 방식으로 풀었을까?", ask_result: "그 뒤의 결과도 나올까?",
@@ -1262,6 +1297,180 @@ const SPEECH_TEXT = {
 };
 const FOCUS_UPDATE_TEXT = { partial: "앞 질문의 설명이 일부 이어집니다.", resolved: "앞 질문이 여기서 설명됩니다.", reopened: "앞의 설명과 맞지 않아 질문을 다시 엽니다." };
 const OBS_TEXT = { action: "한 일이 구체적으로 적혀 있습니다.", method: "어떻게 했는지가 적혀 있습니다.", outcome: "결과가 적혀 있습니다.", reason: "그렇게 한 이유가 적혀 있습니다.", boundary: "맡은 범위의 경계가 적혀 있습니다.", plan: "실제 경험이 아니라 계획으로 적혀 있습니다." };
+
+/* WEB-12: independent situation ledger; these are reading connections, never deficiency notes.
+   Server snapshots are checked before ingestion, and the display only sees the replayed prefix. */
+const SITUATION_POLICY = "readme-situation-v1";
+const isSituation = ds => (ds || S.ds)?.generation?.policy_version === SITUATION_POLICY;
+const SITUATION_TYPES = new Set(["attention_created", "expectation_parked", "source_revisit", "expectation_updated", "expectation_finished"]);
+const SIT_KIND = { entity_definition: "어떤 활동인지", overview_detail: "구체적으로 한 일", reference_resolution: "무엇을 가리키는지", causal_explanation: "이유와 과정" };
+const SIT_STATUS = { pending: "뒤의 설명을 읽는 중", partially_satisfied: "설명이 일부 이어짐", satisfied: "설명 연결됨", contradicted: "앞의 이해를 고침", unresolved_at_end: "연결 확인 못 함" };
+function newSituation() { return { entities: new Map(), expectations: new Map(), revisits: new Map(), window: null, read: new Set(), complete: false, stopped: false }; }
+function sitIdentity(x) { return JSON.stringify([x.id, x.kind, x.origin_unit_id, x.origin, x.context_id, x.entity_ids]); }
+function sitEntityIdentity(e) { return JSON.stringify([e.id, e.kind, e.canonical_name, e.aliases, e.introduced_at_unit_id, e.context_id, e.origin]); }
+function sitProof(p, ds, at) {
+  const u = p && ds.unitById[p.unit_id], a = ds.unitById[at];
+  return !!(u && a && u.order <= a.order && Number.isInteger(p.start) && Number.isInteger(p.end) && p.start >= 0 && p.end > p.start && p.end <= u.text.length && u.text.slice(p.start, p.end) === p.quote);
+}
+function sitProofs(ps, ds, at) { return Array.isArray(ps) && new Set(ps.map(p => p?.unit_id)).size === ps.length && ps.every(p => sitProof(p, ds, at)); }
+function sitSame(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+function sitContains(ps, p) { return ps.some(x => sitSame(x, p)); }
+function sitTargets(ts, x, ds, at) {
+  return Array.isArray(ts) && ts.includes(x.origin_unit_id) && new Set(ts).size === ts.length && ts.every(id => ds.unitById[id] && ds.unitById[id].order < ds.unitById[at].order);
+}
+function sitSnapshot(x, ds, at) {
+  return !!(x && /^x[\w-]+$/.test(x.id) && SIT_KIND[x.kind] && SIT_STATUS[x.status] && ["active", "parked"].includes(x.focus)
+    && (x.context_id === null || typeof x.context_id === "string") && x.origin_unit_id === x.origin?.unit_id && sitProof(x.origin, ds, at)
+    && Array.isArray(x.entity_ids) && x.entity_ids.length === 1 && Number.isInteger(x.state_version)
+    && !Object.hasOwn(x, "prompt") && !Object.hasOwn(x, "sufficient")
+    && [x.evidence, x.withdrawn_evidence, x.correction_evidence].every(ps => sitProofs(ps, ds, at))
+    && (!["satisfied", "contradicted", "unresolved_at_end"].includes(x.status) || x.focus === "parked"));
+}
+function sitDeriveEntities(L) {
+  for (const [id, e] of L.entities) {
+    const xs = [...L.expectations.values()].filter(x => x.entity_ids[0] === id && x.kind === "entity_definition" && x.status === "satisfied");
+    L.entities.set(id, { ...e, status: xs.length ? "explained" : "noticed", definition_unit_ids: [...new Set(xs.flatMap(x => x.evidence.map(p => p.unit_id)))] });
+  }
+}
+/* Mutates only a candidate ledger. A bad poll discards it in its entirety, including focus versions. */
+function checkSituation(L, e, ds) {
+  const type = e.type, at = e.at_unit_id, x = e.expectation;
+  if (type === "failed" || type === "cancelled") { L.stopped = true; L.revisits.clear(); return true; }
+  if (type === "report_completed") return L.complete;
+  if (L.stopped) return false;
+  if (type === "window_started") {
+    if (L.window || L.complete || !Array.isArray(e.unit_ids) || !e.unit_ids.length || !e.unit_ids.every((id, i) => id === ds.order[L.read.size + i])) return false;
+    L.window = { id: e.window_id, units: e.unit_ids }; return true;
+  }
+  if (type === "window_completed") {
+    if (!L.window || L.window.id !== e.window_id || !sitSame(e.unit_ids, L.window.units) || L.revisits.size) return false;
+    for (const id of e.unit_ids) L.read.add(id); L.window = null; return true;
+  }
+  if (type === "reading_completed") {
+    if (L.complete || L.window || L.read.size !== ds.order.length || [...L.expectations.values()].some(x => ["pending", "partially_satisfied"].includes(x.status))) return false;
+    L.complete = true; return true;
+  }
+  if (!SITUATION_TYPES.has(type)) return FOCUS_TYPES.has(type) && !!L.window && L.window.units.includes(at);
+  if (L.complete || !ds.unitById[at]) return false;
+  const ending = type === "expectation_finished";
+  if (ending ? L.window || L.read.size !== ds.order.length || at !== ds.order.at(-1) : !L.window?.units.includes(at)) return false;
+  if (type === "source_revisit") {
+    const prev = L.expectations.get(e.expectation_id);
+    if (!prev || L.revisits.has(prev.id) || !sitTargets(e.target_unit_ids, prev, ds, at) || !["definition", "detail", "reference", "correction"].includes(e.reason)) return false;
+    L.revisits.set(prev.id, e); return true;
+  }
+  if (type === "expectation_parked") {
+    const prev = L.expectations.get(e.expectation_id);
+    if (!prev || prev.focus !== "active" || e.previous_version !== prev.state_version || e.state_version !== prev.state_version + 1) return false;
+    L.expectations.set(prev.id, { ...prev, focus: "parked", state_version: e.state_version }); return true;
+  }
+  if (!sitSnapshot(x, ds, at)) return false;
+  const prev = L.expectations.get(x.id);
+  if (type === "attention_created") {
+    const en = e.entity, priorEntity = en && L.entities.get(en.id);
+    if (prev || x.status !== "pending" || x.state_version !== 1 || x.origin_unit_id !== at || x.evidence.length || x.withdrawn_evidence.length || x.correction_evidence.length
+      || !en || !/^e[\w-]+$/.test(en.id) || x.entity_ids[0] !== en.id
+      || !["project", "product", "organization", "activity", "term"].includes(en.kind) || !sitProof(en.origin, ds, at)
+      || en.origin.quote !== en.canonical_name || !Array.isArray(en.aliases) || en.aliases.some(a => typeof a !== "string" || !ds.unitById[en.introduced_at_unit_id]?.text.includes(a))) return false;
+    if (priorEntity ? sitEntityIdentity(priorEntity) !== sitEntityIdentity(en) || priorEntity.status !== en.status || !sitSame(priorEntity.definition_unit_ids, en.definition_unit_ids)
+      : en.introduced_at_unit_id !== at || en.origin.unit_id !== at || en.status !== "noticed" || !sitSame(en.definition_unit_ids, [])) return false;
+    if ([...L.expectations.values()].some(p => p.kind === x.kind && p.entity_ids[0] === en.id && sitSame(p.origin, x.origin))) return false;
+    L.entities.set(en.id, structuredClone(en));
+  } else {
+    if (!prev || sitIdentity(prev) !== sitIdentity(x) || e.previous_status !== prev.status || x.state_version !== prev.state_version + 1 || (prev.focus === "parked" && x.focus !== "parked")) return false;
+    const allowed = { pending: ["partially_satisfied", "satisfied", "contradicted"], partially_satisfied: ["partially_satisfied", "satisfied", "contradicted"], satisfied: ["contradicted"], contradicted: ["partially_satisfied", "satisfied"] };
+    if (ending) {
+      if (!["pending", "partially_satisfied"].includes(prev.status) || x.status !== "unresolved_at_end" || !["evidence", "withdrawn_evidence", "correction_evidence"].every(k => sitSame(prev[k], x[k]))) return false;
+    } else {
+      const revisit = L.revisits.get(x.id), reason = x.status === "contradicted" ? "correction" : { entity_definition: "definition", reference_resolution: "reference" }[x.kind] || "detail";
+      if (!allowed[prev.status]?.includes(x.status) || !revisit || revisit.at_unit_id !== at || revisit.reason !== reason || !sitSame([...revisit.target_unit_ids].sort(), [...(e.target_unit_ids || [])].sort())) return false;
+      if (x.status === "contradicted") {
+        if (x.evidence.length || !x.correction_evidence.some(p => p.unit_id === at) || !sitSame(x.withdrawn_evidence, [...prev.withdrawn_evidence, ...prev.evidence]) || !prev.correction_evidence.every(p => sitContains(x.correction_evidence, p))) return false;
+      } else if (!x.evidence.some(p => p.unit_id === at && !sitContains(prev.evidence, p)) || !prev.evidence.every(p => sitContains(x.evidence, p))
+        || !sitSame(x.withdrawn_evidence, prev.withdrawn_evidence) || !sitSame(x.correction_evidence, prev.correction_evidence)
+        || x.evidence.some(p => x.withdrawn_evidence.some(old => old.unit_id === p.unit_id))) return false;
+      L.revisits.delete(x.id);
+    }
+  }
+  L.expectations.set(x.id, structuredClone(x)); sitDeriveEntities(L);
+  return [...L.expectations.values()].filter(p => p.focus === "active").length <= 1;
+}
+function applySituation(A, e) {
+  const L = A.situation, x = e.expectation;
+  if (e.type === "source_revisit") return false; // a revisit alone never creates a visible connection
+  if (e.type === "expectation_parked") {
+    const p = L.expectations.get(e.expectation_id);
+    if (!p || p.state_version >= e.state_version) return false;
+    L.expectations.set(p.id, { ...p, focus: "parked", state_version: e.state_version }); return true;
+  }
+  if (!x || (L.expectations.get(x.id)?.state_version || 0) >= x.state_version) return false;
+  if (e.entity) L.entities.set(e.entity.id, structuredClone(e.entity));
+  L.expectations.set(x.id, structuredClone(x)); sitDeriveEntities(L); return true;
+}
+
+/* The same paper and sidebar are reused: hairlines at rest, one connection only on request. */
+function situationMarks(A, ds, add) {
+  if (!isSituation(ds)) return;
+  const chosen = S.ui.situationId && A.situation.expectations.get(S.ui.situationId);
+  const mark = (p, cls) => { const u = ds.unitById[p.unit_id]; add(p.unit_id, { s: u.start + p.start, e: u.start + p.end, cls }); };
+  for (const x of A.situation.expectations.values()) mark(x.origin, "sit");
+  if (!chosen) return;
+  mark(chosen.origin, "sit-selected");
+  const en = A.situation.entities.get(chosen.entity_ids[0]); if (en) mark(en.origin, "sit-name");
+  for (const p of chosen.evidence) mark(p, "sit-selected");
+  for (const p of chosen.correction_evidence) mark(p, "sit-correction");
+}
+function selectSituation(id, reveal = true, unit = null) {
+  if (id && !S.A.situation.expectations.has(id)) return;
+  S.ui.situationId = id; S.ui.situationUnit = unit || (id && S.A.situation.expectations.get(id).origin_unit_id); S.ui.sel = null; S.ui.pinned = null; closeInline();
+  if (id && !S.play.finished && !S.play.terminal) setFollow(false);
+  if (reveal && id) { S.ui.tab = "notes"; if (mq820.matches) S.ui.mtab = "notes"; renderTabsAndPanels(); }
+  paintRead({}); renderSituation(); updateFeedRows(); renderFeedState(); renderSeg();
+  if (reveal && id) { const el = $("#situation-detail"); el?.focus({ preventScroll: true }); el?.scrollIntoView({ block: "nearest", behavior: "auto" }); }
+}
+function situationForUnit(uid) {
+  return [...S.A.situation.expectations.values()].filter(x => [x.origin, ...x.evidence, ...x.correction_evidence].some(p => p.unit_id === uid));
+}
+function renderSituation() {
+  const box = $("#situation-panel"), tools = $("#situation-tools"); if (!box || !tools || !S.A) return;
+  const on = isSituation(), xs = [...S.A.situation.expectations.values()]; box.hidden = !on; tools.hidden = !on;
+  if (!on) return;
+  PAPERS.read.el.classList.toggle("sit-off", !S.ui.situationMarks);
+  setText($("#situation-count"), `문장 연결 ${xs.length}`);
+  $("#situation-marks").setAttribute("aria-pressed", String(S.ui.situationMarks));
+  setText($("#situation-marks"), S.ui.situationMarks ? "밑줄 숨기기" : "밑줄 보기");
+  const selected = xs.find(x => x.id === S.ui.situationId);
+  const sig = JSON.stringify([xs, selected?.id || "", S.ui.situationAll, S.srv.failed, S.srv.cancelled, S.A.ended]);
+  if (box.dataset.sig === sig) return; box.dataset.sig = sig;
+  const keep = box.contains(document.activeElement) ? document.activeElement.dataset.sk : null;
+  box.textContent = "";
+  box.append(h("h3", null, "이어 읽은 내용"), h("p", { class: "sit-caption" }, "이름과 주장에 뒤의 설명이 어떻게 이어지는지 봅니다."));
+  if (!xs.length) { box.append(h("p", { class: "sit-caption" }, "연결할 내용을 만나면 여기에 남깁니다.")); return; }
+  const list = h("div", { class: "sit-choices", role: "group", "aria-label": "확인할 문장 연결" });
+  const visible = S.ui.situationAll ? xs : xs.filter((x, i) => i < 3 || x.id === selected?.id);
+  for (const x of visible) {
+    const en = S.A.situation.entities.get(x.entity_ids[0]);
+    list.append(h("button", { type: "button", class: "sit-choice", "data-sk": x.id, "aria-pressed": String(selected?.id === x.id), onclick: () => selectSituation(selected?.id === x.id ? null : x.id, false) }, h("span", null, en?.canonical_name || "원문"), h("small", null, SIT_KIND[x.kind])));
+  }
+  box.append(list);
+  if (xs.length > 3) box.append(h("button", { type: "button", class: "btn-text sm", "data-sk": "more", "aria-expanded": String(!!S.ui.situationAll), onclick: () => { S.ui.situationAll = !S.ui.situationAll; renderSituation(); } }, S.ui.situationAll ? "목록 줄이기" : `전체 ${xs.length}개 보기`));
+  if (!selected) { box.append(h("p", { class: "sit-caption" }, "밑줄이나 위 항목을 누르면 한 연결만 펼쳐집니다.")); }
+  else {
+    const x = selected, det = h("div", { id: "situation-detail", class: "sit-detail", tabindex: "-1", "data-sk": "detail", role: "group", "aria-label": "선택한 문장 연결" });
+    det.append(h("div", { class: "sit-detail-head" }, h("strong", null, SIT_STATUS[x.status]), h("button", { type: "button", class: "btn-text sm", "data-sk": "close", onclick: () => { selectSituation(null, false); situationFocus(box, x.id); } }, "접기")));
+    const quote = (p, label, old = false) => h("div", { class: "sit-proof" + (old ? " sit-old" : "") }, h("span", { class: "sit-proof-label" }, label), h("p", null, p.quote), h("button", { type: "button", class: "btn-text sm", "data-sk": label + p.unit_id, onclick: () => { showUnitInDoc(p.unit_id); const u = PAPERS.read.units.get(p.unit_id); u?.setAttribute("tabindex", "-1"); u?.focus({ preventScroll: true }); } }, "원문 위치 보기"));
+    det.append(quote(x.origin, "처음 읽은 구절"));
+    if (x.evidence.length) for (const p of x.evidence) det.append(quote(p, "이어진 설명"));
+    if (x.correction_evidence.length) for (const p of x.correction_evidence) det.append(quote(p, "이해를 고친 구절"));
+    if (x.withdrawn_evidence.length) det.append(h("details", { class: "sit-withdrawn" }, h("summary", null, "이전에 연결했던 설명"), x.withdrawn_evidence.map(p => quote(p, "현재 연결에서 제외", true))));
+    if (x.status === "unresolved_at_end") det.append(h("p", { class: "sit-caption" }, "끝까지 읽는 동안 연결을 확인하지 못했습니다. 수정이 필요하다는 뜻은 아닙니다."));
+    else if (["pending", "partially_satisfied"].includes(x.status)) det.append(h("p", { class: "sit-caption" }, S.srv.failed || S.srv.cancelled ? "읽기가 멈춘 시점의 기록입니다." : "뒤의 내용을 더 읽으며 확인합니다."));
+    box.append(det);
+  }
+  if (selected) box.append(h("p", { class: "sit-caption sit-foot" }, "연결은 설명의 관계를 보여줍니다. 사실·역량 인증은 아닙니다."));
+  if (keep) situationFocus(box, keep);
+}
+function situationFocus(box, key) { (box.querySelector(`[data-sk="${CSS.escape(key)}"]`) || box.querySelector('[data-sk="more"]') || box.querySelector("button"))?.focus({ preventScroll: true }); }
 function unitQuote(ds, uid, max = 64) {
   const u = ds.unitById[uid]; if (!u) return "";
   const cut = Array.from(ds.blockById[u.block_id].text.slice(u.start, u.end).trim());
@@ -1509,6 +1718,37 @@ function snapQ(q) { return { ...q, candidate_unit_ids: [...q.candidate_unit_ids]
 
 /* the same example under the focus policy: hand-authored, labelled, used only when the sample is opened with
    <meta name="readme-lab-sample" content="focus"> or ?sample=focus. Not a model output. */
+/* Explicit loopback-only preview. Production is pinned to HttpSource even with this query. */
+const SITUATION_PREVIEW = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname) && new URLSearchParams(location.search).get("sample") === "situation";
+function compileSituation(ds) {
+  const comp = compileFocus(ds, SCRIPT_FOCUS), L = newSituation();
+  const proof = (uid, text) => { const u = ds.unitById[uid], quote = text || u.text, start = u.text.indexOf(quote); return { unit_id: uid, quote, start, end: start + quote.length }; };
+  const emit = (uid, events) => { const prior = comp.byUnit.get(uid) || []; comp.byUnit.set(uid, [...prior.filter(e => SITUATION_TYPES.has(e.type)), ...events, ...prior.filter(e => !SITUATION_TYPES.has(e.type))]); };
+  const create = (uid, id, name, kind, entityId) => {
+    const en = L.entities.get(entityId) || { id: entityId, kind: "activity", canonical_name: name, aliases: [], introduced_at_unit_id: uid, context_id: null, origin: proof(uid, name), status: "noticed", definition_unit_ids: [] };
+    const x = { id, kind, origin_unit_id: uid, origin: proof(uid), context_id: null, entity_ids: [en.id], status: "pending", focus: "active", state_version: 1, evidence: [], withdrawn_evidence: [], correction_evidence: [] };
+    L.entities.set(en.id, en); L.expectations.set(id, x); emit(uid, [{ type: "attention_created", at_unit_id: uid, entity: structuredClone(en), expectation: structuredClone(x) }]);
+  };
+  const update = (uid, id, status) => {
+    const prev = L.expectations.get(id), x = { ...prev, status, focus: "parked", state_version: prev.state_version + 1, evidence: [...prev.evidence, proof(uid)] };
+    L.expectations.set(id, x); sitDeriveEntities(L);
+    const target_unit_ids = [x.origin_unit_id], reason = x.kind === "entity_definition" ? "definition" : "detail";
+    emit(uid, [{ type: "source_revisit", at_unit_id: uid, expectation_id: id, target_unit_ids, reason }, { type: "expectation_updated", at_unit_id: uid, previous_status: prev.status, expectation: structuredClone(x), target_unit_ids }]);
+  };
+  create(ds.sent[0], "x1", "주말 청소년 진로 프로그램", "overview_detail", "e1");
+  update(ds.sent[1], "x1", "satisfied");
+  create(ds.sent[4], "x2", "학습 지원 프로그램", "overview_detail", "e2");
+  update(ds.sent[5], "x2", "partially_satisfied");
+  const festival = ds.order.find(uid => ds.unitById[uid].text.includes("### 마을 축제 체험 부스"));
+  create(festival, "x3", "마을 축제 체험 부스", "entity_definition", "e3");
+  update(ds.sent[6], "x3", "satisfied");
+  create(ds.sent[6], "x4", "마을 축제 체험 부스", "overview_detail", "e3");
+  update(ds.sent[7], "x4", "satisfied");
+  /* This authored link illustrates additional explanation, not a model accuracy claim. */
+  const pending = L.expectations.get("x2");
+  comp.end.push({ type: "expectation_finished", at_unit_id: ds.order.at(-1), previous_status: pending.status, expectation: { ...pending, status: "unresolved_at_end", focus: "parked", state_version: pending.state_version + 1 } });
+  return comp;
+}
 const SAMPLE_FOCUS = (() => { try { return document.querySelector('meta[name="readme-lab-sample"]')?.getAttribute("content")?.trim() === "focus" || /[?&]sample=focus(?:&|$)/.test(location.search); } catch { return false; } })();
 const SCRIPT_FOCUS = [
   [1, ["ask", "q1", "role", "이 경험에서 본인이 직접 맡은 일은 무엇인가요?"], ["say", "ask_role", "q1"]],
@@ -1640,9 +1880,9 @@ const SampleSource = {
   data() {
     if (this.memo) return this.memo;
     const job = makeJob(SAMPLE_JOB_TEXT, SAMPLE_REQS), document = makeDoc("sample-resume", "docx", SAMPLE_BLOCKS);
-    const gen = SAMPLE_FOCUS ? { ...SAMPLE_GEN, policy_version: FOCUS_POLICY } : SAMPLE_GEN;
-    const ds = finalizeDS("sample", job, document, SAMPLE_FILE, gen), comp = SAMPLE_FOCUS ? compileFocus(ds, SCRIPT_FOCUS) : compileScript(ds, SCRIPT_MAIN, Q_MAIN);
-    this.memo = { job, document, ds, comp, report: SAMPLE_FOCUS ? sampleFocusReport(ds, comp) : sampleReport(ds, comp) }; return this.memo;
+    const gen = SITUATION_PREVIEW ? { ...SAMPLE_GEN, policy_version: SITUATION_POLICY } : SAMPLE_FOCUS ? { ...SAMPLE_GEN, policy_version: FOCUS_POLICY } : SAMPLE_GEN;
+    const ds = finalizeDS("sample", job, document, SAMPLE_FILE, gen), comp = SITUATION_PREVIEW ? compileSituation(ds) : SAMPLE_FOCUS ? compileFocus(ds, SCRIPT_FOCUS) : compileScript(ds, SCRIPT_MAIN, Q_MAIN);
+    this.memo = { job, document, ds, comp, report: SAMPLE_FOCUS || SITUATION_PREVIEW ? sampleFocusReport(ds, comp) : sampleReport(ds, comp) }; return this.memo;
   },
   timeline() {
     if (this.tl) return this.tl;
@@ -1794,6 +2034,7 @@ const FixtureSource = {
 };
 function pickSource() {
   const want = metaContent("readme-lab-source") || "auto";
+  if (SITUATION_PREVIEW) return SampleSource;
   if (want === "http") return HttpSource;
   if (FIXTURE_NAME && (want === "fixture" || want === "sample" || want === "auto")) return FixtureSource;
   if (want === "sample") return SampleSource;
@@ -1823,7 +2064,7 @@ const SCOPE_FOCUS_SHORT = "의문과 설명을 연결하며 읽었습니다. 공
 const REC_KEY = "readme-lab-run";
 const Rec = {
   get() { try { const v = JSON.parse(sessionStorage.getItem(REC_KEY) || "null"); return v && typeof v === "object" ? v : null; } catch { return null; } },
-  set(patch) { try { sessionStorage.setItem(REC_KEY, JSON.stringify({ ...(this.get() || {}), ...patch, src: SRC.kind })); } catch { /* storage blocked: a refresh starts over */ } },
+  set(patch) { if (SITUATION_PREVIEW) return; try { sessionStorage.setItem(REC_KEY, JSON.stringify({ ...(this.get() || {}), ...patch, src: SRC.kind })); } catch { /* storage blocked: a refresh starts over */ } },
   clear() { try { sessionStorage.removeItem(REC_KEY); } catch { /* storage blocked */ } }
 };
 /* wakeable waits: polling naps end early when the tab becomes visible again */
@@ -1844,7 +2085,7 @@ const mqRM = matchMedia("(prefers-reduced-motion: reduce)");
 const RM = () => mqRM.matches;
 function freshUi() {
   return { sel: null, tab: "notes", mtab: "doc", filters: { q: true, held: true, part: true, ok: true, req: true, obs: true }, rove: null, pinned: null, inline: null,
-    confirmCancel: false, confirmNew: false, userCancelled: false, invalidCursor: false, restored: 0, restoring: 0, failAck: false, sessionEnded: false, hoverQ: null };
+    situationId: null, situationUnit: null, situationAll: false, situationMarks: true, confirmCancel: false, confirmNew: false, userCancelled: false, invalidCursor: false, restored: 0, restoring: 0, failAck: false, sessionEnded: false, hoverQ: null };
 }
 const S = {
   screen: "s00", flow: null, ds: null, session: false, prepared: null, entering: false,
@@ -1853,15 +2094,16 @@ const S = {
   conn: { state: "connected", attempt: 0 },
   ui: freshUi(), rep: { ret: null, open: new Set() }, ev: null, expired: false, evBuiltFor: null
 };
-function newSrv() { return { started: new Set(), done: new Set(), byUnit: new Map(), end: [], open: null, windowSeen: {}, readingCompleted: false, reportCompleted: false, failed: null, cancelled: false, qv: new Map() }; }
+function newSrv() { return { started: new Set(), done: new Set(), byUnit: new Map(), end: [], open: null, windowSeen: {}, readingCompleted: false, reportCompleted: false, failed: null, cancelled: false, situation: newSituation(), qv: new Map() }; }
 function newPlay() { return { shown: 0, paused: false, follow: true, unseen: 0, mode: "reading", finished: false, terminal: false, replay: false, waiting: null, unit: null, instant: null, stopAt: null, resume: false }; }
-function newA() { return { notes: [], noteById: new Map(), updates: [], q: new Map(), ended: false, applied: new Set(), retracted: new Map(), revisits: [], speech: [], contexts: [], obs: 0 }; }
+function newA() { return { situation: newSituation(), notes: [], noteById: new Map(), updates: [], q: new Map(), ended: false, applied: new Set(), retracted: new Map(), revisits: [], speech: [], contexts: [], obs: 0 }; }
 
 /* applied state: only what the replay has reached (never ahead of the server, never ahead of the screen) */
 function applyEvents(A, evs, ds) {
   const fresh = [], trans = []; let n = 0;
   const v1 = ds.generation.policy_version !== "readme-prefix-v2", focus = isFocus(ds);
   for (const e of evs) {
+    if (SITUATION_TYPES.has(e.type)) { if (isSituation(ds) && applySituation(A, e)) n++; continue; }
     if (FOCUS_TYPES.has(e.type)) { if (focus && applyFocusEvent(A, e, ds, fresh, trans)) n++; continue; }
     if (e.type === "question_updated") {
       let q = A.q.get(e.question_id);
@@ -2012,6 +2254,7 @@ function computeMarks(A, ds) {
     const u = ds.unitById[q.origin]; if (!u) continue;
     add(q.origin, { s: u.start, e: u.end, cls: "q", q: q.status }); counts.q.add(q.origin);
   }
+  situationMarks(A, ds, add);
   return { byUnit, margin, counts };
 }
 function chainOf(n, A) {
@@ -2126,10 +2369,10 @@ function unitAttrs(P, A, M) {
   for (const mg of M.margin) { if (!marked.has(mg.uid)) marked.set(mg.uid, []); marked.get(mg.uid).push(mg); }
   P.desc.textContent = "";
   for (const [uid, sp] of P.units) {
-    const list = marked.get(uid);
-    if (list && P.kind !== "conf") {
+    const list = marked.get(uid), sx = P.kind === "read" && isSituation(P.ds) ? situationForUnit(uid) : [];
+    if ((list || sx.length) && P.kind !== "conf") {
       const id = `d-${P.kind}-${uid}`;
-      P.desc.append(h("span", { id }, list.map(mg => `메모 ${mg.note.num} · ${mg.m.word === "요건" ? "요건 연결" : mg.m.word}`).join(", ")));
+      P.desc.append(h("span", { id }, [...(list || []).map(mg => `메모 ${mg.note.num} · ${mg.m.word === "요건" ? "요건 연결" : mg.m.word}`), ...sx.map(x => `문장 연결 · ${SIT_KIND[x.kind]} · ${SIT_STATUS[x.status]}`)].join(", ")));
       sp.setAttribute("aria-describedby", id);
       if (P.kind === "read") { sp.setAttribute("role", "button"); if (!sp.hasAttribute("tabindex")) sp.tabIndex = -1; }
     } else { sp.removeAttribute("aria-describedby"); if (P.kind === "read") { sp.removeAttribute("role"); sp.removeAttribute("tabindex"); } }
@@ -2443,7 +2686,7 @@ function threadOpts() {
 }
 function paintRead(o = {}) {
   paintMarks(PAPERS.read, S.A, { ...o, ...threadOpts(), extra: extraSn() });
-  applySpotClasses(); placeFailLine(); placePaperEnd();
+  applySpotClasses(); placeFailLine(); placePaperEnd(); renderSituation();
 }
 function drawReadThreads(animate) { drawThreads(PAPERS.read, S.A, { ...threadOpts(), animate }); }
 function relayoutRead() {
@@ -2749,7 +2992,7 @@ function startReading(view, o = {}) {
 }
 function replayLocal() {
   stopPlayer();
-  S.A = newA(); S.play = { ...newPlay(), replay: true }; S.ui.sel = null; S.ui.pinned = null; closeInline();
+  S.A = newA(); S.play = { ...newPlay(), replay: true }; S.ui.sel = null; S.ui.situationId = null; S.ui.pinned = null; closeInline();
   FEED.clear(); $("#notes-feed").textContent = "";
   buildPaper(PAPERS.read, S.ds); gzBuild(PAPERS.read); markAllUnread(); paintRead({});
   BAR_KEY = ""; NOTICE_KEY = ""; annReset(); renderS03(); scrollTo(0, 0); runPlayer();
@@ -2810,8 +3053,11 @@ function onJobError(code) {
 /* the contract's integrity rules: contiguous sequence numbers from the cursor, one job id,
    and every question_updated is the next version of that question (v2 only), matching its own snapshot */
 function questionsConsistent(v, fresh) {
-  const qv = new Map(S.srv.qv), focus = v.generation?.policy_version === FOCUS_POLICY;
+  const qv = new Map(S.srv.qv), policy = v.generation?.policy_version, focus = [FOCUS_POLICY, SITUATION_POLICY].includes(policy);
+  const situation = structuredClone(S.srv.situation);
   for (const e of fresh) {
+    if (policy === SITUATION_POLICY) { if (!S.ds || !checkSituation(situation, e, S.ds)) return false; }
+    else if (SITUATION_TYPES.has(e.type)) return false;
     if (FOCUS_TYPES.has(e.type)) { if (focus && !focusConsistent(qv, e)) return false; continue; }
     if (e.type !== "question_updated") continue;
     if (v.generation?.policy_version !== "readme-prefix-v2") return false;
@@ -2821,7 +3067,7 @@ function questionsConsistent(v, fresh) {
       || JSON.stringify(e.evidence_unit_ids) !== JSON.stringify(q.evidence_unit_ids ?? [])) return false;
     qv.set(e.question_id, { state_version: q.state_version, status: q.status });
   }
-  S.srv.qv = qv;
+  S.srv.qv = qv; S.srv.situation = situation;
   return true;
 }
 /* focus stream integrity: an inquiry opens a question at version 1 once; every update is the next version of that
@@ -2836,7 +3082,7 @@ function focusConsistent(qv, e) {
   return true;
 }
 function handleJobView(v) {
-  if (!v || typeof v !== "object" || !Array.isArray(v.events) || (S.job && v.job_id !== S.job.job_id)) { onJobError("response_invalid"); return false; }
+  if (!v || typeof v !== "object" || !Array.isArray(v.events) || (S.job && (v.job_id !== S.job.job_id || v.generation?.policy_version !== S.job.generation?.policy_version))) { onJobError("response_invalid"); return false; }
   const fresh = v.events.filter(e => e.seq > S.cursor);
   const last = fresh.length ? fresh[fresh.length - 1].seq : S.cursor;
   if (!fresh.every((e, i) => e.seq === S.cursor + i + 1) || v.next_seq !== last) { onJobError("event_gap"); return false; }
@@ -2874,6 +3120,7 @@ function ingest(e) {
   switch (e.type) {
     case "window_started": for (const u of e.unit_ids) { R.started.add(u); R.windowSeen[u] = nowMs(); } R.open = e.unit_ids[0]; break;
     case "window_completed": for (const u of e.unit_ids) R.done.add(u); R.open = null; break;
+    case "attention_created": case "expectation_parked": case "source_revisit": case "expectation_updated": case "expectation_finished":
     case "note": case "question_updated":
     case "context": case "inquiry": case "parked": case "revisit": case "updated": case "observation": case "retracted": case "speech":
       if (R.open) { if (!R.byUnit.has(R.open)) R.byUnit.set(R.open, []); R.byUnit.get(R.open).push(e); } else R.end.push(e);
@@ -2929,7 +3176,7 @@ function setFollow(v) {
   BAR_KEY = ""; renderBar(); renderNewbar(); renderTabsAndPanels();
 }
 function returnToReading() {
-  S.ui.sel = null; S.ui.pinned = null; closeInline();
+  S.ui.situationId = null; S.ui.situationUnit = null; S.ui.sel = null; S.ui.pinned = null; closeInline();
   setFollow(true); applySelection(); renderFeedState(); renderSeg();
   if (mq820.matches && S.ui.mtab !== "doc") { S.ui.mtab = "doc"; renderTabsAndPanels(); requestAnimationFrame(() => { relayoutRead(); followGaze(); }); }
   else followGaze();
@@ -2977,7 +3224,7 @@ function failText(c) {
   if (t) return t.replace("{E}", isSample() ? "" : isJev() ? "(Jev)" : "");
   return /^reader_/.test(c || "") ? "읽기 기록에 오류가 있어 멈췄습니다." : "예상하지 못한 오류로 멈췄습니다.";
 }
-function hasMarks() { return !!(PAPERS.read.M && PAPERS.read.M.margin.length); }
+function hasMarks() { return !!(PAPERS.read.M && PAPERS.read.M.margin.length) || !!(isSituation() && S.A.situation.expectations.size); }
 /* why a run was cancelled comes from the server (JobView.error), so it survives a refresh */
 const cancelledByUser = () => S.ui.userCancelled || S.job?.error === "cancelled";
 const cancelledByLease = () => !S.ui.userCancelled && S.job?.error === "expired";
@@ -3206,11 +3453,12 @@ function renderLegend() {
 }
 function markedOrder() {
   const set = new Set((PAPERS.read.M?.margin || []).map(m => m.uid));
+  if (isSituation()) for (const x of S.A.situation.expectations.values()) for (const p of [x.origin, ...x.evidence, ...x.correction_evidence]) set.add(p.unit_id);
   return S.ds.order.filter(u => set.has(u));
 }
 function renderSeg() {
-  const list = markedOrder(), sel = S.ui.sel && S.A.noteById.get(S.ui.sel);
-  const i = sel ? list.indexOf(sel.unit_id) : -1;
+  const list = markedOrder(), uid = selectedMarkUnit();
+  const i = uid ? list.indexOf(uid) : -1;
   $("#seg-pos").textContent = list.length ? (i >= 0 ? `표시 ${i + 1}${NB}/${NB}${list.length}` : `표시 ${list.length}`) : "";
   const a = document.activeElement, sp = $("#seg-prev"), sn = $("#seg-next");
   sp.disabled = !list.length || i === 0;
@@ -3218,13 +3466,15 @@ function renderSeg() {
   /* at the first or last mark the pressed arrow turns off: focus moves to the other one */
   if (a === sp || a === sn) rescueFocus(a, a === sp ? sn : sp, "#s03-h");
 }
+function selectedMarkUnit() { return S.ui.sel ? S.A.noteById.get(S.ui.sel)?.unit_id : S.ui.situationId ? S.ui.situationUnit : null; }
 function stepMark(dir) {
   const list = markedOrder(); if (!list.length) return;
-  const sel = S.ui.sel && S.A.noteById.get(S.ui.sel);
-  let i = sel ? list.indexOf(sel.unit_id) : -1;
+  const uid = selectedMarkUnit();
+  let i = uid ? list.indexOf(uid) : -1;
   i = i < 0 ? (dir > 0 ? 0 : list.length - 1) : clamp(i + dir, 0, list.length - 1);
-  const n = S.A.notes.find(x => x.unit_id === list[i]); if (!n) return;
+  const n = S.A.notes.find(x => x.unit_id === list[i]);
   if (mq820.matches && S.ui.mtab !== "doc") { S.ui.mtab = "doc"; renderTabsAndPanels(); relayoutRead(); }
+  if (!n) { const x = situationForUnit(list[i])[0]; if (x) { selectSituation(x.id, false, list[i]); ensureUnitVisible(list[i]); } return; }
   selectNote(n.id, { scrollDoc: true, scrollFeed: !mq820.matches });
   if (mq820.matches) openInline(n);
 }
@@ -3408,17 +3658,18 @@ function renderReqPanel() {
   if (keep) { const el = box.querySelector(`[data-k="${CSS.escape(keep)}"]`); if (el) el.focus({ preventScroll: true }); }
 }
 function renderPanelLines() {
-  setText($("#check-line"), isSample() ? "메모는 확정된 판단이 아닙니다. 문장을 직접 확인해 주세요."
+  setText($("#check-line"), isSituation() ? "의문과 설명을 연결하며 읽습니다. 공고와의 대조는 리포트에서 봅니다." : isSample() ? "메모는 확정된 판단이 아닙니다. 문장을 직접 확인해 주세요."
     : isJev() ? `메모는 ${JEV_NAME}가 남긴 초안입니다. 이력서용으로 보정하지 않아 틀릴 수 있으니 문장을 직접 확인해 주세요.`
     : isLaya() ? "메모는 학습 전 모델의 초안이라 틀릴 수 있습니다. 문장을 직접 확인해 주세요." : "메모는 모델이 남긴 초안이라 틀릴 수 있습니다. 문장을 직접 확인해 주세요.");
-  const sc = $("#scope-line"); sc.hidden = !isJev(); setText(sc, isFocus() ? SCOPE_FOCUS : isJev() ? SCOPE_LINE : "");
+  const sc = $("#scope-line"); sc.hidden = !isJev() || isSituation(); setText(sc, isFocus() ? SCOPE_FOCUS : isJev() ? SCOPE_LINE : "");
+  $("#gaze-line").hidden = isSituation();
   setText($("#gaze-line"), isSample() ? "둥근 표시는 지금 읽는 문장을 가리킬 뿐, 실제로 어디를 봤는지는 아닙니다." : "둥근 표시는 지금 읽는 문장을 가리킬 뿐, 모델이 실제로 본 곳은 아닙니다.");
 }
 function renderS03() {
   if (!S.play || S.screen !== "s03") return;
   $("#s03-expired").hidden = !S.expired; $("#work").hidden = S.expired; $("#bar").hidden = S.expired;
   if (S.expired) { $("#s03-notice").textContent = ""; $("#return-strip").hidden = true; return; }
-  renderBar(true); renderNotices(); renderPanelLines(); renderTabsAndPanels(); renderLegend(); renderSeg(); renderLedger(); renderFeedState(); renderNewbar(); renderReqPanel();
+  renderSituation(); renderBar(true); renderNotices(); renderPanelLines(); renderTabsAndPanels(); renderLegend(); renderSeg(); renderLedger(); renderFeedState(); renderNewbar(); renderReqPanel();
   PAPERS.read.el.classList.toggle("queued", S.job?.status === "queued" && !S.srv.started.size);
   placePaperEnd();
 }
@@ -3426,7 +3677,7 @@ function renderS03() {
 /* selection, hover, keyboard on the sheet */
 function selectNote(id, o = {}) {
   if (id && !S.A.noteById.has(id)) id = null;
-  S.ui.sel = id; S.ui.pinned = null; if (!o.keepInline) closeInline();
+  S.ui.situationId = null; S.ui.sel = id; S.ui.pinned = null; if (!o.keepInline) closeInline();
   if (id && !S.play.finished && !S.play.terminal) setFollow(false);
   applySelection(); renderFeedState(); renderSeg();
   const n = id && S.A.noteById.get(id);
@@ -3436,12 +3687,13 @@ function selectNote(id, o = {}) {
 }
 function applySpotClasses() {
   const P = PAPERS.read, n = S.ui.sel && S.A.noteById.get(S.ui.sel);
-  P.el.classList.toggle("spot", !!n);
-  const chain = n ? chainOf(n, S.A) : new Set();
+  const x = S.ui.situationId && S.A.situation.expectations.get(S.ui.situationId), en = x && S.A.situation.entities.get(x.entity_ids[0]);
+  P.el.classList.toggle("spot", !!(n || x));
+  const chain = n ? chainOf(n, S.A) : x ? new Set([x.origin, ...x.evidence, ...x.correction_evidence, ...(en ? [en.origin] : [])].map(p => p.unit_id)) : new Set();
   for (const [uid, sp] of P.units) sp.classList.toggle("chain", chain.has(uid));
   for (const [nid, b] of P.sn) b.classList.toggle("chain", chain.has(S.A.noteById.get(nid)?.unit_id));
 }
-function applySelection() { applySpotClasses(); updateFeedRows(); drawReadThreads(false); BAR_KEY = ""; renderBar(); }
+function applySelection() { if (isSituation()) paintRead({}); applySpotClasses(); updateFeedRows(); drawReadThreads(false); BAR_KEY = ""; renderBar(); }
 function ensureUnitVisible(uid) {
   const sp = PAPERS.read.units.get(uid), r = sp && firstRect(sp); if (!r) return;
   if (r.top < barBottom() + 16 || r.bottom > innerHeight - 24) pageTurn(scrollY + r.top - innerHeight * .36);
@@ -3511,7 +3763,12 @@ function wireReadPaper() {
     const sn = e.target.closest(".sn[data-n]");
     if (sn) { const n = S.A.noteById.get(sn.dataset.n); selectNote(sn.dataset.n, { scrollFeed: !mq820.matches }); if (mq820.matches) openInline(n); return; }
     const u = e.target.closest(".u"); if (!u || !u.classList.contains("read")) return;
-    const uid = u.dataset.u, own = S.A.notes.filter(n => n.unit_id === uid);
+    const uid = u.dataset.u;
+    const sx = isSituation() ? situationForUnit(uid) : [];
+    if (sx.length && (e.target.closest(".sit,.sit-selected,.sit-name,.sit-correction") || !S.A.notes.some(n => n.unit_id === uid))) {
+      const i = sx.findIndex(x => x.id === S.ui.situationId); selectSituation(sx[(i + 1) % sx.length].id, true, uid); return;
+    }
+    const own = S.A.notes.filter(n => n.unit_id === uid);
     if (own.length) {
       const i = own.findIndex(n => n.id === S.ui.sel), n = own[(i + 1) % own.length];
       selectNote(n.id, { scrollFeed: !mq820.matches }); if (mq820.matches) openInline(n);
@@ -4855,6 +5112,11 @@ async function boot() {
   wireTabs($("#side-tabs"), id => { S.ui.tab = id === "tab-reqs" ? "reqs" : "notes"; renderTabsAndPanels(); });
   wireTabs($("#mtabs"), id => { S.ui.mtab = id === "mt-doc" ? "doc" : id === "mt-reqs" ? "reqs" : "notes"; closeInline(); renderTabsAndPanels(); if (S.ui.mtab === "doc") requestAnimationFrame(() => { relayoutRead(); }); });
   wireReadPaper(); wireS00(); wireS01(); wireS02();
+  $("#situation-count").addEventListener("click", () => {
+    S.ui.tab = "notes"; S.ui.mtab = "notes"; if (!S.play.finished && !S.play.terminal) setFollow(false); renderTabsAndPanels();
+    const b = $("#situation-panel button"); b?.focus({ preventScroll: true }); $("#situation-panel").scrollIntoView({ block: "nearest" });
+  });
+  $("#situation-marks").addEventListener("click", () => { S.ui.situationMarks = !S.ui.situationMarks; renderSituation(); });
   $("#seg-prev").addEventListener("click", () => stepMark(-1)); $("#seg-next").addEventListener("click", () => stepMark(1));
   $("#play-btn").addEventListener("click", () => setPaused(!S.play.paused));
   $("#bar-cancel").addEventListener("click", openCancelConfirm);
@@ -4875,7 +5137,7 @@ async function boot() {
   addEventListener("hashchange", () => { const p = pageOf(location.hash); if (p && S.screen !== p) go(p, { fromHash: true }); });
   addEventListener("keydown", e => {
     const typing = e.target.closest("input,textarea,select,[contenteditable]");
-    if (e.key === "Escape" && S.screen === "s03") { if (S.ui.inline) closeInline(); if (S.ui.sel || S.ui.pinned) { S.ui.pinned = null; selectNote(null); } }
+    if (e.key === "Escape" && S.screen === "s03") { if (S.ui.situationId) selectSituation(null, false); if (S.ui.inline) closeInline(); if (S.ui.sel || S.ui.pinned) { S.ui.pinned = null; selectNote(null); } }
     /* citation shortcuts only while the S05 sheet has focus (WCAG 2.1.4); elsewhere the keys scroll as usual */
     if (S.screen === "s05" && !typing && !e.metaKey && !e.ctrlKey && !e.altKey && e.target.closest("#paper-ev")) {
       if (e.key === "j" || e.key === "ArrowDown") { e.preventDefault(); evStep(1); }
@@ -4904,6 +5166,14 @@ async function boot() {
   /* a reload never lands on a stale in-document view: S05 is reopened from the report, not from the URL */
   if (/^#s05\b/.test(location.hash)) { try { history.replaceState(null, "", location.pathname + location.search); } catch { /* sandboxed frame */ } }
   /* a record from the other source (another context of the same origin) is left alone, never deleted */
+  if (SITUATION_PREVIEW) {
+    S.session = true; S.ds = SampleSource.data().ds;
+    let saved = null; try { saved = sessionStorage.getItem("readme-situation-preview-job"); } catch { /* memory only */ }
+    const id = SampleSource.parse(saved, "sj") ? saved : `sj-${nowMs().toString(36)}`;
+    go("s03"); startReading(SampleSource.view(id, 0), saved ? { resume: "s03" } : {});
+    try { sessionStorage.setItem("readme-situation-preview-job", id); } catch { /* memory only */ }
+    return;
+  }
   const rec = Rec.get(), page = pageOf(location.hash);
   if (rec && rec.src === SRC.kind && (rec.token || isSample())) {
     SRC.token = rec.token || SRC.token; S.session = true;

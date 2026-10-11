@@ -1,0 +1,1854 @@
+{
+  "version": "situation-contract-fixture-v1",
+  "provenance": "Authored contract traces projected to public snapshots from backend 355845f; not model output.",
+  "cases": [
+    {
+      "id": "definition_and_focus",
+      "units": [
+        "달고리 프로젝트를 만들었습니다.",
+        "달고리는 반납 알림 서비스이며 대기 시간을 크게 줄였습니다."
+      ],
+      "steps": [
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u1",
+          "active_expectation_id": "x1",
+          "events": [
+            {
+              "type": "attention_created",
+              "at_unit_id": "u1",
+              "entity": {
+                "id": "e1",
+                "kind": "project",
+                "canonical_name": "달고리",
+                "aliases": [],
+                "introduced_at_unit_id": "u1",
+                "context_id": null,
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리",
+                  "start": 0,
+                  "end": 3
+                },
+                "status": "noticed",
+                "definition_unit_ids": []
+              },
+              "expectation": {
+                "id": "x1",
+                "kind": "entity_definition",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리 프로젝트를 만들었습니다.",
+                  "start": 0,
+                  "end": 17
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "pending",
+                "evidence": [],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 1,
+                "focus": "active"
+              }
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u1",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        },
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u2",
+          "active_expectation_id": null,
+          "events": [
+            {
+              "type": "source_revisit",
+              "at_unit_id": "u2",
+              "expectation_id": "x1",
+              "target_unit_ids": ["u1"],
+              "reason": "definition"
+            },
+            {
+              "type": "expectation_updated",
+              "at_unit_id": "u2",
+              "previous_status": "pending",
+              "expectation": {
+                "id": "x1",
+                "kind": "entity_definition",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리 프로젝트를 만들었습니다.",
+                  "start": 0,
+                  "end": 17
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "satisfied",
+                "evidence": [
+                  {
+                    "unit_id": "u2",
+                    "quote": "달고리는 반납 알림 서비스이며 대기 시간을 크게 줄였습니다.",
+                    "start": 0,
+                    "end": 33
+                  }
+                ],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 2,
+                "focus": "parked"
+              },
+              "target_unit_ids": ["u1"]
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u2",
+            "context_id": "c1",
+            "active_question_id": "q1",
+            "events": [
+              {
+                "type": "context",
+                "at_unit_id": "u2",
+                "context_id": "c1",
+                "topic": "달고리",
+                "source_unit_ids": ["u1", "u2"]
+              },
+              {
+                "type": "inquiry",
+                "at_unit_id": "u2",
+                "context_id": "c1",
+                "question": {
+                  "id": "q1",
+                  "origin_unit_id": "u2",
+                  "context_id": "c1",
+                  "facet": "basis",
+                  "text": "변화는 무엇과 비교했나요?",
+                  "status": "open",
+                  "evidence": [],
+                  "focus": "active",
+                  "state_version": 1,
+                  "withdrawn_evidence": [],
+                  "correction_evidence": []
+                },
+                "state_version": 1
+              }
+            ]
+          }
+        }
+      ],
+      "finish": {
+        "version": "situation-reader-v1",
+        "at_unit_id": "u2",
+        "final_events": [],
+        "snapshot": {
+          "entities": [
+            {
+              "id": "e1",
+              "kind": "project",
+              "canonical_name": "달고리",
+              "aliases": [],
+              "introduced_at_unit_id": "u1",
+              "context_id": null,
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리",
+                "start": 0,
+                "end": 3
+              },
+              "status": "explained",
+              "definition_unit_ids": ["u2"]
+            }
+          ],
+          "expectations": [
+            {
+              "id": "x1",
+              "kind": "entity_definition",
+              "origin_unit_id": "u1",
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리 프로젝트를 만들었습니다.",
+                "start": 0,
+                "end": 17
+              },
+              "context_id": null,
+              "entity_ids": ["e1"],
+              "status": "satisfied",
+              "evidence": [
+                {
+                  "unit_id": "u2",
+                  "quote": "달고리는 반납 알림 서비스이며 대기 시간을 크게 줄였습니다.",
+                  "start": 0,
+                  "end": 33
+                }
+              ],
+              "withdrawn_evidence": [],
+              "correction_evidence": [],
+              "state_version": 2,
+              "focus": "parked"
+            }
+          ],
+          "questions": [
+            {
+              "id": "q1",
+              "origin_unit_id": "u2",
+              "context_id": "c1",
+              "facet": "basis",
+              "text": "변화는 무엇과 비교했나요?",
+              "status": "open",
+              "evidence": [],
+              "focus": "active",
+              "state_version": 1,
+              "withdrawn_evidence": [],
+              "correction_evidence": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "correction_reexplained",
+      "units": [
+        "달고리를 만들었습니다.",
+        "달고리는 예약 서비스입니다.",
+        "정정: 달고리는 예약 서비스가 아니라 반납 알림 서비스입니다.",
+        "달고리는 반납 예정일을 이메일로 알려 줍니다."
+      ],
+      "steps": [
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u1",
+          "active_expectation_id": "x1",
+          "events": [
+            {
+              "type": "attention_created",
+              "at_unit_id": "u1",
+              "entity": {
+                "id": "e1",
+                "kind": "project",
+                "canonical_name": "달고리",
+                "aliases": [],
+                "introduced_at_unit_id": "u1",
+                "context_id": null,
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리",
+                  "start": 0,
+                  "end": 3
+                },
+                "status": "noticed",
+                "definition_unit_ids": []
+              },
+              "expectation": {
+                "id": "x1",
+                "kind": "entity_definition",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리를 만들었습니다.",
+                  "start": 0,
+                  "end": 12
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "pending",
+                "evidence": [],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 1,
+                "focus": "active"
+              }
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u1",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        },
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u2",
+          "active_expectation_id": null,
+          "events": [
+            {
+              "type": "source_revisit",
+              "at_unit_id": "u2",
+              "expectation_id": "x1",
+              "target_unit_ids": ["u1"],
+              "reason": "definition"
+            },
+            {
+              "type": "expectation_updated",
+              "at_unit_id": "u2",
+              "previous_status": "pending",
+              "expectation": {
+                "id": "x1",
+                "kind": "entity_definition",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리를 만들었습니다.",
+                  "start": 0,
+                  "end": 12
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "satisfied",
+                "evidence": [
+                  {
+                    "unit_id": "u2",
+                    "quote": "달고리는 예약 서비스입니다.",
+                    "start": 0,
+                    "end": 15
+                  }
+                ],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 2,
+                "focus": "parked"
+              },
+              "target_unit_ids": ["u1"]
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u2",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        },
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u3",
+          "active_expectation_id": null,
+          "events": [
+            {
+              "type": "source_revisit",
+              "at_unit_id": "u3",
+              "expectation_id": "x1",
+              "target_unit_ids": ["u1"],
+              "reason": "correction"
+            },
+            {
+              "type": "expectation_updated",
+              "at_unit_id": "u3",
+              "previous_status": "satisfied",
+              "expectation": {
+                "id": "x1",
+                "kind": "entity_definition",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리를 만들었습니다.",
+                  "start": 0,
+                  "end": 12
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "contradicted",
+                "evidence": [],
+                "withdrawn_evidence": [
+                  {
+                    "unit_id": "u2",
+                    "quote": "달고리는 예약 서비스입니다.",
+                    "start": 0,
+                    "end": 15
+                  }
+                ],
+                "correction_evidence": [
+                  {
+                    "unit_id": "u3",
+                    "quote": "정정: 달고리는 예약 서비스가 아니라 반납 알림 서비스입니다.",
+                    "start": 0,
+                    "end": 34
+                  }
+                ],
+                "state_version": 3,
+                "focus": "parked"
+              },
+              "target_unit_ids": ["u1"]
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u3",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        },
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u4",
+          "active_expectation_id": null,
+          "events": [
+            {
+              "type": "source_revisit",
+              "at_unit_id": "u4",
+              "expectation_id": "x1",
+              "target_unit_ids": ["u1"],
+              "reason": "definition"
+            },
+            {
+              "type": "expectation_updated",
+              "at_unit_id": "u4",
+              "previous_status": "contradicted",
+              "expectation": {
+                "id": "x1",
+                "kind": "entity_definition",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리를 만들었습니다.",
+                  "start": 0,
+                  "end": 12
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "satisfied",
+                "evidence": [
+                  {
+                    "unit_id": "u4",
+                    "quote": "달고리는 반납 예정일을 이메일로 알려 줍니다.",
+                    "start": 0,
+                    "end": 25
+                  }
+                ],
+                "withdrawn_evidence": [
+                  {
+                    "unit_id": "u2",
+                    "quote": "달고리는 예약 서비스입니다.",
+                    "start": 0,
+                    "end": 15
+                  }
+                ],
+                "correction_evidence": [
+                  {
+                    "unit_id": "u3",
+                    "quote": "정정: 달고리는 예약 서비스가 아니라 반납 알림 서비스입니다.",
+                    "start": 0,
+                    "end": 34
+                  }
+                ],
+                "state_version": 4,
+                "focus": "parked"
+              },
+              "target_unit_ids": ["u1"]
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u4",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        }
+      ],
+      "finish": {
+        "version": "situation-reader-v1",
+        "at_unit_id": "u4",
+        "final_events": [],
+        "snapshot": {
+          "entities": [
+            {
+              "id": "e1",
+              "kind": "project",
+              "canonical_name": "달고리",
+              "aliases": [],
+              "introduced_at_unit_id": "u1",
+              "context_id": null,
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리",
+                "start": 0,
+                "end": 3
+              },
+              "status": "explained",
+              "definition_unit_ids": ["u4"]
+            }
+          ],
+          "expectations": [
+            {
+              "id": "x1",
+              "kind": "entity_definition",
+              "origin_unit_id": "u1",
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리를 만들었습니다.",
+                "start": 0,
+                "end": 12
+              },
+              "context_id": null,
+              "entity_ids": ["e1"],
+              "status": "satisfied",
+              "evidence": [
+                {
+                  "unit_id": "u4",
+                  "quote": "달고리는 반납 예정일을 이메일로 알려 줍니다.",
+                  "start": 0,
+                  "end": 25
+                }
+              ],
+              "withdrawn_evidence": [
+                {
+                  "unit_id": "u2",
+                  "quote": "달고리는 예약 서비스입니다.",
+                  "start": 0,
+                  "end": 15
+                }
+              ],
+              "correction_evidence": [
+                {
+                  "unit_id": "u3",
+                  "quote": "정정: 달고리는 예약 서비스가 아니라 반납 알림 서비스입니다.",
+                  "start": 0,
+                  "end": 34
+                }
+              ],
+              "state_version": 4,
+              "focus": "parked"
+            }
+          ],
+          "questions": []
+        }
+      }
+    },
+    {
+      "id": "partial_and_new",
+      "units": [
+        "달고리의 알림 절차를 개선했습니다.",
+        "달고리의 안내 문구를 바꾸었고 모래빛 프로젝트도 맡았습니다."
+      ],
+      "steps": [
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u1",
+          "active_expectation_id": "x1",
+          "events": [
+            {
+              "type": "attention_created",
+              "at_unit_id": "u1",
+              "entity": {
+                "id": "e1",
+                "kind": "project",
+                "canonical_name": "달고리",
+                "aliases": [],
+                "introduced_at_unit_id": "u1",
+                "context_id": null,
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리",
+                  "start": 0,
+                  "end": 3
+                },
+                "status": "noticed",
+                "definition_unit_ids": []
+              },
+              "expectation": {
+                "id": "x1",
+                "kind": "overview_detail",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리의 알림 절차를 개선했습니다.",
+                  "start": 0,
+                  "end": 19
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "pending",
+                "evidence": [],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 1,
+                "focus": "active"
+              }
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u1",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        },
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u2",
+          "active_expectation_id": "x2",
+          "events": [
+            {
+              "type": "source_revisit",
+              "at_unit_id": "u2",
+              "expectation_id": "x1",
+              "target_unit_ids": ["u1"],
+              "reason": "detail"
+            },
+            {
+              "type": "expectation_updated",
+              "at_unit_id": "u2",
+              "previous_status": "pending",
+              "expectation": {
+                "id": "x1",
+                "kind": "overview_detail",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리의 알림 절차를 개선했습니다.",
+                  "start": 0,
+                  "end": 19
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "partially_satisfied",
+                "evidence": [
+                  {
+                    "unit_id": "u2",
+                    "quote": "달고리의 안내 문구를 바꾸었고 모래빛 프로젝트도 맡았습니다.",
+                    "start": 0,
+                    "end": 33
+                  }
+                ],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 2,
+                "focus": "parked"
+              },
+              "target_unit_ids": ["u1"]
+            },
+            {
+              "type": "attention_created",
+              "at_unit_id": "u2",
+              "entity": {
+                "id": "e2",
+                "kind": "project",
+                "canonical_name": "모래빛",
+                "aliases": [],
+                "introduced_at_unit_id": "u2",
+                "context_id": null,
+                "origin": {
+                  "unit_id": "u2",
+                  "quote": "모래빛",
+                  "start": 17,
+                  "end": 20
+                },
+                "status": "noticed",
+                "definition_unit_ids": []
+              },
+              "expectation": {
+                "id": "x2",
+                "kind": "entity_definition",
+                "origin_unit_id": "u2",
+                "origin": {
+                  "unit_id": "u2",
+                  "quote": "달고리의 안내 문구를 바꾸었고 모래빛 프로젝트도 맡았습니다.",
+                  "start": 0,
+                  "end": 33
+                },
+                "context_id": null,
+                "entity_ids": ["e2"],
+                "status": "pending",
+                "evidence": [],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 1,
+                "focus": "active"
+              }
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u2",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        }
+      ],
+      "finish": {
+        "version": "situation-reader-v1",
+        "at_unit_id": "u2",
+        "final_events": [
+          {
+            "type": "expectation_finished",
+            "at_unit_id": "u2",
+            "previous_status": "partially_satisfied",
+            "expectation": {
+              "id": "x1",
+              "kind": "overview_detail",
+              "origin_unit_id": "u1",
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리의 알림 절차를 개선했습니다.",
+                "start": 0,
+                "end": 19
+              },
+              "context_id": null,
+              "entity_ids": ["e1"],
+              "status": "unresolved_at_end",
+              "evidence": [
+                {
+                  "unit_id": "u2",
+                  "quote": "달고리의 안내 문구를 바꾸었고 모래빛 프로젝트도 맡았습니다.",
+                  "start": 0,
+                  "end": 33
+                }
+              ],
+              "withdrawn_evidence": [],
+              "correction_evidence": [],
+              "state_version": 3,
+              "focus": "parked"
+            }
+          },
+          {
+            "type": "expectation_finished",
+            "at_unit_id": "u2",
+            "previous_status": "pending",
+            "expectation": {
+              "id": "x2",
+              "kind": "entity_definition",
+              "origin_unit_id": "u2",
+              "origin": {
+                "unit_id": "u2",
+                "quote": "달고리의 안내 문구를 바꾸었고 모래빛 프로젝트도 맡았습니다.",
+                "start": 0,
+                "end": 33
+              },
+              "context_id": null,
+              "entity_ids": ["e2"],
+              "status": "unresolved_at_end",
+              "evidence": [],
+              "withdrawn_evidence": [],
+              "correction_evidence": [],
+              "state_version": 2,
+              "focus": "parked"
+            }
+          }
+        ],
+        "snapshot": {
+          "entities": [
+            {
+              "id": "e1",
+              "kind": "project",
+              "canonical_name": "달고리",
+              "aliases": [],
+              "introduced_at_unit_id": "u1",
+              "context_id": null,
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리",
+                "start": 0,
+                "end": 3
+              },
+              "status": "noticed",
+              "definition_unit_ids": []
+            },
+            {
+              "id": "e2",
+              "kind": "project",
+              "canonical_name": "모래빛",
+              "aliases": [],
+              "introduced_at_unit_id": "u2",
+              "context_id": null,
+              "origin": {
+                "unit_id": "u2",
+                "quote": "모래빛",
+                "start": 17,
+                "end": 20
+              },
+              "status": "noticed",
+              "definition_unit_ids": []
+            }
+          ],
+          "expectations": [
+            {
+              "id": "x1",
+              "kind": "overview_detail",
+              "origin_unit_id": "u1",
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리의 알림 절차를 개선했습니다.",
+                "start": 0,
+                "end": 19
+              },
+              "context_id": null,
+              "entity_ids": ["e1"],
+              "status": "unresolved_at_end",
+              "evidence": [
+                {
+                  "unit_id": "u2",
+                  "quote": "달고리의 안내 문구를 바꾸었고 모래빛 프로젝트도 맡았습니다.",
+                  "start": 0,
+                  "end": 33
+                }
+              ],
+              "withdrawn_evidence": [],
+              "correction_evidence": [],
+              "state_version": 3,
+              "focus": "parked"
+            },
+            {
+              "id": "x2",
+              "kind": "entity_definition",
+              "origin_unit_id": "u2",
+              "origin": {
+                "unit_id": "u2",
+                "quote": "달고리의 안내 문구를 바꾸었고 모래빛 프로젝트도 맡았습니다.",
+                "start": 0,
+                "end": 33
+              },
+              "context_id": null,
+              "entity_ids": ["e2"],
+              "status": "unresolved_at_end",
+              "evidence": [],
+              "withdrawn_evidence": [],
+              "correction_evidence": [],
+              "state_version": 2,
+              "focus": "parked"
+            }
+          ],
+          "questions": []
+        }
+      }
+    },
+    {
+      "id": "three_attentions",
+      "units": [
+        "달고리, 해바퀴, 모래빛의 절차를 개선했습니다.",
+        "달고리의 알림 문구를 간소화했습니다.",
+        "해바퀴의 접수 단계를 줄였습니다.",
+        "모래빛의 검색 조건을 추가했습니다."
+      ],
+      "steps": [
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u1",
+          "active_expectation_id": "x1",
+          "events": [
+            {
+              "type": "attention_created",
+              "at_unit_id": "u1",
+              "entity": {
+                "id": "e1",
+                "kind": "project",
+                "canonical_name": "달고리",
+                "aliases": [],
+                "introduced_at_unit_id": "u1",
+                "context_id": null,
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리",
+                  "start": 0,
+                  "end": 3
+                },
+                "status": "noticed",
+                "definition_unit_ids": []
+              },
+              "expectation": {
+                "id": "x1",
+                "kind": "overview_detail",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리, 해바퀴, 모래빛의 절차를 개선했습니다.",
+                  "start": 0,
+                  "end": 26
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "pending",
+                "evidence": [],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 1,
+                "focus": "active"
+              }
+            },
+            {
+              "type": "attention_created",
+              "at_unit_id": "u1",
+              "entity": {
+                "id": "e2",
+                "kind": "project",
+                "canonical_name": "해바퀴",
+                "aliases": [],
+                "introduced_at_unit_id": "u1",
+                "context_id": null,
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "해바퀴",
+                  "start": 5,
+                  "end": 8
+                },
+                "status": "noticed",
+                "definition_unit_ids": []
+              },
+              "expectation": {
+                "id": "x2",
+                "kind": "overview_detail",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리, 해바퀴, 모래빛의 절차를 개선했습니다.",
+                  "start": 0,
+                  "end": 26
+                },
+                "context_id": null,
+                "entity_ids": ["e2"],
+                "status": "pending",
+                "evidence": [],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 1,
+                "focus": "parked"
+              }
+            },
+            {
+              "type": "attention_created",
+              "at_unit_id": "u1",
+              "entity": {
+                "id": "e3",
+                "kind": "project",
+                "canonical_name": "모래빛",
+                "aliases": [],
+                "introduced_at_unit_id": "u1",
+                "context_id": null,
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "모래빛",
+                  "start": 10,
+                  "end": 13
+                },
+                "status": "noticed",
+                "definition_unit_ids": []
+              },
+              "expectation": {
+                "id": "x3",
+                "kind": "overview_detail",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리, 해바퀴, 모래빛의 절차를 개선했습니다.",
+                  "start": 0,
+                  "end": 26
+                },
+                "context_id": null,
+                "entity_ids": ["e3"],
+                "status": "pending",
+                "evidence": [],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 1,
+                "focus": "parked"
+              }
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u1",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        },
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u2",
+          "active_expectation_id": null,
+          "events": [
+            {
+              "type": "source_revisit",
+              "at_unit_id": "u2",
+              "expectation_id": "x1",
+              "target_unit_ids": ["u1"],
+              "reason": "detail"
+            },
+            {
+              "type": "expectation_updated",
+              "at_unit_id": "u2",
+              "previous_status": "pending",
+              "expectation": {
+                "id": "x1",
+                "kind": "overview_detail",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리, 해바퀴, 모래빛의 절차를 개선했습니다.",
+                  "start": 0,
+                  "end": 26
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "satisfied",
+                "evidence": [
+                  {
+                    "unit_id": "u2",
+                    "quote": "달고리의 알림 문구를 간소화했습니다.",
+                    "start": 0,
+                    "end": 20
+                  }
+                ],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 2,
+                "focus": "parked"
+              },
+              "target_unit_ids": ["u1"]
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u2",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        },
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u3",
+          "active_expectation_id": null,
+          "events": [
+            {
+              "type": "source_revisit",
+              "at_unit_id": "u3",
+              "expectation_id": "x2",
+              "target_unit_ids": ["u1"],
+              "reason": "detail"
+            },
+            {
+              "type": "expectation_updated",
+              "at_unit_id": "u3",
+              "previous_status": "pending",
+              "expectation": {
+                "id": "x2",
+                "kind": "overview_detail",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리, 해바퀴, 모래빛의 절차를 개선했습니다.",
+                  "start": 0,
+                  "end": 26
+                },
+                "context_id": null,
+                "entity_ids": ["e2"],
+                "status": "satisfied",
+                "evidence": [
+                  {
+                    "unit_id": "u3",
+                    "quote": "해바퀴의 접수 단계를 줄였습니다.",
+                    "start": 0,
+                    "end": 18
+                  }
+                ],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 2,
+                "focus": "parked"
+              },
+              "target_unit_ids": ["u1"]
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u3",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        },
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u4",
+          "active_expectation_id": null,
+          "events": [
+            {
+              "type": "source_revisit",
+              "at_unit_id": "u4",
+              "expectation_id": "x3",
+              "target_unit_ids": ["u1"],
+              "reason": "detail"
+            },
+            {
+              "type": "expectation_updated",
+              "at_unit_id": "u4",
+              "previous_status": "pending",
+              "expectation": {
+                "id": "x3",
+                "kind": "overview_detail",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리, 해바퀴, 모래빛의 절차를 개선했습니다.",
+                  "start": 0,
+                  "end": 26
+                },
+                "context_id": null,
+                "entity_ids": ["e3"],
+                "status": "satisfied",
+                "evidence": [
+                  {
+                    "unit_id": "u4",
+                    "quote": "모래빛의 검색 조건을 추가했습니다.",
+                    "start": 0,
+                    "end": 19
+                  }
+                ],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 2,
+                "focus": "parked"
+              },
+              "target_unit_ids": ["u1"]
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u4",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        }
+      ],
+      "finish": {
+        "version": "situation-reader-v1",
+        "at_unit_id": "u4",
+        "final_events": [],
+        "snapshot": {
+          "entities": [
+            {
+              "id": "e1",
+              "kind": "project",
+              "canonical_name": "달고리",
+              "aliases": [],
+              "introduced_at_unit_id": "u1",
+              "context_id": null,
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리",
+                "start": 0,
+                "end": 3
+              },
+              "status": "noticed",
+              "definition_unit_ids": []
+            },
+            {
+              "id": "e2",
+              "kind": "project",
+              "canonical_name": "해바퀴",
+              "aliases": [],
+              "introduced_at_unit_id": "u1",
+              "context_id": null,
+              "origin": {
+                "unit_id": "u1",
+                "quote": "해바퀴",
+                "start": 5,
+                "end": 8
+              },
+              "status": "noticed",
+              "definition_unit_ids": []
+            },
+            {
+              "id": "e3",
+              "kind": "project",
+              "canonical_name": "모래빛",
+              "aliases": [],
+              "introduced_at_unit_id": "u1",
+              "context_id": null,
+              "origin": {
+                "unit_id": "u1",
+                "quote": "모래빛",
+                "start": 10,
+                "end": 13
+              },
+              "status": "noticed",
+              "definition_unit_ids": []
+            }
+          ],
+          "expectations": [
+            {
+              "id": "x1",
+              "kind": "overview_detail",
+              "origin_unit_id": "u1",
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리, 해바퀴, 모래빛의 절차를 개선했습니다.",
+                "start": 0,
+                "end": 26
+              },
+              "context_id": null,
+              "entity_ids": ["e1"],
+              "status": "satisfied",
+              "evidence": [
+                {
+                  "unit_id": "u2",
+                  "quote": "달고리의 알림 문구를 간소화했습니다.",
+                  "start": 0,
+                  "end": 20
+                }
+              ],
+              "withdrawn_evidence": [],
+              "correction_evidence": [],
+              "state_version": 2,
+              "focus": "parked"
+            },
+            {
+              "id": "x2",
+              "kind": "overview_detail",
+              "origin_unit_id": "u1",
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리, 해바퀴, 모래빛의 절차를 개선했습니다.",
+                "start": 0,
+                "end": 26
+              },
+              "context_id": null,
+              "entity_ids": ["e2"],
+              "status": "satisfied",
+              "evidence": [
+                {
+                  "unit_id": "u3",
+                  "quote": "해바퀴의 접수 단계를 줄였습니다.",
+                  "start": 0,
+                  "end": 18
+                }
+              ],
+              "withdrawn_evidence": [],
+              "correction_evidence": [],
+              "state_version": 2,
+              "focus": "parked"
+            },
+            {
+              "id": "x3",
+              "kind": "overview_detail",
+              "origin_unit_id": "u1",
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리, 해바퀴, 모래빛의 절차를 개선했습니다.",
+                "start": 0,
+                "end": 26
+              },
+              "context_id": null,
+              "entity_ids": ["e3"],
+              "status": "satisfied",
+              "evidence": [
+                {
+                  "unit_id": "u4",
+                  "quote": "모래빛의 검색 조건을 추가했습니다.",
+                  "start": 0,
+                  "end": 19
+                }
+              ],
+              "withdrawn_evidence": [],
+              "correction_evidence": [],
+              "state_version": 2,
+              "focus": "parked"
+            }
+          ],
+          "questions": []
+        }
+      }
+    },
+    {
+      "id": "existing_entity_new_expectation",
+      "units": [
+        "달고리 프로젝트를 만들었습니다.",
+        "달고리는 반납 알림 서비스입니다.",
+        "달고리의 접수 절차도 개선했습니다."
+      ],
+      "steps": [
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u1",
+          "active_expectation_id": "x1",
+          "events": [
+            {
+              "type": "attention_created",
+              "at_unit_id": "u1",
+              "entity": {
+                "id": "e1",
+                "kind": "project",
+                "canonical_name": "달고리",
+                "aliases": [],
+                "introduced_at_unit_id": "u1",
+                "context_id": null,
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리",
+                  "start": 0,
+                  "end": 3
+                },
+                "status": "noticed",
+                "definition_unit_ids": []
+              },
+              "expectation": {
+                "id": "x1",
+                "kind": "entity_definition",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리 프로젝트를 만들었습니다.",
+                  "start": 0,
+                  "end": 17
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "pending",
+                "evidence": [],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 1,
+                "focus": "active"
+              }
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u1",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        },
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u2",
+          "active_expectation_id": null,
+          "events": [
+            {
+              "type": "source_revisit",
+              "at_unit_id": "u2",
+              "expectation_id": "x1",
+              "target_unit_ids": ["u1"],
+              "reason": "definition"
+            },
+            {
+              "type": "expectation_updated",
+              "at_unit_id": "u2",
+              "previous_status": "pending",
+              "expectation": {
+                "id": "x1",
+                "kind": "entity_definition",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리 프로젝트를 만들었습니다.",
+                  "start": 0,
+                  "end": 17
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "satisfied",
+                "evidence": [
+                  {
+                    "unit_id": "u2",
+                    "quote": "달고리는 반납 알림 서비스입니다.",
+                    "start": 0,
+                    "end": 18
+                  }
+                ],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 2,
+                "focus": "parked"
+              },
+              "target_unit_ids": ["u1"]
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u2",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        },
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u3",
+          "active_expectation_id": "x2",
+          "events": [
+            {
+              "type": "attention_created",
+              "at_unit_id": "u3",
+              "entity": {
+                "id": "e1",
+                "kind": "project",
+                "canonical_name": "달고리",
+                "aliases": [],
+                "introduced_at_unit_id": "u1",
+                "context_id": null,
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리",
+                  "start": 0,
+                  "end": 3
+                },
+                "status": "explained",
+                "definition_unit_ids": ["u2"]
+              },
+              "expectation": {
+                "id": "x2",
+                "kind": "overview_detail",
+                "origin_unit_id": "u3",
+                "origin": {
+                  "unit_id": "u3",
+                  "quote": "달고리의 접수 절차도 개선했습니다.",
+                  "start": 0,
+                  "end": 19
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "pending",
+                "evidence": [],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 1,
+                "focus": "active"
+              }
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u3",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        }
+      ],
+      "finish": {
+        "version": "situation-reader-v1",
+        "at_unit_id": "u3",
+        "final_events": [
+          {
+            "type": "expectation_finished",
+            "at_unit_id": "u3",
+            "previous_status": "pending",
+            "expectation": {
+              "id": "x2",
+              "kind": "overview_detail",
+              "origin_unit_id": "u3",
+              "origin": {
+                "unit_id": "u3",
+                "quote": "달고리의 접수 절차도 개선했습니다.",
+                "start": 0,
+                "end": 19
+              },
+              "context_id": null,
+              "entity_ids": ["e1"],
+              "status": "unresolved_at_end",
+              "evidence": [],
+              "withdrawn_evidence": [],
+              "correction_evidence": [],
+              "state_version": 2,
+              "focus": "parked"
+            }
+          }
+        ],
+        "snapshot": {
+          "entities": [
+            {
+              "id": "e1",
+              "kind": "project",
+              "canonical_name": "달고리",
+              "aliases": [],
+              "introduced_at_unit_id": "u1",
+              "context_id": null,
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리",
+                "start": 0,
+                "end": 3
+              },
+              "status": "explained",
+              "definition_unit_ids": ["u2"]
+            }
+          ],
+          "expectations": [
+            {
+              "id": "x1",
+              "kind": "entity_definition",
+              "origin_unit_id": "u1",
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리 프로젝트를 만들었습니다.",
+                "start": 0,
+                "end": 17
+              },
+              "context_id": null,
+              "entity_ids": ["e1"],
+              "status": "satisfied",
+              "evidence": [
+                {
+                  "unit_id": "u2",
+                  "quote": "달고리는 반납 알림 서비스입니다.",
+                  "start": 0,
+                  "end": 18
+                }
+              ],
+              "withdrawn_evidence": [],
+              "correction_evidence": [],
+              "state_version": 2,
+              "focus": "parked"
+            },
+            {
+              "id": "x2",
+              "kind": "overview_detail",
+              "origin_unit_id": "u3",
+              "origin": {
+                "unit_id": "u3",
+                "quote": "달고리의 접수 절차도 개선했습니다.",
+                "start": 0,
+                "end": 19
+              },
+              "context_id": null,
+              "entity_ids": ["e1"],
+              "status": "unresolved_at_end",
+              "evidence": [],
+              "withdrawn_evidence": [],
+              "correction_evidence": [],
+              "state_version": 2,
+              "focus": "parked"
+            }
+          ],
+          "questions": []
+        }
+      }
+    },
+    {
+      "id": "utf16_heading",
+      "units": ["# 🚀달고리", "달고리는 반납 알림 서비스입니다."],
+      "steps": [
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u1",
+          "active_expectation_id": "x1",
+          "events": [
+            {
+              "type": "attention_created",
+              "at_unit_id": "u1",
+              "entity": {
+                "id": "e1",
+                "kind": "project",
+                "canonical_name": "달고리",
+                "aliases": [],
+                "introduced_at_unit_id": "u1",
+                "context_id": null,
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리",
+                  "start": 4,
+                  "end": 7
+                },
+                "status": "noticed",
+                "definition_unit_ids": []
+              },
+              "expectation": {
+                "id": "x1",
+                "kind": "entity_definition",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "# 🚀달고리",
+                  "start": 0,
+                  "end": 7
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "pending",
+                "evidence": [],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 1,
+                "focus": "active"
+              }
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u1",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        },
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u2",
+          "active_expectation_id": null,
+          "events": [
+            {
+              "type": "source_revisit",
+              "at_unit_id": "u2",
+              "expectation_id": "x1",
+              "target_unit_ids": ["u1"],
+              "reason": "definition"
+            },
+            {
+              "type": "expectation_updated",
+              "at_unit_id": "u2",
+              "previous_status": "pending",
+              "expectation": {
+                "id": "x1",
+                "kind": "entity_definition",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "# 🚀달고리",
+                  "start": 0,
+                  "end": 7
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "satisfied",
+                "evidence": [
+                  {
+                    "unit_id": "u2",
+                    "quote": "달고리는 반납 알림 서비스입니다.",
+                    "start": 0,
+                    "end": 18
+                  }
+                ],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 2,
+                "focus": "parked"
+              },
+              "target_unit_ids": ["u1"]
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u2",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        }
+      ],
+      "finish": {
+        "version": "situation-reader-v1",
+        "at_unit_id": "u2",
+        "final_events": [],
+        "snapshot": {
+          "entities": [
+            {
+              "id": "e1",
+              "kind": "project",
+              "canonical_name": "달고리",
+              "aliases": [],
+              "introduced_at_unit_id": "u1",
+              "context_id": null,
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리",
+                "start": 4,
+                "end": 7
+              },
+              "status": "explained",
+              "definition_unit_ids": ["u2"]
+            }
+          ],
+          "expectations": [
+            {
+              "id": "x1",
+              "kind": "entity_definition",
+              "origin_unit_id": "u1",
+              "origin": {
+                "unit_id": "u1",
+                "quote": "# 🚀달고리",
+                "start": 0,
+                "end": 7
+              },
+              "context_id": null,
+              "entity_ids": ["e1"],
+              "status": "satisfied",
+              "evidence": [
+                {
+                  "unit_id": "u2",
+                  "quote": "달고리는 반납 알림 서비스입니다.",
+                  "start": 0,
+                  "end": 18
+                }
+              ],
+              "withdrawn_evidence": [],
+              "correction_evidence": [],
+              "state_version": 2,
+              "focus": "parked"
+            }
+          ],
+          "questions": []
+        }
+      }
+    },
+    {
+      "id": "park_then_finish",
+      "units": [
+        "달고리 프로젝트를 맡았습니다.",
+        "다음 활동 기록으로 넘어갑니다."
+      ],
+      "steps": [
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u1",
+          "active_expectation_id": "x1",
+          "events": [
+            {
+              "type": "attention_created",
+              "at_unit_id": "u1",
+              "entity": {
+                "id": "e1",
+                "kind": "project",
+                "canonical_name": "달고리",
+                "aliases": [],
+                "introduced_at_unit_id": "u1",
+                "context_id": null,
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리",
+                  "start": 0,
+                  "end": 3
+                },
+                "status": "noticed",
+                "definition_unit_ids": []
+              },
+              "expectation": {
+                "id": "x1",
+                "kind": "entity_definition",
+                "origin_unit_id": "u1",
+                "origin": {
+                  "unit_id": "u1",
+                  "quote": "달고리 프로젝트를 맡았습니다.",
+                  "start": 0,
+                  "end": 16
+                },
+                "context_id": null,
+                "entity_ids": ["e1"],
+                "status": "pending",
+                "evidence": [],
+                "withdrawn_evidence": [],
+                "correction_evidence": [],
+                "state_version": 1,
+                "focus": "active"
+              }
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u1",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        },
+        {
+          "version": "situation-reader-v1",
+          "at_unit_id": "u2",
+          "active_expectation_id": null,
+          "events": [
+            {
+              "type": "expectation_parked",
+              "at_unit_id": "u2",
+              "expectation_id": "x1",
+              "previous_version": 1,
+              "state_version": 2
+            }
+          ],
+          "focus": {
+            "version": "focus-reader-v1",
+            "at_unit_id": "u2",
+            "context_id": null,
+            "active_question_id": null,
+            "events": []
+          }
+        }
+      ],
+      "finish": {
+        "version": "situation-reader-v1",
+        "at_unit_id": "u2",
+        "final_events": [
+          {
+            "type": "expectation_finished",
+            "at_unit_id": "u2",
+            "previous_status": "pending",
+            "expectation": {
+              "id": "x1",
+              "kind": "entity_definition",
+              "origin_unit_id": "u1",
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리 프로젝트를 맡았습니다.",
+                "start": 0,
+                "end": 16
+              },
+              "context_id": null,
+              "entity_ids": ["e1"],
+              "status": "unresolved_at_end",
+              "evidence": [],
+              "withdrawn_evidence": [],
+              "correction_evidence": [],
+              "state_version": 3,
+              "focus": "parked"
+            }
+          }
+        ],
+        "snapshot": {
+          "entities": [
+            {
+              "id": "e1",
+              "kind": "project",
+              "canonical_name": "달고리",
+              "aliases": [],
+              "introduced_at_unit_id": "u1",
+              "context_id": null,
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리",
+                "start": 0,
+                "end": 3
+              },
+              "status": "noticed",
+              "definition_unit_ids": []
+            }
+          ],
+          "expectations": [
+            {
+              "id": "x1",
+              "kind": "entity_definition",
+              "origin_unit_id": "u1",
+              "origin": {
+                "unit_id": "u1",
+                "quote": "달고리 프로젝트를 맡았습니다.",
+                "start": 0,
+                "end": 16
+              },
+              "context_id": null,
+              "entity_ids": ["e1"],
+              "status": "unresolved_at_end",
+              "evidence": [],
+              "withdrawn_evidence": [],
+              "correction_evidence": [],
+              "state_version": 3,
+              "focus": "parked"
+            }
+          ],
+          "questions": []
+        }
+      }
+    }
+  ]
+}
