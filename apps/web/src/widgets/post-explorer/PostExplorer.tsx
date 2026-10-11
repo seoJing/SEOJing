@@ -3,7 +3,6 @@
 import { useState, useSyncExternalStore } from "react";
 import { FileExplorer, Subtitle } from "@app/ui";
 import type { ContentNode } from "@app/utils";
-import contentTree from "@/generated/content-tree.json";
 import { getReadPosts } from "@/widgets/recently-read/RecentlyRead";
 import { getItemsForPath, toExplorerItems } from "./post-explorer.utils";
 
@@ -17,6 +16,7 @@ function subscribeStorage(cb: () => void) {
 interface PostExplorerProps {
   rootPath?: string;
   wayFindingPath?: string;
+  contentTree: ContentNode[];
 }
 
 /**
@@ -30,6 +30,7 @@ interface PostExplorerProps {
 export function PostExplorer({
   rootPath = "/",
   wayFindingPath,
+  contentTree,
 }: PostExplorerProps) {
   const [currentPath, setCurrentPath] = useState(rootPath);
   const readPosts = useSyncExternalStore(
@@ -39,7 +40,7 @@ export function PostExplorer({
   );
   const visitedHref = new Set(readPosts.map((p) => p.href));
 
-  const nodes = getItemsForPath(contentTree as ContentNode[], currentPath);
+  const nodes = getItemsForPath(contentTree, currentPath);
   const items = toExplorerItems(nodes, visitedHref);
 
   return (

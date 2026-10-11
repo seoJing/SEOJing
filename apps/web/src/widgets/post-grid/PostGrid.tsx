@@ -1,6 +1,5 @@
 import { Subtitle } from "@app/ui";
 import type { ContentNode } from "@app/utils";
-import contentTree from "@/generated/content-tree.json";
 import {
   getAllPosts,
   getSubTree,
@@ -11,14 +10,16 @@ interface PostGridProps {
   rootPath?: string;
   title?: string;
   limit?: number;
+  contentTree: ContentNode[];
 }
 
 export function PostGrid({
   rootPath = "/",
   title = "대표 이미지로 보기",
   limit,
+  contentTree,
 }: PostGridProps) {
-  const subTree = getSubTree(contentTree as ContentNode[], rootPath);
+  const subTree = getSubTree(contentTree, rootPath);
   const posts = getAllPosts(subTree);
   const visiblePosts =
     typeof limit === "number" ? posts.slice(0, limit) : posts;

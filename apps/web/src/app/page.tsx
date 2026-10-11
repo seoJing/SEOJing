@@ -1,18 +1,12 @@
-import { mdxComponents } from "@/widgets/mdx-renderer/MdxRenderer";
-import { loadContent } from "@/shared/config";
 import { ArticleHeader, Paper } from "@app/ui";
 import { calculateReadingTime } from "@app/utils";
 import { ArticleToolbar } from "@/widgets/article-toolbar/ArticleToolbar";
-import type { MDXComponents } from "mdx/types";
+import { BackendArticleDocument } from "@/shared/content/backend-article-document";
+import { documentPlainText } from "@/shared/content/backend-article";
+import resume from "@/shared/content/resume-document.json";
 
-export default async function Home() {
-  const content = await loadContent(["resume"]);
-
-  if (!content) {
-    return null;
-  }
-
-  const MDXContent = content.compiled.default;
+export default function Home() {
+  const text = documentPlainText(resume.document);
 
   return (
     <>
@@ -24,15 +18,15 @@ export default async function Home() {
       </div>
       <Paper>
         <ArticleHeader
-          title={content.frontmatter.title}
-          date={content.frontmatter.date}
-          tags={content.frontmatter.tags}
-          readingTime={calculateReadingTime(content.source)}
+          title={resume.frontmatter.title}
+          date={resume.frontmatter.date}
+          tags={resume.frontmatter.tags}
+          readingTime={calculateReadingTime(text)}
         />
         <div className="article-prose" data-article-content>
-          <MDXContent components={mdxComponents as MDXComponents} />
+          <BackendArticleDocument document={resume.document} />
         </div>
-        <ArticleToolbar slug={"resume"} title={content.frontmatter.title} />
+        <ArticleToolbar slug={"resume"} title={resume.frontmatter.title} />
       </Paper>
     </>
   );

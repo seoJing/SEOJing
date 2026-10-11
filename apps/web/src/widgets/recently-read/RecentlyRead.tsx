@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Paper, Subtitle } from "@app/ui";
 import { cn } from "@app/utils";
 import type { ContentNode } from "@app/utils";
-import contentTree from "@/generated/content-tree.json";
 import { getCommentedPosts } from "@/widgets/comment/comment-tracker";
 import {
   getReadPosts,
@@ -31,6 +30,7 @@ export type { ReadRecord } from "./recently-read.utils";
 
 interface RecentlyReadProps {
   rootPath?: string;
+  contentTree: ContentNode[];
 }
 
 /**
@@ -41,7 +41,10 @@ interface RecentlyReadProps {
  * <RecentlyRead rootPath="/study" />
  * ```
  */
-export function RecentlyRead({ rootPath = "/" }: RecentlyReadProps) {
+export function RecentlyRead({
+  rootPath = "/",
+  contentTree,
+}: RecentlyReadProps) {
   const readPosts = useSyncExternalStore(
     subscribeStorage,
     getReadPosts,
@@ -53,10 +56,10 @@ export function RecentlyRead({ rootPath = "/" }: RecentlyReadProps) {
     () => EMPTY_SET,
   );
 
-  const subTree = getSubTree(contentTree as ContentNode[], rootPath);
+  const subTree = getSubTree(contentTree, rootPath);
   const validHrefs = collectHrefs(subTree);
   const filteredPosts = readPosts.filter((p) => validHrefs.has(p.href));
-  const descriptionMap = buildDescriptionMap(contentTree as ContentNode[]);
+  const descriptionMap = buildDescriptionMap(contentTree);
 
   return (
     <section className="flex flex-col gap-4">

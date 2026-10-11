@@ -4,11 +4,11 @@ import Link from "next/link";
 import { Carousel, Subtitle } from "@app/ui";
 import type { CarouselItem } from "@app/ui";
 import type { ContentNode } from "@app/utils";
-import contentTree from "@/generated/content-tree.json";
 import { getSubTree, getRecentPosts } from "./new-posts-carousel.utils";
 
 interface NewPostsCarouselProps {
   rootPath?: string;
+  contentTree: ContentNode[];
 }
 
 /**
@@ -19,8 +19,11 @@ interface NewPostsCarouselProps {
  * <NewPostsCarousel rootPath="/study" />
  * ```
  */
-export function NewPostsCarousel({ rootPath = "/" }: NewPostsCarouselProps) {
-  const subTree = getSubTree(contentTree as ContentNode[], rootPath);
+export function NewPostsCarousel({
+  rootPath = "/",
+  contentTree,
+}: NewPostsCarouselProps) {
+  const subTree = getSubTree(contentTree, rootPath);
   const recentPosts = getRecentPosts(subTree);
 
   if (recentPosts.length === 0) return null;

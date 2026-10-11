@@ -64,15 +64,10 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-        env:
-          # Keep generation aligned with the production Worker var: slug-level only.
-          SEOJING_BACKEND_ARTICLE_SLUGS: study/effective-typescript/day5
-      - name: Verify backend-article deployment configuration
+      - name: Verify native article deployment configuration
         run: pnpm --filter @app/web run public:readback:test
       - name: Check Cloudflare Worker bundle size
         run: pnpm --filter @app/web run worker:size:check
-      - name: Verify bundled article outage fallback
-        run: pnpm --filter @app/web run test:content-fallback
 
   deploy:
     name: Deploy
@@ -91,9 +86,6 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-        env:
-          # Keep backend-first rendering and the registry's explicit MDX fallback.
-          SEOJING_BACKEND_ARTICLE_SLUGS: study/effective-typescript/day5
 
       - name: Deploy to Cloudflare Workers
         run: pnpm --filter @app/web exec wrangler deploy --config dist/server/wrangler.json
