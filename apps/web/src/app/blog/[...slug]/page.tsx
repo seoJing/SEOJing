@@ -8,7 +8,6 @@ import { PostExplorer } from "@/widgets/post-explorer/PostExplorer";
 import { PostGrid } from "@/widgets/post-grid";
 import { ArticleToolbar } from "@/widgets/article-toolbar/ArticleToolbar";
 import { ArticleAnalytics } from "@/widgets/article-analytics";
-import { PostQaPanel, SectionQaPrompts } from "@/widgets/post-qa";
 import { SummaryVideo } from "@/widgets/summary-video";
 import type { Metadata } from "vinext/shims/metadata";
 import {
@@ -105,13 +104,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             video={content.frontmatter.summaryVideo}
             title={content.frontmatter.title}
           />
-          {/* TTS is intentionally paused while backend-backed text rendering is stabilized. */}
           <div className="article-prose" data-article-content>
             <ArticleContent />
           </div>
-          <SectionQaPrompts slug={slug.join("/")} />
         </div>
-        <PostQaPanel slug={slug.join("/")} title={content.frontmatter.title} />
         <ArticleToolbar
           slug={slug.join("/")}
           title={content.frontmatter.title}

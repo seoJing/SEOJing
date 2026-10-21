@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Paper, Subtitle } from "@app/ui";
 import { cn } from "@app/utils";
 import type { ContentNode } from "@app/utils";
-import { getCommentedPosts } from "@/widgets/comment/comment-tracker";
 import {
   getReadPosts,
   collectHrefs,
@@ -14,7 +13,6 @@ import {
 } from "./recently-read.utils";
 
 const EMPTY_POSTS: ReturnType<typeof getReadPosts> = [];
-const EMPTY_SET = new Set<string>();
 
 function subscribeStorage(cb: () => void) {
   window.addEventListener("storage", cb);
@@ -50,11 +48,6 @@ export function RecentlyRead({
     getReadPosts,
     () => EMPTY_POSTS,
   );
-  const commentedPosts = useSyncExternalStore(
-    subscribeStorage,
-    getCommentedPosts,
-    () => EMPTY_SET,
-  );
 
   const subTree = getSubTree(contentTree, rootPath);
   const validHrefs = collectHrefs(subTree);
@@ -72,7 +65,6 @@ export function RecentlyRead({
         <div className="flex gap-2 overflow-x-auto pb-3 sm:gap-3 scrollbar-h">
           {filteredPosts.map((post) => {
             const description = descriptionMap.get(post.href) ?? "";
-            const hasCommented = commentedPosts.has(post.href);
             const isFullyRead = (post.progress ?? 0) >= 100;
             return (
               <Link key={post.href} href={post.href} className="shrink-0">
@@ -106,15 +98,6 @@ export function RecentlyRead({
                           <img
                             src="/redSilling.png"
                             alt="완독"
-                            className="size-10 lg:size-15"
-                          />
-                        </div>
-                      )}
-                      {hasCommented && (
-                        <div className="absolute left-17 lg:left-21 top-25 lg:top-32 z-10 rotate-12">
-                          <img
-                            src="/purpleSilling.png"
-                            alt="댓글 완료"
                             className="size-10 lg:size-15"
                           />
                         </div>
