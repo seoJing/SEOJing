@@ -55,7 +55,7 @@ function collectPosts(nodes: ContentNode[]): PostInfo[] {
           description: node.frontmatter.description,
           date: node.frontmatter.date,
           tags: node.frontmatter.tags,
-          href: `/blog${node.path.replace(/\.mdx?$/, "")}`,
+          href: "/blog" + node.path,
           category: getCategoryFromPath(node.path),
           cover: node.frontmatter.cover,
         });

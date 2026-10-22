@@ -1,43 +1,25 @@
-# Post-management retirement boundaries
+# Post-management and MDX retirement boundaries
 
-This cleanup removes the blog Q&A/RAG endpoint and widgets, blog audio player and comment tracking. Giscus public article comments were subsequently restored from the pre-PR61 configuration; see `cms-corrections-verification.md`. Public `/blog` index/detail, sitemap, RSS, llms.txt, presentation, reading progress/history, protected `/ops/articles`, backend article fallback and D1 public snapshot synchronization remain.
+Stage 2 retired the active frontend MDX corpus and its generated/runtime/authoring surfaces after the owner approved contract v2 on 2026-10-22. The earlier requirement for 201 individual desktop/mobile visual-acceptance records was **waived and risk-accepted, not completed**. Never describe that evidence as collected.
 
-Career routes/code were already absent from tracked application source. The regression suite enumerates actual route files, checks navigation and application/corpus links, executes sitemap/RSS/llms handlers against all retained manifest slugs, and checks retired module absence. It also exercises the remaining toolbar controls. These are assertions against current source/behavior, not updated snapshots.
+The immutable pre-retirement archive remains outside this repository at /Users/seojing/Projects/seojing-retirement-archives/seojing-mdx-pre-retirement-5d9c3133-ed7cc2b1-20261022.tar.gz, SHA-256 7c7405b719a647b9aa61a28800bd5e84734fc342e659eab05242e13cb8987fc4. The backend archive audit verifies the archived 201-post manifest, exact source hashes/slugs, and conversion results without requiring active apps/web/content files.
 
-## Local gates
+## Retained product contracts
 
-From `apps/web`:
+- Public /blog index/detail, sitemap, RSS, llms.txt, search/explorer, presentation and reading progress/history.
+- Protected /ops/articles list/editor backed by native DOCUMENT/BLOCKS content.
+- Backend article fallback, D1 public snapshot synchronization, Giscus, and all referenced public assets.
+- src/shared/content/resume-document.json is the native resume source. The old content/resume.mdx is not required by a route.
+- Presentation/TTS assets and generators remain because presentation export consumes them.
+- The TTS generator accepts an explicit native article export only: run
+  `pnpm generate:tts -- --input /private/path/articles.json`. Every slug,
+  title and DOCUMENT node is validated and all manifests are built before any
+  existing generated JSON/transcript is touched. It does not read
+  `apps/web/content` or make network requests.
+- Historical analytics reporting remains; old event names do not reactivate retired routes.
 
-```sh
-pnpm exec vitest run src/shared/content/retirement-boundary.test.ts src/shared/content/mdx-migration-manifest.test.ts src/widgets/article-toolbar/ArticleToolbar.test.tsx
-pnpm test
-pnpm exec tsc --noEmit
-pnpm lint
-pnpm build
-```
+## Deterministic local gates
 
-Do not run publication, deployment, migration, restart, staging or commit commands as part of this cleanup. Builds and tests are local verification only.
+From apps/web run focused retirement tests, full tests/coverage, TypeScript, lint, format check, build, Worker size, and public readback unit checks. After build, scan tracked active source and the produced Worker bundle for .mdx files and retired manifest/review/generated-loader imports.
 
-## MDX retirement remains blocked
-
-Retain all 201 MDX blog posts plus `content/resume.mdx`, the exact migration manifest, source hashes, referenced assets, conversion tools, migration review UI and all canonical routes. A count or successful structural conversion is not visual acceptance.
-
-The authoritative offline readiness command and evidence schema are documented in the backend's `docs/post-management-retirement.md`. From `/Users/seojing/Projects/seojing-backend`:
-
-```sh
-pnpm mdx:retirement-audit --content-root /Users/seojing/Projects/SEOJing/apps/web/content --manifest /Users/seojing/Projects/SEOJing/apps/web/src/shared/content/mdx-migration-manifest.json --corpus-only
-```
-
-For actual readiness omit `--corpus-only` and supply `--evidence /private/path/review/evidence.json`. Without evidence the final gate exits 1. It requires all 201 named desktop/mobile visual acceptances, matching source and native DOCUMENT hashes, exact slug inventories, published current/latest revisions, and raw API/D1 payload plus D1 index-column parity. Evidence files themselves are hashed. Do not fabricate acceptance records. Existing transition notes and `MdxReviewQueue` states describe conversion/publication, not permission to retire the corpus. Even a passing final audit requires independent review and a completed rollback window before a separate removal change.
-
-The backend also contains the unapplied, backup-first Career migration `20261021000000_retire_career_radar`; follow its runbook, never rewrite old migrations.
-
-## Exact shared blockers retained
-
-- `apps/web/src/shared/tts/tts-artifacts.ts` and its test, `apps/web/scripts/generate-tts-artifacts.ts`, and the `generate:tts` package script: consumed by `apps/web/src/shared/presentation/presentation-export.ts` and `apps/web/scripts/export-presentation-pptx.ts`. Removing them would change retained presentation export contracts.
-- `apps/web/public/tts-artifacts/**`, `apps/web/public/summary-videos/**`, and all other public assets: presentation/media references and preserved corpus assets; no asset deletion is authorized here. `purpleSilling.png` also remains under this asset boundary.
-- `apps/web/src/widgets/article-analytics/useArticleAnalytics.ts`, `article-analytics.utils.ts`, their tests, `apps/web/src/shared/analytics/**`, and `/ops/analytics`: historical Q&A/TTS metrics and shared analytics contracts remain. Event names are not active blog Q&A/TTS routes. Removing historical reporting requires a separate decision.
-- `.agent-local/ocr-career-review/branch.patch`, `review.txt`, `rereview.txt`, `rules.txt`, `fixes.patch`, `final-gate.txt`: local review evidence/patches, not reproducible application outputs; preserve until their owner approves archival/removal.
-- README/Work24 code, routes and documents are outside scope, including shared files' existing registrations. No changes to either feature are authorized.
-
-The untracked generated `apps/web/src/generated/career-blog-evidence.json` was removed. The backend cleanup removes stale Career compilation outputs directly under `dist`; protected historical README build copies are listed separately as blockers.
+Human representative desktop/mobile evidence still covers text, code, tables, images/media, quizzes, dates and responsive layout; exhaustive 201-post visual evidence remains explicitly waived. Deployment and production readback are separate authorized operations. Independent exact-diff review and a verified rollback window remain required before release.

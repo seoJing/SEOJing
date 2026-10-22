@@ -13,10 +13,10 @@ const tree: ContentNode[] = [
     path: "/study",
     children: [
       {
-        name: "react.mdx",
+        name: "react",
         type: "file",
-        path: "/study/react.mdx",
-        extension: "mdx",
+        path: "/study/react",
+        extension: "post",
         frontmatter: {
           title: "React",
           description: "Learn React",
@@ -29,10 +29,10 @@ const tree: ContentNode[] = [
         },
       },
       {
-        name: "vue.mdx",
+        name: "vue",
         type: "file",
-        path: "/study/vue.mdx",
-        extension: "mdx",
+        path: "/study/vue",
+        extension: "post",
         frontmatter: {
           title: "Vue",
           description: "Learn Vue",
@@ -43,10 +43,10 @@ const tree: ContentNode[] = [
     ],
   },
   {
-    name: "intro.mdx",
+    name: "intro",
     type: "file",
-    path: "/intro.mdx",
-    extension: "mdx",
+    path: "/intro",
+    extension: "post",
     frontmatter: {
       title: "Intro",
       description: "Introduction",

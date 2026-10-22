@@ -375,38 +375,6 @@ export async function POST(request: Request): Promise<Response> {
     return jsonResponse(200, { ok: true, action, article: saved.data.article });
   }
 
-  if (action === "saveRevision") {
-    const sourceText = readString(body, "sourceText");
-    if (!sourceText) {
-      return jsonResponse(400, { ok: false, error: "source_text_required" });
-    }
-    const saved = await fetchBackendJson<AdminArticlePayload>(
-      config.origin,
-      `/admin/articles/${encodeURIComponent(slug)}/revisions`,
-      {
-        method: "PUT",
-        adminToken: config.adminToken,
-        body: JSON.stringify({
-          title: readString(body, "title") || undefined,
-          description: readString(body, "description") || undefined,
-          category: readString(body, "category") || undefined,
-          sourceText,
-          changeSummary:
-            readString(body, "changeSummary") || "SEOJing /ops article edit",
-          authorName: "SEOJing Ops",
-        }),
-      },
-    );
-    if (!saved.ok) {
-      return jsonResponse(saved.status, {
-        ok: false,
-        error: "backend_revision_save_failed",
-        status: saved.status,
-      });
-    }
-    return jsonResponse(200, { ok: true, action, article: saved.data.article });
-  }
-
   if (action === "restoreRevision") {
     const revisionNumber = readNumber(body, "revisionNumber");
     if (!Number.isInteger(revisionNumber) || revisionNumber < 1) {

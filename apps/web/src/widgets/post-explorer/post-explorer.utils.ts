@@ -35,7 +35,7 @@ export function toExplorerItems(
         itemCount: node.itemCount,
       };
     }
-    const href = `/blog${node.path.replace(/\.mdx?$/, "")}`;
+    const href = "/blog" + node.path;
     return {
       type: "file" as const,
       name: node.frontmatter?.title ?? node.name,

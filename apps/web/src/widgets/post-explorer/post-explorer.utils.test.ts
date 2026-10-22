@@ -10,10 +10,10 @@ const tree: ContentNode[] = [
     itemCount: 2,
     children: [
       {
-        name: "react.mdx",
+        name: "react",
         type: "file",
-        path: "/study/react.mdx",
-        extension: "mdx",
+        path: "/study/react",
+        extension: "post",
         frontmatter: {
           title: "React Guide",
           date: "2024-01-01",
@@ -22,10 +22,10 @@ const tree: ContentNode[] = [
         },
       },
       {
-        name: "vue.mdx",
+        name: "vue",
         type: "file",
-        path: "/study/vue.mdx",
-        extension: "mdx",
+        path: "/study/vue",
+        extension: "post",
         frontmatter: {
           title: "Vue Guide",
           date: "2024-02-01",
@@ -36,10 +36,10 @@ const tree: ContentNode[] = [
     ],
   },
   {
-    name: "intro.mdx",
+    name: "intro",
     type: "file",
-    path: "/intro.mdx",
-    extension: "mdx",
+    path: "/intro",
+    extension: "post",
     frontmatter: {
       title: "Intro",
       date: "2024-03-01",
@@ -61,7 +61,7 @@ describe("getItemsForPath", () => {
   it("returns children of a folder", () => {
     const items = getItemsForPath(tree, "/study");
     expect(items).toHaveLength(2);
-    expect(items[0]!.name).toBe("react.mdx");
+    expect(items[0]!.name).toBe("react");
   });
 
   it("returns empty for non-existent path", () => {
@@ -85,7 +85,7 @@ describe("toExplorerItems", () => {
     expect(file).toMatchObject({
       type: "file",
       name: "Intro",
-      extension: "mdx",
+      extension: "post",
       href: "/blog/intro",
     });
   });
@@ -105,9 +105,9 @@ describe("toExplorerItems", () => {
 
   it("uses node name when frontmatter is missing", () => {
     const nodes: ContentNode[] = [
-      { name: "raw.mdx", type: "file", path: "/raw.mdx", extension: "mdx" },
+      { name: "raw", type: "file", path: "/raw", extension: "post" },
     ];
     const items = toExplorerItems(nodes, new Set());
-    expect(items[0]!.name).toBe("raw.mdx");
+    expect(items[0]!.name).toBe("raw");
   });
 });

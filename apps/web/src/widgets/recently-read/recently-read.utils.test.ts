@@ -152,10 +152,10 @@ const sampleTree: ContentNode[] = [
     path: "/study",
     children: [
       {
-        name: "react.mdx",
+        name: "react",
         type: "file",
-        path: "/study/react.mdx",
-        extension: "mdx",
+        path: "/study/react",
+        extension: "post",
         frontmatter: {
           title: "React",
           description: "Learn React",
@@ -168,7 +168,7 @@ const sampleTree: ContentNode[] = [
   {
     name: "intro.md",
     type: "file",
-    path: "/intro.md",
+    path: "/intro",
     extension: "md",
     frontmatter: {
       title: "Intro",
@@ -210,7 +210,7 @@ describe("getSubTree", () => {
   it("returns children of a folder path", () => {
     const sub = getSubTree(sampleTree, "/study");
     expect(sub).toHaveLength(1);
-    expect(sub[0]!.name).toBe("react.mdx");
+    expect(sub[0]!.name).toBe("react");
   });
 
   it("returns empty for non-existent path", () => {

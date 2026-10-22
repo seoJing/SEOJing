@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildNativeTtsArticleManifest,
   buildTtsArticleManifest,
   extractTtsSections,
   normalizeText,
@@ -82,5 +83,35 @@ describe("TTS artifact manifest", () => {
         ),
       ),
     ).toContain("제목 링크와 코드");
+  });
+
+  it("builds deterministic narration from native DOCUMENT content", () => {
+    const manifest = buildNativeTtsArticleManifest({
+      slug: "native/article",
+      title: "Native article",
+      generatedAt: "2026-10-22T00:00:00.000Z",
+      document: {
+        type: "doc",
+        content: [
+          {
+            type: "heading",
+            attrs: { level: 2 },
+            content: [{ type: "text", text: "Native heading" }],
+          },
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Native body text." }],
+          },
+        ],
+      },
+    });
+    expect(manifest.artifacts.map((artifact) => artifact.text)).toEqual([
+      "Native heading Native body text.",
+      "Native heading Native body text.",
+      "Native body text.",
+    ]);
+    expect(manifest.sections).toMatchObject([
+      { title: "Native heading", text: "Native body text." },
+    ]);
   });
 });

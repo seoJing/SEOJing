@@ -33,7 +33,7 @@ function contentKindFromSlug(slug: string): AnalyticsContentKind {
 }
 
 function slugFromPath(path: string): string {
-  return path.replace(/^\//, "").replace(/\.mdx$/, "");
+  return path.startsWith("/") ? path.slice(1) : path;
 }
 
 function walkContentTree(
@@ -45,7 +45,7 @@ function walkContentTree(
       walkContentTree(node.children ?? [], items);
       continue;
     }
-    if (node.extension !== "post" && node.extension !== "mdx") continue;
+    if (node.extension !== "post") continue;
     const slug = slugFromPath(node.path);
     items.push({
       slug,

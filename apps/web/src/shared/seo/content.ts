@@ -20,7 +20,7 @@ export function flattenContentTree(nodes: ContentTree): SeoContentEntry[] {
       }
 
       if (!node.frontmatter) continue;
-      const slug = node.path.replace(/^\//, "").replace(/\.(mdx|md)$/i, "");
+      const slug = node.path.startsWith("/") ? node.path.slice(1) : node.path;
       const slugParts = slug.split("/").filter(Boolean);
       entries.push({
         slug,

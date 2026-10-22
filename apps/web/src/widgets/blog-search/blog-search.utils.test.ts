@@ -6,10 +6,10 @@ describe("flattenFiles", () => {
   it("extracts file nodes with frontmatter", () => {
     const nodes: ContentNode[] = [
       {
-        name: "react.mdx",
+        name: "react",
         type: "file",
-        path: "/react.mdx",
-        extension: "mdx",
+        path: "/react",
+        extension: "post",
         frontmatter: {
           title: "React",
           description: "React guide",
@@ -23,7 +23,7 @@ describe("flattenFiles", () => {
       {
         title: "React",
         description: "React guide",
-        path: "/react.mdx",
+        path: "/react",
         tags: ["react"],
       },
     ]);
@@ -49,10 +49,10 @@ describe("flattenFiles", () => {
         path: "/study",
         children: [
           {
-            name: "hooks.mdx",
+            name: "hooks",
             type: "file",
-            path: "/study/hooks.mdx",
-            extension: "mdx",
+            path: "/study/hooks",
+            extension: "post",
             frontmatter: {
               title: "Hooks",
               description: "React Hooks",
@@ -74,12 +74,12 @@ describe("flattenFiles", () => {
 });
 
 describe("toPostHref", () => {
-  it("converts .mdx path to blog URL", () => {
-    expect(toPostHref("/study/react.mdx")).toBe("/blog/study/react");
+  it("accepts an extensionless native path", () => {
+    expect(toPostHref("/study/react")).toBe("/blog/study/react");
   });
 
-  it("converts .md path to blog URL", () => {
-    expect(toPostHref("/intro.md")).toBe("/blog/intro");
+  it("accepts an extensionless native path", () => {
+    expect(toPostHref("/intro")).toBe("/blog/intro");
   });
 
   it("handles path without extension gracefully", () => {

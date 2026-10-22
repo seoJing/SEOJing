@@ -408,6 +408,31 @@ describe("/api/ops/articles", () => {
     expect(response.status).toBe(200);
   });
 
+  it("rejects the retired source revision action without calling the backend", async () => {
+    configureBackend();
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const response = await POST(
+      new Request("http://localhost/api/ops/articles", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "saveRevision",
+          slug: "cms/draft",
+          sourceText: "# retired source write",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      ok: false,
+      error: "unsupported_action",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it("restores an earlier revision for the selected article", async () => {
     configureBackend();
     const fetchSpy = vi.fn(async () =>
