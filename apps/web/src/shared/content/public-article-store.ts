@@ -162,6 +162,7 @@ export function buildPublicContentTree(
       type: "file",
       path: `/${article.slug}`,
       extension: "post",
+      kind: "article",
       frontmatter: {
         title: article.title,
         description: article.description ?? "",

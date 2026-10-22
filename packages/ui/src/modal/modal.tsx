@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import { IoClose } from "react-icons/io5";
 import { cn } from "@app/utils";
@@ -19,6 +19,42 @@ export function Modal({
   className,
   ...props
 }: ModalProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.activeElement;
+    const panel = panelRef.current;
+    const controls = () =>
+      Array.from(
+        panel?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), iframe, [tabindex="0"]',
+        ) ?? [],
+      );
+    (controls()[0] ?? panel)?.focus();
+    const trapFocus = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const items = controls();
+      const first = items[0];
+      const last = items.at(-1);
+      if (!first) {
+        event.preventDefault();
+        panel?.focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", trapFocus);
+    return () => {
+      document.removeEventListener("keydown", trapFocus);
+      if (previous instanceof HTMLElement) previous.focus();
+    };
+  }, [open]);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -43,6 +79,8 @@ export function Modal({
       className="fixed inset-0 z-50 flex items-center justify-center"
       role="dialog"
       aria-modal="true"
+      aria-labelledby={title != null ? titleId : undefined}
+      aria-label={title == null ? props["aria-label"] : undefined}
     >
       {/* Backdrop */}
       <div
@@ -53,6 +91,8 @@ export function Modal({
 
       {/* Panel */}
       <div
+        ref={panelRef}
+        tabIndex={-1}
         className={cn(
           "relative z-10 mx-2 w-full rounded-2xl animate-modal-in",
           "bg-background border border-gray-200 dark:border-gray-700",
@@ -65,7 +105,10 @@ export function Modal({
         {/* Header */}
         {title != null && (
           <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-700">
-            <h2 className="font-heading text-lg font-bold text-gray-900 dark:text-gray-100">
+            <h2
+              id={titleId}
+              className="font-heading text-lg font-bold text-gray-900 dark:text-gray-100"
+            >
               {title}
             </h2>
             <IconButton

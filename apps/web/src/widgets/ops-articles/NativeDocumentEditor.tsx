@@ -527,7 +527,7 @@ export function NativeDocumentEditor({
       </div>
       <EditorContent
         editor={editor}
-        className="article-prose min-h-80 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 [&_.tiptap]:min-h-72 [&_.tiptap]:outline-none [&_table]:border-collapse [&_td]:border [&_td]:p-2 [&_th]:border [&_th]:p-2"
+        className="article-prose min-w-0 max-w-full overflow-x-auto min-h-80 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 [&_.tiptap]:min-h-72 [&_.tiptap]:outline-none [&_table]:border-collapse [&_td]:border [&_td]:p-2 [&_th]:border [&_th]:p-2"
       />
     </div>
   );

@@ -75,6 +75,7 @@ describe("published article index", () => {
       type: "file",
       path: "/note",
       extension: "post",
+      kind: "article",
     });
     expect(flattenContentTree(tree).map((entry) => entry.slug)).toEqual([
       "note",

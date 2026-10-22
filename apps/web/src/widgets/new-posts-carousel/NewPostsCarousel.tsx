@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateOnly } from "@app/utils";
+
 import Link from "next/link";
 import { Carousel, Subtitle } from "@app/ui";
 import type { CarouselItem } from "@app/ui";
@@ -49,7 +51,9 @@ export function NewPostsCarousel({
           <p className="mt-2 line-clamp-2 text-xs text-gray-700 sm:text-sm dark:text-gray-300">
             {post.description}
           </p>
-          <time className="mt-2 text-xs">{post.date}</time>
+          <time dateTime={post.date} className="mt-2 text-xs">
+            {formatDateOnly(post.date)}
+          </time>
         </div>
       </Link>
     ),

@@ -2,6 +2,7 @@ export { cn } from "./cn";
 
 export type {
   ContentCover,
+  ContentSummaryVideo,
   ContentFrontmatter,
   ContentNode,
   ContentTree,
@@ -10,3 +11,5 @@ export { getItemsForPath } from "./content-types";
 export type { ContentChunk, ContentChunkInput } from "./content-chunks";
 export { buildMdxSearchIndex, chunkMdxByHeadings } from "./content-chunks";
 export { calculateReadingTime } from "./reading-time";
+
+export { formatDateOnly } from "./date";

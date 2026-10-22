@@ -8,11 +8,11 @@ vi.mock("@/widgets/presentation", () => ({
   PresentationView: () => <div>Presentation retained</div>,
 }));
 
-describe("article toolbar after comment retirement", () => {
-  it("retains back/presentation controls and has no comment control or event listener", () => {
+describe("article toolbar with restored comments", () => {
+  it("retains back/presentation and opens comments only on explicit activation", () => {
     render(<ArticleToolbar slug="study/backend/day1" title="Study" />);
-    expect(screen.queryByRole("button", { name: "댓글" })).toBeNull();
-    expect(screen.getAllByRole("button")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "댓글" })).toBeVisible();
+    expect(screen.getAllByRole("button")).toHaveLength(3);
     window.dispatchEvent(
       new CustomEvent("seojing:open-comments", {
         detail: { source: "post_qa" },

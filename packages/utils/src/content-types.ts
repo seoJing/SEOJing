@@ -30,6 +30,7 @@ export interface ContentNode {
   // content/ 기준 상대 경로 (예: "/frontend/react-시작하기.mdx")
   path: string;
   extension?: string;
+  kind?: "article";
   frontmatter?: ContentFrontmatter;
   children?: ContentNode[];
   itemCount?: number;

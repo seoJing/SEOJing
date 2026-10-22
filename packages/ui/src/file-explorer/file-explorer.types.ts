@@ -16,6 +16,8 @@ export interface FileData {
   name: string;
   /** 파일 확장자 (예: "mdx", "pdf") */
   extension: string;
+  /** Semantic content kind, independent of storage/source format. */
+  kind?: "article";
   /** 상세 페이지 링크 */
   href: string;
   /** 파일 크기 (예: "3.4 MB") */

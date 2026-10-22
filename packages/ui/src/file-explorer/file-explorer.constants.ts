@@ -18,6 +18,7 @@ export const FILE_ICON_MAP: Record<
   React.ComponentType<{ className?: string }>
 > = {
   // 문서
+  article: AiFillFileText,
   md: AiFillFileText,
   mdx: AiFillFileText,
   txt: AiFillFileText,
@@ -58,6 +59,7 @@ export const DefaultFileIcon = AiFillFile;
 
 /** 확장자별 아이콘 색상 */
 export const FILE_ICON_COLORS: Record<string, string> = {
+  article: "text-blue-400",
   md: "text-blue-400",
   mdx: "text-blue-400",
   pdf: "text-red-400",

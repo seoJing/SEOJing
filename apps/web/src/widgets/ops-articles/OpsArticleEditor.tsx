@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { ArticleImage, ArticleQuiz, ArticleQuizItem, CodeBlock } from "@app/ui";
+import { ArticlePreview } from "@/shared/content/ArticlePreview";
+import type { BackendArticleApiResponse } from "@/shared/content/article-adapter";
 
 import {
   normalizeBlocks,
@@ -39,6 +40,7 @@ type EditorArticle = {
   editingRevisionId?: string | null;
   sourceText?: string;
   renderedHtml?: string | null;
+  preview?: BackendArticleApiResponse;
   previewRenderedHtml?: string | null;
   previewIssues?: Array<{ name: string; line: number }>;
   blocks?: ArticleBlock[];
@@ -101,10 +103,13 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
     "idle" | "loading" | "saving" | "publishing"
   >("idle");
   const [message, setMessage] = useState("");
-  const [snapshotSyncRequired, setSnapshotSyncRequired] = useState(false);
+  const [snapshotRetryAction, setSnapshotRetryAction] = useState<
+    "syncPublished" | "reconcileVisibility" | null
+  >(null);
 
   const isBusy = status !== "idle";
-  const article = payload?.article;
+  const article =
+    payload?.article?.slug === selectedSlug ? payload.article : undefined;
   const hasSelection = selectedSlug.trim().length > 0;
   const isBlockArticle = article?.sourceFormat === "BLOCKS";
   const isDocumentArticle = article?.sourceFormat === "DOCUMENT";
@@ -199,6 +204,75 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
+  const draftFields = {
+    slug: selectedSlug,
+    title,
+    description,
+    category,
+    blocks: toBackendBlocks(blocks),
+    sourceText,
+    document,
+    tags: tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean),
+    cover: coverSrc
+      ? { ...article?.cover, src: coverSrc, alt: coverAlt }
+      : null,
+    summaryVideo: summaryVideoSrc
+      ? {
+          ...article?.summaryVideo,
+          src: summaryVideoSrc,
+          title: summaryVideoTitle,
+        }
+      : null,
+    displayDate: displayDate || null,
+    displayUpdatedAt: displayUpdatedAt || null,
+    expectedRevisionId: article?.editingRevisionId,
+  };
+  const previewRequest = JSON.stringify({ action: "preview", ...draftFields });
+  const [draftPreview, setDraftPreview] = useState<{
+    request: string;
+    article?: BackendArticleApiResponse;
+    error?: string;
+  } | null>(null);
+  useEffect(() => {
+    if (!article || !dirty || !(isDocumentArticle || isBlockArticle)) return;
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch("/api/ops/articles", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: previewRequest,
+          signal: controller.signal,
+        });
+        const body = (await response.json()) as {
+          ok?: boolean;
+          preview?: BackendArticleApiResponse;
+          error?: string;
+        };
+        if (!response.ok || !body.ok || !body.preview)
+          throw new Error(body.error ?? "미리보기를 불러오지 못했습니다.");
+        if (!controller.signal.aborted)
+          setDraftPreview({ request: previewRequest, article: body.preview });
+      } catch (error) {
+        if (!controller.signal.aborted)
+          setDraftPreview({
+            request: previewRequest,
+            error: error instanceof Error ? error.message : "미리보기 실패",
+          });
+      }
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [article, dirty, isDocumentArticle, isBlockArticle, previewRequest]);
+  const currentDraftPreview =
+    draftPreview?.request === previewRequest ? draftPreview : null;
+  const preview = dirty ? currentDraftPreview?.article : article?.preview;
+
   async function mutate(
     action:
       | "saveBlocks"
@@ -207,6 +281,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
       | "restoreRevision"
       | "publish"
       | "syncPublished"
+      | "reconcileVisibility"
       | "unpublish"
       | "archive"
       | "delete",
@@ -220,37 +295,17 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           action,
-          slug: selectedSlug,
-          title,
-          description,
-          category,
-          blocks: toBackendBlocks(blocks),
-          sourceText,
-          document,
-          tags: tags
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter(Boolean),
-          cover: coverSrc
-            ? { ...article?.cover, src: coverSrc, alt: coverAlt }
-            : null,
-          summaryVideo: summaryVideoSrc
-            ? {
-                ...article?.summaryVideo,
-                src: summaryVideoSrc,
-                title: summaryVideoTitle,
-              }
-            : null,
-          displayDate: displayDate || null,
-          displayUpdatedAt: displayUpdatedAt || null,
-          expectedRevisionId: article?.editingRevisionId,
+          ...draftFields,
           revisionNumber,
         }),
       });
       const body = (await response.json()) as MutationPayload;
       if (!response.ok || !body.ok) {
-        if (body.backendPublished && body.retryAction === "syncPublished") {
-          setSnapshotSyncRequired(true);
+        if (
+          body.retryAction === "syncPublished" ||
+          body.retryAction === "reconcileVisibility"
+        ) {
+          setSnapshotRetryAction(body.retryAction);
         }
         const issue = body.issues?.[0];
         throw new Error(
@@ -259,7 +314,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
             : (body.error ?? `request failed: ${response.status}`),
         );
       }
-      setSnapshotSyncRequired(false);
+      setSnapshotRetryAction(null);
       if (action === "delete") {
         window.location.assign("/ops/articles");
         return;
@@ -267,7 +322,7 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
       setMessage(
         action === "publish"
           ? "발행 완료. 공개 글과 목록을 다시 불러옵니다."
-          : action === "syncPublished"
+          : action === "syncPublished" || action === "reconcileVisibility"
             ? "공개 사본 동기화가 완료됐습니다."
             : action === "unpublish"
               ? "비공개 초안으로 전환했습니다."
@@ -402,12 +457,12 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
             </div>
           )}
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            {snapshotSyncRequired ? (
+            {snapshotRetryAction ? (
               <button
                 type="button"
                 className="rounded-full border border-amber-500 px-5 py-2.5 text-sm font-semibold text-amber-800 disabled:opacity-45"
                 disabled={isBusy}
-                onClick={() => void mutate("syncPublished")}
+                onClick={() => void mutate(snapshotRetryAction)}
               >
                 공개 사본 다시 동기화
               </button>
@@ -518,6 +573,21 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
           글일 수 있습니다.
         </p>
       )}
+      {article && (isDocumentArticle || isBlockArticle) ? (
+        <section aria-label="공개 화면 미리보기" className="mt-8 min-w-0">
+          <h2 className="mb-4 text-xl font-semibold">공개 화면 미리보기</h2>
+          {preview ? (
+            <ArticlePreview article={preview} />
+          ) : (
+            <p role={currentDraftPreview?.error ? "alert" : "status"}>
+              {dirty
+                ? (currentDraftPreview?.error ??
+                  "공개 화면 미리보기를 준비하고 있습니다…")
+                : "안전한 공개 미리보기를 사용할 수 없습니다. 다시 불러오세요."}
+            </p>
+          )}
+        </section>
+      ) : null}
     </section>
   );
 }
@@ -1066,69 +1136,7 @@ function BlockCard({
           />
         </>
       ) : null}
-      <div className="article-prose mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-        <CmsPreviewBlock block={block} />
-      </div>
     </article>
-  );
-}
-
-function CmsPreviewBlock({ block }: { block: ArticleBlock }) {
-  const content = block.content;
-  if (block.type === "HEADING") {
-    const level = numberValue(content.level, 2);
-    const text = stringValue(content.text, "제목");
-    if (level === 1) return <h1>{text}</h1>;
-    if (level === 3) return <h3>{text}</h3>;
-    if (level === 4) return <h4>{text}</h4>;
-    return <h2>{text}</h2>;
-  }
-  if (block.type === "PARAGRAPH")
-    return <p>{stringValue(content.text, "본문을 입력하세요.")}</p>;
-  if (block.type === "CODE") {
-    const code = stringValue(content.code, "// 코드를 입력하세요");
-    return (
-      <CodeBlock
-        language={stringValue(content.language, "text")}
-        plainText={code}
-      >
-        {code}
-      </CodeBlock>
-    );
-  }
-  if (block.type === "IMAGE") {
-    const url = stringValue(content.url);
-    return url ? (
-      <ArticleImage
-        src={url}
-        alt={stringValue(content.alt)}
-        caption={stringValue(content.caption) || undefined}
-      />
-    ) : (
-      <p className="text-sm text-zinc-500">
-        이미지 URL을 입력하면 여기서 확인할 수 있습니다.
-      </p>
-    );
-  }
-  if (block.type === "CALLOUT") {
-    return (
-      <aside data-callout-tone={stringValue(content.tone, "note")}>
-        <strong>{stringValue(content.title) || "메모"}</strong>
-        <p>{stringValue(content.text, "메모 내용을 입력하세요.")}</p>
-      </aside>
-    );
-  }
-  const question = stringValue(content.question, "질문을 입력하세요.");
-  return (
-    <ArticleQuiz>
-      <ArticleQuizItem
-        mode={arrayValue(content.choices).length ? "multiple" : "description"}
-        question={question}
-        choices={arrayValue(content.choices)}
-        answer={stringValue(content.answer)}
-        explanation={stringValue(content.explanation) || undefined}
-      />
-    </ArticleQuiz>
   );
 }
 

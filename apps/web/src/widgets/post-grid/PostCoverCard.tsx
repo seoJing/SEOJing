@@ -1,3 +1,4 @@
+import { formatDateOnly } from "@app/utils";
 import Link from "next/link";
 import type { PostInfo } from "@/widgets/new-posts-carousel/new-posts-carousel.utils";
 
@@ -58,17 +59,6 @@ function hashText(value: string) {
     hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
   }
   return hash;
-}
-
-function formatDate(date: string) {
-  if (!date) return "No date";
-  const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) return date;
-  return new Intl.DateTimeFormat("ko-KR", {
-    year: "2-digit",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(parsed);
 }
 
 function splitTitle(title: string) {
@@ -246,7 +236,7 @@ export function PostCoverCard({ post, priority = false }: PostCoverCardProps) {
           style={{ color: hasImage ? "rgba(255,255,255,0.78)" : palette.muted }}
         >
           <span>{post.category}</span>
-          <time className="hidden sm:inline">{formatDate(post.date)}</time>
+          <time className="hidden sm:inline">{formatDateOnly(post.date)}</time>
         </div>
 
         <div className="absolute inset-x-[8%] bottom-[8%]">
@@ -271,7 +261,7 @@ export function PostCoverCard({ post, priority = false }: PostCoverCardProps) {
                 color: hasImage ? "rgba(255,255,255,0.78)" : palette.muted,
               }}
             >
-              {formatDate(post.date)}
+              {formatDateOnly(post.date)}
             </time>
             <img
               src="/logo.ico"
