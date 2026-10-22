@@ -78,7 +78,7 @@ describe("post-MDX retirement boundary", () => {
     for (const path of active) {
       const source = readFileSync(path, "utf8");
       expect(source, relative(process.cwd(), path)).not.toMatch(
-        /mdx-migration-manifest|MdxReviewQueue|src\/generated\/content|content\/resume\.mdx/,
+        /mdx-migration-manifest|MdxReviewQueue|src\/generated\/content|content\/resume\.mdx|saveRevision/,
       );
     }
     const pkg = JSON.parse(readFileSync(resolve("package.json"), "utf8")) as {
@@ -114,5 +114,12 @@ describe("post-MDX retirement boundary", () => {
     expect(JSON.stringify([...blogNavItems, ...portfolioNavItems])).not.toMatch(
       /https:\/\/seojing\.com\/careers?/i,
     );
+    for (const retiredPath of [
+      "src/app/post-qa",
+      "src/widgets/blog-audio-player",
+      "src/shared/rag",
+      "src/widgets/comment-tracker",
+    ])
+      expect(existsSync(resolve(retiredPath)), retiredPath).toBe(false);
   });
 });

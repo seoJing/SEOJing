@@ -276,7 +276,6 @@ export function OpsArticleEditor({ selectedSlug }: { selectedSlug: string }) {
   async function mutate(
     action:
       | "saveBlocks"
-      | "saveRevision"
       | "saveDocument"
       | "restoreRevision"
       | "publish"

@@ -11,6 +11,11 @@ The immutable pre-retirement archive remains outside this repository at /Users/s
 - Backend article fallback, D1 public snapshot synchronization, Giscus, and all referenced public assets.
 - src/shared/content/resume-document.json is the native resume source. The old content/resume.mdx is not required by a route.
 - Presentation/TTS assets and generators remain because presentation export consumes them.
+- The TTS generator accepts an explicit native article export only: run
+  `pnpm generate:tts -- --input /private/path/articles.json`. Every slug,
+  title and DOCUMENT node is validated and all manifests are built before any
+  existing generated JSON/transcript is touched. It does not read
+  `apps/web/content` or make network requests.
 - Historical analytics reporting remains; old event names do not reactivate retired routes.
 
 ## Deterministic local gates

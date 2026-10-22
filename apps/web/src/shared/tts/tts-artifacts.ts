@@ -50,6 +50,18 @@ export interface BuildTtsManifestInput {
   generatedAt?: string;
 }
 
+export interface NativeTtsDocument {
+  type: "doc";
+  content: NativeTtsNode[];
+}
+
+export interface NativeTtsNode {
+  type: string;
+  text?: string;
+  attrs?: Record<string, unknown>;
+  content?: NativeTtsNode[];
+}
+
 const TWO_MINUTE_MAX_WORDS = 360;
 const FIVE_MINUTE_MAX_WORDS = 900;
 const SECTION_MAX_WORDS = 520;
@@ -113,6 +125,44 @@ export function buildTtsArticleManifest({
     artifacts,
     sections,
   };
+}
+
+export function buildNativeTtsArticleManifest(input: {
+  slug: string;
+  title: string;
+  document: NativeTtsDocument;
+  generatedAt?: string;
+}): TtsArticleManifest {
+  return buildTtsArticleManifest({
+    slug: input.slug,
+    title: input.title,
+    source: nativeDocumentToTtsSource(input.document),
+    generatedAt: input.generatedAt,
+  });
+}
+
+/** Convert a validated native DOCUMENT tree into deterministic narration text. */
+export function nativeDocumentToTtsSource(document: NativeTtsDocument): string {
+  const lines: string[] = [];
+  const textOf = (node: NativeTtsNode): string =>
+    normalizeText(
+      [node.text ?? "", ...(node.content ?? []).map(textOf)].join(" "),
+    );
+  for (const node of document.content) {
+    const value = textOf(node);
+    if (!value) continue;
+    if (node.type === "heading") {
+      const rawLevel = node.attrs?.level;
+      const level =
+        typeof rawLevel === "number" && Number.isInteger(rawLevel)
+          ? Math.min(4, Math.max(2, rawLevel))
+          : 2;
+      lines.push("#".repeat(level) + " " + value);
+    } else {
+      lines.push(value);
+    }
+  }
+  return lines.join("\n\n");
 }
 
 export function extractTtsSections(source: string): TtsSection[] {
