@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "generate:tts": "tsx scripts/generate-tts-artifacts.ts",
-    "qa:insights": "tsx scripts/qa-log-insights.ts",
     "asset:insert": "node scripts/insert-content-image.mjs",
     "cover:auto": "node scripts/generate-content-covers.mjs",
     "visual:auto": "node scripts/generate-inline-visuals.mjs",
@@ -30,7 +29,6 @@
     "@app/design-system": "workspace:*",
     "@app/ui": "workspace:*",
     "@app/utils": "workspace:*",
-    "@giscus/react": "^3.1.0",
     "@tanstack/react-query": "^5.0.0",
     "@tiptap/core": "^3.31.4",
     "@tiptap/extension-image": "^3.31.4",

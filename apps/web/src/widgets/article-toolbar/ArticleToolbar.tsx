@@ -1,20 +1,14 @@
 "use client";
 
-import { useEffect, useCallback, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconButton } from "@app/ui";
-import {
-  IoArrowBack,
-  IoChatbubbleOutline,
-  IoEaselOutline,
-} from "react-icons/io5";
-import { CommentModal } from "@/widgets/comment";
+import { IoArrowBack, IoEaselOutline } from "react-icons/io5";
 import { PresentationView } from "@/widgets/presentation";
 import {
   markAsRead,
   updateReadProgress,
 } from "@/widgets/recently-read/RecentlyRead";
-import { markAsCommented } from "@/widgets/comment/comment-tracker";
 
 interface ArticleToolbarProps {
   slug: string;
@@ -22,7 +16,7 @@ interface ArticleToolbarProps {
 }
 
 /**
- * 글 하단 플로팅 툴바. 댓글/뒤로가기 + 읽기 진행률 추적을 담당한다.
+ * 글 하단 플로팅 툴바. 프레젠테이션/뒤로가기 + 읽기 진행률 추적을 담당한다.
  *
  * @example
  * ```tsx
@@ -31,7 +25,6 @@ interface ArticleToolbarProps {
  */
 export function ArticleToolbar({ slug, title }: ArticleToolbarProps) {
   const router = useRouter();
-  const [commentOpen, setCommentOpen] = useState(false);
   const [presentationOpen, setPresentationOpen] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const articleSectionRef = useRef<HTMLElement | null>(null);
@@ -39,17 +32,6 @@ export function ArticleToolbar({ slug, title }: ArticleToolbarProps) {
   useEffect(() => {
     markAsRead(`/blog/${slug}`, title);
   }, [slug, title]);
-
-  useEffect(() => {
-    const handleOpenComments = (event: Event) => {
-      if (event instanceof CustomEvent && event.detail?.source === "post_qa") {
-        setCommentOpen(true);
-      }
-    };
-    window.addEventListener("seojing:open-comments", handleOpenComments);
-    return () =>
-      window.removeEventListener("seojing:open-comments", handleOpenComments);
-  }, []);
 
   useEffect(() => {
     articleSectionRef.current = toolbarRef.current?.closest("section") ?? null;
@@ -84,10 +66,6 @@ export function ArticleToolbar({ slug, title }: ArticleToolbarProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [slug]);
 
-  const handleComment = useCallback(() => {
-    markAsCommented(`/blog/${slug}`);
-  }, [slug]);
-
   return (
     <>
       <div
@@ -106,14 +84,6 @@ export function ArticleToolbar({ slug, title }: ArticleToolbarProps) {
           <IconButton
             variant="ghost"
             size="sm"
-            aria-label="댓글"
-            onClick={() => setCommentOpen(true)}
-          >
-            <IoChatbubbleOutline className="size-5" />
-          </IconButton>
-          <IconButton
-            variant="ghost"
-            size="sm"
             aria-label="뒤로가기"
             onClick={() => router.back()}
           >
@@ -121,12 +91,6 @@ export function ArticleToolbar({ slug, title }: ArticleToolbarProps) {
           </IconButton>
         </div>
       </div>
-      <CommentModal
-        open={commentOpen}
-        onClose={() => setCommentOpen(false)}
-        slug={slug}
-        onComment={handleComment}
-      />
       {presentationOpen && (
         <PresentationView
           articleRef={articleSectionRef}

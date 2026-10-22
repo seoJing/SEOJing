@@ -22,6 +22,9 @@ describe("MDX migration review manifest", () => {
       .map((path) => path.slice(contentRoot.length + 1).replaceAll("\\", "/"))
       .filter((path) => path !== "resume.mdx")
       .sort();
+    expect(entries).toHaveLength(201);
+    expect(paths).toHaveLength(201);
+    expect(new Set(entries.map((entry) => entry.slug)).size).toBe(201);
     expect(entries.map((entry) => entry.sourcePath).sort()).toEqual(paths);
     for (const entry of entries) {
       expect(entry.slug).toBe(

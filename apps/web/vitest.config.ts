@@ -40,6 +40,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "next/navigation": "vinext/shims/navigation",
+      "next/link": "vinext/shims/link",
       "cloudflare:workers": path.resolve(
         __dirname,
         "./src/shared/lib/cloudflare-workers-test-mock.ts",
