@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconButton } from "@app/ui";
-import { IoArrowBack, IoEaselOutline } from "react-icons/io5";
+import {
+  IoArrowBack,
+  IoEaselOutline,
+  IoChatbubbleOutline,
+} from "react-icons/io5";
+import { CommentModal } from "@/widgets/comment/CommentModal";
 import { PresentationView } from "@/widgets/presentation";
 import {
   markAsRead,
@@ -25,6 +30,7 @@ interface ArticleToolbarProps {
  */
 export function ArticleToolbar({ slug, title }: ArticleToolbarProps) {
   const router = useRouter();
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const [presentationOpen, setPresentationOpen] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const articleSectionRef = useRef<HTMLElement | null>(null);
@@ -76,6 +82,14 @@ export function ArticleToolbar({ slug, title }: ArticleToolbarProps) {
           <IconButton
             variant="ghost"
             size="sm"
+            aria-label="댓글"
+            onClick={() => setCommentsOpen(true)}
+          >
+            <IoChatbubbleOutline className="size-5" />
+          </IconButton>
+          <IconButton
+            variant="ghost"
+            size="sm"
             aria-label="프레젠테이션"
             onClick={() => setPresentationOpen(true)}
           >
@@ -91,6 +105,11 @@ export function ArticleToolbar({ slug, title }: ArticleToolbarProps) {
           </IconButton>
         </div>
       </div>
+      <CommentModal
+        open={commentsOpen}
+        onClose={() => setCommentsOpen(false)}
+        slug={slug}
+      />
       {presentationOpen && (
         <PresentationView
           articleRef={articleSectionRef}

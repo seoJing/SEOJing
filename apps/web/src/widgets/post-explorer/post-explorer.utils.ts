@@ -39,7 +39,8 @@ export function toExplorerItems(
     return {
       type: "file" as const,
       name: node.frontmatter?.title ?? node.name,
-      extension: node.extension ?? "mdx",
+      extension: node.extension ?? "",
+      kind: node.kind,
       href,
       date: node.frontmatter?.date,
       visited: visitedHrefs.has(href),

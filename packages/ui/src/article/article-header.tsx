@@ -1,14 +1,5 @@
-import { cn } from "@app/utils";
+import { cn, formatDateOnly } from "@app/utils";
 import type { ArticleHeaderProps } from "./article.types";
-
-function formatDate(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
 
 export function ArticleHeader({
   title,
@@ -58,7 +49,7 @@ export function ArticleHeader({
           </>
         )}
         <time dateTime={typeof date === "string" ? date : date.toISOString()}>
-          {formatDate(date)}
+          {formatDateOnly(date)}
         </time>
         {updated && (
           <>
@@ -70,7 +61,7 @@ export function ArticleHeader({
                   typeof updated === "string" ? updated : updated.toISOString()
                 }
               >
-                {formatDate(updated)}
+                {formatDateOnly(updated)}
               </time>
             </span>
           </>

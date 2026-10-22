@@ -1,6 +1,6 @@
 # Post-management retirement boundaries
 
-This cleanup removes the blog Q&A/RAG endpoint and widgets, blog audio player, Giscus/comment widgets and comment tracking. Public `/blog` index/detail, sitemap, RSS, llms.txt, presentation, reading progress/history, protected `/ops/articles`, backend article fallback and D1 public snapshot synchronization remain.
+This cleanup removes the blog Q&A/RAG endpoint and widgets, blog audio player and comment tracking. Giscus public article comments were subsequently restored from the pre-PR61 configuration; see `cms-corrections-verification.md`. Public `/blog` index/detail, sitemap, RSS, llms.txt, presentation, reading progress/history, protected `/ops/articles`, backend article fallback and D1 public snapshot synchronization remain.
 
 Career routes/code were already absent from tracked application source. The regression suite enumerates actual route files, checks navigation and application/corpus links, executes sitemap/RSS/llms handlers against all retained manifest slugs, and checks retired module absence. It also exercises the remaining toolbar controls. These are assertions against current source/behavior, not updated snapshots.
 

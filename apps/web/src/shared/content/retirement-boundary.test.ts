@@ -56,7 +56,6 @@ describe("retired Career and blog interaction boundaries", () => {
     }
     for (const directory of [
       "src/widgets/post-qa",
-      "src/widgets/comment",
       "src/widgets/blog-audio-player",
       "src/shared/rag",
     ]) {
@@ -65,7 +64,10 @@ describe("retired Career and blog interaction boundaries", () => {
         directory,
       ).toEqual([]);
     }
-    expect(existsSync(resolve("src/shared/config/giscus.ts"))).toBe(false);
+    expect(existsSync(resolve("src/shared/config/giscus.ts"))).toBe(true);
+    expect(existsSync(resolve("src/widgets/comment/comment-tracker.ts"))).toBe(
+      false,
+    );
     for (const path of [
       "src/widgets/ops-articles/MdxReviewQueue.tsx",
       "src/widgets/ops-articles/NativeDocumentEditor.tsx",
@@ -81,7 +83,7 @@ describe("retired Career and blog interaction boundaries", () => {
       "scripts/insert-content-image.mjs",
     ])
       expect(existsSync(resolve(path)), path).toBe(true);
-    expect(readFileSync(resolve("package.json"), "utf8")).not.toContain(
+    expect(readFileSync(resolve("package.json"), "utf8")).toContain(
       "@giscus/react",
     );
   });
@@ -107,7 +109,7 @@ describe("retired Career and blog interaction boundaries", () => {
       const source = readFileSync(path, "utf8");
       expect(source, relative(process.cwd(), path)).not.toMatch(retiredLink);
       expect(source, relative(process.cwd(), path)).not.toMatch(
-        /(?:from\s*|import\s*)["'][^"']*(?:widgets\/(?:post-qa|comment|blog-audio-player)|shared\/rag)[^"']*["']/,
+        /(?:from\s*|import\s*)["'][^"']*(?:widgets\/(?:post-qa|blog-audio-player)|shared\/rag)[^"']*["']/,
       );
     }
   });

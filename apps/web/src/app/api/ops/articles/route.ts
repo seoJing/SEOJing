@@ -67,6 +67,7 @@ type AdminArticlePayload = {
     editingRevisionId?: string | null;
     sourceText?: string;
     renderedHtml?: string | null;
+    preview?: BackendArticleApiResponse;
     previewRenderedHtml?: string | null;
     previewIssues?: Array<{ name: string; line: number }>;
     blocks?: AdminArticleBlock[];
@@ -193,11 +194,50 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const action = readString(body, "action");
+  if (action === "bulkPublish" || action === "bulkUnpublish") {
+    return bulkVisibility(
+      body,
+      action === "bulkPublish" ? "publish" : "unpublish",
+    );
+  }
   const slug = readString(body, "slug");
   if (!slug) return jsonResponse(400, { ok: false, error: "slug_required" });
 
   const config = readBackendConfig();
   if (!config.ok) return jsonResponse(config.status, config.body);
+
+  if (action === "preview") {
+    const result = await fetchBackendJson<{
+      preview: BackendArticleApiResponse;
+      error?: string;
+    }>(config.origin, "/admin/articles/preview", {
+      method: "POST",
+      adminToken: config.adminToken,
+      body: JSON.stringify(
+        Object.fromEntries(
+          [
+            "slug",
+            "title",
+            "description",
+            "category",
+            "document",
+            "blocks",
+            "tags",
+            "cover",
+            "summaryVideo",
+            "displayDate",
+            "displayUpdatedAt",
+          ].map((key) => [key, readField(body, key)]),
+        ),
+      ),
+    });
+    return result.ok
+      ? jsonResponse(200, { ok: true, preview: result.data.preview })
+      : jsonResponse(result.status, {
+          ok: false,
+          error: result.error ?? "backend_preview_failed",
+        });
+  }
 
   if (action === "createDocument" || action === "saveDocument") {
     const title = readString(body, "title");
@@ -391,6 +431,18 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
+  if (action === "reconcileVisibility") {
+    const ok = await reconcilePublicSnapshot(
+      config.origin,
+      config.adminToken,
+      slug,
+    );
+    return jsonResponse(ok ? 200 : 503, {
+      ok,
+      ...(ok ? {} : { error: "snapshot_reconciliation_failed" }),
+    });
+  }
+
   if (action === "syncPublished") {
     const synced = await syncPublicSnapshot(config.origin, slug);
     return synced.ok
@@ -446,11 +498,19 @@ export async function POST(request: Request): Promise<Response> {
       { method: "POST", adminToken: config.adminToken },
     );
     if (!updated.ok) {
-      await restorePublicSnapshot(previous.article);
+      const reconciled =
+        updated.status < 500
+          ? await reconcilePublicSnapshot(
+              config.origin,
+              config.adminToken,
+              slug,
+            )
+          : false;
       return jsonResponse(updated.status, {
         ok: false,
         error: `backend_${visibilityAction}_failed`,
         status: updated.status,
+        ...(reconciled ? {} : { retryAction: "reconcileVisibility" }),
       });
     }
     return jsonResponse(200, {
@@ -485,6 +545,138 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   return jsonResponse(400, { ok: false, error: "unsupported_action" });
+}
+
+type BulkItemResult = {
+  slug: string;
+  ok: boolean;
+  status?: string;
+  error?: string;
+  article?: BackendArticleApiResponse;
+  retryAction?: string;
+};
+
+function isBulkScope(scope: unknown): scope is Record<string, string> {
+  if (!scope || typeof scope !== "object" || Array.isArray(scope)) return false;
+  return Object.entries(scope).every(([key, value]) => {
+    if (typeof value !== "string") return false;
+    if (key === "category") return value.length > 0 && value.length <= 120;
+    if (key === "query") return value.length <= 200;
+    if (key === "status")
+      return ["DRAFT", "PUBLISHED", "ARCHIVED"].includes(value);
+    if (key === "format") return ["DOCUMENT", "BLOCKS", "MDX"].includes(value);
+    return false;
+  });
+}
+
+async function bulkVisibility(
+  body: unknown,
+  action: "publish" | "unpublish",
+): Promise<Response> {
+  const slugs = readField(body, "slugs");
+  const scope = readField(body, "scope");
+  if (
+    !Array.isArray(slugs) ||
+    slugs.length < 1 ||
+    slugs.length > 20 ||
+    new Set(slugs).size !== slugs.length ||
+    slugs.some(
+      (slug) =>
+        typeof slug !== "string" ||
+        slug.length > 240 ||
+        !/^[\p{L}\p{N}_-]+(?:\/[\p{L}\p{N}_-]+)*$/u.test(slug),
+    ) ||
+    !isBulkScope(scope)
+  ) {
+    return jsonResponse(400, { ok: false, error: "invalid_bulk_scope" });
+  }
+  const config = readBackendConfig();
+  if (!config.ok) return jsonResponse(config.status, config.body);
+  const results: BulkItemResult[] = [];
+  // Bound work and report every item. A failed/unknown write never restores an
+  // old snapshot blindly: reconciliation reads the current authenticated state.
+  for (const slug of slugs as string[]) {
+    if (action === "unpublish") {
+      try {
+        await deletePublicArticle(slug);
+      } catch {
+        results.push({
+          slug,
+          ok: false,
+          error: "public_snapshot_delete_failed",
+        });
+        continue;
+      }
+    }
+    const changed = await fetchBackendJson<{ results: BulkItemResult[] }>(
+      config.origin,
+      "/admin/articles/bulk-visibility",
+      {
+        method: "POST",
+        adminToken: config.adminToken,
+        body: JSON.stringify({ action, slugs: [slug], scope }),
+      },
+    );
+    const result = changed.ok ? changed.data.results?.[0] : undefined;
+    if (!result || result.slug !== slug || !result.ok) {
+      // A timeout may still complete on the backend. Keep the public snapshot
+      // absent until an explicit retry; never resurrect a stale public article.
+      const reconciled =
+        result && result.slug === slug
+          ? await reconcilePublicSnapshot(
+              config.origin,
+              config.adminToken,
+              slug,
+            )
+          : false;
+      results.push({
+        slug,
+        ok: false,
+        error: result?.error ?? "backend_visibility_unknown",
+        ...(reconciled ? {} : { retryAction: "reconcileVisibility" }),
+      });
+      continue;
+    }
+    try {
+      if (action === "publish") {
+        if (!result.article) throw new Error("Missing publication snapshot");
+        await putPublicArticle(result.article);
+      }
+      results.push({ slug, ok: true, status: result.status });
+    } catch {
+      results.push({
+        slug,
+        ok: false,
+        status: result.status,
+        error: "public_snapshot_sync_failed",
+        retryAction: "reconcileVisibility",
+      });
+    }
+  }
+  return jsonResponse(200, {
+    ok: results.every((result) => result.ok),
+    results,
+  });
+}
+
+async function reconcilePublicSnapshot(
+  origin: string,
+  adminToken: string,
+  slug: string,
+): Promise<boolean> {
+  const current = await fetchBackendJson<BackendArticleApiResponse>(
+    origin,
+    `/admin/articles/${encodeURIComponent(slug)}/public-snapshot`,
+    { method: "GET", adminToken },
+  );
+  try {
+    if (current.ok) await putPublicArticle(current.data);
+    else if (current.status === 404) await deletePublicArticle(slug);
+    else return false;
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function removePublicSnapshotBeforeBackend(

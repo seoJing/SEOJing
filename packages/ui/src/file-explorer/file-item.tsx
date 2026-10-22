@@ -15,8 +15,9 @@ export function FileItem({
   size = "md",
   isHighLighting = false,
 }: FileItemProps) {
-  const IconComponent = FILE_ICON_MAP[file.extension] ?? DefaultFileIcon;
-  const iconColor = FILE_ICON_COLORS[file.extension] ?? "text-gray-400";
+  const iconKey = file.kind === "article" ? "article" : file.extension;
+  const IconComponent = FILE_ICON_MAP[iconKey] ?? DefaultFileIcon;
+  const iconColor = FILE_ICON_COLORS[iconKey] ?? "text-gray-400";
   return (
     <a
       href={file.href}
@@ -32,6 +33,8 @@ export function FileItem({
       )}
     >
       <IconComponent
+        aria-hidden="true"
+        data-file-kind={file.kind}
         className={cn("shrink-0", iconColor, EXPLORER_ICON_SIZES[size])}
       />
       <span

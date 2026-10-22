@@ -14,6 +14,72 @@ vi.mock("@/shared/content/public-article-store", () => ({
 import { GET, POST } from "./route";
 
 describe("/api/ops/articles", () => {
+  it("proxies preview through the protected backend without touching public snapshots", async () => {
+    configureBackend();
+    const preview = {
+      slug: "study/post",
+      title: "Preview",
+      body: { html: "<p>Safe</p>" },
+    };
+    const fetchSpy = vi.fn(async () => Response.json({ preview }));
+    vi.stubGlobal("fetch", fetchSpy);
+    const response = await POST(
+      new Request("http://localhost/api/ops/articles", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "preview",
+          slug: "study/post",
+          title: "Preview",
+          blocks: [],
+          renderedHtml: "untrusted",
+          sourceText: "never forwarded",
+        }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, preview });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "http://127.0.0.1:4027/admin/articles/preview",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          authorization: "Bearer test-admin-token",
+        }),
+        body: JSON.stringify({
+          slug: "study/post",
+          title: "Preview",
+          blocks: [],
+        }),
+      }),
+    );
+    expect(snapshot.put).not.toHaveBeenCalled();
+    expect(snapshot.remove).not.toHaveBeenCalled();
+    expect(snapshot.read).not.toHaveBeenCalled();
+  });
+
+  it("rejects unauthenticated preview requests before sending draft content", async () => {
+    configureBackend();
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("SEOJING_OPS_ACCESS_EMAIL", "owner@example.com");
+    vi.stubEnv("SEOJING_OPS_ACCESS_ISSUER", "https://access.example.com");
+    vi.stubEnv("SEOJING_OPS_ACCESS_AUD", "test-audience");
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    const response = await POST(
+      new Request("https://seojing.com/api/ops/articles", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "preview",
+          slug: "study/post",
+          title: "Preview",
+          blocks: [],
+        }),
+      }),
+    );
+    expect(response.status).toBe(401);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it("proxies the private review queue without a slug", async () => {
     vi.stubEnv("SEOJING_BACKEND_API_ORIGIN", "http://127.0.0.1:4027/");
     vi.stubEnv("SEOJING_BACKEND_ADMIN_API_TOKEN", "test-admin-token");
@@ -172,7 +238,9 @@ describe("/api/ops/articles", () => {
     });
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => {
+      vi.fn(async (url: unknown) => {
+        if (String(url).endsWith("public-snapshot"))
+          return Response.json(article);
         events.push("backend-unpublish");
         return Response.json({ error: "conflict" }, { status: 409 });
       }),
@@ -362,5 +430,105 @@ describe("/api/ops/articles", () => {
       expect.objectContaining({ method: "POST" }),
     );
     expect(response.status).toBe(201);
+  });
+});
+
+describe("bounded bulk visibility proxy", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+    vi.resetAllMocks();
+  });
+  function setup() {
+    vi.stubEnv("SEOJING_BACKEND_API_ORIGIN", "http://127.0.0.1:4027");
+    vi.stubEnv("SEOJING_BACKEND_ADMIN_API_TOKEN", "local-test-only");
+  }
+  const request = (body: unknown) =>
+    new Request("http://localhost/api/ops/articles", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  it("rejects empty, duplicate, oversized, and missing scopes before mutation", async () => {
+    setup();
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    for (const body of [
+      { slugs: [] },
+      { slugs: ["a", "a"] },
+      { slugs: Array.from({ length: 21 }, (_, i) => `p${i}`) },
+      { slugs: ["../private"] },
+    ]) {
+      expect(
+        (await POST(request({ action: "bulkPublish", scope: {}, ...body })))
+          .status,
+      ).toBe(400);
+    }
+    expect(
+      (await POST(request({ action: "bulkPublish", slugs: ["a"] }))).status,
+    ).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+  it("reports D1 failure as a recoverable partial publication", async () => {
+    setup();
+    snapshot.put.mockRejectedValueOnce(new Error("D1 unavailable"));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          results: [
+            {
+              slug: "study/a",
+              ok: true,
+              status: "PUBLISHED",
+              article: { slug: "study/a" },
+            },
+          ],
+        }),
+      ),
+    );
+    const response = await POST(
+      request({
+        action: "bulkPublish",
+        slugs: ["study/a"],
+        scope: { category: "Study" },
+      }),
+    );
+    expect(await response.json()).toMatchObject({
+      ok: false,
+      results: [
+        {
+          slug: "study/a",
+          ok: false,
+          status: "PUBLISHED",
+          retryAction: "reconcileVisibility",
+        },
+      ],
+    });
+  });
+  it("does not write backend on D1 removal failure or resurrect snapshots after uncertain outcomes", async () => {
+    setup();
+    snapshot.remove.mockRejectedValueOnce(new Error("D1 unavailable"));
+    const fetchMock = vi.fn(async (url: unknown) =>
+      String(url).endsWith("public-snapshot")
+        ? Response.json({ slug: "study/b" })
+        : Response.json({ error: "failed" }, { status: 503 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const response = await POST(
+      request({
+        action: "bulkUnpublish",
+        slugs: ["study/a", "study/b"],
+        scope: {},
+      }),
+    );
+    expect(await response.json()).toMatchObject({
+      ok: false,
+      results: [
+        { slug: "study/a", error: "public_snapshot_delete_failed" },
+        { slug: "study/b", error: "backend_visibility_unknown" },
+      ],
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(snapshot.put).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import { ArticleHeader, Paper } from "@app/ui";
-import { calculateReadingTime } from "@app/utils";
+import { ArticleContentView } from "@/shared/content/ArticleContentView";
 import { getContentTree, isSlugFolder, loadContent } from "@/shared/config";
 import { NewPostsCarousel } from "@/widgets/new-posts-carousel/NewPostsCarousel";
 import { RecentlyRead } from "@/widgets/recently-read/RecentlyRead";
@@ -8,7 +7,6 @@ import { PostExplorer } from "@/widgets/post-explorer/PostExplorer";
 import { PostGrid } from "@/widgets/post-grid";
 import { ArticleToolbar } from "@/widgets/article-toolbar/ArticleToolbar";
 import { ArticleAnalytics } from "@/widgets/article-analytics";
-import { SummaryVideo } from "@/widgets/summary-video";
 import type { Metadata } from "vinext/shims/metadata";
 import {
   buildArticleMetadata,
@@ -71,7 +69,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound();
   }
 
-  const ArticleContent = content.compiled.default;
   const wayFindingPath = `/blog/${slug.join("/")}`;
   const rootPath = `/${slug.slice(0, -1).join("/")}`;
   const description = getArticleDescription(
@@ -87,51 +84,42 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           breadcrumbJsonLd(slug),
         ]}
       />
-      <Paper>
-        <ArticleAnalytics
-          slug={slug.join("/")}
-          title={content.frontmatter.title}
-        />
-        <div className="relative">
-          <ArticleHeader
-            title={content.frontmatter.title}
-            date={content.frontmatter.date}
-            updated={content.frontmatter.updated}
-            tags={content.frontmatter.tags}
-            readingTime={calculateReadingTime(content.source)}
-          />
-          <SummaryVideo
-            video={content.frontmatter.summaryVideo}
+      <ArticleContentView
+        content={content}
+        before={
+          <ArticleAnalytics
+            slug={slug.join("/")}
             title={content.frontmatter.title}
           />
-          <div className="article-prose" data-article-content>
-            <ArticleContent />
-          </div>
-        </div>
-        <ArticleToolbar
-          slug={slug.join("/")}
-          title={content.frontmatter.title}
-        />
-        <PostExplorer
-          rootPath={rootPath}
-          wayFindingPath={wayFindingPath}
-          contentTree={contentTree}
-        />
-        <PostGrid
-          rootPath={rootPath}
-          title="같은 섹션의 대표 이미지"
-          contentTree={contentTree}
-        />
-        <div className="mt-16 border-t border-foreground/10 pt-5 text-right">
-          <a
-            href={`/ops/articles/edit?slug=${encodeURIComponent(slug.join("/"))}`}
-            className="text-xs text-foreground/35 transition-colors hover:text-foreground/65"
-            title="관리자 전용 · Cloudflare Access 로그인 필요"
-          >
-            관리자용 글 수정
-          </a>
-        </div>
-      </Paper>
+        }
+        after={
+          <>
+            <ArticleToolbar
+              slug={slug.join("/")}
+              title={content.frontmatter.title}
+            />
+            <PostExplorer
+              rootPath={rootPath}
+              wayFindingPath={wayFindingPath}
+              contentTree={contentTree}
+            />
+            <PostGrid
+              rootPath={rootPath}
+              title="같은 섹션의 대표 이미지"
+              contentTree={contentTree}
+            />
+            <div className="mt-16 border-t border-foreground/10 pt-5 text-right">
+              <a
+                href={`/ops/articles/edit?slug=${encodeURIComponent(slug.join("/"))}`}
+                className="text-xs text-foreground/35 transition-colors hover:text-foreground/65"
+                title="관리자 전용 · Cloudflare Access 로그인 필요"
+              >
+                관리자용 글 수정
+              </a>
+            </div>
+          </>
+        }
+      />
     </div>
   );
 }

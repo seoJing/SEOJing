@@ -16,7 +16,7 @@ export default async function OpsArticleEditPage({
   const params = searchParams ? await searchParams : {};
   const selectedSlug = params.slug?.trim() ?? "";
   return (
-    <main className="mx-auto max-w-5xl px-3 py-6 text-zinc-950 dark:text-zinc-50 sm:px-4 sm:py-10">
+    <main className="min-w-0 py-6 text-zinc-950 dark:text-zinc-50 sm:py-10">
       <header className="mb-6">
         <a
           href="/ops/articles"
