@@ -197,6 +197,7 @@ export function OpsArticleList() {
   }
   async function reconcile(slug: string) {
     setBusy(true);
+    setError("");
     try {
       const response = await fetch("/api/ops/articles", {
         method: "POST",
@@ -317,7 +318,7 @@ export function OpsArticleList() {
           ))}
         </ul>
       ) : null}
-      {!loading ? (
+      {!loading && (!error || rows.length > 0) ? (
         <>
           <p className="mt-4 text-sm text-zinc-500">
             {filtered.length}개 글 · 최근 수정일 순

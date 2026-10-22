@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { OpsArticleList } from "./OpsArticleList";
@@ -103,4 +103,105 @@ it("selects only the current page, shows indeterminate, clears hidden selection,
     scope: { category: "Study", query: "study/post-0" },
   });
   vi.restoreAllMocks();
+});
+
+it("hides an empty list after the initial load fails", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () =>
+      Response.json({ ok: false, error: "목록 조회 실패" }, { status: 500 }),
+    ),
+  );
+  render(<OpsArticleList />);
+  expect(await screen.findByRole("alert")).toHaveTextContent("목록 조회 실패");
+  expect(screen.queryByText("0개 글 · 최근 수정일 순")).toBeNull();
+  expect(screen.queryByText("조건에 맞는 글이 없습니다.")).toBeNull();
+});
+
+it("preserves loaded rows when a later refresh fails", async () => {
+  const article = {
+    slug: "study/kept",
+    title: "Kept article",
+    category: "Study",
+    status: "DRAFT",
+    sourceFormat: "DOCUMENT",
+    updatedAt: "2026-10-22T00:00:00Z",
+  };
+  let call = 0;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => {
+      call += 1;
+      if (call === 1) return Response.json({ ok: true, articles: [article] });
+      if (call === 2)
+        return Response.json({
+          ok: true,
+          results: [{ slug: article.slug, ok: true }],
+        });
+      return Response.json(
+        { ok: false, error: "목록 새로고침 실패" },
+        { status: 500 },
+      );
+    }),
+  );
+  vi.spyOn(window, "confirm").mockReturnValue(true);
+  render(<OpsArticleList />);
+  await screen.findByText("Kept article");
+  fireEvent.click(screen.getByRole("checkbox", { name: "Kept article 선택" }));
+  fireEvent.click(screen.getByRole("button", { name: "선택 공개" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "목록 새로고침 실패",
+  );
+  expect(screen.getByText("Kept article")).toBeVisible();
+});
+
+it("clears a stale reconcile error before a successful retry", async () => {
+  const article = {
+    slug: "study/reconcile",
+    title: "Reconcile article",
+    category: "Study",
+    status: "PUBLISHED",
+    sourceFormat: "DOCUMENT",
+    updatedAt: "2026-10-22T00:00:00Z",
+  };
+  let call = 0;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => {
+      call += 1;
+      if (call === 1 || call === 3 || call === 6)
+        return Response.json({ ok: true, articles: [article] });
+      if (call === 2)
+        return Response.json({
+          ok: true,
+          results: [
+            {
+              slug: article.slug,
+              ok: false,
+              error: "공개 상태 불일치",
+              retryAction: "reconcileVisibility",
+            },
+          ],
+        });
+      if (call === 4) return Response.json({ ok: false }, { status: 500 });
+      return Response.json({ ok: true });
+    }),
+  );
+  vi.spyOn(window, "confirm").mockReturnValue(true);
+  render(<OpsArticleList />);
+  await screen.findByText("Reconcile article");
+  fireEvent.click(
+    screen.getByRole("checkbox", { name: "Reconcile article 선택" }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "선택 비공개" }));
+  const retry = await screen.findByRole("button", {
+    name: "공개 상태 확인 · study/reconcile",
+  });
+  fireEvent.click(retry);
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "상태 확인 실패. 다시 시도하세요.",
+  );
+  fireEvent.click(retry);
+  await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+  expect(screen.queryByRole("button", { name: /공개 상태 확인/ })).toBeNull();
 });

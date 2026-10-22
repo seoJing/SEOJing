@@ -17,6 +17,10 @@ it("labels the dialog, contains keyboard focus, closes on Escape and restores fo
   expect(first).toHaveFocus();
   fireEvent.keyDown(first, { key: "Tab", shiftKey: true });
   expect(last).toHaveFocus();
+  const panel = first.closest<HTMLElement>('[tabindex="-1"]')!;
+  panel.focus();
+  fireEvent.keyDown(panel, { key: "Tab", shiftKey: true });
+  expect(last).toHaveFocus();
   fireEvent.keyDown(last, { key: "Tab" });
   expect(first).toHaveFocus();
   fireEvent.keyDown(first, { key: "Escape" });

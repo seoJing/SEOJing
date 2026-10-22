@@ -16,6 +16,8 @@ describe("date-only ko-KR / Asia-Seoul contract", () => {
       "",
       "garbage",
       "2025-02-29",
+      "2025-02-29T00:00:00Z",
+      "2026-04-31T23:00:00+09:00",
       "2026-10-22T00:00:00",
       null,
       undefined,

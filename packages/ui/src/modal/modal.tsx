@@ -40,7 +40,10 @@ export function Modal({
       if (!first) {
         event.preventDefault();
         panel?.focus();
-      } else if (event.shiftKey && document.activeElement === first) {
+      } else if (
+        event.shiftKey &&
+        (document.activeElement === first || document.activeElement === panel)
+      ) {
         event.preventDefault();
         last?.focus();
       } else if (!event.shiftKey && document.activeElement === last) {
