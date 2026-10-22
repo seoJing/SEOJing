@@ -28,7 +28,7 @@ export function flattenFiles(nodes: ContentNode[]): SearchResult[] {
   return results;
 }
 
-/** MDX 경로를 블로그 URL로 변환 */
-export function toPostHref(mdxPath: string) {
-  return `/blog${mdxPath.replace(/\.mdx?$/, "")}`;
+/** Native content-tree path를 블로그 URL로 변환 */
+export function toPostHref(contentPath: string) {
+  return "/blog" + contentPath;
 }

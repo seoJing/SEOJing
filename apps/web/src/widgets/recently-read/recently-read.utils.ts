@@ -69,7 +69,7 @@ export function collectHrefs(nodes: ContentNode[]): Set<string> {
   function walk(items: ContentNode[]) {
     for (const node of items) {
       if (node.type === "file" && node.frontmatter) {
-        hrefs.add(`/blog${node.path.replace(/\.mdx?$/, "")}`);
+        hrefs.add("/blog" + node.path);
       }
       if (node.type === "folder" && node.children) {
         walk(node.children);
@@ -104,7 +104,7 @@ export function buildDescriptionMap(nodes: ContentNode[]): Map<string, string> {
   function walk(items: ContentNode[]) {
     for (const node of items) {
       if (node.type === "file" && node.frontmatter) {
-        const href = `/blog${node.path.replace(/\.mdx?$/, "")}`;
+        const href = "/blog" + node.path;
         map.set(href, node.frontmatter.description);
       }
       if (node.type === "folder" && node.children) {

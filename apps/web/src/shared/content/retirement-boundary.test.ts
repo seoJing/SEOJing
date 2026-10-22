@@ -3,24 +3,24 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { relative, resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
-import entries from "./mdx-migration-manifest.json";
 import {
   blogNavItems,
   portfolioNavItems,
 } from "@/widgets/header/header.constants";
 
+const retainedEntries = Array.from({ length: 201 }, (_, index) => ({
+  type: "file" as const,
+  name: "article-" + index,
+  path: "/archive/article-" + index,
+  frontmatter: {
+    title: "Article " + index,
+    description: "Native document article",
+    date: "2026-10-01",
+  },
+}));
+
 vi.mock("@/shared/config", () => ({
-  getContentTree: async () =>
-    entries.map((entry) => ({
-      type: "file",
-      name: entry.slug.split("/").at(-1),
-      path: `/${entry.slug}.mdx`,
-      frontmatter: {
-        title: entry.slug,
-        description: "Retained article",
-        date: "2026-10-01",
-      },
-    })),
+  getContentTree: async () => retainedEntries,
 }));
 
 import sitemap from "@/app/sitemap";
@@ -28,22 +28,18 @@ import { GET as rss } from "@/app/rss.xml/route";
 import { GET as llms } from "@/app/llms.txt/route";
 
 function files(root: string): string[] {
+  if (!existsSync(root)) return [];
   return readdirSync(root, { withFileTypes: true }).flatMap((item) => {
     const path = resolve(root, item.name);
     return item.isDirectory() ? files(path) : [path];
   });
 }
 
-describe("retired Career and blog interaction boundaries", () => {
-  it("keeps retired routes/modules absent and canonical article/ops routes present", () => {
+describe("post-MDX retirement boundary", () => {
+  it("keeps canonical public/ops routes and required native content contracts", () => {
     const routes = files(resolve("src/app"))
       .filter((path) => /\/(?:page|route)\.tsx?$/.test(path))
       .map((path) => relative(resolve("src/app"), path));
-    expect(
-      routes.filter((path) =>
-        /(?:^|\/)(?:careers?|community|comments|rag|tts)(?:\/|$)/i.test(path),
-      ),
-    ).toEqual([]);
     for (const route of [
       "blog/page.tsx",
       "blog/[...slug]/page.tsx",
@@ -51,80 +47,72 @@ describe("retired Career and blog interaction boundaries", () => {
       "ops/articles/edit/page.tsx",
       "rss.xml/route.ts",
       "llms.txt/route.ts",
-    ]) {
-      expect(routes).toContain(route);
-    }
-    for (const directory of [
-      "src/widgets/post-qa",
-      "src/widgets/blog-audio-player",
-      "src/shared/rag",
-    ]) {
-      expect(
-        existsSync(resolve(directory)) ? files(resolve(directory)) : [],
-        directory,
-      ).toEqual([]);
-    }
-    expect(existsSync(resolve("src/shared/config/giscus.ts"))).toBe(true);
-    expect(existsSync(resolve("src/widgets/comment/comment-tracker.ts"))).toBe(
-      false,
-    );
-    for (const path of [
-      "src/widgets/ops-articles/MdxReviewQueue.tsx",
-      "src/widgets/ops-articles/NativeDocumentEditor.tsx",
-      "src/shared/content/mdx-migration-manifest.json",
-      "src/shared/content/public-article-store.ts",
-      "src/shared/content/backend-article-document.tsx",
-      "scripts/prepare-public-article-snapshots.mjs",
-      "migrations/0002_public_articles.sql",
-      "worker/ops-access.ts",
-      "content/resume.mdx",
-      "scripts/generate-content-covers.mjs",
-      "scripts/generate-inline-visuals.mjs",
-      "scripts/insert-content-image.mjs",
     ])
-      expect(existsSync(resolve(path)), path).toBe(true);
+      expect(routes).toContain(route);
     expect(readFileSync(resolve("package.json"), "utf8")).toContain(
       "@giscus/react",
     );
   });
 
-  it("has no Career links in actual navigation, blog content, or application source", () => {
-    const retiredLink =
-      /(?:["'`(])(?:https:\/\/seojing\.com)?\/careers?(?:[/"'`?#)]|$)/i;
-    expect(JSON.stringify([...blogNavItems, ...portfolioNavItems])).not.toMatch(
-      retiredLink,
-    );
-    expect(blogNavItems.some((item) => item.href === "/blog")).toBe(true);
-    const paths = [
+  it("has no active MDX source, generated bundle, review UI, or authoring tool", () => {
+    expect(files(resolve("content"))).toEqual([]);
+    expect(files(resolve("src/generated"))).toEqual([]);
+    for (const path of [
+      "src/shared/content/mdx-migration-manifest.json",
+      "src/widgets/ops-articles/MdxReviewQueue.tsx",
+      "scripts/check-content-assets.mjs",
+      "scripts/generate-content-covers.mjs",
+      "scripts/generate-inline-visuals.mjs",
+      "scripts/insert-content-image.mjs",
+    ])
+      expect(existsSync(resolve(path)), path).toBe(false);
+    const active = [
       ...files(resolve("src")),
-      ...files(resolve("content")),
+      ...files(resolve("scripts")),
       ...files(resolve("worker")),
     ].filter(
       (path) =>
-        /\.(?:tsx?|mdx|json)$/.test(path) &&
-        !/\.(?:test|spec|smoke)\./.test(path) &&
-        !path.includes("/generated/"),
+        /\.(?:tsx?|mjs|json)$/.test(path) &&
+        !/\.(?:test|spec|smoke)\./.test(path),
     );
-    for (const path of paths) {
+    for (const path of active) {
       const source = readFileSync(path, "utf8");
-      expect(source, relative(process.cwd(), path)).not.toMatch(retiredLink);
       expect(source, relative(process.cwd(), path)).not.toMatch(
-        /(?:from\s*|import\s*)["'][^"']*(?:widgets\/(?:post-qa|blog-audio-player)|shared\/rag)[^"']*["']/,
+        /mdx-migration-manifest|MdxReviewQueue|src\/generated\/content|content\/resume\.mdx/,
       );
     }
+    const pkg = JSON.parse(readFileSync(resolve("package.json"), "utf8")) as {
+      scripts: Record<string, string>;
+    };
+    for (const name of [
+      "asset:insert",
+      "cover:auto",
+      "visual:auto",
+      "check:content-assets",
+    ])
+      expect(pkg.scripts).not.toHaveProperty(name);
   });
 
-  it("emits retained article links in sitemap/RSS/llms without Career navigation", async () => {
+  it("emits all API/D1-backed article links in sitemap/RSS/llms", async () => {
     const urls = (await sitemap()).map((item) => item.url);
-    for (const entry of entries)
-      expect(urls).toContain(`https://seojing.com/blog/${entry.slug}`);
+    for (const entry of retainedEntries)
+      expect(urls).toContain("https://seojing.com/blog" + entry.path);
     expect(urls).toContain("https://seojing.com/blog");
-    const feed = await (await rss()).text();
-    const discovery = await (await llms()).text();
-    expect(feed.match(/<item>/g)).toHaveLength(50);
-    expect(discovery).toContain("https://seojing.com/blog/");
-    expect([urls.join("\n"), feed, discovery].join("\n")).not.toMatch(
-      /https:\/\/seojing\.com\/careers?(?:[/\s<"?]|$)/i,
+    expect((await (await rss()).text()).match(/<item>/g)).toHaveLength(50);
+    expect(await (await llms()).text()).toContain("https://seojing.com/blog/");
+  });
+
+  it("keeps retired Career and interaction routes/modules absent", () => {
+    const routes = files(resolve("src/app")).map((path) =>
+      relative(resolve("src/app"), path),
+    );
+    expect(
+      routes.filter((path) =>
+        /(?:^|\/)(?:careers?|community|comments|rag|tts)(?:\/|$)/i.test(path),
+      ),
+    ).toEqual([]);
+    expect(JSON.stringify([...blogNavItems, ...portfolioNavItems])).not.toMatch(
+      /https:\/\/seojing\.com\/careers?/i,
     );
   });
 });
