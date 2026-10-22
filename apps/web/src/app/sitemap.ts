@@ -27,18 +27,6 @@ export default async function sitemap() {
       changeFrequency: "daily" as const,
       priority: 0.9,
     },
-    {
-      url: absoluteUrl("/readme"),
-      lastModified: "2026-10-03",
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    },
-    {
-      url: absoluteUrl("/readme/contest"),
-      lastModified: "2026-10-03",
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    },
     ...posts,
   ];
 }
