@@ -1,5 +1,6 @@
 import { formatDateOnly } from "@app/utils";
 import Link from "next/link";
+import Image from "next/image";
 import type { PostInfo } from "@/widgets/new-posts-carousel/new-posts-carousel.utils";
 
 const PALETTES = [
@@ -201,6 +202,7 @@ export function PostCoverCard({ post, priority = false }: PostCoverCardProps) {
   return (
     <Link
       href={post.href}
+      prefetch={false}
       className="group block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gray-900 dark:focus-visible:outline-gray-100"
       aria-label={`${post.title} 글로 이동`}
     >
@@ -212,9 +214,16 @@ export function PostCoverCard({ post, priority = false }: PostCoverCardProps) {
         }}
       >
         {hasImage ? (
-          <img
-            src={post.cover!.src}
+          <Image
+            src={post.cover!.src!}
             alt={post.cover?.alt ?? ""}
+            fill
+            sizes="(min-width: 1024px) 320px, (min-width: 640px) 33vw, 50vw"
+            quality={70}
+            unoptimized={
+              !post.cover!.src!.startsWith("/") ||
+              post.cover!.src!.startsWith("//")
+            }
             className="absolute inset-0 size-full scale-[1.04] object-cover opacity-85 blur-[1px] saturate-[0.88] contrast-[0.72] transition duration-500 group-hover:scale-[1.07]"
             loading={priority ? "eager" : "lazy"}
           />

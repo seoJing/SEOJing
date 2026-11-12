@@ -7,6 +7,10 @@ import { PostExplorer } from "@/widgets/post-explorer/PostExplorer";
 import { PostGrid } from "@/widgets/post-grid";
 import { ArticleToolbar } from "@/widgets/article-toolbar/ArticleToolbar";
 import { ArticleAnalytics } from "@/widgets/article-analytics";
+import {
+  getAllPosts,
+  getSubTree,
+} from "@/widgets/new-posts-carousel/new-posts-carousel.utils";
 import type { Metadata } from "vinext/shims/metadata";
 import {
   buildArticleMetadata,
@@ -47,6 +51,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   if (isSlugFolder(slug, contentTree)) {
     const rootPath = `/${slug.join("/")}`;
+    const folderNodes = getSubTree(contentTree, rootPath);
+    const hasMorePosts = getAllPosts(folderNodes).length > 24;
 
     return (
       <>
@@ -58,7 +64,29 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           rootPath={rootPath}
           contentTree={contentTree}
           title="이 섹션의 대표 이미지"
+          limit={24}
         />
+        {hasMorePosts ? (
+          <details className="rounded-lg border border-foreground/10 p-4">
+            <summary className="cursor-pointer text-sm font-semibold">
+              이 분야의 전체 글 바로가기
+            </summary>
+            <nav
+              aria-label="이 분야의 글과 하위 분류"
+              className="mt-3 flex flex-wrap gap-2"
+            >
+              {folderNodes.map((node) => (
+                <a
+                  key={node.path}
+                  href={`/blog${node.path}`}
+                  className="rounded-full border border-foreground/15 px-3 py-1.5 text-sm hover:border-foreground/40"
+                >
+                  {node.frontmatter?.title ?? node.name}
+                </a>
+              ))}
+            </nav>
+          </details>
+        ) : null}
       </>
     );
   }
