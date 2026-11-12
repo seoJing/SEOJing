@@ -8,27 +8,45 @@ const SENTINELS = [
   {
     slug: "study/clab-26-1/week1",
     title: "프론트엔드 스터디 1주차",
-    signals: ["data-backend-article-document"],
+    signals: [
+      "data-backend-article-document",
+      "data-article-quiz",
+      "data-code-block",
+      "screenshot_20260321_022923.png",
+    ],
   },
   {
-    slug: "study/javascript-quizbook/day10",
-    signals: ["data-backend-article-document", "data-article-quiz"],
-  },
-  {
-    slug: "study/effective-typescript/day5",
+    slug: "SEOJing/inline-visual-pipeline",
+    title: "본문 이미지를 나중에 넣는 게 아니라",
     signals: [
       "data-backend-article-document",
       "data-code-block",
-      "data-article-quiz",
-      "inference-api-design.svg",
+      "inline-01.svg",
+    ],
+  },
+  {
+    slug: "SEOJing/riso-cover-pipeline",
+    title: "대표 이미지를 글마다 다시 붙이는 방식",
+    signals: [
+      "data-backend-article-document",
+      "latest20-riso-contact-sheet.png",
     ],
   },
 ];
+const PRIVATE_SENTINELS = [
+  "study/javascript-quizbook/day10",
+  "study/effective-typescript/day5",
+];
+
+// Raise or lower this editorial floor only alongside a deliberate visibility change.
+const MINIMUM_PUBLIC_ARTICLES = 173;
 
 export function readArgs(argv, env = process.env) {
   const args = {
     origin: env.PUBLIC_READBACK_ORIGIN || DEFAULT_ORIGIN,
-    minimumArticles: Number(env.PUBLIC_READBACK_MINIMUM_ARTICLES || 201),
+    minimumArticles: Number(
+      env.PUBLIC_READBACK_MINIMUM_ARTICLES || MINIMUM_PUBLIC_ARTICLES,
+    ),
     retries: Number(env.PUBLIC_READBACK_RETRIES || 12),
     delayMs: Number(env.PUBLIC_READBACK_DELAY_MS || 10_000),
     timeoutMs: Number(env.PUBLIC_READBACK_TIMEOUT_MS || 30_000),
@@ -82,6 +100,9 @@ export function inspectPublicIndex(payload, minimumArticles) {
   const missing = SENTINELS.map((entry) => entry.slug).filter(
     (slug) => !unique.has(slug),
   );
+  const unexpectedlyPublic = PRIVATE_SENTINELS.filter((slug) =>
+    unique.has(slug),
+  );
   const invalid = slugs.filter(
     (slug) => !/^[\p{L}\p{N}_-]+(?:\/[\p{L}\p{N}_-]+)*$/u.test(slug),
   );
@@ -90,9 +111,11 @@ export function inspectPublicIndex(payload, minimumArticles) {
       slugs.length >= minimumArticles &&
       unique.size === slugs.length &&
       !missing.length &&
+      !unexpectedlyPublic.length &&
       !invalid.length,
     count: slugs.length,
     missing,
+    unexpectedlyPublic,
     invalid,
     duplicateCount: slugs.length - unique.size,
   };
@@ -171,14 +194,32 @@ export async function runAttempt(args) {
   ).json();
   const index = inspectPublicIndex(payload, args.minimumArticles);
   if (!index.ok) return { ok: false, index, pages: [] };
-  const pages = await Promise.all(
-    SENTINELS.map(async (sentinel) => {
-      const url = `${args.origin}/blog/${sentinel.slug}`;
-      const html = await (await get(url, "text/html", args.timeoutMs)).text();
-      return { slug: sentinel.slug, ...inspectPublicHtml(html, sentinel) };
-    }),
-  );
-  return { ok: pages.every((page) => page.ok), index, pages };
+  const pages = [];
+  // Keep expensive SSR probes sequential on the free-tier Worker.
+  for (const sentinel of SENTINELS) {
+    const url = `${args.origin}/blog/${sentinel.slug}`;
+    const html = await (await get(url, "text/html", args.timeoutMs)).text();
+    pages.push({ slug: sentinel.slug, ...inspectPublicHtml(html, sentinel) });
+  }
+  const privatePages = [];
+  for (const slug of PRIVATE_SENTINELS) {
+    const response = await fetch(`${args.origin}/blog/${slug}`, {
+      headers: { Accept: "text/html", "Cache-Control": "no-cache" },
+      signal: AbortSignal.timeout(args.timeoutMs),
+    });
+    await response.body?.cancel();
+    privatePages.push({
+      slug,
+      status: response.status,
+      ok: response.status === 404,
+    });
+  }
+  return {
+    ok: pages.every((page) => page.ok) && privatePages.every((page) => page.ok),
+    index,
+    pages,
+    privatePages,
+  };
 }
 
 async function main() {
