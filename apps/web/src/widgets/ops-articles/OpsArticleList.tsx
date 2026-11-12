@@ -28,7 +28,7 @@ export function OpsArticleList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("all");
+  const [status, setStatus] = useState("active");
   const [format, setFormat] = useState("all");
   const [category, setCategory] = useState("all");
   const [page, setPage] = useState(1);
@@ -73,7 +73,9 @@ export function OpsArticleList() {
       rows
         .filter(
           (row) =>
-            (status === "all" || row.status === status) &&
+            (status === "all" ||
+              (status === "active" && row.status !== "ARCHIVED") ||
+              row.status === status) &&
             (format === "all" || row.sourceFormat === format) &&
             (category === "all" || row.category === category) &&
             `${row.title} ${row.slug} ${row.category ?? ""}`
@@ -113,7 +115,7 @@ export function OpsArticleList() {
   };
   const scope = {
     ...(category !== "all" ? { category } : {}),
-    ...(status !== "all" ? { status } : {}),
+    ...(status !== "all" && status !== "active" ? { status } : {}),
     ...(format !== "all" ? { format } : {}),
     ...(query.trim() ? { query: query.trim() } : {}),
   };
@@ -267,6 +269,7 @@ export function OpsArticleList() {
             }}
             className={inputClass}
           >
+            <option value="active">활성</option>
             <option value="all">전체</option>
             <option value="PUBLISHED">공개</option>
             <option value="DRAFT">비공개</option>
