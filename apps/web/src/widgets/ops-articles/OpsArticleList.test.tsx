@@ -6,6 +6,31 @@ import { OpsArticleList } from "./OpsArticleList";
 afterEach(() => vi.unstubAllGlobals());
 
 describe("OpsArticleList", () => {
+  it("defaults to active articles and allows switching to all or archived", async () => {
+    const articles = ["DRAFT", "PUBLISHED", "ARCHIVED"].map((status) => ({
+      slug: `study/${status.toLowerCase()}`,
+      title: status,
+      category: "Study",
+      status,
+      sourceFormat: "DOCUMENT",
+      updatedAt: "2026-10-22T00:00:00Z",
+    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ ok: true, articles })),
+    );
+    render(<OpsArticleList />);
+    const statusFilter = screen.getByRole("combobox", { name: "상태 필터" });
+    expect(statusFilter).toHaveValue("active");
+    expect(await screen.findByText("2개 글 · 최근 수정일 순")).toBeVisible();
+    expect(screen.queryByText("ARCHIVED")).toBeNull();
+    fireEvent.change(statusFilter, { target: { value: "all" } });
+    expect(screen.getByText("3개 글 · 최근 수정일 순")).toBeVisible();
+    fireEvent.change(statusFilter, { target: { value: "ARCHIVED" } });
+    expect(screen.getByText("1개 글 · 최근 수정일 순")).toBeVisible();
+    expect(screen.getByText("ARCHIVED")).toBeVisible();
+  });
+
   it("paginates the CMS queue and combines status, format, and title filters", async () => {
     const articles = Array.from({ length: 22 }, (_, index) => ({
       slug: `study/post-${index + 1}`,
