@@ -47,15 +47,16 @@ Chrome CDP의 Performance Trace/Network를 사용했다. 캐시를 끄고 `/blog
 
 1. 게시물 전체의 카드 SSR이 1.26MB HTML·3,676 DOM 요소를 만들었다. `/blog`와 대형 분야별 페이지에서는 최근 24개 카드만 먼저 렌더링하고 분야별 링크와 기존 `PostExplorer`로 전체 글을 계속 탐색할 수 있게 했다. 분야별 페이지에는 바로 아래 단계의 폴더·글 HTML 링크를 넣어 전체 글에 도달할 수 있고, 공개 글은 sitemap에도 남는다. `/blog/study` 원격 프리뷰 HTML은 526,674B → 346,445B(34.2% 감소)였다.
 2. 카드·캐러셀의 `next/link`가 보이는 글의 RSC를 사전 요청해 각각 고비용 Worker 렌더를 추가했다. 해당 링크의 prefetch를 껐다. `NewPostsCarousel`는 서버 컴포넌트로 옮겨 전체 content tree를 클라이언트로 한 번 덜 직렬화한다.
-3. 원본 2–4.5MB 이미지를 카드 크기로 전송했다. 기존 Cloudflare Images binding과 `next/image`를 사용해 640px AVIF 등으로 변환한다. 이미지 응답은 버전별 Cache API에 저장하고 브라우저 TTL은 5분으로 제한한다. [Images Free의 월 5,000개 고유 변환](https://developers.cloudflare.com/images/pricing/) 범위의 기존 binding을 사용하며 별도 유료 플랜을 신청하지 않는다.
+3. 원본 2–4.5MB 이미지를 카드 크기로 전송했다. 기존 Cloudflare Images binding과 `next/image`를 사용해 640px AVIF 등으로 변환한다. **변환 성공이 확인된** 이미지 응답만 버전별 Cache API에 저장하고 브라우저 TTL은 5분으로 제한한다. vinext가 변환 실패 후 원본을 200으로 반환하는 경우는 캐시를 우회하고 TTL을 60초로 제한해 7일짜리 원본 캐시가 남지 않게 했다. [Images Free의 월 5,000개 고유 변환](https://developers.cloudflare.com/images/pricing/) 범위의 기존 binding을 사용하며 별도 유료 플랜을 신청하지 않는다.
 4. 반복 SSR 자체를 막기 위해 공개 HTML과 RSC를 Cache API에 저장한다. 블로그 캐시 키에는 Worker 버전과 D1 게시물 리비전을 포함한다. D1 trigger가 게시·수정·삭제 시 리비전을 올려 어느 데이터센터에서도 비공개 글의 옛 캐시 키를 재사용하지 않는다. 하위 경로는 D1에 해당 공개 글이나 하위 공개 글이 있을 때만 캐시해, 비공개 전환 중 백엔드 fallback의 일시적인 200 응답을 새 리비전 아래에 저장하지 않는다. `_rsc` 값은 정규화하되 RSC·라우터·vinext 변형 헤더는 키에 반영한다. 홈·정적 소개 페이지는 Worker 버전으로 캐시를 무효화한다. 쿠키·인증 요청, 404, 임의 쿼리, `private/no-store` 응답은 저장하지 않는다. 캐시 가능한 페이지의 일반 브라우저·앞단 Worker 응답에는 `private, no-store`를 돌려 리비전 검사를 우회하지 않게 한다. 이는 브라우저 자체 캐시와 일부 뒤로 가기 최적화의 이점을 포기하는 안전성 우선 선택이다.
 
 ## 검증과 한계
 
-- 저장소 전체 `pnpm build`, `pnpm lint`, `pnpm format:check`, `pnpm test:coverage`: 통과. 웹 `pnpm test`: 31 파일, 237 테스트 통과. 웹 `test:smoke` 2건, `public:readback:test` 5건, `worker:size:check`(gzip 531.57KiB / 상한 2,800KiB) 통과. 코드 재검토 수정 후 전체 빌드·테스트·Worker 크기를 재검증했다.
+- 저장소 전체 `pnpm build`, `pnpm lint`, `pnpm format:check`, `pnpm test:coverage`: 통과. 웹 `pnpm test`: 31 파일, 238 테스트 통과. 웹 `test:smoke` 2건, `public:readback:test` 5건, `worker:size:check`(gzip 531.65KiB / 상한 2,800KiB) 통과. 코드 재검토 수정 후 전체 빌드·테스트·Worker 크기를 재검증했다.
 - SQLite 메모리 DB에서 새 migration 적용 후 리비전 `0 → 1 → 2 → 3`(insert/update/delete)을 확인했다. `wrangler d1 migrations apply ANALYTICS_DB --local`도 성공했다.
 - 로컬 workerd 동일 환경의 반복 요청: 홈 82ms MISS → 9ms HIT, 블로그 34ms MISS → 15ms HIT(로컬 D1에 글 0개), 이미지 800ms MISS → 11ms HIT. **벽시계 시간**이며 운영 CPU 수치는 아니다.
 - 독립 검토에서 비공개 전환 중 backend fallback의 일시적 200 캐싱 위험을 발견해 D1 공개 경로 확인을 추가했다. 수정 후 재검토에서 출시 차단 이슈 없이 수용됐다. 로컬 workerd의 실제 vinext `Vary` 헤더가 달린 `/blog` HTML과 RSC 모두 `MISS → HIT`를 확인했다. `_rsc` 임의 값·라우터 변형 분리와 fallback 200 미저장도 테스트했다. 운영에서는 하위 글 경로의 추가 D1 조회 비용을 따로 확인해야 한다.
+- PR 자동 리뷰에서 변환 실패 시 원본 이미지가 200으로 반환되는 vinext 경로를 찾아, 장기 캐시가 아닌 60초 응답으로 분리하고 회귀 테스트를 추가했다.
 - 이미지 프리뷰 응답: `/_next/image` 200 `image/avif`; 원본 리다이렉트가 아님. 카드 스크린샷도 확인했다.
 - `pnpm exec tsc --noEmit`은 이 작업과 무관하게 기존 테스트·디자인시스템·날짜 유틸 타입 오류 7건으로 실패한다. 이 변경 파일의 타입 오류는 수정했다.
 - 실제 운영의 캐시 적중 CPU와 1102 감소는 **아직 검증되지 않았다**. 캐시 미스는 여전히 SSR에 200–400ms CPU가 들 수 있고, 최초 요청·새 데이터센터에서는 1102가 완전히 배제되지 않는다. 배포 후 동일 조건에서 확인해야 한다.

@@ -64,8 +64,9 @@ export default {
         request,
         env.CF_VERSION_METADATA.id,
         ctx,
-        () =>
-          handleImageOptimization(
+        async () => {
+          let transformed = false;
+          const response = await handleImageOptimization(
             request,
             {
               fetchAsset: (path) =>
@@ -77,11 +78,15 @@ export default {
                     format: format as ImageOutputOptions["format"],
                     quality,
                   });
-                return result.response();
+                const image = await result.response();
+                transformed = true;
+                return image;
               },
             },
             allowedWidths,
-          ),
+          );
+          return { response, transformed };
+        },
       );
     }
 
