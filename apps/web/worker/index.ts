@@ -13,6 +13,8 @@ import {
 import handler from "vinext/server/app-router-entry";
 import { handleAnalyticsRequest, purgeExpiredAnalytics } from "./analytics";
 import { handleDiscoveryRequest } from "./discovery";
+import { servePublicPageWithCache } from "./public-page-cache";
+import { serveOptimizedImageWithCache } from "./public-image-cache";
 
 // Image security config. SVG sources with .svg extension auto-skip the
 // optimization endpoint on the client side (served directly, no proxy).
@@ -37,27 +39,49 @@ export default {
     if (url.pathname === "/api/ops/discovery")
       return handleDiscoveryRequest(request, env);
 
+    if (
+      url.pathname === "/" ||
+      url.pathname === "/portfolio" ||
+      url.pathname === "/skills" ||
+      url.pathname === "/blog" ||
+      url.pathname.startsWith("/blog/")
+    ) {
+      return servePublicPageWithCache(
+        request,
+        env.ANALYTICS_DB,
+        env.CF_VERSION_METADATA.id,
+        ctx,
+        () => handler.fetch(request, env, ctx),
+      );
+    }
+
     // Image optimization via Cloudflare Images binding.
     // The parseImageParams validation inside handleImageOptimization
     // normalizes backslashes and validates the origin hasn't changed.
-    if (url.pathname === "/_vinext/image") {
+    if (url.pathname === "/_vinext/image" || url.pathname === "/_next/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
-      return handleImageOptimization(
+      return serveOptimizedImageWithCache(
         request,
-        {
-          fetchAsset: (path) =>
-            env.ASSETS.fetch(new Request(new URL(path, request.url))),
-          transformImage: async (body, { width, format, quality }) => {
-            const result = await env.IMAGES.input(body)
-              .transform(width > 0 ? { width } : {})
-              .output({
-                format: format as ImageOutputOptions["format"],
-                quality,
-              });
-            return result.response();
-          },
-        },
-        allowedWidths,
+        env.CF_VERSION_METADATA.id,
+        ctx,
+        () =>
+          handleImageOptimization(
+            request,
+            {
+              fetchAsset: (path) =>
+                env.ASSETS.fetch(new Request(new URL(path, request.url))),
+              transformImage: async (body, { width, format, quality }) => {
+                const result = await env.IMAGES.input(body)
+                  .transform(width > 0 ? { width } : {})
+                  .output({
+                    format: format as ImageOutputOptions["format"],
+                    quality,
+                  });
+                return result.response();
+              },
+            },
+            allowedWidths,
+          ),
       );
     }
 

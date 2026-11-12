@@ -67,7 +67,12 @@ export function RecentlyRead({
             const description = descriptionMap.get(post.href) ?? "";
             const isFullyRead = (post.progress ?? 0) >= 100;
             return (
-              <Link key={post.href} href={post.href} className="shrink-0">
+              <Link
+                key={post.href}
+                href={post.href}
+                prefetch={false}
+                className="shrink-0"
+              >
                 <div
                   className={cn(
                     "w-28 rounded-lg overflow-hidden sm:w-36",

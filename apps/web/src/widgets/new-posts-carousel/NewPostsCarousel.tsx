@@ -1,5 +1,3 @@
-"use client";
-
 import { formatDateOnly } from "@app/utils";
 
 import Link from "next/link";
@@ -33,7 +31,7 @@ export function NewPostsCarousel({
   const carouselItems: CarouselItem[] = recentPosts.map((post) => ({
     id: post.href,
     content: (
-      <Link href={post.href} className="block h-full">
+      <Link href={post.href} prefetch={false} className="block h-full">
         <div className="flex h-full flex-col justify-end bg-linear-to-br bg-(--color-cloud-dancer) dark:bg-gray-800 p-4 sm:p-6">
           <div className="mb-2 flex flex-wrap gap-1.5">
             {post.tags.slice(0, 3).map((tag) => (

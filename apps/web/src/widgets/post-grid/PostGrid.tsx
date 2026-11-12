@@ -31,7 +31,10 @@ export function PostGrid({
       <div className="flex items-end justify-between gap-4">
         <Subtitle>{title}</Subtitle>
         <span className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
-          {visiblePosts.length} posts · latest first
+          {visiblePosts.length === posts.length
+            ? `${posts.length} posts`
+            : `${visiblePosts.length} of ${posts.length} posts`}{" "}
+          · latest first
         </span>
       </div>
       <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 sm:gap-1.5 lg:gap-2">
